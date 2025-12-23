@@ -20,12 +20,14 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
-          # 1. Install everything in one go
+          # Use python -m to ensure it targets the environment created by setup-python
           python -m pip install --upgrade pip
-          pip install yt-dlp feedgen requests
+          python -m pip install yt-dlp feedgen requests
+          
+          # Install FFmpeg for audio conversion
           sudo apt-get update && sudo apt-get install ffmpeg -y
           
-          # 2. Run the script immediately after
+          # Run the script in the same step
           python scripts/process_podcast.py
 
       - name: Commit and Push changes
