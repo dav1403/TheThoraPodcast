@@ -1,6 +1,13 @@
-import os
+name: Update Podcast
+on:
+  workflow_dispatch:  # This creates the manual "Run" button
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight
+    
+    import os
 from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
+
 
 # --- CONFIGURATION ---
 CHANNEL_URL = 'https://www.youtube.com/@YOUR_CHANNEL' # <-- Change this
