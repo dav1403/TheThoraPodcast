@@ -4,27 +4,81 @@ from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
 
 # --- CONFIGURATION ---
+# These come from your GitHub Secrets
 API_KEY = os.getenv('YOUTUBE_API_KEY')
+# Put your UC... ID here
 CHANNEL_ID = 'UC9YrWm1ef0uLV2EGOvXXAAw' # Use the ID, not the @name
+# Your info for Spotify
 EMAIL = 'thetorahpodcast@gmail.com'
-BASE_URL = 'https://dav1403.github.io/TheThoraPodcast/'
+# Your GitHub Pages URL: https://username.github.io/repo-name/
+BASE_URL = 'https://dav1403.github.io/TheThoraPodcast/' 
 
-def get_latest_video_url():
-    # Official API call to get the latest video from the channel
-    url = f"https://www.googleapis.com/youtube/v3/search?key={API_KEY}&channelId={CHANNEL_ID}&part=snippet,id&order=date&maxResults=1"
+RSS_FILE = 'podcast.xml'
+AUDIO_FOLDER = 'episodes'
+
+if not os.path.exists(AUDIO_FOLDER):
+    os.makedirs(AUDIO_FOLDER)
+
+def get_latest_video_info():
+    print(f"Querying YouTube API for Channel: {CHANNEL_ID}")
+    url = f"https://www.googleapis.com/youtube/v3/search?key={API_KEY}&channelId={CHANNEL_ID}&part=snippet,id&order=date&maxResults=1&type=video"
     response = requests.get(url).json()
+    
+    if 'items' not in response or not response['items']:
+        raise Exception(f"API Error or No Videos Found: {response}")
+        
     video_id = response['items'][0]['id']['videoId']
-    return f"https://www.youtube.com/watch?v={video_id}", response['items'][0]['snippet']
+    snippet = response['items'][0]['snippet']
+    return f"https://www.youtube.com/watch?v={video_id}", snippet
 
 def download_audio(video_url):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': 'episodes/%(title)s.%(ext)s',
-        'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '192'}],
+        'outtmpl': f'{AUDIO_FOLDER}/%(title)s.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
         'quiet': True,
-        # No cookies needed here usually!
     }
     with YoutubeDL(ydl_opts) as ydl:
-        ydl.download([video_url])
+        info = ydl.extract_info(video_url, download=True)
+        return info['title']
 
-# ... rest of the RSS logic remains the same
+def update_rss():
+    fg = FeedGenerator()
+    fg.load_extension('podcast')
+    fg.title('The Thora Podcast')
+    fg.author({'name': 'Automator', 'email': EMAIL})
+    fg.link(href=BASE_URL, rel='alternate')
+    fg.description('Latest audio from YouTube')
+    fg.language('en')
+    # Spotify likes a category
+    fg.podcast.itunes_category('Technology') 
+
+    # Look at all files in the episodes folder
+    for file in os.listdir(AUDIO_FOLDER):
+        if file.endswith(".mp3"):
+            fe = fg.add_entry()
+            fe.id(file)
+            fe.title(file.replace(".mp3", ""))
+            # Create a clean URL for Spotify to download
+            file_url = f"{BASE_URL}{AUDIO_FOLDER}/{file}".replace(" ", "%20")
+            fe.enclosure(file_url, 0, 'audio/mpeg')
+
+    fg.rss_file(RSS_FILE)
+
+if __name__ == "__main__":
+    try:
+        video_url, snippet = get_latest_video_info()
+        print(f"Found latest video: {snippet['title']}")
+        
+        downloaded_title = download_audio(video_url)
+        print(f"Successfully downloaded: {downloaded_title}")
+        
+        update_rss()
+        print("RSS feed updated successfully.")
+    except Exception as e:
+        print(f"ERROR: {e}")
+        exit(1)
