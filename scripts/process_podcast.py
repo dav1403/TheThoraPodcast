@@ -5,9 +5,9 @@ from feedgen.feed import FeedGenerator
 
 # --- CONFIGURATION ---
 API_KEY = os.getenv('YOUTUBE_API_KEY')
-CHANNEL_ID = 'UCxxxxxxxxxxxx' # Use the ID, not the @name
-EMAIL = 'your-email@example.com'
-BASE_URL = 'https://your-username.github.io/your-repo/'
+CHANNEL_ID = 'UC9YrWm1ef0uLV2EGOvXXAAw' # Use the ID, not the @name
+EMAIL = 'thetorahpodcast@gmail.com'
+BASE_URL = 'https://dav1403.github.io/TheThoraPodcast/'
 
 def get_latest_video_url():
     # Official API call to get the latest video from the channel
