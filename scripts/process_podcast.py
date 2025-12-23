@@ -31,6 +31,8 @@ def get_latest_video_info():
 def download_audio(video_url):
     ydl_opts = {
         'format': 'bestaudio/best',
+        # This tells yt-dlp to use the iOS app client logic
+        'extractor_args': {'youtube': {'player_client': ['ios']}}, 
         'outtmpl': f'{AUDIO_FOLDER}/%(title)s.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -38,6 +40,7 @@ def download_audio(video_url):
             'preferredquality': '192',
         }],
         'quiet': True,
+        'no_warnings': True,
     }
     with YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(video_url, download=True)
