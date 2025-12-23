@@ -8,10 +8,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-- name: Install dependencies
-        run: |
-          pip install yt-dlp feedgen requests # Add 'requests' here
-          sudo apt-get update && sudo apt-get install ffmpeg -y
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -22,7 +18,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install yt-dlp feedgen
+          pip install yt-dlp feedgen requests
           sudo apt-get update && sudo apt-get install ffmpeg -y
 
       - name: Run script
