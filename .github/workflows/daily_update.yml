@@ -1,6 +1,6 @@
 name: Update Podcast
 on:
-  workflow_dispatch: # Creates the manual "Run" button
+  workflow_dispatch: # This adds the "Run workflow" button
   schedule:
     - cron: '0 0 * * *' # Runs every day at midnight
 
@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install yt-dlp feedgen
-          sudo apt-get install ffmpeg -y
+          sudo apt-get update && sudo apt-get install ffmpeg -y
 
       - name: Run script
         run: python scripts/process_podcast.py
