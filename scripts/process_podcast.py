@@ -31,8 +31,8 @@ def get_latest_video_info():
 def download_audio(video_url):
     ydl_opts = {
         'format': 'bestaudio/best',
-        # This tells yt-dlp to use the iOS app client logic
-        'extractor_args': {'youtube': {'player_client': ['ios']}}, 
+        # THIS IS THE FIX: Simulates official mobile apps to bypass bot checks
+        'extractor_args': {'youtube': {'player_client': ['android', 'ios']}},
         'outtmpl': f'{AUDIO_FOLDER}/%(title)s.%(ext)s',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
@@ -50,10 +50,10 @@ def update_rss():
     fg = FeedGenerator()
     fg.load_extension('podcast')
     fg.title('The Thora Podcast')
-    fg.author({'name': 'Automator', 'email': EMAIL})
+    fg.author({'name': 'The Thora Team', 'email': EMAIL})
     fg.link(href=BASE_URL, rel='alternate')
-    fg.description('Latest audio from YouTube')
-    fg.language('en')
+    fg.description('Latest audio from YouTube channel converted for Spotify.')
+    fg.language('fr') # Setting to French based on video title
     fg.podcast.itunes_category('Religion & Spirituality') 
 
     for file in os.listdir(AUDIO_FOLDER):
@@ -61,6 +61,7 @@ def update_rss():
             fe = fg.add_entry()
             fe.id(file)
             fe.title(file.replace(".mp3", ""))
+            # URL Encodes spaces to prevent broken links
             file_url = f"{BASE_URL}{AUDIO_FOLDER}/{file}".replace(" ", "%20")
             fe.enclosure(file_url, 0, 'audio/mpeg')
 
