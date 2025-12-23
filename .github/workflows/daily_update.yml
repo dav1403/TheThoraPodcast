@@ -1,9 +1,11 @@
-name: Update Podcast Debug
+name: Update Podcast
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
 
 jobs:
-  debug_build:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -14,14 +16,18 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Debug Installation
-        run: |
-          # Use 'which python' to see the path
-          which python
-          # Force install using the specific python runner
-          python -m pip install requests yt-dlp feedgen
-          
-      - name: Run Debug Script
+      - name: Install and Run
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-        run: python scripts/process_podcast.py
+        run: |
+          python -m pip install requests yt-dlp feedgen
+          sudo apt-get update && sudo apt-get install ffmpeg -y
+          python scripts/process_podcast.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add .
+          git commit -m "New podcast episode added" || echo "No changes to commit"
+          git push
