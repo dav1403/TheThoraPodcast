@@ -1,0 +1,60 @@
+import os
+from yt_dlp import YoutubeDL
+from feedgen.feed import FeedGenerator
+
+# --- CONFIGURATION ---
+CHANNEL_URL = 'https://www.youtube.com/@YOUR_CHANNEL' # <-- Change this
+EMAIL = 'your-email@example.com' # <-- Change this (Spotify needs this)
+BASE_URL = 'https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/' # <-- Change this
+
+RSS_FILE = 'podcast.xml'
+AUDIO_FOLDER = 'episodes'
+
+if not os.path.exists(AUDIO_FOLDER):
+    os.makedirs(AUDIO_FOLDER)
+
+def download_latest_audio():
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': f'{AUDIO_FOLDER}/%(title)s.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+        'playlist_items': '1',
+        'quiet': True
+    }
+    with YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(CHANNEL_URL, download=True)
+        # Handle playlist/channel structure
+        entry = info['entries'][0] if 'entries' in info else info
+        return entry
+
+def update_rss(video_info):
+    fg = FeedGenerator()
+    fg.load_extension('podcast')
+    fg.title('Automated YouTube Podcast')
+    fg.author({'name': 'Automator', 'email': EMAIL})
+    fg.link(href=BASE_URL, rel='alternate')
+    fg.description('Latest episodes from YouTube')
+    fg.language('en')
+
+    # This loop adds all MP3s found in the episodes folder to the feed
+    for file in os.listdir(AUDIO_FOLDER):
+        if file.endswith(".mp3"):
+            fe = fg.add_entry()
+            fe.id(file)
+            fe.title(file.replace(".mp3", ""))
+            # Create the direct link to the file on GitHub Pages
+            file_url = f"{BASE_URL}{AUDIO_FOLDER}/{file}".replace(" ", "%20")
+            fe.enclosure(file_url, 0, 'audio/mpeg')
+
+    fg.rss_file(RSS_FILE)
+
+if __name__ == "__main__":
+    print("Fetching latest video...")
+    video_info = download_latest_audio()
+    print(f"Downloaded: {video_info['title']}")
+    update_rss(video_info)
+    print("RSS Feed Updated.")
