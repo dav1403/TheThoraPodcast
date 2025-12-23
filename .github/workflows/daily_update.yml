@@ -1,8 +1,8 @@
 name: Update Podcast
 on:
-  workflow_dispatch: # This adds the "Run workflow" button
+  workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *' # Runs every day at midnight
+    - cron: '0 0 * * *'
 
 jobs:
   build:
@@ -12,24 +12,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # Updated to v5
         with:
           python-version: '3.9'
+          cache: 'pip' # Optional: Speeds up future runs
 
-      - name: Install dependencies
+      - name: Install all dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install yt-dlp feedgen requests
           sudo apt-get update && sudo apt-get install ffmpeg -y
 
-      - name: Run script
+      - name: Run podcast script
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          PYTHONPATH: ${{ github.workspace }} # Explicitly tell Python where to look
         run: python scripts/process_podcast.py
-
-      - name: Commit and Push changes
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
-          git add .
-          git commit -m "New podcast episode added" || echo "No changes to commit"
-          git push
