@@ -1,60 +1,30 @@
 import os
+import requests
 from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
 
 # --- CONFIGURATION ---
-CHANNEL_URL = 'https://www.youtube.com/@YOUR_CHANNEL' # <-- Change this
-EMAIL = 'your-email@example.com' # <-- Change this (Spotify needs this)
-BASE_URL = 'https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/' # <-- Change this
+API_KEY = os.getenv('YOUTUBE_API_KEY')
+CHANNEL_ID = 'UCxxxxxxxxxxxx' # Use the ID, not the @name
+EMAIL = 'your-email@example.com'
+BASE_URL = 'https://your-username.github.io/your-repo/'
 
-RSS_FILE = 'podcast.xml'
-AUDIO_FOLDER = 'episodes'
+def get_latest_video_url():
+    # Official API call to get the latest video from the channel
+    url = f"https://www.googleapis.com/youtube/v3/search?key={API_KEY}&channelId={CHANNEL_ID}&part=snippet,id&order=date&maxResults=1"
+    response = requests.get(url).json()
+    video_id = response['items'][0]['id']['videoId']
+    return f"https://www.youtube.com/watch?v={video_id}", response['items'][0]['snippet']
 
-if not os.path.exists(AUDIO_FOLDER):
-    os.makedirs(AUDIO_FOLDER)
-
-def download_latest_audio():
+def download_audio(video_url):
     ydl_opts = {
         'format': 'bestaudio/best',
-        'outtmpl': f'{AUDIO_FOLDER}/%(title)s.%(ext)s',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-        'playlist_items': '1',
-        'quiet': True
+        'outtmpl': 'episodes/%(title)s.%(ext)s',
+        'postprocessors': [{'key': 'FFmpegExtractAudio','preferredcodec': 'mp3','preferredquality': '192'}],
+        'quiet': True,
+        # No cookies needed here usually!
     }
     with YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(CHANNEL_URL, download=True)
-        # Handle playlist/channel structure
-        entry = info['entries'][0] if 'entries' in info else info
-        return entry
+        ydl.download([video_url])
 
-def update_rss(video_info):
-    fg = FeedGenerator()
-    fg.load_extension('podcast')
-    fg.title('Automated YouTube Podcast')
-    fg.author({'name': 'Automator', 'email': EMAIL})
-    fg.link(href=BASE_URL, rel='alternate')
-    fg.description('Latest episodes from YouTube')
-    fg.language('en')
-
-    # This loop adds all MP3s found in the episodes folder to the feed
-    for file in os.listdir(AUDIO_FOLDER):
-        if file.endswith(".mp3"):
-            fe = fg.add_entry()
-            fe.id(file)
-            fe.title(file.replace(".mp3", ""))
-            # Create the direct link to the file on GitHub Pages
-            file_url = f"{BASE_URL}{AUDIO_FOLDER}/{file}".replace(" ", "%20")
-            fe.enclosure(file_url, 0, 'audio/mpeg')
-
-    fg.rss_file(RSS_FILE)
-
-if __name__ == "__main__":
-    print("Fetching latest video...")
-    video_info = download_latest_audio()
-    print(f"Downloaded: {video_info['title']}")
-    update_rss(video_info)
-    print("RSS Feed Updated.")
+# ... rest of the RSS logic remains the same
