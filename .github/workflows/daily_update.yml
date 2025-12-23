@@ -14,17 +14,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.10' # Updated to 3.10 to remove deprecation warning
 
       - name: Install and Run
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
-          # Force the latest version of yt-dlp
+          # Always upgrade yt-dlp to the latest version to bypass new YouTube blocks
+          python -m pip install --upgrade pip
           python -m pip install --upgrade requests yt-dlp feedgen
           sudo apt-get update && sudo apt-get install ffmpeg -y
           python scripts/process_podcast.py
-          
+
       - name: Commit and Push changes
         run: |
           git config --global user.name "GitHub Action"
