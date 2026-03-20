@@ -90,6 +90,44 @@ def asset_already_exists(release: dict, filename: str) -> str | None:
 # YouTube API helpers
 # ---------------------------------------------------------------------------
 
+def get_channel_info(channel_id: str) -> dict:
+    """
+    Fetch the YouTube channel's name, description, and best available
+    thumbnail. Returns a dict with keys: title, description, thumbnail.
+    """
+    url = (
+        f"https://www.googleapis.com/youtube/v3/channels"
+        f"?key={API_KEY}&id={channel_id}&part=snippet"
+    )
+    r = requests.get(url)
+    data = r.json()
+
+    if "error" in data:
+        raise Exception(f"YouTube API error fetching channel info: {data['error']['message']}")
+
+    items = data.get("items", [])
+    if not items:
+        raise Exception(f"No channel found for ID: {channel_id}")
+
+    snippet = items[0]["snippet"]
+    thumbnails = snippet.get("thumbnails", {})
+
+    # Prefer highest resolution: maxres → high → medium → default
+    thumb_url = (
+        thumbnails.get("maxres") or
+        thumbnails.get("high") or
+        thumbnails.get("medium") or
+        thumbnails.get("default") or
+        {}
+    ).get("url", "")
+
+    return {
+        "title":       snippet["title"],
+        "description": snippet.get("description", ""),
+        "thumbnail":   thumb_url,
+    }
+
+
 def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
     """
     Fetch the latest 10 videos from the channel.
@@ -171,25 +209,30 @@ def save_feed_entries(feed_path: Path, entries: list[dict]):
     sidecar.write_text(json.dumps(entries, indent=2, ensure_ascii=False))
 
 
-def build_rss_feed(channel_cfg: dict, entries: list[dict], feed_path: Path):
-    """Regenerate the RSS XML from the entries list."""
+def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], feed_path: Path):
+    """Regenerate the RSS XML from the entries list.
+
+    channel_cfg  — static config from channels.json (slug, author, email, language, category)
+    channel_info — live data from YouTube API (title, description, thumbnail)
+    """
     fg = FeedGenerator()
     fg.load_extension("podcast")
 
     fg.id(BASE_URL + f"feeds/{channel_cfg['slug']}.xml")
-    fg.title(channel_cfg["podcast_title"])
+    fg.title(channel_info["title"])
     fg.author({"name": channel_cfg["podcast_author"], "email": channel_cfg["podcast_email"]})
     fg.link(href=BASE_URL, rel="alternate")
     fg.link(href=BASE_URL + f"feeds/{channel_cfg['slug']}.xml", rel="self")
-    fg.description(channel_cfg["podcast_description"])
+    fg.description(channel_info["description"] or channel_info["title"])
     fg.language(channel_cfg.get("podcast_language", "en"))
     fg.podcast.itunes_category(channel_cfg.get("podcast_category", "Technology"))
     fg.podcast.itunes_author(channel_cfg["podcast_author"])
     fg.podcast.itunes_explicit("no")
 
-    if channel_cfg.get("podcast_image_url"):
-        fg.image(channel_cfg["podcast_image_url"])
-        fg.podcast.itunes_image(channel_cfg["podcast_image_url"])
+    # Show-level cover image from YouTube channel thumbnail
+    if channel_info.get("thumbnail"):
+        fg.image(channel_info["thumbnail"])
+        fg.podcast.itunes_image(channel_info["thumbnail"])
 
     # Most recent first
     for entry in sorted(entries, key=lambda e: e["published"], reverse=True):
@@ -231,14 +274,24 @@ def process_channel(channel_cfg: dict, processed: dict):
     slug = channel_cfg["slug"]
     channel_id = channel_cfg["youtube_channel_id"]
     print(f"\n{'='*60}")
-    print(f"Channel: {channel_cfg['podcast_title']} ({slug})")
+    print(f"Channel: {slug} ({channel_id})")
     print(f"{'='*60}")
+
+    # Fetch live channel metadata from YouTube
+    print("  Fetching channel info from YouTube...")
+    channel_info = get_channel_info(channel_id)
+    print(f"  Channel name: {channel_info['title']}")
 
     already_done = set(processed.get(slug, []))
     new_videos = get_new_videos(channel_id, already_done)
 
     if not new_videos:
         print("  No new videos found.")
+        # Still rebuild RSS in case channel info (name/description/image) changed on YouTube
+        feed_path = FEEDS_DIR / f"{slug}.xml"
+        entries = load_feed_entries(feed_path)
+        if entries:
+            build_rss_feed(channel_cfg, channel_info, entries, feed_path)
         return
 
     print(f"  Found {len(new_videos)} new video(s).")
@@ -248,7 +301,7 @@ def process_channel(channel_cfg: dict, processed: dict):
 
     # GitHub release tag for this channel's audio files
     release_tag = f"audio-{slug}"
-    release = get_or_create_release(release_tag, f"Audio: {channel_cfg['podcast_title']}")
+    release = get_or_create_release(release_tag, f"Audio: {channel_info['title']}")
     release_id = release["id"]
 
     for video in new_videos:
@@ -307,9 +360,9 @@ def process_channel(channel_cfg: dict, processed: dict):
         # Small delay to be kind to APIs
         time.sleep(2)
 
-    # Rebuild RSS
+    # Rebuild RSS with live channel info
     save_feed_entries(feed_path, entries)
-    build_rss_feed(channel_cfg, entries, feed_path)
+    build_rss_feed(channel_cfg, channel_info, entries, feed_path)
 
 
 def main():

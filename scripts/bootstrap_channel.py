@@ -25,6 +25,7 @@ from pathlib import Path
 # Reuse all helpers from process_podcasts
 sys.path.insert(0, str(Path(__file__).parent))
 from process_podcasts import (
+    get_channel_info,
     get_or_create_release,
     upload_audio_to_release,
     asset_already_exists,
@@ -93,8 +94,12 @@ def main():
         print(f"ERROR: No channel with slug '{args.slug}' found in channels.json")
         sys.exit(1)
 
-    print(f"Bootstrapping: {channel_cfg['podcast_title']}")
-    print(f"Fetching up to {args.max} videos from YouTube...")
+    # Fetch live channel metadata from YouTube
+    print(f"Fetching channel info from YouTube...")
+    channel_info = get_channel_info(channel_cfg["youtube_channel_id"])
+    print(f"Channel name : {channel_info['title']}")
+    print(f"Channel image: {channel_info['thumbnail']}")
+    print(f"Fetching up to {args.max} videos...")
 
     videos = get_videos_for_channel(channel_cfg["youtube_channel_id"], args.max)
     print(f"Found {len(videos)} videos.")
@@ -107,7 +112,7 @@ def main():
     existing_ids = {e["video_id"] for e in entries}
 
     release_tag = f"audio-{args.slug}"
-    release = get_or_create_release(release_tag, f"Audio: {channel_cfg['podcast_title']}")
+    release = get_or_create_release(release_tag, f"Audio: {channel_info['title']}")
     release_id = release["id"]
 
     for video in reversed(videos):  # oldest first so feed order is correct
@@ -158,10 +163,15 @@ def main():
         time.sleep(2)
 
     save_feed_entries(feed_path, entries)
-    build_rss_feed(channel_cfg, entries, feed_path)
+    build_rss_feed(channel_cfg, channel_info, entries, feed_path)
+
+    repo = os.environ.get("GITHUB_REPO", "dav1403/TheThoraPodcast")
+    owner = repo.split("/")[0]
+    repo_name = repo.split("/")[1]
+    feed_url = f"https://{owner}.github.io/{repo_name}/feeds/{args.slug}.xml"
     print(f"\n✓ Bootstrap complete. Feed: feeds/{args.slug}.xml ({len(entries)} episodes)")
     print(f"\nNext step: Submit this RSS URL to Spotify for Podcasters:")
-    print(f"  https://{os.environ.get('GITHUB_REPO', 'dav1403/TheThoraPodcast').split('/')[0]}.github.io/{os.environ.get('GITHUB_REPO', 'dav1403/TheThoraPodcast').split('/')[1]}/feeds/{args.slug}.xml")
+    print(f"  {feed_url}")
 
 
 if __name__ == "__main__":
