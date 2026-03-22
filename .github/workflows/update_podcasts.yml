@@ -47,10 +47,11 @@ jobs:
           GITHUB_REPO:     ${{ github.repository }}
         run: python scripts/process_podcasts.py
 
-      - name: Commit and push updated feeds
+       - name: Commit and push updated feeds
         run: |
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"
-          git add feeds/ processed.json
+          git add feeds/
+          git add --ignore-unmatch processed.json
           git diff --staged --quiet || git commit -m "chore: update podcast feeds [skip ci]"
           git push
