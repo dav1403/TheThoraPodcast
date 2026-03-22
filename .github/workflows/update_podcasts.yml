@@ -1,13 +1,10 @@
 name: Update Podcast Feeds
 
 on:
-  # Run daily at 06:00 UTC (adjust to your timezone)
   schedule:
     - cron: '0 6 * * *'
-  # Allow manual trigger from the Actions tab
   workflow_dispatch:
 
-# Required so the workflow can commit RSS feeds back to the repo
 permissions:
   contents: write
 
@@ -19,7 +16,6 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          # Full history needed so git push works correctly
           fetch-depth: 0
 
       - name: Set up Python 3.11
@@ -41,6 +37,9 @@ jobs:
           pip install -r requirements.txt
           sudo apt-get update -qq && sudo apt-get install -y ffmpeg
 
+      - name: Ensure feeds/ directory exists
+        run: mkdir -p feeds
+
       - name: Run podcast update
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -53,6 +52,5 @@ jobs:
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"
           git add feeds/ processed.json
-          # Only commit if something actually changed
           git diff --staged --quiet || git commit -m "chore: update podcast feeds [skip ci]"
           git push
