@@ -272,7 +272,9 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
 def load_processed() -> dict:
     p = Path(PROCESSED_FILE)
     if p.exists():
-        return json.loads(p.read_text())
+        text = p.read_text().strip()
+        if text:
+            return json.loads(text)
     return {}
 
 
