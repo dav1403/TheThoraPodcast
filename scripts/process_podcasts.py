@@ -15,8 +15,6 @@ import os
 import sys
 import json
 import time
-import hashlib
-import subprocess
 import requests
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,15 +24,27 @@ from feedgen.feed import FeedGenerator
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-API_KEY          = os.environ["YOUTUBE_API_KEY"]
-GITHUB_TOKEN     = os.environ["GITHUB_TOKEN"]
-GITHUB_REPO      = os.environ.get("GITHUB_REPO", "dav1403/TheThoraPodcast")
-BASE_URL         = f"https://{GITHUB_REPO.split('/')[0]}.github.io/{GITHUB_REPO.split('/')[1]}/"
+API_KEY      = os.environ.get("YOUTUBE_API_KEY")
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+GITHUB_REPO  = os.environ.get("GITHUB_REPO", "")
 
-CHANNELS_FILE    = "channels.json"
-PROCESSED_FILE   = "processed.json"
-FEEDS_DIR        = Path("feeds")
-AUDIO_DIR        = Path("tmp_audio")
+if not API_KEY:
+    print("ERROR: YOUTUBE_API_KEY environment variable is not set.")
+    sys.exit(1)
+if not GITHUB_TOKEN:
+    print("ERROR: GITHUB_TOKEN environment variable is not set.")
+    sys.exit(1)
+if not GITHUB_REPO:
+    print("ERROR: GITHUB_REPO environment variable is not set.")
+    sys.exit(1)
+
+_owner, _repo_name = GITHUB_REPO.split("/", 1)
+BASE_URL = f"https://{_owner}.github.io/{_repo_name}/"
+
+CHANNELS_FILE  = "channels.json"
+PROCESSED_FILE = "processed.json"
+FEEDS_DIR      = Path("feeds")
+AUDIO_DIR      = Path("tmp_audio")
 
 FEEDS_DIR.mkdir(exist_ok=True)
 AUDIO_DIR.mkdir(exist_ok=True)
@@ -43,39 +53,47 @@ AUDIO_DIR.mkdir(exist_ok=True)
 # GitHub Releases helpers
 # ---------------------------------------------------------------------------
 
-def get_or_create_release(tag: str, name: str) -> dict:
-    """Return the release dict for `tag`, creating it if it doesn't exist."""
-    headers = {
+def _gh_headers() -> dict:
+    return {
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github+json",
     }
+
+
+def get_or_create_release(tag: str, name: str) -> dict:
+    """Return the release dict for `tag`, creating it if it doesn't exist."""
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/tags/{tag}"
-    r = requests.get(url, headers=headers)
+    r = requests.get(url, headers=_gh_headers())
     if r.status_code == 200:
         return r.json()
 
-    # Create it
+    # Create it — must create the git tag too via the releases API
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
-    payload = {"tag_name": tag, "name": name, "draft": False, "prerelease": False}
-    r = requests.post(url, headers=headers, json=payload)
-    r.raise_for_status()
+    payload = {
+        "tag_name":         tag,
+        "name":             name,
+        "draft":            False,
+        "prerelease":       False,
+        "target_commitish": "main",   # branch the tag points to
+    }
+    r = requests.post(url, headers=_gh_headers(), json=payload)
+    if not r.ok:
+        raise Exception(f"Failed to create release '{tag}': {r.status_code} {r.text}")
     return r.json()
 
 
 def upload_audio_to_release(release_id: int, mp3_path: Path) -> str:
     """Upload mp3_path to the release. Returns the public download URL."""
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Content-Type": "audio/mpeg",
-    }
     filename = mp3_path.name
     upload_url = (
         f"https://uploads.github.com/repos/{GITHUB_REPO}/releases/{release_id}/assets"
         f"?name={requests.utils.quote(filename)}"
     )
+    headers = {**_gh_headers(), "Content-Type": "audio/mpeg"}
     with open(mp3_path, "rb") as f:
         r = requests.post(upload_url, headers=headers, data=f)
-    r.raise_for_status()
+    if not r.ok:
+        raise Exception(f"Upload failed: {r.status_code} {r.text}")
     return r.json()["browser_download_url"]
 
 
@@ -92,8 +110,8 @@ def asset_already_exists(release: dict, filename: str) -> str | None:
 
 def get_channel_info(channel_id: str) -> dict:
     """
-    Fetch the YouTube channel's name, description, and best available
-    thumbnail. Returns a dict with keys: title, description, thumbnail.
+    Fetch the YouTube channel's name, description, and best available thumbnail.
+    Returns a dict with keys: title, description, thumbnail.
     """
     url = (
         f"https://www.googleapis.com/youtube/v3/channels"
@@ -109,13 +127,11 @@ def get_channel_info(channel_id: str) -> dict:
     if not items:
         raise Exception(f"No channel found for ID: {channel_id}")
 
-    snippet = items[0]["snippet"]
+    snippet    = items[0]["snippet"]
     thumbnails = snippet.get("thumbnails", {})
-
-    # Prefer highest resolution: maxres → high → medium → default
-    thumb_url = (
+    thumb_url  = (
         thumbnails.get("maxres") or
-        thumbnails.get("high") or
+        thumbnails.get("high")   or
         thumbnails.get("medium") or
         thumbnails.get("default") or
         {}
@@ -151,14 +167,14 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
     for item in data["items"]:
         vid_id = item["id"]["videoId"]
         if vid_id not in already_processed:
+            thumbs = item["snippet"]["thumbnails"]
             new_videos.append({
-                "id": vid_id,
-                "title": item["snippet"]["title"],
+                "id":          vid_id,
+                "title":       item["snippet"]["title"],
                 "description": item["snippet"].get("description", ""),
-                "published": item["snippet"]["publishedAt"],
-                "thumbnail": item["snippet"]["thumbnails"].get("maxres",
-                             item["snippet"]["thumbnails"].get("high", {})).get("url", ""),
-                "url": f"https://www.youtube.com/watch?v={vid_id}",
+                "published":   item["snippet"]["publishedAt"],
+                "thumbnail":   (thumbs.get("maxres") or thumbs.get("high") or {}).get("url", ""),
+                "url":         f"https://www.youtube.com/watch?v={vid_id}",
             })
     return new_videos
 
@@ -172,28 +188,29 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
     ydl_opts = {
         "format": "bestaudio/best",
         "extractor_args": {"youtube": {"player_client": ["android", "ios"]}},
-        "outtmpl": str(out_dir / "%(title)s.%(ext)s"),
+        "outtmpl": str(out_dir / "%(id)s.%(ext)s"),   # use video ID, not title, to avoid unicode issues
         "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
+            "key":              "FFmpegExtractAudio",
+            "preferredcodec":   "mp3",
             "preferredquality": "128",
         }],
-        "quiet": False,
+        "quiet":       False,
         "no_warnings": False,
+        # Retry on transient network errors
+        "retries":       5,
+        "fragment_retries": 5,
     }
     with YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(video_url, download=True)
-        title = info["title"]
+        ydl.extract_info(video_url, download=True)
 
-    # Find the resulting mp3
-    for f in out_dir.iterdir():
-        if f.suffix == ".mp3":
-            return f
-    raise FileNotFoundError(f"No MP3 found in {out_dir} after downloading '{title}'")
+    mp3_files = list(out_dir.glob("*.mp3"))
+    if not mp3_files:
+        raise FileNotFoundError(f"No MP3 found in {out_dir} after downloading {video_url}")
+    return mp3_files[0]
 
 
 # ---------------------------------------------------------------------------
-# RSS feed
+# RSS feed helpers
 # ---------------------------------------------------------------------------
 
 def load_feed_entries(feed_path: Path) -> list[dict]:
@@ -210,26 +227,23 @@ def save_feed_entries(feed_path: Path, entries: list[dict]):
 
 
 def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], feed_path: Path):
-    """Regenerate the RSS XML from the entries list.
-
-    channel_cfg  — static config from channels.json (slug, author, email, language, category)
-    channel_info — live data from YouTube API (title, description, thumbnail)
-    """
+    """Regenerate the RSS XML from the entries list."""
     fg = FeedGenerator()
     fg.load_extension("podcast")
 
-    fg.id(BASE_URL + f"feeds/{channel_cfg['slug']}.xml")
+    feed_url = BASE_URL + f"feeds/{channel_cfg['slug']}.xml"
+
+    fg.id(feed_url)
     fg.title(channel_info["title"])
     fg.author({"name": channel_cfg["podcast_author"], "email": channel_cfg["podcast_email"]})
     fg.link(href=BASE_URL, rel="alternate")
-    fg.link(href=BASE_URL + f"feeds/{channel_cfg['slug']}.xml", rel="self")
+    fg.link(href=feed_url, rel="self")
     fg.description(channel_info["description"] or channel_info["title"])
     fg.language(channel_cfg.get("podcast_language", "en"))
     fg.podcast.itunes_category(channel_cfg.get("podcast_category", "Technology"))
     fg.podcast.itunes_author(channel_cfg["podcast_author"])
     fg.podcast.itunes_explicit("no")
 
-    # Show-level cover image from YouTube channel thumbnail
     if channel_info.get("thumbnail"):
         fg.image(channel_info["thumbnail"])
         fg.podcast.itunes_image(channel_info["thumbnail"])
@@ -244,7 +258,6 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
         fe.enclosure(entry["audio_url"], str(entry.get("file_size", 0)), "audio/mpeg")
         fe.podcast.itunes_duration(str(entry.get("duration_secs", 0)))
         fe.podcast.itunes_explicit("no")
-        # Per-episode thumbnail (shown on Spotify as episode artwork)
         if entry.get("thumbnail"):
             fe.podcast.itunes_image(entry["thumbnail"])
 
@@ -257,8 +270,9 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
 # ---------------------------------------------------------------------------
 
 def load_processed() -> dict:
-    if Path(PROCESSED_FILE).exists():
-        return json.loads(Path(PROCESSED_FILE).read_text())
+    p = Path(PROCESSED_FILE)
+    if p.exists():
+        return json.loads(p.read_text())
     return {}
 
 
@@ -267,109 +281,97 @@ def save_processed(data: dict):
 
 
 # ---------------------------------------------------------------------------
-# Main
+# Per-channel processing
 # ---------------------------------------------------------------------------
 
 def process_channel(channel_cfg: dict, processed: dict):
-    slug = channel_cfg["slug"]
+    slug       = channel_cfg["slug"]
     channel_id = channel_cfg["youtube_channel_id"]
     print(f"\n{'='*60}")
     print(f"Channel: {slug} ({channel_id})")
     print(f"{'='*60}")
 
-    # Fetch live channel metadata from YouTube
     print("  Fetching channel info from YouTube...")
     channel_info = get_channel_info(channel_id)
     print(f"  Channel name: {channel_info['title']}")
 
     already_done = set(processed.get(slug, []))
-    new_videos = get_new_videos(channel_id, already_done)
+    new_videos   = get_new_videos(channel_id, already_done)
+
+    feed_path = FEEDS_DIR / f"{slug}.xml"
+    entries   = load_feed_entries(feed_path)
 
     if not new_videos:
         print("  No new videos found.")
-        # Still rebuild RSS in case channel info (name/description/image) changed on YouTube
-        feed_path = FEEDS_DIR / f"{slug}.xml"
-        entries = load_feed_entries(feed_path)
+        # Still rebuild feed in case channel metadata changed
         if entries:
             build_rss_feed(channel_cfg, channel_info, entries, feed_path)
         return
 
     print(f"  Found {len(new_videos)} new video(s).")
 
-    feed_path = FEEDS_DIR / f"{slug}.xml"
-    entries = load_feed_entries(feed_path)
-
-    # GitHub release tag for this channel's audio files
     release_tag = f"audio-{slug}"
-    release = get_or_create_release(release_tag, f"Audio: {channel_info['title']}")
-    release_id = release["id"]
+    release     = get_or_create_release(release_tag, f"Audio: {channel_info['title']}")
+    release_id  = release["id"]
 
     for video in new_videos:
         print(f"\n  Processing: {video['title']}")
 
-        # Sanitize filename for GitHub release asset
-        safe_title = "".join(c if c.isalnum() or c in " -_" else "_" for c in video["title"])
-        safe_title = safe_title[:80].strip()
+        safe_title   = "".join(c if c.isalnum() or c in " -_" else "_" for c in video["title"])
+        safe_title   = safe_title[:80].strip()
         mp3_filename = f"{video['id']}_{safe_title}.mp3"
 
-        # Check if already uploaded to this release
         existing_url = asset_already_exists(release, mp3_filename)
         if existing_url:
-            print(f"  Already uploaded, skipping download.")
+            print(f"  Already uploaded — skipping download.")
             audio_url = existing_url
             file_size = 0
         else:
             # Clean tmp dir before each download
             for f in AUDIO_DIR.iterdir():
                 f.unlink()
-
             try:
-                mp3_path = download_audio(video["url"], AUDIO_DIR)
+                mp3_path  = download_audio(video["url"], AUDIO_DIR)
                 file_size = mp3_path.stat().st_size
-
-                # Rename to our canonical filename
                 final_path = AUDIO_DIR / mp3_filename
                 mp3_path.rename(final_path)
-
                 print(f"  Uploading to GitHub Releases...")
                 audio_url = upload_audio_to_release(release_id, final_path)
                 print(f"  Uploaded → {audio_url}")
-
             except Exception as e:
                 print(f"  ERROR downloading/uploading: {e}")
                 continue
 
-        # Add to feed entries
         pub_dt = datetime.fromisoformat(video["published"].replace("Z", "+00:00"))
         entries.append({
-            "video_id": video["id"],
-            "title": video["title"],
-            "description": video.get("description", ""),
-            "published": pub_dt.isoformat(),
-            "audio_url": audio_url,
-            "file_size": file_size,
+            "video_id":     video["id"],
+            "title":        video["title"],
+            "description":  video.get("description", ""),
+            "published":    pub_dt.isoformat(),
+            "audio_url":    audio_url,
+            "file_size":    file_size,
             "duration_secs": 0,
-            "thumbnail": video.get("thumbnail", ""),
+            "thumbnail":    video.get("thumbnail", ""),
         })
 
-        # Mark as processed
         processed.setdefault(slug, []).append(video["id"])
         save_processed(processed)
         print(f"  Marked {video['id']} as processed.")
-
-        # Small delay to be kind to APIs
         time.sleep(2)
 
-    # Rebuild RSS with live channel info
     save_feed_entries(feed_path, entries)
     build_rss_feed(channel_cfg, channel_info, entries, feed_path)
 
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
 
 def main():
     print("=== Podcast Update Run ===")
     print(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
 
-    channels = json.loads(Path(CHANNELS_FILE).read_text())
+    channels  = json.loads(Path(CHANNELS_FILE).read_text())
     processed = load_processed()
 
     errors = []
