@@ -1,39 +1,232 @@
+Here it is — copy everything between the code fences:
+
+```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Podcast RSS Feeds</title>
+  <title>The Thora Podcast</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; color: #222; }
-    h1 { font-size: 1.4rem; }
-    .feed { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin: 16px 0; }
-    .feed h2 { margin: 0 0 6px; font-size: 1rem; }
-    .feed a { font-size: 0.85rem; word-break: break-all; color: #1a73e8; }
-    .label { font-size: 0.75rem; color: #666; text-transform: uppercase; margin-bottom: 2px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f0;
+      color: #222;
+      line-height: 1.5;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 32px 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 2rem; margin-bottom: 6px; }
+    header p  { color: #aab; font-size: 0.95rem; }
+
+    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    .channel {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      margin-bottom: 32px;
+      overflow: hidden;
+    }
+    .channel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid #eee;
+    }
+    .channel-header h2 { font-size: 1.15rem; }
+    .rss-link {
+      font-size: 0.75rem;
+      color: #e87722;
+      text-decoration: none;
+      border: 1px solid #e87722;
+      border-radius: 4px;
+      padding: 3px 8px;
+      white-space: nowrap;
+    }
+    .rss-link:hover { background: #e87722; color: #fff; }
+
+    .episode-list { list-style: none; }
+
+    .episode {
+      display: flex;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      align-items: flex-start;
+    }
+    .episode:last-child { border-bottom: none; }
+
+    .episode-thumb {
+      width: 90px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background: #ddd;
+    }
+    .episode-thumb-placeholder {
+      width: 90px;
+      height: 60px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background: #e0e0e0;
+    }
+
+    .episode-body { flex: 1; min-width: 0; }
+    .episode-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .episode-date { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
+    .episode-desc {
+      font-size: 0.8rem;
+      color: #555;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    audio {
+      width: 100%;
+      height: 32px;
+      accent-color: #1a1a2e;
+    }
+
+    .state {
+      padding: 28px 20px;
+      text-align: center;
+      color: #888;
+      font-size: 0.9rem;
+    }
+    .state.loading::before {
+      content: '';
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid #ccc;
+      border-top-color: #555;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 500px) {
+      .episode-thumb, .episode-thumb-placeholder { display: none; }
+    }
   </style>
 </head>
 <body>
-  <h1>Podcast RSS Feeds</h1>
-  <p>These feeds are auto-generated from YouTube channels and can be submitted to Spotify for Podcasters.</p>
 
-  <div class="feed">
-    <h2>Rav Itshak Cohen</h2>
-    <div class="label">RSS Feed URL</div>
-    <a href="feeds/rav-itshak-cohen.xml">feeds/rav-itshak-cohen.xml</a>
-  </div>
+<header>
+  <h1>The Thora Podcast</h1>
+  <p>Cours de Torah depuis YouTube — flux RSS prêts pour Spotify for Podcasters</p>
+</header>
 
-  <div class="feed">
-    <h2>Rav Yonathan Mergui</h2>
-    <div class="label">RSS Feed URL</div>
-    <a href="feeds/rav-yonathan-mergui.xml">feeds/rav-yonathan-mergui.xml</a>
-  </div>
+<main id="app"></main>
 
-  <div class="feed">
-    <h2>Rav Yaakov Sitruk</h2>
-    <div class="label">RSS Feed URL</div>
-    <a href="feeds/rav-yaakov-sitruk.xml">feeds/rav-yaakov-sitruk.xml</a>
-  </div>
+<script>
+  const CHANNELS = [
+    { slug: 'rav-itshak-cohen',    name: 'Rav Itshak Cohen' },
+    { slug: 'rav-yonathan-mergui', name: 'Rav Yonathan Mergui' },
+    { slug: 'rav-yaakov-sitruk',   name: 'Rav Yaakov Sitruk' },
+  ];
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleDateString('fr-FR', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderEpisode(ep) {
+    const thumb = ep.thumbnail
+      ? `<img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+      : `<div class="episode-thumb-placeholder"></div>`;
+
+    const desc = ep.description
+      ? `<p class="episode-desc">${escapeHtml(ep.description)}</p>`
+      : '';
+
+    const player = ep.audio_url
+      ? `<audio controls preload="none" src="${escapeHtml(ep.audio_url)}"></audio>`
+      : '';
+
+    return `
+      <li class="episode">
+        ${thumb}
+        <div class="episode-body">
+          <div class="episode-title">${escapeHtml(ep.title)}</div>
+          <div class="episode-date">${formatDate(ep.published)}</div>
+          ${desc}
+          ${player}
+        </div>
+      </li>`;
+  }
+
+  async function loadChannel(ch) {
+    const section = document.createElement('section');
+    section.className = 'channel';
+    const feedUrl = `feeds/${ch.slug}.xml`;
+    section.innerHTML = `
+      <div class="channel-header">
+        <h2>${escapeHtml(ch.name)}</h2>
+        <a class="rss-link" href="${feedUrl}" target="_blank">RSS Feed</a>
+      </div>
+      <div class="state loading">Chargement des épisodes…</div>`;
+    document.getElementById('app').appendChild(section);
+
+    let episodes = [];
+    try {
+      const res = await fetch(`feeds/${ch.slug}.entries.json`);
+      if (res.ok) episodes = await res.json();
+    } catch (_) {}
+
+    episodes.sort((a, b) => new Date(b.published) - new Date(a.published));
+
+    if (episodes.length === 0) {
+      section.querySelector('.state, div:last-child').outerHTML =
+        '<div class="state">Aucun épisode disponible pour le moment.</div>';
+    } else {
+      const ul = document.createElement('ul');
+      ul.className = 'episode-list';
+      ul.innerHTML = episodes.map(renderEpisode).join('');
+      section.querySelector('[class="state loading"]').replaceWith(ul);
+    }
+  }
+
+  (async () => {
+    for (const ch of CHANNELS) {
+      await loadChannel(ch);
+    }
+  })();
+</script>
 
 </body>
 </html>
+```
+
+Paste that into the GitHub editor for `index.html`, save it, then do the workflow fix and trigger a run.
