@@ -67,14 +67,13 @@ def get_or_create_release(tag: str, name: str) -> dict:
     if r.status_code == 200:
         return r.json()
 
-    # Create it — must create the git tag too via the releases API
     url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
     payload = {
         "tag_name":         tag,
         "name":             name,
         "draft":            False,
         "prerelease":       False,
-        "target_commitish": "main",   # branch the tag points to
+        "target_commitish": "main",
     }
     r = requests.post(url, headers=_gh_headers(), json=payload)
     if not r.ok:
@@ -183,12 +182,10 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 # Audio download
 # ---------------------------------------------------------------------------
 
-    def download_audio(video_url: str, out_dir: Path) -> Path:
+def download_audio(video_url: str, out_dir: Path) -> Path:
     """Download audio from video_url as MP3 into out_dir. Returns the MP3 path."""
-
     ydl_opts = {
         "format": "bestaudio/best",
-        # Try multiple player clients in order; web_creator works in CI/headless environments
         "extractor_args": {"youtube": {"player_client": ["web_creator", "ios", "mweb"]}},
         "outtmpl": str(out_dir / "%(id)s.%(ext)s"),
         "postprocessors": [{
@@ -202,7 +199,6 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
         "fragment_retries": 10,
         "ignoreerrors": False,
     }
-
     with YoutubeDL(ydl_opts) as ydl:
         ydl.extract_info(video_url, download=True)
 
@@ -251,7 +247,6 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
         fg.image(channel_info["thumbnail"])
         fg.podcast.itunes_image(channel_info["thumbnail"])
 
-    # Most recent first
     for entry in sorted(entries, key=lambda e: e["published"], reverse=True):
         fe = fg.add_entry()
         fe.id(entry["video_id"])
@@ -265,7 +260,7 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
             fe.podcast.itunes_image(entry["thumbnail"])
 
     fg.rss_file(str(feed_path), pretty=True)
-    print(f"  RSS feed written → {feed_path} ({len(entries)} episodes)")
+    print(f"  RSS feed written -> {feed_path} ({len(entries)} episodes)")
 
 
 # ---------------------------------------------------------------------------
@@ -303,13 +298,12 @@ def process_channel(channel_cfg: dict, processed: dict):
     already_done = set(processed.get(slug, []))
     new_videos   = get_new_videos(channel_id, already_done)
 
-    feed_path = FEEDS_DIR / f"{slug}.xml"
-    entries   = load_feed_entries(feed_path)
+    feed_path      = FEEDS_DIR / f"{slug}.xml"
+    entries        = load_feed_entries(feed_path)
     entries_before = len(entries)
 
     if not new_videos:
         print("  No new videos found.")
-        # Still rebuild feed in case channel metadata changed
         if entries:
             build_rss_feed(channel_cfg, channel_info, entries, feed_path)
         return
@@ -329,35 +323,34 @@ def process_channel(channel_cfg: dict, processed: dict):
 
         existing_url = asset_already_exists(release, mp3_filename)
         if existing_url:
-            print(f"  Already uploaded — skipping download.")
+            print(f"  Already uploaded - skipping download.")
             audio_url = existing_url
             file_size = 0
         else:
-            # Clean tmp dir before each download
             for f in AUDIO_DIR.iterdir():
                 f.unlink()
             try:
-                mp3_path  = download_audio(video["url"], AUDIO_DIR)
-                file_size = mp3_path.stat().st_size
+                mp3_path   = download_audio(video["url"], AUDIO_DIR)
+                file_size  = mp3_path.stat().st_size
                 final_path = AUDIO_DIR / mp3_filename
                 mp3_path.rename(final_path)
                 print(f"  Uploading to GitHub Releases...")
                 audio_url = upload_audio_to_release(release_id, final_path)
-                print(f"  Uploaded → {audio_url}")
+                print(f"  Uploaded -> {audio_url}")
             except Exception as e:
                 print(f"  ERROR downloading/uploading: {e}")
                 continue
 
         pub_dt = datetime.fromisoformat(video["published"].replace("Z", "+00:00"))
         entries.append({
-            "video_id":     video["id"],
-            "title":        video["title"],
-            "description":  video.get("description", ""),
-            "published":    pub_dt.isoformat(),
-            "audio_url":    audio_url,
-            "file_size":    file_size,
+            "video_id":      video["id"],
+            "title":         video["title"],
+            "description":   video.get("description", ""),
+            "published":     pub_dt.isoformat(),
+            "audio_url":     audio_url,
+            "file_size":     file_size,
             "duration_secs": 0,
-            "thumbnail":    video.get("thumbnail", ""),
+            "thumbnail":     video.get("thumbnail", ""),
         })
 
         processed.setdefault(slug, []).append(video["id"])
@@ -365,13 +358,11 @@ def process_channel(channel_cfg: dict, processed: dict):
         print(f"  Marked {video['id']} as processed.")
         time.sleep(2)
 
-        # Only write files if we actually added new entries
     if len(entries) > entries_before:
         save_feed_entries(feed_path, entries)
         build_rss_feed(channel_cfg, channel_info, entries, feed_path)
     else:
         print("  No entries were successfully added (all downloads may have failed).")
-
 
 
 # ---------------------------------------------------------------------------
