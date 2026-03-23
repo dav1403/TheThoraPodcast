@@ -183,8 +183,9 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 # Audio download
 # ---------------------------------------------------------------------------
 
-    def download_audio(video_url: str, out_dir: Path) -> Path:        ← ADD THIS
-    """Download audio from video_url as MP3 into out_dir. Returns the MP3 path."""  ← AND THIS
+    def download_audio(video_url: str, out_dir: Path) -> Path:
+    """Download audio from video_url as MP3 into out_dir. Returns the MP3 path."""
+
     ydl_opts = {
         "format": "bestaudio/best",
         # Try multiple player clients in order; web_creator works in CI/headless environments
