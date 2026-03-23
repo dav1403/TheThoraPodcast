@@ -183,12 +183,11 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 # Audio download
 # ---------------------------------------------------------------------------
 
-def download_audio(video_url: str, out_dir: Path) -> Path:
-    """Download audio from video_url as MP3 into out_dir. Returns the MP3 path."""
     ydl_opts = {
         "format": "bestaudio/best",
-        "extractor_args": {"youtube": {"player_client": ["android", "ios"]}},
-        "outtmpl": str(out_dir / "%(id)s.%(ext)s"),   # use video ID, not title, to avoid unicode issues
+        # Try multiple player clients in order; web_creator works in CI/headless environments
+        "extractor_args": {"youtube": {"player_client": ["web_creator", "ios", "mweb"]}},
+        "outtmpl": str(out_dir / "%(id)s.%(ext)s"),
         "postprocessors": [{
             "key":              "FFmpegExtractAudio",
             "preferredcodec":   "mp3",
@@ -196,9 +195,11 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
         }],
         "quiet":       False,
         "no_warnings": False,
-        # Retry on transient network errors
-        "retries":       5,
-        "fragment_retries": 5,
+        "retries":       10,
+        "fragment_retries": 10,
+        "ignoreerrors": False,
+    }
+
     }
     with YoutubeDL(ydl_opts) as ydl:
         ydl.extract_info(video_url, download=True)
