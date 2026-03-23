@@ -185,8 +185,7 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 def download_audio(video_url: str, out_dir: Path) -> Path:
     """Download audio from video_url as MP3 into out_dir. Returns the MP3 path."""
     ydl_opts = {
-        "format": "bestaudio/best",
-        "extractor_args": {"youtube": {"player_client": ["web_creator", "ios", "mweb"]}},
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": str(out_dir / "%(id)s.%(ext)s"),
         "postprocessors": [{
             "key":              "FFmpegExtractAudio",
