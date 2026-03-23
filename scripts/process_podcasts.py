@@ -186,6 +186,7 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
     """Download audio from video_url as MP3 into out_dir. Returns the MP3 path."""
     ydl_opts = {
         "format": "bestaudio[ext=m4a]/bestaudio/best",
+        "extractor_args": {"youtube": {"player_client": ["ios"]}},
         "outtmpl": str(out_dir / "%(id)s.%(ext)s"),
         "postprocessors": [{
             "key":              "FFmpegExtractAudio",
