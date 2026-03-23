@@ -192,15 +192,19 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
             "key":              "FFmpegExtractAudio",
             "preferredcodec":   "mp3",
             "preferredquality": "128",
-        }],
+            }],
         "quiet":       False,
         "no_warnings": False,
         "retries":       10,
         "fragment_retries": 10,
         "ignoreerrors": False,
     }
+    cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
+    if cookies_file and Path(cookies_file).exists():
+        ydl_opts["cookiefile"] = cookies_file
     with YoutubeDL(ydl_opts) as ydl:
         ydl.extract_info(video_url, download=True)
+
 
     mp3_files = list(out_dir.glob("*.mp3"))
     if not mp3_files:
