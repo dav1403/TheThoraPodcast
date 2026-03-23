@@ -71,6 +71,12 @@ jobs:
                       print(f"Bootstrap failed for {ch['slug']}")
           EOF
 
+      - name: Write YouTube cookies
+        if: ${{ secrets.YOUTUBE_COOKIES != '' }}
+        run: |
+          echo "${{ secrets.YOUTUBE_COOKIES }}" > /tmp/yt_cookies.txt
+          echo "YOUTUBE_COOKIES_FILE=/tmp/yt_cookies.txt" >> $GITHUB_ENV
+
       - name: Run podcast update
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
