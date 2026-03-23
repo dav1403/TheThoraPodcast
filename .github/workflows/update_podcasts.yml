@@ -63,6 +63,11 @@ jobs:
                   json.loads(entries_file.read_text() or "[]") == []
               )
               if needs_bootstrap:
+                  print(f"Bootstrapping {ch['slug']}...")
+                  result = subprocess.run(
+                      [sys.executable, "scripts/bootstrap_channel.py", "--slug", ch["slug"], "--max", "10"],
+                      capture_output=False
+                  )
                   if result.returncode != 0:
                       print(f"Bootstrap failed for {ch['slug']}")
           EOF
