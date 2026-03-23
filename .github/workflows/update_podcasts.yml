@@ -72,10 +72,13 @@ jobs:
           EOF
 
       - name: Write YouTube cookies
-        if: ${{ secrets.YOUTUBE_COOKIES != '' }}
+        env:
+          YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
         run: |
-          echo "${{ secrets.YOUTUBE_COOKIES }}" > /tmp/yt_cookies.txt
-          echo "YOUTUBE_COOKIES_FILE=/tmp/yt_cookies.txt" >> $GITHUB_ENV
+          if [ -n "$YOUTUBE_COOKIES" ]; then
+            echo "$YOUTUBE_COOKIES" > /tmp/yt_cookies.txt
+            echo "YOUTUBE_COOKIES_FILE=/tmp/yt_cookies.txt" >> $GITHUB_ENV
+          fi
 
       - name: Run podcast update
         env:
