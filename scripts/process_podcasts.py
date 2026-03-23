@@ -200,7 +200,6 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
         "ignoreerrors": False,
     }
 
-    }
     with YoutubeDL(ydl_opts) as ydl:
         ydl.extract_info(video_url, download=True)
 
