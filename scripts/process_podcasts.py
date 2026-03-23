@@ -332,7 +332,8 @@ def process_channel(channel_cfg: dict, processed: dict):
             file_size = 0
         else:
             for f in AUDIO_DIR.iterdir():
-                f.unlink()
+                if f.is_file():
+                    f.unlink()
             try:
                 mp3_path   = download_audio(video["url"], AUDIO_DIR)
                 file_size  = mp3_path.stat().st_size
@@ -340,6 +341,7 @@ def process_channel(channel_cfg: dict, processed: dict):
                 mp3_path.rename(final_path)
                 print(f"  Uploading to GitHub Releases...")
                 audio_url = upload_audio_to_release(release_id, final_path)
+                release["assets"].append({"name": mp3_filename, "browser_download_url": audio_url})
                 print(f"  Uploaded -> {audio_url}")
             except Exception as e:
                 print(f"  ERROR downloading/uploading: {e}")
