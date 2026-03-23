@@ -57,13 +57,12 @@ jobs:
           for ch in channels:
               if not ch.get("enabled", True):
                   continue
-              feed_file = Path(f"feeds/{ch['slug']}.xml")
-              if not feed_file.exists():
-                  print(f"Bootstrapping {ch['slug']}...")
-                  result = subprocess.run(
-                      [sys.executable, "scripts/bootstrap_channel.py", "--slug", ch["slug"], "--max", "10"],
-                      capture_output=False
-                  )
+              entries_file = Path(f"feeds/{ch['slug']}.entries.json")
+              needs_bootstrap = (
+                  not entries_file.exists() or
+                  json.loads(entries_file.read_text() or "[]") == []
+              )
+              if needs_bootstrap:
                   if result.returncode != 0:
                       print(f"Bootstrap failed for {ch['slug']}")
           EOF
