@@ -35,7 +35,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          sudo apt-get update -qq && sudo apt-get install -y ffmpeg
 
       - name: Ensure feeds/ directory exists
         run: mkdir -p feeds
