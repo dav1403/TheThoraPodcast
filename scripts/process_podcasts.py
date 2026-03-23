@@ -303,6 +303,7 @@ def process_channel(channel_cfg: dict, processed: dict):
 
     feed_path = FEEDS_DIR / f"{slug}.xml"
     entries   = load_feed_entries(feed_path)
+    entries_before = len(entries)
 
     if not new_videos:
         print("  No new videos found.")
@@ -362,8 +363,13 @@ def process_channel(channel_cfg: dict, processed: dict):
         print(f"  Marked {video['id']} as processed.")
         time.sleep(2)
 
-    save_feed_entries(feed_path, entries)
-    build_rss_feed(channel_cfg, channel_info, entries, feed_path)
+        # Only write files if we actually added new entries
+    if len(entries) > entries_before:
+        save_feed_entries(feed_path, entries)
+        build_rss_feed(channel_cfg, channel_info, entries, feed_path)
+    else:
+        print("  No entries were successfully added (all downloads may have failed).")
+
 
 
 # ---------------------------------------------------------------------------
