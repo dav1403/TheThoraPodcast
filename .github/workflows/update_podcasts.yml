@@ -44,6 +44,15 @@ jobs:
       - name: Ensure feeds/ directory exists
         run: mkdir -p feeds
 
+      - name: Write YouTube cookies
+        env:
+          YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
+        run: |
+          if [ -n "$YOUTUBE_COOKIES" ]; then
+            echo "$YOUTUBE_COOKIES" > /tmp/yt_cookies.txt
+            echo "YOUTUBE_COOKIES_FILE=/tmp/yt_cookies.txt" >> $GITHUB_ENV
+          fi
+
       - name: Bootstrap new channels (backfill last 10 episodes if feed missing)
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -75,15 +84,6 @@ jobs:
                   if result.returncode != 0:
                       print(f"Bootstrap failed for {ch['slug']}")
           EOF
-
-      - name: Write YouTube cookies
-        env:
-          YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
-        run: |
-          if [ -n "$YOUTUBE_COOKIES" ]; then
-            echo "$YOUTUBE_COOKIES" > /tmp/yt_cookies.txt
-            echo "YOUTUBE_COOKIES_FILE=/tmp/yt_cookies.txt" >> $GITHUB_ENV
-          fi
 
       - name: Run podcast update
         env:
