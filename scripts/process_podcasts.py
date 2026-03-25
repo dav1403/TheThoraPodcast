@@ -182,21 +182,39 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 # Audio download — cobalt-first, yt-dlp fallback
 # ---------------------------------------------------------------------------
 
-COBALT_INSTANCES_API = "https://instances.cobalt.best/api/v1/instances.json"
+COBALT_INSTANCES_API = "https://instances.cobalt.best/api"
+COBALT_FALLBACK_INSTANCES = [
+    "https://kityune.imput.net",
+    "https://sunny.imput.net",
+    "https://nachos.imput.net",
+    "https://blossom.imput.net",
+]
 
 
 def get_cobalt_instances() -> list[str]:
-    """Fetch top public cobalt instances sorted by score."""
+    """Fetch top public cobalt instances with YouTube support, sorted by score."""
     try:
-        resp = requests.get(COBALT_INSTANCES_API, timeout=10)
+        resp = requests.get(
+            COBALT_INSTANCES_API,
+            headers={"User-Agent": "TheThoraPodcast/1.0"},
+            timeout=10,
+        )
         resp.raise_for_status()
         instances = resp.json()
-        with_api = [i for i in instances if i.get("api")]
-        with_api.sort(key=lambda x: x.get("score", 0), reverse=True)
-        return [i["api"].rstrip("/") for i in with_api[:5]]
+        filtered = [
+            i for i in instances
+            if i.get("online")
+            and i.get("services", {}).get("youtube")
+            and not i.get("info", {}).get("auth")
+            and i.get("api")
+            and i.get("protocol")
+        ]
+        filtered.sort(key=lambda x: x.get("score", 0), reverse=True)
+        urls = [f"{i['protocol']}://{i['api']}" for i in filtered[:5]]
+        return urls if urls else COBALT_FALLBACK_INSTANCES
     except Exception as e:
-        print(f"  [cobalt] Could not fetch instance list: {e}")
-        return []
+        print(f"  [cobalt] Could not fetch instance list: {e} — using fallbacks")
+        return COBALT_FALLBACK_INSTANCES
 
 
 def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
