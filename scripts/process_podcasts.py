@@ -183,22 +183,159 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 # Audio download — Piped-first, cobalt second, yt-dlp fallback
 # ---------------------------------------------------------------------------
 
-# Piped is a YouTube frontend that proxies streams through its own servers.
-# Downloading from a pipedproxy URL means GitHub Actions hits Piped's server,
-# not YouTube directly — bypassing YouTube's Azure IP block.
-PIPED_INSTANCES = [
+# ---------------------------------------------------------------------------
+# Invidious downloader
+# Invidious proxies YouTube streams through its own servers.
+# With local=true, stream URLs go through the Invidious instance,
+# so GitHub Actions downloads from Invidious (non-Azure IP), not YouTube CDN.
+# ---------------------------------------------------------------------------
+
+INVIDIOUS_FALLBACK_INSTANCES = [
+    "https://yewtu.be",
+    "https://inv.nadeko.net",
+    "https://invidious.nerdvpn.de",
+    "https://invidious.privacyredirect.com",
+    "https://iv.ggtyler.dev",
+    "https://invidious.perennialte.ch",
+    "https://invidious.flossboxin.org.in",
+    "https://invidious.protokolla.fi",
+]
+
+
+def get_invidious_instances() -> list[str]:
+    """Fetch healthy Invidious instances that have the API enabled."""
+    try:
+        resp = requests.get(
+            "https://api.invidious.io/instances.json",
+            params={"sort_by": "health"},
+            headers={"User-Agent": "TheThoraPodcast/1.0"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        instances = resp.json()
+        # Format: [[name, {uri, api, type, health, ...}], ...]
+        uris = [
+            data["uri"].rstrip("/")
+            for _, data in instances
+            if data.get("api") and data.get("type") == "https"
+        ]
+        return uris[:8] if uris else INVIDIOUS_FALLBACK_INSTANCES
+    except Exception as e:
+        print(f"  [invidious] Could not fetch instance list: {e} — using fallbacks")
+        return INVIDIOUS_FALLBACK_INSTANCES
+
+
+def _download_stream_and_convert(audio_url: str, video_id: str, out_dir: Path, tag: str) -> Path:
+    """Download an audio stream URL and convert to MP3 via ffmpeg."""
+    mime_hint = "webm"  # default; ffmpeg handles both webm/opus and m4a/aac
+    ext = "webm"
+    tmp_path = out_dir / f"{video_id}.{ext}"
+    mp3_path = out_dir / f"{video_id}.mp3"
+
+    with requests.get(
+        audio_url, stream=True, timeout=300,
+        headers={"User-Agent": "TheThoraPodcast/1.0"}
+    ) as r:
+        r.raise_for_status()
+        with open(tmp_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+
+    if tmp_path.stat().st_size < 10_000:
+        tmp_path.unlink()
+        raise RuntimeError("Downloaded file too small — blocked or rate-limited")
+
+    result = subprocess.run(
+        ["ffmpeg", "-i", str(tmp_path), "-vn", "-ar", "44100", "-ac", "2",
+         "-b:a", "128k", str(mp3_path), "-y"],
+        capture_output=True, text=True,
+    )
+    tmp_path.unlink()
+    if result.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed: {result.stderr[-300:]}")
+
+    print(f"  [{tag}] Downloaded and converted to MP3")
+    return mp3_path
+
+
+def download_via_invidious(video_url: str, video_id: str, out_dir: Path) -> Path:
+    """Try downloading audio via Invidious API (proxied streams). Returns MP3 path."""
+    instances = get_invidious_instances()
+    for base in instances:
+        try:
+            resp = requests.get(
+                f"{base}/api/v1/videos/{video_id}",
+                params={"local": "true"},
+                headers={"User-Agent": "TheThoraPodcast/1.0"},
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                print(f"  [invidious] {base} → HTTP {resp.status_code}")
+                continue
+            data = resp.json()
+            if "error" in data:
+                print(f"  [invidious] {base} → error: {data['error']}")
+                continue
+
+            adaptive = data.get("adaptiveFormats", [])
+            audio_formats = [f for f in adaptive if f.get("type", "").startswith("audio/")]
+            if not audio_formats:
+                print(f"  [invidious] {base} → no audio formats")
+                continue
+
+            best = sorted(audio_formats, key=lambda x: x.get("bitrate", 0), reverse=True)[0]
+            audio_url = best["url"]
+
+            print(f"  [invidious] Trying stream from {base} ...")
+            result = _download_stream_and_convert(audio_url, video_id, out_dir, f"invidious/{base}")
+            return result
+
+        except Exception as e:
+            print(f"  [invidious] {base} failed: {e}")
+            for p in [out_dir / f"{video_id}.webm", out_dir / f"{video_id}.m4a",
+                      out_dir / f"{video_id}.mp3"]:
+                if p.exists():
+                    p.unlink()
+            continue
+
+    raise RuntimeError("All Invidious instances failed")
+
+
+# ---------------------------------------------------------------------------
+# Piped downloader (fallback)
+# ---------------------------------------------------------------------------
+
+PIPED_FALLBACK_INSTANCES = [
     "https://pipedapi.kavin.rocks",
-    "https://piped-api.garudalinux.org",
-    "https://piped.adminforge.de",
+    "https://pipedapi.adminforge.de",
     "https://pipedapi.tokhmi.xyz",
     "https://pipedapi.moomoo.me",
-    "https://api.piped.yt",
+    "https://piped-api.codeberg.page",
 ]
+
+
+def get_piped_instances() -> list[str]:
+    """Fetch active Piped instances from the official instance list."""
+    try:
+        resp = requests.get(
+            "https://instances.piped.video/api/v1/instances",
+            headers={"User-Agent": "TheThoraPodcast/1.0"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        instances = resp.json()
+        # Format: [{api_url, frontend_url, ...}]
+        urls = [i["api_url"].rstrip("/") for i in instances if i.get("api_url")]
+        return urls[:6] if urls else PIPED_FALLBACK_INSTANCES
+    except Exception as e:
+        print(f"  [piped] Could not fetch instance list: {e} — using fallbacks")
+        return PIPED_FALLBACK_INSTANCES
 
 
 def download_via_piped(video_url: str, video_id: str, out_dir: Path) -> Path:
     """Try downloading audio via Piped API (proxied streams). Returns MP3 path."""
-    for base in PIPED_INSTANCES:
+    instances = get_piped_instances()
+    for base in instances:
         try:
             resp = requests.get(
                 f"{base}/streams/{video_id}",
@@ -217,47 +354,18 @@ def download_via_piped(video_url: str, video_id: str, out_dir: Path) -> Path:
                 print(f"  [piped] {base} → no audio streams")
                 continue
 
-            # Prefer proxied URLs (not direct googlevideo.com CDN), highest bitrate
             sorted_streams = sorted(audio_streams, key=lambda x: x.get("bitrate", 0), reverse=True)
+            # Prefer proxied URLs (not direct googlevideo.com CDN)
             chosen = next(
                 (s for s in sorted_streams if "googlevideo.com" not in s.get("url", "")),
                 sorted_streams[0],
             )
             audio_url = chosen["url"]
-            mime = chosen.get("mimeType", "")
-            ext = "webm" if ("webm" in mime or "opus" in mime) else "m4a"
-
-            tmp_path = out_dir / f"{video_id}.{ext}"
-            mp3_path = out_dir / f"{video_id}.mp3"
-
-            with requests.get(
-                audio_url, stream=True, timeout=300,
-                headers={"User-Agent": "TheThoraPodcast/1.0"}
-            ) as r:
-                r.raise_for_status()
-                with open(tmp_path, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        f.write(chunk)
-
-            if tmp_path.stat().st_size < 10_000:
-                tmp_path.unlink()
-                raise RuntimeError("Downloaded file too small — likely blocked or rate-limited")
-
-            result = subprocess.run(
-                ["ffmpeg", "-i", str(tmp_path), "-vn", "-ar", "44100", "-ac", "2",
-                 "-b:a", "128k", str(mp3_path), "-y"],
-                capture_output=True, text=True,
-            )
-            tmp_path.unlink()
-            if result.returncode != 0:
-                raise RuntimeError(f"ffmpeg failed: {result.stderr[-300:]}")
-
-            print(f"  [piped] Downloaded via {base}")
-            return mp3_path
+            print(f"  [piped] Trying stream from {base} ...")
+            return _download_stream_and_convert(audio_url, video_id, out_dir, f"piped/{base}")
 
         except Exception as e:
             print(f"  [piped] {base} failed: {e}")
-            # Clean up partial files
             for p in [out_dir / f"{video_id}.webm", out_dir / f"{video_id}.m4a",
                       out_dir / f"{video_id}.mp3"]:
                 if p.exists():
@@ -366,8 +474,13 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
 
 
 def download_audio(video_url: str, out_dir: Path) -> Path:
-    """Download audio as MP3. Tries Piped first, then cobalt, then yt-dlp."""
+    """Download audio as MP3. Tries Invidious → Piped → cobalt → yt-dlp."""
     video_id = video_url.split("v=")[-1].split("&")[0]
+
+    try:
+        return download_via_invidious(video_url, video_id, out_dir)
+    except Exception as e:
+        print(f"  [invidious] All instances failed ({e}) — trying Piped")
 
     try:
         return download_via_piped(video_url, video_id, out_dir)
