@@ -183,13 +183,17 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 COBALT_INSTANCES_API = "https://instances.cobalt.best/api"
-# Community instances that don't require auth (no official instances — they require Turnstile)
+# Community instances that don't require auth — wider list for resilience
 COBALT_FALLBACK_INSTANCES = [
+    "https://api.dl.woof.monster",
     "https://cobaltapi.squair.xyz",
     "https://api.cobalt.blackcat.sweeux.org",
     "https://api.cobalt.liubquanti.click",
     "https://cobaltapi.cjs.nz",
-    "https://api.dl.woof.monster",
+    "https://nuko-c.meowing.de",
+    "https://cobalt.alpha.wolfy.love",
+    "https://grapefruit.clxxped.lol",
+    "https://api.qwkuns.me",
 ]
 
 
@@ -243,9 +247,11 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
                 timeout=30,
             )
             if resp.status_code != 200:
+                print(f"  [cobalt] {base_url} → HTTP {resp.status_code}")
                 continue
             data = resp.json()
             if data.get("status") not in ("tunnel", "redirect", "stream"):
+                print(f"  [cobalt] {base_url} → status={data.get('status')} {data.get('error', {}).get('code','')}")
                 continue
 
             out_path = out_dir / f"{video_id}.mp3"
