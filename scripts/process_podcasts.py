@@ -183,11 +183,13 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 COBALT_INSTANCES_API = "https://instances.cobalt.best/api"
+# Community instances that don't require auth (no official instances — they require Turnstile)
 COBALT_FALLBACK_INSTANCES = [
-    "https://kityune.imput.net",
-    "https://sunny.imput.net",
-    "https://nachos.imput.net",
-    "https://blossom.imput.net",
+    "https://cobaltapi.squair.xyz",
+    "https://api.cobalt.blackcat.sweeux.org",
+    "https://api.cobalt.liubquanti.click",
+    "https://cobaltapi.cjs.nz",
+    "https://api.dl.woof.monster",
 ]
 
 
@@ -196,10 +198,13 @@ def get_cobalt_instances() -> list[str]:
     try:
         resp = requests.get(
             COBALT_INSTANCES_API,
-            headers={"User-Agent": "TheThoraPodcast/1.0"},
+            headers={"Accept": "application/json", "User-Agent": "TheThoraPodcast/1.0"},
             timeout=10,
         )
         resp.raise_for_status()
+        text = resp.text.strip()
+        if not text:
+            raise ValueError("Empty response from instances API")
         instances = resp.json()
         filtered = [
             i for i in instances
