@@ -15,6 +15,7 @@ import os
 import sys
 import json
 import time
+import subprocess
 import requests
 from datetime import datetime, timezone
 from pathlib import Path
@@ -179,8 +180,92 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Audio download — cobalt-first, yt-dlp fallback
+# Audio download — Piped-first, cobalt second, yt-dlp fallback
 # ---------------------------------------------------------------------------
+
+# Piped is a YouTube frontend that proxies streams through its own servers.
+# Downloading from a pipedproxy URL means GitHub Actions hits Piped's server,
+# not YouTube directly — bypassing YouTube's Azure IP block.
+PIPED_INSTANCES = [
+    "https://pipedapi.kavin.rocks",
+    "https://piped-api.garudalinux.org",
+    "https://piped.adminforge.de",
+    "https://pipedapi.tokhmi.xyz",
+    "https://pipedapi.moomoo.me",
+    "https://api.piped.yt",
+]
+
+
+def download_via_piped(video_url: str, video_id: str, out_dir: Path) -> Path:
+    """Try downloading audio via Piped API (proxied streams). Returns MP3 path."""
+    for base in PIPED_INSTANCES:
+        try:
+            resp = requests.get(
+                f"{base}/streams/{video_id}",
+                headers={"User-Agent": "TheThoraPodcast/1.0"},
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                print(f"  [piped] {base} → HTTP {resp.status_code}")
+                continue
+            data = resp.json()
+            if "error" in data:
+                print(f"  [piped] {base} → error: {data['error']}")
+                continue
+            audio_streams = data.get("audioStreams", [])
+            if not audio_streams:
+                print(f"  [piped] {base} → no audio streams")
+                continue
+
+            # Prefer proxied URLs (not direct googlevideo.com CDN), highest bitrate
+            sorted_streams = sorted(audio_streams, key=lambda x: x.get("bitrate", 0), reverse=True)
+            chosen = next(
+                (s for s in sorted_streams if "googlevideo.com" not in s.get("url", "")),
+                sorted_streams[0],
+            )
+            audio_url = chosen["url"]
+            mime = chosen.get("mimeType", "")
+            ext = "webm" if ("webm" in mime or "opus" in mime) else "m4a"
+
+            tmp_path = out_dir / f"{video_id}.{ext}"
+            mp3_path = out_dir / f"{video_id}.mp3"
+
+            with requests.get(
+                audio_url, stream=True, timeout=300,
+                headers={"User-Agent": "TheThoraPodcast/1.0"}
+            ) as r:
+                r.raise_for_status()
+                with open(tmp_path, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+            if tmp_path.stat().st_size < 10_000:
+                tmp_path.unlink()
+                raise RuntimeError("Downloaded file too small — likely blocked or rate-limited")
+
+            result = subprocess.run(
+                ["ffmpeg", "-i", str(tmp_path), "-vn", "-ar", "44100", "-ac", "2",
+                 "-b:a", "128k", str(mp3_path), "-y"],
+                capture_output=True, text=True,
+            )
+            tmp_path.unlink()
+            if result.returncode != 0:
+                raise RuntimeError(f"ffmpeg failed: {result.stderr[-300:]}")
+
+            print(f"  [piped] Downloaded via {base}")
+            return mp3_path
+
+        except Exception as e:
+            print(f"  [piped] {base} failed: {e}")
+            # Clean up partial files
+            for p in [out_dir / f"{video_id}.webm", out_dir / f"{video_id}.m4a",
+                      out_dir / f"{video_id}.mp3"]:
+                if p.exists():
+                    p.unlink()
+            continue
+
+    raise RuntimeError("All Piped instances failed")
+
 
 COBALT_INSTANCES_API = "https://instances.cobalt.best/api"
 # Community instances that don't require auth — wider list for resilience
@@ -281,8 +366,13 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
 
 
 def download_audio(video_url: str, out_dir: Path) -> Path:
-    """Download audio as MP3. Tries cobalt first, falls back to yt-dlp."""
+    """Download audio as MP3. Tries Piped first, then cobalt, then yt-dlp."""
     video_id = video_url.split("v=")[-1].split("&")[0]
+
+    try:
+        return download_via_piped(video_url, video_id, out_dir)
+    except Exception as e:
+        print(f"  [piped] All instances failed ({e}) — trying cobalt")
 
     try:
         return download_via_cobalt(video_url, video_id, out_dir)
