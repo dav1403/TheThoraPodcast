@@ -243,7 +243,6 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
         headers["Authorization"] = f"Api-Key {api_key}"
 
     for base_url in instances:
-        time.sleep(2)  # avoid triggering per-IP rate limits
         try:
             resp = requests.post(
                 f"{base_url}/",
@@ -253,7 +252,7 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
                 timeout=30,
             )
             if resp.status_code != 200:
-                print(f"  [cobalt] {base_url} → HTTP {resp.status_code}")
+                print(f"  [cobalt] {base_url} → HTTP {resp.status_code}: {resp.text[:120]}")
                 continue
             data = resp.json()
             if data.get("status") not in ("tunnel", "redirect", "stream"):
