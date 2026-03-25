@@ -232,12 +232,18 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
     if not instances:
         raise RuntimeError("No cobalt instances available")
 
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Origin": "https://cobalt.tools",
+        "User-Agent": "Mozilla/5.0 (compatible; TheThoraPodcast/1.0)",
+    }
     api_key = os.environ.get("COBALT_API_KEY", "")
     if api_key:
         headers["Authorization"] = f"Api-Key {api_key}"
 
     for base_url in instances:
+        time.sleep(2)  # avoid triggering per-IP rate limits
         try:
             resp = requests.post(
                 f"{base_url}/",
