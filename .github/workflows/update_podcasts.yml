@@ -23,14 +23,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Install yt-dlp JSI solver
-        run: deno install --global --allow-all -r -f -n yt-dlp-jsi "jsr:@yt-dlp/jsi"
-
       - name: Cache pip dependencies
         uses: actions/cache@v4
         with:

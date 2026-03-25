@@ -179,11 +179,82 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
-# Audio download
+# Audio download — cobalt-first, yt-dlp fallback
 # ---------------------------------------------------------------------------
 
+COBALT_INSTANCES_API = "https://instances.cobalt.best/api/v1/instances.json"
+
+
+def get_cobalt_instances() -> list[str]:
+    """Fetch top public cobalt instances sorted by score."""
+    try:
+        resp = requests.get(COBALT_INSTANCES_API, timeout=10)
+        resp.raise_for_status()
+        instances = resp.json()
+        with_api = [i for i in instances if i.get("api")]
+        with_api.sort(key=lambda x: x.get("score", 0), reverse=True)
+        return [i["api"].rstrip("/") for i in with_api[:5]]
+    except Exception as e:
+        print(f"  [cobalt] Could not fetch instance list: {e}")
+        return []
+
+
+def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
+    """Try downloading audio via cobalt public instances. Returns MP3 path."""
+    instances = get_cobalt_instances()
+    if not instances:
+        raise RuntimeError("No cobalt instances available")
+
+    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    api_key = os.environ.get("COBALT_API_KEY", "")
+    if api_key:
+        headers["Authorization"] = f"Api-Key {api_key}"
+
+    for base_url in instances:
+        try:
+            resp = requests.post(
+                f"{base_url}/",
+                json={"url": video_url, "downloadMode": "audio",
+                      "audioFormat": "mp3", "audioBitrate": "128"},
+                headers=headers,
+                timeout=30,
+            )
+            if resp.status_code != 200:
+                continue
+            data = resp.json()
+            if data.get("status") not in ("tunnel", "redirect", "stream"):
+                continue
+
+            out_path = out_dir / f"{video_id}.mp3"
+            with requests.get(data["url"], stream=True, timeout=120) as r:
+                r.raise_for_status()
+                with open(out_path, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+
+            if out_path.stat().st_size < 10_000:
+                out_path.unlink()
+                raise RuntimeError("Downloaded file too small")
+
+            print(f"  [cobalt] Downloaded via {base_url}")
+            return out_path
+
+        except Exception as e:
+            print(f"  [cobalt] {base_url} failed: {e}")
+            continue
+
+    raise RuntimeError("All cobalt instances failed")
+
+
 def download_audio(video_url: str, out_dir: Path) -> Path:
-    """Download audio from video_url as MP3 into out_dir. Returns the MP3 path."""
+    """Download audio as MP3. Tries cobalt first, falls back to yt-dlp."""
+    video_id = video_url.split("v=")[-1].split("&")[0]
+
+    try:
+        return download_via_cobalt(video_url, video_id, out_dir)
+    except Exception as e:
+        print(f"  [cobalt] Failed ({e}) — falling back to yt-dlp")
+
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": str(out_dir / "%(id)s.%(ext)s"),
@@ -191,19 +262,18 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
             "key":              "FFmpegExtractAudio",
             "preferredcodec":   "mp3",
             "preferredquality": "128",
-            }],
-        "quiet":       False,
-        "no_warnings": False,
-        "retries":       10,
+        }],
+        "quiet":            False,
+        "no_warnings":      False,
+        "retries":          10,
         "fragment_retries": 10,
-        "ignoreerrors": False,
+        "ignoreerrors":     False,
     }
     cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
     if cookies_file and Path(cookies_file).exists():
         ydl_opts["cookiefile"] = cookies_file
     with YoutubeDL(ydl_opts) as ydl:
         ydl.extract_info(video_url, download=True)
-
 
     mp3_files = list(out_dir.glob("*.mp3"))
     if not mp3_files:
