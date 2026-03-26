@@ -552,6 +552,7 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
     fg.language(channel_cfg.get("podcast_language", "en"))
     fg.podcast.itunes_category(channel_cfg.get("podcast_category", "Technology"))
     fg.podcast.itunes_author(channel_cfg["podcast_author"])
+    fg.podcast.itunes_owner(name=channel_cfg["podcast_author"], email=channel_cfg["podcast_email"])
     fg.podcast.itunes_explicit("no")
 
     if channel_info.get("thumbnail"):
