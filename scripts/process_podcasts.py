@@ -607,11 +607,14 @@ def process_channel(channel_cfg: dict, processed: dict):
     channel_info = get_channel_info(channel_id)
     print(f"  Channel name: {channel_info['title']}")
 
-    already_done = set(processed.get(slug, []))
-    new_videos   = get_new_videos(channel_id, already_done)
+    feed_path = FEEDS_DIR / f"{slug}.xml"
+    entries   = load_feed_entries(feed_path)
 
-    feed_path      = FEEDS_DIR / f"{slug}.xml"
-    entries        = load_feed_entries(feed_path)
+    # Combine processed.json IDs + entries.json IDs to avoid re-downloading
+    already_done = set(processed.get(slug, []))
+    already_done.update(e["video_id"] for e in entries)
+
+    new_videos     = get_new_videos(channel_id, already_done)
     entries_before = len(entries)
 
     if not new_videos:
@@ -689,6 +692,20 @@ def main():
 
     channels  = json.loads(Path(CHANNELS_FILE).read_text())
     processed = load_processed()
+
+    # Sync processed.json with entries.json so they're always in agreement
+    for ch in channels:
+        if not ch.get("enabled", True):
+            continue
+        slug = ch["slug"]
+        feed_path = FEEDS_DIR / f"{slug}.xml"
+        entries = load_feed_entries(feed_path)
+        if entries:
+            known = set(processed.get(slug, []))
+            new_ids = [e["video_id"] for e in entries if e["video_id"] not in known]
+            if new_ids:
+                processed.setdefault(slug, []).extend(new_ids)
+    save_processed(processed)
 
     errors = []
     for ch in channels:
