@@ -16,6 +16,7 @@ import sys
 import json
 import time
 import subprocess
+import html
 import requests
 from datetime import datetime, timezone
 from pathlib import Path
@@ -138,8 +139,8 @@ def get_channel_info(channel_id: str) -> dict:
     ).get("url", "")
 
     return {
-        "title":       snippet["title"],
-        "description": snippet.get("description", ""),
+        "title":       html.unescape(snippet["title"]),
+        "description": html.unescape(snippet.get("description", "")),
         "thumbnail":   thumb_url,
     }
 
@@ -170,8 +171,8 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
             thumbs = item["snippet"]["thumbnails"]
             new_videos.append({
                 "id":          vid_id,
-                "title":       item["snippet"]["title"],
-                "description": item["snippet"].get("description", ""),
+                "title":       html.unescape(item["snippet"]["title"]),
+                "description": html.unescape(item["snippet"].get("description", "")),
                 "published":   item["snippet"]["publishedAt"],
                 "thumbnail":   (thumbs.get("maxres") or thumbs.get("high") or {}).get("url", ""),
                 "url":         f"https://www.youtube.com/watch?v={vid_id}",
