@@ -14,6 +14,7 @@ Designed to run daily via GitHub Actions.
 import os
 import sys
 import json
+import argparse
 import time
 import subprocess
 import html
@@ -596,7 +597,7 @@ def save_processed(data: dict):
 # Per-channel processing
 # ---------------------------------------------------------------------------
 
-def process_channel(channel_cfg: dict, processed: dict):
+def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
     slug       = channel_cfg["slug"]
     channel_id = channel_cfg["youtube_channel_id"]
     print(f"\n{'='*60}")
@@ -621,7 +622,7 @@ def process_channel(channel_cfg: dict, processed: dict):
         print("  No new videos found.")
         if entries:
             build_rss_feed(channel_cfg, channel_info, entries, feed_path)
-        return
+        return 0
 
     print(f"  Found {len(new_videos)} new video(s).")
 
@@ -629,7 +630,11 @@ def process_channel(channel_cfg: dict, processed: dict):
     release     = get_or_create_release(release_tag, f"Audio: {channel_info['title']}")
     release_id  = release["id"]
 
+    slots_used = 0
     for video in new_videos:
+        if slots_used >= budget:
+            print(f"  Budget reached, deferring remaining new videos to next run.")
+            break
         print(f"\n  Processing: {video['title']}")
 
         safe_title   = "".join(c if c.isalnum() or c in " -_" else "_" for c in video["title"])
@@ -673,6 +678,7 @@ def process_channel(channel_cfg: dict, processed: dict):
         processed.setdefault(slug, []).append(video["id"])
         save_processed(processed)
         print(f"  Marked {video['id']} as processed.")
+        slots_used += 1
         time.sleep(2)
 
     if len(entries) > entries_before:
@@ -681,14 +687,22 @@ def process_channel(channel_cfg: dict, processed: dict):
     else:
         print("  No entries were successfully added (all downloads may have failed).")
 
+    return slots_used
+
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--budget", type=int, default=5,
+                        help="Max videos to download this run (new episodes first)")
+    args = parser.parse_args()
+
     print("=== Podcast Update Run ===")
     print(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
+    print(f"Budget: {args.budget} video(s) this run")
 
     channels  = json.loads(Path(CHANNELS_FILE).read_text())
     processed = load_processed()
@@ -707,16 +721,25 @@ def main():
                 processed.setdefault(slug, []).extend(new_ids)
     save_processed(processed)
 
+    budget_remaining = args.budget
     errors = []
     for ch in channels:
+        if budget_remaining <= 0:
+            print(f"\nBudget exhausted — skipping remaining channels.")
+            break
         if not ch.get("enabled", True):
             print(f"\nSkipping disabled channel: {ch['slug']}")
             continue
         try:
-            process_channel(ch, processed)
+            used = process_channel(ch, processed, budget_remaining)
+            budget_remaining -= used
         except Exception as e:
             print(f"\nERROR on channel {ch['slug']}: {e}")
             errors.append((ch["slug"], str(e)))
+
+    # Write remaining budget so backfill_podcasts.py knows how many slots are left
+    Path("/tmp/backfill_budget").write_text(str(budget_remaining))
+    print(f"\nBudget remaining for backfill: {budget_remaining}")
 
     if errors:
         print(f"\n{'='*60}")
@@ -726,7 +749,7 @@ def main():
         sys.exit(1)
 
     print(f"\n{'='*60}")
-    print("All channels processed successfully.")
+    print("New episode check complete.")
 
 
 if __name__ == "__main__":

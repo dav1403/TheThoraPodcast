@@ -90,17 +90,27 @@ jobs:
                       print(f"Bootstrap failed for {ch['slug']}")
           EOF
 
-      - name: Run podcast update
+      - name: Run podcast update (new episodes, budget 5)
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPO:     ${{ github.repository }}
-        run: python scripts/process_podcasts.py
+        run: python scripts/process_podcasts.py --budget 5
+
+      - name: Run backfill (historical episodes with remaining budget)
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO:     ${{ github.repository }}
+        run: |
+          BUDGET=$(cat /tmp/backfill_budget 2>/dev/null || echo 0)
+          echo "Backfill budget: $BUDGET"
+          python scripts/backfill_podcasts.py --budget "$BUDGET"
 
       - name: Commit and push updated feeds
         run: |
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"
-          git add feeds/ processed.json
+          git add feeds/ processed.json backfill_state.json
           git diff --staged --quiet || git commit -m "chore: update podcast feeds [skip ci]"
           git push
