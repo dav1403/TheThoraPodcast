@@ -139,12 +139,6 @@
 <main id="app"></main>
 
 <script>
-  const CHANNELS = [
-    { slug: 'rav-itshak-cohen',    name: 'Rav Itshak Cohen' },
-    { slug: 'rav-yonathan-mergui', name: 'Rav Yonathan Mergui' },
-    { slug: 'rav-yaakov-sitruk',   name: 'Rav Yaakov Sitruk' },
-  ];
-
   function formatDate(iso) {
     return new Date(iso).toLocaleDateString('fr-FR', {
       day: 'numeric', month: 'long', year: 'numeric'
@@ -216,7 +210,18 @@
   }
 
   (async () => {
-    for (const ch of CHANNELS) {
+    let channels = [];
+    try {
+      const res = await fetch('channels.json');
+      if (res.ok) {
+        const all = await res.json();
+        channels = all
+          .filter(ch => ch.enabled)
+          .map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
+      }
+    } catch (_) {}
+
+    for (const ch of channels) {
       await loadChannel(ch);
     }
   })();
@@ -224,4 +229,3 @@
 
 </body>
 </html>
-```
