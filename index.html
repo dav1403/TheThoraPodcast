@@ -105,6 +105,22 @@
       accent-color: #1a1a2e;
     }
 
+    .show-more-bar {
+      padding: 12px 20px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .show-more-btn {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      color: #555;
+      cursor: pointer;
+      width: 100%;
+    }
+    .show-more-btn:hover { background: #f5f5f0; border-color: #aaa; }
+
     .state {
       padding: 28px 20px;
       text-align: center;
@@ -139,6 +155,8 @@
 <main id="app"></main>
 
 <script>
+  const PREVIEW_COUNT = 3;
+
   function formatDate(iso) {
     return new Date(iso).toLocaleDateString('fr-FR', {
       day: 'numeric', month: 'long', year: 'numeric'
@@ -199,13 +217,36 @@
     episodes.sort((a, b) => new Date(b.published) - new Date(a.published));
 
     if (episodes.length === 0) {
-      section.querySelector('.state, div:last-child').outerHTML =
+      section.querySelector('.state.loading').outerHTML =
         '<div class="state">Aucun épisode disponible pour le moment.</div>';
-    } else {
-      const ul = document.createElement('ul');
-      ul.className = 'episode-list';
-      ul.innerHTML = episodes.map(renderEpisode).join('');
-      section.querySelector('[class="state loading"]').replaceWith(ul);
+      return;
+    }
+
+    const ul = document.createElement('ul');
+    ul.className = 'episode-list';
+    ul.innerHTML = episodes.map(renderEpisode).join('');
+    section.querySelector('.state.loading').replaceWith(ul);
+
+    // Hide episodes beyond the preview count
+    const items = ul.querySelectorAll('.episode');
+    items.forEach((el, i) => {
+      if (i >= PREVIEW_COUNT) el.hidden = true;
+    });
+
+    // Add "show more" button if needed
+    if (episodes.length > PREVIEW_COUNT) {
+      const bar = document.createElement('div');
+      bar.className = 'show-more-bar';
+      const btn = document.createElement('button');
+      btn.className = 'show-more-btn';
+      const hidden = episodes.length - PREVIEW_COUNT;
+      btn.textContent = `Voir les ${hidden} épisodes suivants`;
+      btn.addEventListener('click', () => {
+        items.forEach(el => el.hidden = false);
+        bar.remove();
+      });
+      bar.appendChild(btn);
+      section.appendChild(bar);
     }
   }
 
