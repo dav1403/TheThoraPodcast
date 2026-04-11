@@ -46,7 +46,8 @@ BACKFILL_STATE_FILE = Path("backfill_state.json")
 
 def load_backfill_state() -> dict:
     if BACKFILL_STATE_FILE.exists():
-        return json.loads(BACKFILL_STATE_FILE.read_text())
+        content = BACKFILL_STATE_FILE.read_text().strip()
+        return json.loads(content) if content else {}
     return {}
 
 
@@ -157,7 +158,7 @@ def backfill_channel(channel_cfg: dict, processed: dict, state: dict) -> int:
             print(f"  [{slug}] Uploaded -> {audio_url}")
         except Exception as e:
             print(f"  [{slug}] ERROR: {e} — skipping this video.")
-            return 0
+            return 1  # consume the slot — download was attempted, don't retry this run
 
     pub_dt = datetime.fromisoformat(video["published"].replace("Z", "+00:00"))
     entries.append({

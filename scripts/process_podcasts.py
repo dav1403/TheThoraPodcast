@@ -84,7 +84,7 @@ def get_or_create_release(tag: str, name: str) -> dict:
     return r.json()
 
 
-def upload_audio_to_release(release_id: int, mp3_path: Path) -> str:
+def upload_audio_to_release(release_id: int, mp3_path: Path, retries: int = 3) -> str:
     """Upload mp3_path to the release. Returns the public download URL."""
     filename = mp3_path.name
     upload_url = (
@@ -92,11 +92,20 @@ def upload_audio_to_release(release_id: int, mp3_path: Path) -> str:
         f"?name={requests.utils.quote(filename)}"
     )
     headers = {**_gh_headers(), "Content-Type": "audio/mpeg"}
-    with open(mp3_path, "rb") as f:
-        r = requests.post(upload_url, headers=headers, data=f)
-    if not r.ok:
-        raise Exception(f"Upload failed: {r.status_code} {r.text}")
-    return r.json()["browser_download_url"]
+    for attempt in range(retries):
+        try:
+            with open(mp3_path, "rb") as f:
+                r = requests.post(upload_url, headers=headers, data=f, timeout=300)
+            if r.ok:
+                return r.json()["browser_download_url"]
+            raise Exception(f"Upload failed: {r.status_code} {r.text[:200]}")
+        except Exception as e:
+            if attempt < retries - 1:
+                wait = 30 * (attempt + 1)
+                print(f"  Upload attempt {attempt + 1} failed: {e}. Retrying in {wait}s...")
+                time.sleep(wait)
+            else:
+                raise
 
 
 def asset_already_exists(release: dict, filename: str) -> str | None:
@@ -385,9 +394,6 @@ COBALT_FALLBACK_INSTANCES = [
     "https://api.cobalt.blackcat.sweeux.org",
     "https://api.cobalt.liubquanti.click",
     "https://cobaltapi.cjs.nz",
-    "https://nuko-c.meowing.de",
-    "https://cobalt.alpha.wolfy.love",
-    "https://grapefruit.clxxped.lol",
     "https://api.qwkuns.me",
 ]
 
@@ -476,23 +482,29 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
 
 
 def download_audio(video_url: str, out_dir: Path) -> Path:
-    """Download audio as MP3. Tries Invidious → Piped → cobalt → yt-dlp."""
+    """Download audio as MP3. If cookies are available, tries yt-dlp first.
+    Otherwise falls back to Invidious → Piped → cobalt → yt-dlp."""
     video_id = video_url.split("v=")[-1].split("&")[0]
+    cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
+    has_cookies = bool(cookies_file and Path(cookies_file).exists())
 
-    try:
-        return download_via_invidious(video_url, video_id, out_dir)
-    except Exception as e:
-        print(f"  [invidious] All instances failed ({e}) — trying Piped")
+    # When cookies are available, yt-dlp is the most reliable path — use it directly.
+    # Proxy chain (Invidious/Piped/cobalt) is only tried when we have no cookies.
+    if not has_cookies:
+        try:
+            return download_via_invidious(video_url, video_id, out_dir)
+        except Exception as e:
+            print(f"  [invidious] All instances failed ({e}) — trying Piped")
 
-    try:
-        return download_via_piped(video_url, video_id, out_dir)
-    except Exception as e:
-        print(f"  [piped] All instances failed ({e}) — trying cobalt")
+        try:
+            return download_via_piped(video_url, video_id, out_dir)
+        except Exception as e:
+            print(f"  [piped] All instances failed ({e}) — trying cobalt")
 
-    try:
-        return download_via_cobalt(video_url, video_id, out_dir)
-    except Exception as e:
-        print(f"  [cobalt] Failed ({e}) — falling back to yt-dlp")
+        try:
+            return download_via_cobalt(video_url, video_id, out_dir)
+        except Exception as e:
+            print(f"  [cobalt] Failed ({e}) — falling back to yt-dlp")
 
     ydl_opts = {
         "format": "bestaudio/best",
@@ -661,6 +673,7 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
                 print(f"  Uploaded -> {audio_url}")
             except Exception as e:
                 print(f"  ERROR downloading/uploading: {e}")
+                slots_used += 1  # consume the slot — download was attempted, don't re-attempt this run
                 continue
 
         pub_dt = datetime.fromisoformat(video["published"].replace("Z", "+00:00"))
