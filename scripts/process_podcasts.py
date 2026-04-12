@@ -701,7 +701,8 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
         processed.setdefault(slug, []).append(video["id"])
         save_processed(processed)
         print(f"  Marked {video['id']} as processed.")
-        slots_used += 1
+        if not existing_url:  # don't count free "already uploaded" skips against budget
+            slots_used += 1
         time.sleep(2)
 
     if len(entries) > entries_before:

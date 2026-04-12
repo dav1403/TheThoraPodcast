@@ -177,7 +177,7 @@ def backfill_channel(channel_cfg: dict, processed: dict, state: dict) -> int:
     save_feed_entries(feed_path, entries)
     build_rss_feed(channel_cfg, channel_info, entries, feed_path)
     print(f"  [{slug}] Done.")
-    return 1
+    return 0 if existing_url else 1  # free skip doesn't consume a budget slot
 
 
 def main():
