@@ -138,7 +138,7 @@ def backfill_channel(channel_cfg: dict, processed: dict, state: dict) -> int:
     safe_title   = safe_title[:80].strip()
     mp3_filename = f"{video['id']}_{safe_title}.mp3"
 
-    existing_url = asset_already_exists(release, mp3_filename)
+    existing_url = asset_already_exists(release, mp3_filename, video_id=video["id"])
     if existing_url:
         print(f"  [{slug}] Already uploaded — recording entry only.")
         audio_url = existing_url

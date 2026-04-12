@@ -108,10 +108,12 @@ def upload_audio_to_release(release_id: int, mp3_path: Path, retries: int = 3) -
                 raise
 
 
-def asset_already_exists(release: dict, filename: str) -> str | None:
-    """Return the download URL if this filename is already in the release."""
+def asset_already_exists(release: dict, filename: str, video_id: str = None) -> str | None:
+    """Return the download URL if this file (or video ID) is already in the release."""
     for asset in release.get("assets", []):
         if asset["name"] == filename:
+            return asset["browser_download_url"]
+        if video_id and asset["name"].startswith(f"{video_id}_"):
             return asset["browser_download_url"]
     return None
 
@@ -653,7 +655,7 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
         safe_title   = safe_title[:80].strip()
         mp3_filename = f"{video['id']}_{safe_title}.mp3"
 
-        existing_url = asset_already_exists(release, mp3_filename)
+        existing_url = asset_already_exists(release, mp3_filename, video_id=video["id"])
         if existing_url:
             print(f"  Already uploaded - skipping download.")
             audio_url = existing_url
