@@ -84,6 +84,10 @@ def get_or_create_release(tag: str, name: str) -> dict:
     return r.json()
 
 
+class _UploadRejected(Exception):
+    """Raised when GitHub rejects an upload with a non-retriable error (e.g. 422 already_exists)."""
+
+
 def upload_audio_to_release(release_id: int, mp3_path: Path, retries: int = 3) -> str:
     """Upload mp3_path to the release. Returns the public download URL."""
     filename = mp3_path.name
@@ -98,7 +102,11 @@ def upload_audio_to_release(release_id: int, mp3_path: Path, retries: int = 3) -
                 r = requests.post(upload_url, headers=headers, data=f, timeout=300)
             if r.ok:
                 return r.json()["browser_download_url"]
+            if r.status_code == 422:
+                raise _UploadRejected(f"GitHub rejected upload (already_exists): {r.text[:200]}")
             raise Exception(f"Upload failed: {r.status_code} {r.text[:200]}")
+        except _UploadRejected:
+            raise  # never retry on 422
         except Exception as e:
             if attempt < retries - 1:
                 wait = 30 * (attempt + 1)
