@@ -210,23 +210,43 @@ def main():
     budget_remaining = args.budget
     slots_used = 0
 
-    # Round-robin: 1 slot per channel until budget is exhausted
-    for ch in enabled:
-        if budget_remaining <= 0:
+    # Multi-pass round-robin: keep looping through channels until budget is
+    # exhausted or a full pass produces no progress at all.
+    # Free skips (already-uploaded orphans) don't consume budget but DO advance
+    # a channel's oldest-date frontier, so we count them as progress and keep going.
+    while budget_remaining > 0:
+        all_exhausted = all(
+            state.get(ch["slug"], {}).get("exhausted", False) for ch in enabled
+        )
+        if all_exhausted:
+            print("All channels fully backfilled — nothing to do.")
             break
-        if state.get(ch["slug"], {}).get("exhausted", False):
-            continue
-        try:
-            used = backfill_channel(ch, processed, state)
-            if used:
-                slots_used += 1
-                budget_remaining -= 1
-                if budget_remaining > 0:
-                    delay = random.uniform(15, 30)
-                    print(f"  Waiting {delay:.0f}s before next download...")
-                    time.sleep(delay)
-        except Exception as e:
-            print(f"  ERROR on {ch['slug']}: {e}")
+
+        progress_this_pass = False  # any channel did something this pass
+        for ch in enabled:
+            if budget_remaining <= 0:
+                break
+            if state.get(ch["slug"], {}).get("exhausted", False):
+                continue
+            try:
+                used = backfill_channel(ch, processed, state)
+                now_exhausted = state.get(ch["slug"], {}).get("exhausted", False)
+                if used:
+                    slots_used += 1
+                    budget_remaining -= 1
+                    progress_this_pass = True
+                    if budget_remaining > 0:
+                        delay = random.uniform(15, 30)
+                        print(f"  Waiting {delay:.0f}s before next download...")
+                        time.sleep(delay)
+                elif not now_exhausted:
+                    # returned 0 but not exhausted = free skip, frontier advanced
+                    progress_this_pass = True
+            except Exception as e:
+                print(f"  ERROR on {ch['slug']}: {e}")
+
+        if not progress_this_pass:
+            break  # nothing happened anywhere — genuinely nothing left to do
 
     print(f"\n=== Backfill complete: {slots_used} episode(s) added ===")
 
