@@ -49,6 +49,23 @@ jobs:
       - name: Ensure feeds/ directory exists
         run: mkdir -p feeds
 
+      - name: Save pre-run feed counts
+        run: |
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+          counts = {}
+          for f in Path("feeds").glob("*.entries.json"):
+              slug = f.stem.replace(".entries", "")
+              try:
+                  entries = json.loads(f.read_text(encoding="utf-8") or "[]")
+              except Exception:
+                  entries = []
+              counts[slug] = len(entries)
+          Path("/tmp/pre_run_counts.json").write_text(json.dumps(counts))
+          print("Pre-run counts:", counts)
+          EOF
+
       - name: Write YouTube cookies
         env:
           YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
@@ -114,3 +131,9 @@ jobs:
           git add feeds/ processed.json backfill_state.json
           git diff --staged --quiet || git commit -m "chore: update podcast feeds [skip ci]"
           git push
+
+      - name: Generate run summary
+        if: always()
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/generate_summary.py >> $GITHUB_STEP_SUMMARY
