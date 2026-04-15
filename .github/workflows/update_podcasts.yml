@@ -75,6 +75,13 @@ jobs:
             echo "YOUTUBE_COOKIES_FILE=/tmp/yt_cookies.txt" >> $GITHUB_ENV
           fi
 
+      - name: Generate channel artwork (3000x3000 PNG for Apple Podcasts)
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: |
+          mkdir -p artwork
+          python scripts/generate_artwork.py
+
       - name: Bootstrap new channels (backfill last 10 episodes if feed missing)
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -128,7 +135,7 @@ jobs:
         run: |
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"
-          git add feeds/ processed.json backfill_state.json
+          git add feeds/ processed.json backfill_state.json artwork/
           git diff --staged --quiet || git commit -m "chore: update podcast feeds [skip ci]"
           git push
 

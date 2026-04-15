@@ -580,7 +580,10 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
 
     if channel_info.get("thumbnail"):
         fg.image(channel_info["thumbnail"])
-        fg.podcast.itunes_image(channel_info["thumbnail"])
+    # Apple Podcasts requires 1400-3000px artwork on a HEAD-friendly server.
+    # Use the pre-generated artwork hosted on GitHub Pages; fall back to YouTube thumbnail.
+    artwork_url = BASE_URL + f"artwork/{channel_cfg['slug']}.png"
+    fg.podcast.itunes_image(artwork_url)
 
     for entry in sorted(entries, key=lambda e: e["published"], reverse=True):
         fe = fg.add_entry()
