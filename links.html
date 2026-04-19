@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Thora Podcast — Écouter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f0;
+      color: #222;
+      line-height: 1.5;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 32px 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 2rem; margin-bottom: 6px; }
+    header p  { color: #aab; font-size: 0.95rem; }
+    .header-nav {
+      margin-top: 14px;
+      font-size: 0.85rem;
+    }
+    .header-nav a {
+      color: #aab;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(170,170,187,0.4);
+    }
+    .header-nav a:hover { color: #fff; border-color: #fff; }
+
+    main {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 32px 16px 60px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 18px 20px;
+    }
+
+    .card-art {
+      width: 72px;
+      height: 72px;
+      border-radius: 10px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #e0e0e0;
+    }
+
+    .card-body { flex: 1; min-width: 0; }
+
+    .card-name {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .platform-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .platform-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: opacity .15s;
+    }
+    .platform-btn:hover { opacity: 0.82; }
+    .platform-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .btn-spotify { background: #1DB954; color: #fff; }
+    .btn-apple   { background: #872EC4; color: #fff; }
+    .btn-deezer  { background: #EF5466; color: #fff; }
+    .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
+
+    .no-platforms {
+      font-size: 0.78rem;
+      color: #aaa;
+      font-style: italic;
+    }
+
+    @media (max-width: 480px) {
+      .card { flex-direction: column; align-items: flex-start; }
+      .card-art { width: 60px; height: 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>The Thora Podcast</h1>
+  <p>Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-nav">
+    <a href="index.html">Voir les épisodes</a>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<script>
+  const PLATFORM_META = {
+    spotify: {
+      label: 'Spotify',
+      cls:   'btn-spotify',
+      icon:  `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`,
+    },
+    apple: {
+      label: 'Apple Podcasts',
+      cls:   'btn-apple',
+      icon:  `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.3a7.7 7.7 0 0 1 5.44 13.14c-.37.37-.79.69-1.25.94-.1-.76-.28-1.63-.58-2.35.52-.48.87-1.15.87-1.9 0-1.43-1.16-2.59-2.59-2.59s-2.59 1.16-2.59 2.59c0 .75.32 1.42.83 1.9-.3.72-.48 1.59-.58 2.35a7.68 7.68 0 0 1-1.25-.94A7.7 7.7 0 0 1 12 4.3zm0 2.1a5.6 5.6 0 0 0-3.96 9.56c.18-.83.46-1.74.9-2.45a4.15 4.15 0 0 1-.54-2.03A3.6 3.6 0 0 1 12 7.9a3.6 3.6 0 0 1 3.6 3.58 4.15 4.15 0 0 1-.54 2.03c.44.71.72 1.62.9 2.45A5.6 5.6 0 0 0 12 6.4zm0 3.1a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 5.6c1.05 0 1.82.28 2.3.55-.26 1.18-.38 2.28-.32 3.03a7.65 7.65 0 0 1-1.98.26 7.65 7.65 0 0 1-1.98-.26c.06-.75-.06-1.85-.32-3.03.48-.27 1.25-.55 2.3-.55z"/></svg>`,
+    },
+    deezer: {
+      label: 'Deezer',
+      cls:   'btn-deezer',
+      icon:  `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.944 17.369h4.512v1.601h-4.512zm0-3.075h4.512v1.6h-4.512zm0-3.074h4.512v1.601h-4.512zm-5.944 6.15h4.512v1.6H13zm0-3.075h4.512v1.6H13zm0-3.074h4.512v1.601H13zm-5.944 6.149h4.512v1.6H7.056zm0-3.075h4.512v1.6H7.056zM1.112 17.37h4.512v1.6H1.112z"/></svg>`,
+    },
+    rss: {
+      label: 'RSS',
+      cls:   'btn-rss',
+      icon:  `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>`,
+    },
+  };
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderCard(ch) {
+    const artSrc = `artwork/${ch.slug}.png`;
+    const platforms = ch.platforms || {};
+    const activeLinks = Object.entries(platforms).filter(([, url]) => url && url.trim());
+
+    const badges = activeLinks.map(([key, url]) => {
+      const meta = PLATFORM_META[key];
+      if (!meta) return '';
+      return `<a class="platform-btn ${meta.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener">${meta.icon}${meta.label}</a>`;
+    }).join('');
+
+    const linksHtml = activeLinks.length
+      ? `<div class="platform-links">${badges}</div>`
+      : `<span class="no-platforms">Bientôt disponible</span>`;
+
+    return `
+      <div class="card">
+        <img class="card-art" src="${escapeHtml(artSrc)}" alt="${escapeHtml(ch.podcast_author)}"
+             onerror="this.style.background='#e0e0e0';this.removeAttribute('src')">
+        <div class="card-body">
+          <div class="card-name">${escapeHtml(ch.podcast_author)}</div>
+          ${linksHtml}
+        </div>
+      </div>`;
+  }
+
+  (async () => {
+    const app = document.getElementById('app');
+    let channels = [];
+    try {
+      const res = await fetch('channels.json');
+      if (res.ok) channels = (await res.json()).filter(ch => ch.enabled);
+    } catch (_) {}
+
+    if (!channels.length) {
+      app.innerHTML = '<p style="text-align:center;color:#aaa;padding:40px">Aucune chaîne disponible.</p>';
+      return;
+    }
+
+    app.innerHTML = channels.map(renderCard).join('');
+  })();
+</script>
+
+</body>
+</html>
