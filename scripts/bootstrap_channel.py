@@ -7,12 +7,17 @@ Usage:
     export YOUTUBE_API_KEY=your_key
     export GITHUB_TOKEN=your_personal_access_token
     export GITHUB_REPO=youruser/yourrepo
+    export R2_ENDPOINT_URL=https://<account_id>.r2.cloudflarestorage.com
+    export R2_ACCESS_KEY_ID=your_r2_key
+    export R2_SECRET_ACCESS_KEY=your_r2_secret
+    export R2_BUCKET_NAME=your_bucket
+    export R2_PUBLIC_URL=https://your-public-url.r2.dev
     python scripts/bootstrap_channel.py --slug the-thora-podcast --max 20
 
 This will:
   1. Fetch the last N videos from the channel
   2. Download each as MP3
-  3. Upload to GitHub Releases
+  3. Upload to Cloudflare R2
   4. Build the initial RSS feed
 
 After this, process_podcasts.py handles new episodes automatically.
@@ -32,9 +37,8 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from process_podcasts import (
     get_channel_info,
-    get_or_create_release,
-    upload_audio_to_release,
-    asset_already_exists,
+    upload_audio_to_r2,
+    asset_exists_in_r2,
     download_audio,
     build_rss_feed,
     load_feed_entries,
@@ -115,10 +119,6 @@ def main():
     entries      = load_feed_entries(feed_path)
     existing_ids = {e["video_id"] for e in entries}
 
-    release_tag = f"audio-{args.slug}"
-    release     = get_or_create_release(release_tag, f"Audio: {channel_info['title']}")
-    release_id  = release["id"]
-
     for video in reversed(videos):   # oldest first so feed order is correct
         if video["id"] in already_done or video["id"] in existing_ids:
             print(f"  Skipping already-processed: {video['title']}")
@@ -130,7 +130,7 @@ def main():
         safe_title   = safe_title[:80].strip()
         mp3_filename = f"{video['id']}_{safe_title}.mp3"
 
-        existing_url = asset_already_exists(release, mp3_filename)
+        existing_url = asset_exists_in_r2(mp3_filename)
         if existing_url:
             print(f"  Already uploaded: {existing_url}")
             audio_url = existing_url
@@ -144,10 +144,9 @@ def main():
                 file_size  = mp3_path.stat().st_size
                 final_path = AUDIO_DIR / mp3_filename
                 mp3_path.rename(final_path)
-                print(f"  Uploading to GitHub Releases...")
-                audio_url = upload_audio_to_release(release_id, final_path)
-                release["assets"].append({"name": mp3_filename, "browser_download_url": audio_url})
-                print(f"  ✓ {audio_url}")
+                print(f"  Uploading to R2...")
+                audio_url = upload_audio_to_r2(final_path, mp3_filename)
+                print(f"  {audio_url}")
             except Exception as e:
                 print(f"  ERROR: {e} — skipping this video")
                 continue
@@ -174,7 +173,7 @@ def main():
     owner     = GITHUB_REPO.split("/")[0]
     repo_name = GITHUB_REPO.split("/")[1]
     feed_url  = f"https://{owner}.github.io/{repo_name}/feeds/{args.slug}.xml"
-    print(f"\n✓ Bootstrap complete. Feed: feeds/{args.slug}.xml ({len(entries)} episodes)")
+    print(f"\nBootstrap complete. Feed: feeds/{args.slug}.xml ({len(entries)} episodes)")
     print(f"\nNext step: Submit this RSS URL to Spotify for Podcasters:")
     print(f"  {feed_url}")
 
