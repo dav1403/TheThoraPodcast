@@ -65,26 +65,31 @@ def get_r2_client():
         endpoint_url=os.environ["R2_ENDPOINT_URL"],
         aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
         aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
-        config=Config(signature_version="s3v4"),
+        config=Config(
+            signature_version="s3v4",
+            connect_timeout=30,
+            read_timeout=300,
+            retries={"max_attempts": 3},
+        ),
         region_name="auto",
     )
 
 
 def upload_audio_to_r2(mp3_path: Path, filename: str, retries: int = 3) -> str:
-    """Upload mp3_path to R2. Returns the public URL."""
+    """Upload mp3_path to R2 using multipart transfer. Returns the public URL."""
+    from boto3.s3.transfer import TransferConfig
     bucket = os.environ["R2_BUCKET_NAME"]
     public_base = os.environ["R2_PUBLIC_URL"].rstrip("/")
     client = get_r2_client()
+    transfer_cfg = TransferConfig(multipart_threshold=8 * 1024 * 1024, max_concurrency=4)
 
     for attempt in range(retries):
         try:
-            with open(mp3_path, "rb") as f:
-                client.put_object(
-                    Bucket=bucket,
-                    Key=filename,
-                    Body=f,
-                    ContentType="audio/mpeg",
-                )
+            client.upload_file(
+                str(mp3_path), bucket, filename,
+                ExtraArgs={"ContentType": "audio/mpeg"},
+                Config=transfer_cfg,
+            )
             return f"{public_base}/{filename}"
         except Exception as e:
             if attempt < retries - 1:
