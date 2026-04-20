@@ -656,8 +656,8 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
             break
         print(f"\n  Processing: {video['title']}")
 
-        safe_title   = "".join(c if c.isalnum() or c in " -_" else "_" for c in video["title"])
-        safe_title   = safe_title[:80].strip()
+        safe_title   = "".join(c if c.isalnum() or c in "-_" else "_" for c in video["title"])
+        safe_title   = safe_title[:80].strip("_")
         mp3_filename = f"{video['id']}_{safe_title}.mp3"
 
         existing_url = asset_exists_in_r2(mp3_filename, video_id=video["id"])
