@@ -1,5 +1,5 @@
 # My Podcast
-https://dav1403.github.io/TheThoraPodcast/
+https://dav1403.github.io/TheThoraPodcast/links.html
 
 # To add more Shows 
 
