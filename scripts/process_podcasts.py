@@ -4,7 +4,7 @@ process_podcasts.py
 Monitors multiple YouTube channels for new videos.
 For each new video:
   1. Downloads audio as MP3 via yt-dlp
-  2. Uploads MP3 to GitHub Releases (free public hosting)
+  2. Uploads MP3 to Cloudflare R2 (free egress, S3-compatible)
   3. Updates the channel's RSS feed XML (hosted on GitHub Pages)
   4. Records the video ID in processed.json to avoid re-processing
 
@@ -23,6 +23,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
+import boto3
+from botocore.config import Config
+from botocore.exceptions import ClientError
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -53,76 +56,66 @@ FEEDS_DIR.mkdir(exist_ok=True)
 AUDIO_DIR.mkdir(exist_ok=True)
 
 # ---------------------------------------------------------------------------
-# GitHub Releases helpers
+# Cloudflare R2 helpers
 # ---------------------------------------------------------------------------
 
-def _gh_headers() -> dict:
-    return {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github+json",
-    }
-
-
-def get_or_create_release(tag: str, name: str) -> dict:
-    """Return the release dict for `tag`, creating it if it doesn't exist."""
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/tags/{tag}"
-    r = requests.get(url, headers=_gh_headers())
-    if r.status_code == 200:
-        return r.json()
-
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
-    payload = {
-        "tag_name":         tag,
-        "name":             name,
-        "draft":            False,
-        "prerelease":       False,
-        "target_commitish": "main",
-    }
-    r = requests.post(url, headers=_gh_headers(), json=payload)
-    if not r.ok:
-        raise Exception(f"Failed to create release '{tag}': {r.status_code} {r.text}")
-    return r.json()
-
-
-class _UploadRejected(Exception):
-    """Raised when GitHub rejects an upload with a non-retriable error (e.g. 422 already_exists)."""
-
-
-def upload_audio_to_release(release_id: int, mp3_path: Path, retries: int = 3) -> str:
-    """Upload mp3_path to the release. Returns the public download URL."""
-    filename = mp3_path.name
-    upload_url = (
-        f"https://uploads.github.com/repos/{GITHUB_REPO}/releases/{release_id}/assets"
-        f"?name={requests.utils.quote(filename)}"
+def get_r2_client():
+    return boto3.client(
+        "s3",
+        endpoint_url=os.environ["R2_ENDPOINT_URL"],
+        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+        config=Config(signature_version="s3v4"),
+        region_name="auto",
     )
-    headers = {**_gh_headers(), "Content-Type": "audio/mpeg"}
+
+
+def upload_audio_to_r2(mp3_path: Path, filename: str, retries: int = 3) -> str:
+    """Upload mp3_path to R2. Returns the public URL."""
+    bucket = os.environ["R2_BUCKET_NAME"]
+    public_base = os.environ["R2_PUBLIC_URL"].rstrip("/")
+    client = get_r2_client()
+
     for attempt in range(retries):
         try:
             with open(mp3_path, "rb") as f:
-                r = requests.post(upload_url, headers=headers, data=f, timeout=300)
-            if r.ok:
-                return r.json()["browser_download_url"]
-            if r.status_code == 422:
-                raise _UploadRejected(f"GitHub rejected upload (already_exists): {r.text[:200]}")
-            raise Exception(f"Upload failed: {r.status_code} {r.text[:200]}")
-        except _UploadRejected:
-            raise  # never retry on 422
+                client.put_object(
+                    Bucket=bucket,
+                    Key=filename,
+                    Body=f,
+                    ContentType="audio/mpeg",
+                )
+            return f"{public_base}/{filename}"
         except Exception as e:
             if attempt < retries - 1:
-                wait = 30 * (attempt + 1)
-                print(f"  Upload attempt {attempt + 1} failed: {e}. Retrying in {wait}s...")
+                wait = 15 * (attempt + 1)
+                print(f"  R2 upload attempt {attempt + 1} failed: {e}. Retrying in {wait}s...")
                 time.sleep(wait)
             else:
                 raise
 
 
-def asset_already_exists(release: dict, filename: str, video_id: str = None) -> str | None:
-    """Return the download URL if this file (or video ID) is already in the release."""
-    for asset in release.get("assets", []):
-        if asset["name"] == filename:
-            return asset["browser_download_url"]
-        if video_id and asset["name"].startswith(f"{video_id}_"):
-            return asset["browser_download_url"]
+def asset_exists_in_r2(filename: str, video_id: str = None) -> str | None:
+    """Return the public URL if the file already exists in R2, else None."""
+    bucket = os.environ["R2_BUCKET_NAME"]
+    public_base = os.environ["R2_PUBLIC_URL"].rstrip("/")
+    client = get_r2_client()
+
+    try:
+        client.head_object(Bucket=bucket, Key=filename)
+        return f"{public_base}/{filename}"
+    except ClientError:
+        pass
+
+    if video_id:
+        try:
+            resp = client.list_objects_v2(Bucket=bucket, Prefix=f"{video_id}_", MaxKeys=1)
+            if resp.get("Contents"):
+                key = resp["Contents"][0]["Key"]
+                return f"{public_base}/{key}"
+        except ClientError:
+            pass
+
     return None
 
 # ---------------------------------------------------------------------------
@@ -573,7 +566,7 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
     fg.link(href=feed_url, rel="self")
     fg.description(channel_info["description"] or channel_info["title"])
     fg.language(channel_cfg.get("podcast_language", "en"))
-    fg.podcast.itunes_category(channel_cfg.get("podcast_category", "Technology"))
+    fg.podcast.itunes_category(channel_cfg.get("podcast_category", "Religion & Spirituality"))
     fg.podcast.itunes_author(channel_cfg["podcast_author"])
     fg.podcast.itunes_owner(name=channel_cfg["podcast_author"], email=channel_cfg["podcast_email"])
     fg.podcast.itunes_explicit("no")
@@ -651,10 +644,6 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
 
     print(f"  Found {len(new_videos)} new video(s).")
 
-    release_tag = f"audio-{slug}"
-    release     = get_or_create_release(release_tag, f"Audio: {channel_info['title']}")
-    release_id  = release["id"]
-
     slots_used = 0
     for video in new_videos:
         if slots_used >= budget:
@@ -666,7 +655,7 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
         safe_title   = safe_title[:80].strip()
         mp3_filename = f"{video['id']}_{safe_title}.mp3"
 
-        existing_url = asset_already_exists(release, mp3_filename, video_id=video["id"])
+        existing_url = asset_exists_in_r2(mp3_filename, video_id=video["id"])
         if existing_url:
             print(f"  Already uploaded - skipping download.")
             audio_url = existing_url
@@ -680,9 +669,8 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
                 file_size  = mp3_path.stat().st_size
                 final_path = AUDIO_DIR / mp3_filename
                 mp3_path.rename(final_path)
-                print(f"  Uploading to GitHub Releases...")
-                audio_url = upload_audio_to_release(release_id, final_path)
-                release["assets"].append({"name": mp3_filename, "browser_download_url": audio_url})
+                print(f"  Uploading to R2...")
+                audio_url = upload_audio_to_r2(final_path, mp3_filename)
                 print(f"  Uploaded -> {audio_url}")
             except Exception as e:
                 print(f"  ERROR downloading/uploading: {e}")
