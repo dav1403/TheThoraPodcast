@@ -26,9 +26,8 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from process_podcasts import (
     get_channel_info,
-    get_or_create_release,
-    upload_audio_to_release,
-    asset_already_exists,
+    upload_audio_to_r2,
+    asset_exists_in_r2,
     download_audio,
     build_rss_feed,
     load_feed_entries,
@@ -130,15 +129,12 @@ def backfill_channel(channel_cfg: dict, processed: dict, state: dict) -> int:
     print(f"  [{slug}] Backfilling: {video['title']} ({video['published']})")
 
     channel_info = get_channel_info(channel_id)
-    release_tag  = f"audio-{slug}"
-    release      = get_or_create_release(release_tag, f"Audio: {channel_info['title']}")
-    release_id   = release["id"]
 
     safe_title   = "".join(c if c.isalnum() or c in " -_" else "_" for c in video["title"])
     safe_title   = safe_title[:80].strip()
     mp3_filename = f"{video['id']}_{safe_title}.mp3"
 
-    existing_url = asset_already_exists(release, mp3_filename, video_id=video["id"])
+    existing_url = asset_exists_in_r2(mp3_filename, video_id=video["id"])
     if existing_url:
         print(f"  [{slug}] Already uploaded — recording entry only.")
         audio_url = existing_url
@@ -152,9 +148,8 @@ def backfill_channel(channel_cfg: dict, processed: dict, state: dict) -> int:
             file_size  = mp3_path.stat().st_size
             final_path = AUDIO_DIR / mp3_filename
             mp3_path.rename(final_path)
-            print(f"  [{slug}] Uploading to GitHub Releases...")
-            audio_url = upload_audio_to_release(release_id, final_path)
-            release["assets"].append({"name": mp3_filename, "browser_download_url": audio_url})
+            print(f"  [{slug}] Uploading to R2...")
+            audio_url = upload_audio_to_r2(final_path, mp3_filename)
             print(f"  [{slug}] Uploaded -> {audio_url}")
         except Exception as e:
             print(f"  [{slug}] ERROR: {e} — skipping this video.")
