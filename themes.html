@@ -104,7 +104,9 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 2px;
+      text-decoration: none;
     }
+    .ep-ch:hover { text-decoration: underline; }
     .ep-title {
       font-weight: 600;
       font-size: 0.88rem;
@@ -445,7 +447,7 @@
         return `<li class="ep-card">
           ${thumb}
           <div class="ep-body">
-            <div class="ep-ch">${escapeHtml(ch.name)}</div>
+            <a class="ep-ch" href="index.html#${escapeHtml(ch.slug)}">${escapeHtml(ch.name)}</a>
             <div class="ep-title" title="${escapeHtml(ep.title)}">${escapeHtml(ep.title)}</div>
             <div class="ep-date">${formatDate(ep.published)}</div>
             ${tagPills}${playBtn}

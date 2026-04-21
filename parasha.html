@@ -133,7 +133,8 @@
       object-fit: cover;
       background: #e0e0e0;
     }
-    .result-channel-name { font-size: 0.95rem; font-weight: 600; }
+    .result-channel-name { font-size: 0.95rem; font-weight: 600; color: #222; text-decoration: none; }
+    .result-channel-name:hover { text-decoration: underline; }
     .result-channel-count { margin-left: auto; font-size: 0.75rem; color: #aaa; }
 
     .episode-list { list-style: none; }
@@ -449,7 +450,7 @@ function renderResults(slug, allData) {
     <div class="result-channel">
       <div class="result-channel-header">
         <img class="result-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">
-        <div class="result-channel-name">${escapeHtml(ch.name)}</div>
+        <a class="result-channel-name" href="index.html#${escapeHtml(ch.slug)}">${escapeHtml(ch.name)}</a>
         <div class="result-channel-count">${episodes.length} épisode${episodes.length > 1 ? 's' : ''}</div>
       </div>
       <ul class="episode-list">
