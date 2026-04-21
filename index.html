@@ -278,6 +278,11 @@
     for (const ch of channels) {
       await loadChannel(ch);
     }
+
+    if (location.hash) {
+      const el = document.querySelector(location.hash);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
   })();
 </script>
 
