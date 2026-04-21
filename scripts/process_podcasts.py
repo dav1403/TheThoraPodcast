@@ -552,7 +552,7 @@ def load_feed_entries(feed_path: Path) -> list[dict]:
     """Load existing feed entries from a JSON sidecar file."""
     sidecar = feed_path.with_suffix(".entries.json")
     if sidecar.exists():
-        return json.loads(sidecar.read_text())
+        return json.loads(sidecar.read_text(encoding="utf-8"))
     return []
 
 
