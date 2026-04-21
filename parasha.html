@@ -22,9 +22,24 @@
     }
     header h1 { font-size: 2rem; margin-bottom: 6px; }
     header p  { color: #aab; font-size: 0.95rem; margin-bottom: 14px; }
-    .header-nav { font-size: 0.85rem; display: flex; justify-content: center; gap: 20px; }
-    .header-nav a { color: #aab; text-decoration: none; border-bottom: 1px solid rgba(170,170,187,0.4); }
-    .header-nav a:hover { color: #fff; border-color: #fff; }
+    .header-nav {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 16px 20px;
+    }
+    .header-nav a {
+      color: rgba(255,255,255,.65);
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.2);
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .header-nav a:hover { color: #fff; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.1); }
+    .header-nav a.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
 
     main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
 
@@ -133,8 +148,7 @@
       object-fit: cover;
       background: #e0e0e0;
     }
-    .result-channel-name { font-size: 0.95rem; font-weight: 600; color: #222; text-decoration: none; }
-    .result-channel-name:hover { text-decoration: underline; }
+    .result-channel-name { font-size: 0.95rem; font-weight: 600; }
     .result-channel-count { margin-left: auto; font-size: 0.75rem; color: #aaa; }
 
     .episode-list { list-style: none; }
@@ -237,7 +251,8 @@
   <p>Cours par Paracha</p>
   <nav class="header-nav">
     <a href="index.html">Accueil</a>
-    <a href="links.html">S'abonner</a>
+    <a href="links.html">Les Rabbins</a>
+    <a href="parasha.html" class="active">Par Paracha</a>
     <a href="themes.html">Par Thème</a>
   </nav>
 </header>
@@ -450,7 +465,7 @@ function renderResults(slug, allData) {
     <div class="result-channel">
       <div class="result-channel-header">
         <img class="result-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">
-        <a class="result-channel-name" href="index.html#${escapeHtml(ch.slug)}">${escapeHtml(ch.name)}</a>
+        <div class="result-channel-name">${escapeHtml(ch.name)}</div>
         <div class="result-channel-count">${episodes.length} épisode${episodes.length > 1 ? 's' : ''}</div>
       </div>
       <ul class="episode-list">
