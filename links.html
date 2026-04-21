@@ -141,6 +141,24 @@
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
 
+    .copy-rss {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: #f5f5f0;
+      color: #555;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+    }
+    .copy-rss:hover { border-color: #aaa; color: #333; }
+    .copy-rss.copied { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+
     .no-platforms { font-size: 0.78rem; color: #aaa; font-style: italic; }
 
     .card-stats {
@@ -214,6 +232,17 @@
     },
   };
 
+  function copyRss(btn, url) {
+    navigator.clipboard.writeText(url).then(() => {
+      btn.classList.add('copied');
+      btn.textContent = '✓ Copié !';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier RSS`;
+      }, 2000);
+    });
+  }
+
   function escapeHtml(str) {
     return String(str)
       .replace(/&/g, '&amp;')
@@ -239,6 +268,11 @@
     const platforms   = ch.platforms || {};
     const activeLinks = Object.entries(platforms).filter(([, url]) => url && url.trim());
 
+    const rssUrl = `https://thetorahpodcast.net/feeds/${ch.slug}.xml`;
+    const copyBtn = `<button class="copy-rss" onclick="copyRss(this,'${escapeHtml(rssUrl)}')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copier RSS</button>`;
+
     const badges = activeLinks.map(([key, url]) => {
       const meta = PLATFORM_META[key];
       if (!meta) return '';
@@ -246,8 +280,8 @@
     }).join('');
 
     const linksHtml = activeLinks.length
-      ? `<div class="platform-links">${badges}</div>`
-      : `<span class="no-platforms">Bientôt disponible</span>`;
+      ? `<div class="platform-links">${badges}${copyBtn}</div>`
+      : `<div class="platform-links">${copyBtn}</div>`;
 
     const count  = entries.length;
     const latest = latestEpisode(entries);

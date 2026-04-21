@@ -6,24 +6,23 @@
   <title>The Thora Podcast</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: system-ui, -apple-system, sans-serif;
       background: #f5f5f0;
       color: #222;
       line-height: 1.5;
+      padding-bottom: 80px;
     }
 
     header {
       background: #1a1a2e;
       color: #fff;
-      padding: 32px 20px;
+      padding: 28px 20px 0;
       text-align: center;
     }
     header h1 { font-size: 2rem; margin-bottom: 6px; }
     header p  { color: #aab; font-size: 0.95rem; margin-bottom: 14px; }
-
-    .header-nav { font-size: 0.85rem; }
+    .header-nav { font-size: 0.85rem; margin-bottom: 16px; }
     .header-nav a {
       color: #aab;
       text-decoration: none;
@@ -31,99 +30,207 @@
     }
     .header-nav a:hover { color: #fff; border-color: #fff; }
 
-    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+    /* Search */
+    .search-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #1a1a2e;
+      padding: 10px 16px 14px;
+    }
+    .search-inner {
+      position: relative;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.4);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 9px 16px 9px 40px;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      outline: none;
+    }
+    .search-input::placeholder { color: rgba(255,255,255,0.4); }
+    .search-input:focus { background: rgba(255,255,255,0.18); }
 
+    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    /* Recents */
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #999;
+      margin-bottom: 10px;
+    }
+    #recents-section { margin-bottom: 32px; }
+    .recents-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: thin;
+    }
+    .recents-row::-webkit-scrollbar { height: 4px; }
+    .recents-row::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+    .recent-card {
+      flex-shrink: 0;
+      width: 150px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .recent-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .recent-card img {
+      width: 100%;
+      height: 84px;
+      object-fit: cover;
+      background: #e0e0e0;
+      display: block;
+    }
+    .recent-card-body { padding: 7px 9px 9px; }
+    .recent-card-ch {
+      font-size: 0.62rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .recent-card-title {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #222;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.3;
+      margin-bottom: 3px;
+    }
+    .recent-card-date { font-size: 0.62rem; color: #bbb; }
+
+    /* Channel sections */
     .channel {
       background: #fff;
       border-radius: 12px;
       box-shadow: 0 1px 4px rgba(0,0,0,.08);
-      margin-bottom: 32px;
+      margin-bottom: 28px;
       overflow: hidden;
     }
+    .channel[hidden] { display: none; }
     .channel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
       gap: 8px;
-      padding: 18px 20px 14px;
+      padding: 16px 20px 12px;
       border-bottom: 1px solid #eee;
     }
-    .channel-header h2 { font-size: 1.15rem; }
+    .channel-header-left { display: flex; align-items: center; gap: 10px; }
+    .channel-art {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #e0e0e0;
+      flex-shrink: 0;
+    }
+    .channel-header h2 { font-size: 1.05rem; }
     .rss-link {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: #e87722;
       text-decoration: none;
       border: 1px solid #e87722;
       border-radius: 4px;
       padding: 3px 8px;
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .rss-link:hover { background: #e87722; color: #fff; }
 
     .episode-list { list-style: none; }
-
     .episode {
       display: flex;
       gap: 14px;
-      padding: 14px 20px;
+      padding: 13px 20px;
       border-bottom: 1px solid #f0f0f0;
       align-items: flex-start;
     }
     .episode:last-child { border-bottom: none; }
     .episode[hidden] { display: none; }
-
     .episode-thumb {
-      width: 90px;
-      height: 60px;
+      width: 80px; height: 54px;
       object-fit: cover;
       border-radius: 6px;
       flex-shrink: 0;
       background: #ddd;
     }
-    .episode-thumb-placeholder {
-      width: 90px;
-      height: 60px;
+    .episode-thumb-ph {
+      width: 80px; height: 54px;
       border-radius: 6px;
       flex-shrink: 0;
-      background: #e0e0e0;
+      background: #e8e8e8;
     }
-
     .episode-body { flex: 1; min-width: 0; }
     .episode-title {
       font-weight: 600;
-      font-size: 0.9rem;
-      margin-bottom: 3px;
+      font-size: 0.88rem;
+      margin-bottom: 2px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .episode-date { font-size: 0.75rem; color: #888; margin-bottom: 6px; }
+    .episode-date { font-size: 0.73rem; color: #888; margin-bottom: 6px; }
     .episode-desc {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: #555;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
-    audio {
-      width: 100%;
-      height: 32px;
-      accent-color: #1a1a2e;
+    .play-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 13px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      transition: background .15s;
     }
+    .play-btn:hover { background: #2d2d50; }
+    .play-btn.playing { background: #e87722; }
+    .play-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
 
-    .show-more-bar {
-      padding: 12px 20px;
-      border-top: 1px solid #f0f0f0;
-    }
+    .show-more-bar { padding: 11px 20px; border-top: 1px solid #f0f0f0; }
     .show-more-btn {
       background: none;
       border: 1px solid #ccc;
       border-radius: 6px;
       padding: 6px 14px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: #555;
       cursor: pointer;
       width: 100%;
@@ -139,7 +246,7 @@
     .state.loading::before {
       content: '';
       display: inline-block;
-      width: 18px; height: 18px;
+      width: 16px; height: 16px;
       border: 2px solid #ccc;
       border-top-color: #555;
       border-radius: 50%;
@@ -149,8 +256,66 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    .no-results {
+      text-align: center;
+      color: #aaa;
+      padding: 48px 20px;
+      font-size: 0.9rem;
+    }
+
+    /* Persistent player */
+    #player {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #1a1a2e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      box-shadow: 0 -2px 16px rgba(0,0,0,.25);
+      z-index: 200;
+      transform: translateY(0);
+      transition: transform .25s ease;
+    }
+    #player.hidden { transform: translateY(100%); }
+    #player-art {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #333;
+      flex-shrink: 0;
+    }
+    #player-info { min-width: 0; flex: 1; }
+    #player-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #player-channel { font-size: 0.68rem; color: #99a; }
+    #player-audio {
+      flex: 2;
+      min-width: 120px;
+      height: 32px;
+      accent-color: #e87722;
+    }
+    #player-close {
+      background: none;
+      border: none;
+      color: #778;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    #player-close:hover { color: #fff; }
+
     @media (max-width: 500px) {
-      .episode-thumb, .episode-thumb-placeholder { display: none; }
+      .episode-thumb, .episode-thumb-ph { display: none; }
+      #player-art { display: none; }
     }
   </style>
 </head>
@@ -158,126 +323,274 @@
 
 <header>
   <h1>The Thora Podcast</h1>
-  <p>Cours de Torah depuis YouTube — flux RSS prêts pour Spotify for Podcasters</p>
-  <div class="header-nav">
-    <a href="links.html">S'abonner sur les plateformes →</a>
-  </div>
+  <p>Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-nav"><a href="links.html">S'abonner sur les plateformes →</a></div>
 </header>
 
-<main id="app"></main>
+<div class="search-wrap">
+  <div class="search-inner">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input class="search-input" id="search" type="search" placeholder="Rechercher un épisode ou un rav…" autocomplete="off">
+  </div>
+</div>
+
+<main id="app">
+  <div class="state loading">Chargement…</div>
+</main>
+
+<div id="player" class="hidden">
+  <img id="player-art" src="" alt="">
+  <div id="player-info">
+    <div id="player-title"></div>
+    <div id="player-channel"></div>
+  </div>
+  <audio id="player-audio" controls></audio>
+  <button id="player-close" title="Fermer">✕</button>
+</div>
 
 <script>
   const PREVIEW_COUNT = 3;
+  const RECENTS_COUNT = 10;
+
+  let allData = [];
+  let activeBtn = null;
+
+  const playerEl    = document.getElementById('player');
+  const playerAudio = document.getElementById('player-audio');
+  const playerTitle = document.getElementById('player-title');
+  const playerCh    = document.getElementById('player-channel');
+  const playerArt   = document.getElementById('player-art');
+
+  function playIcon() {
+    return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`;
+  }
+  function pauseIcon() {
+    return `<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>`;
+  }
+
+  function loadInPlayer(ep, chName, slug) {
+    playerTitle.textContent = ep.title;
+    playerCh.textContent    = chName;
+    playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
+    playerAudio.src         = ep.audio_url;
+    playerAudio.play();
+    playerEl.classList.remove('hidden');
+  }
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.play-btn[data-slug]');
+    if (btn) {
+      const slug = btn.dataset.slug;
+      const idx  = +btn.dataset.idx;
+      const d    = allData.find(x => x.ch.slug === slug);
+      if (!d) return;
+      if (activeBtn && activeBtn !== btn) {
+        activeBtn.classList.remove('playing');
+        activeBtn.innerHTML = playIcon() + ' Écouter';
+      }
+      activeBtn = btn;
+      btn.classList.add('playing');
+      btn.innerHTML = pauseIcon() + ' En cours…';
+      loadInPlayer(d.entries[idx], d.ch.name, slug);
+    }
+
+    const card = e.target.closest('.recent-card[data-slug]');
+    if (card) {
+      const slug = card.dataset.slug;
+      const idx  = +card.dataset.idx;
+      const d    = allData.find(x => x.ch.slug === slug);
+      if (d) loadInPlayer(d.entries[idx], d.ch.name, slug);
+    }
+  });
+
+  document.getElementById('player-close').addEventListener('click', () => {
+    playerAudio.pause();
+    playerEl.classList.add('hidden');
+    if (activeBtn) {
+      activeBtn.classList.remove('playing');
+      activeBtn.innerHTML = playIcon() + ' Écouter';
+      activeBtn = null;
+    }
+  });
+
+  playerAudio.addEventListener('ended', () => {
+    if (activeBtn) {
+      activeBtn.classList.remove('playing');
+      activeBtn.innerHTML = playIcon() + ' Écouter';
+      activeBtn = null;
+    }
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 
   function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('fr-FR', {
-      day: 'numeric', month: 'long', year: 'numeric'
-    });
+    return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function renderEpisode(ep) {
+  function renderEpisode(ep, slug, idx) {
     const thumb = ep.thumbnail
       ? `<img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
-      : `<div class="episode-thumb-placeholder"></div>`;
-
+      : `<div class="episode-thumb-ph"></div>`;
     const desc = ep.description
       ? `<p class="episode-desc">${escapeHtml(ep.description)}</p>`
       : '';
-
-    const player = ep.audio_url
-      ? `<audio controls preload="none" src="${escapeHtml(ep.audio_url)}"></audio>`
+    const playBtn = ep.audio_url
+      ? `<button class="play-btn" data-slug="${escapeHtml(slug)}" data-idx="${idx}">${playIcon()} Écouter</button>`
       : '';
-
     return `
-      <li class="episode">
+      <li class="episode" data-title="${escapeHtml(ep.title.toLowerCase())}">
         ${thumb}
         <div class="episode-body">
           <div class="episode-title">${escapeHtml(ep.title)}</div>
           <div class="episode-date">${formatDate(ep.published)}</div>
-          ${desc}
-          ${player}
+          ${desc}${playBtn}
         </div>
       </li>`;
   }
 
-  async function loadChannel(ch) {
+  function buildRecents() {
+    const flat = [];
+    for (const { ch, entries } of allData) {
+      entries.forEach((ep, idx) => flat.push({ ep, ch, idx }));
+    }
+    flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
+
+    const cards = flat.slice(0, RECENTS_COUNT).map(({ ep, ch, idx }) => `
+      <div class="recent-card" data-slug="${escapeHtml(ch.slug)}" data-idx="${idx}">
+        <img src="${escapeHtml(ep.thumbnail || `artwork/${ch.slug}.png`)}" alt=""
+             loading="lazy" onerror="this.src='artwork/${escapeHtml(ch.slug)}.png'">
+        <div class="recent-card-body">
+          <div class="recent-card-ch">${escapeHtml(ch.name)}</div>
+          <div class="recent-card-title">${escapeHtml(ep.title)}</div>
+          <div class="recent-card-date">${formatDate(ep.published)}</div>
+        </div>
+      </div>`).join('');
+
+    const wrap = document.createElement('div');
+    wrap.id = 'recents-section';
+    wrap.innerHTML = `<div class="section-label">Derniers épisodes</div><div class="recents-row">${cards}</div>`;
+    return wrap;
+  }
+
+  function buildChannel(ch, entries) {
     const section = document.createElement('section');
     section.className = 'channel';
     section.id = ch.slug;
-    const feedUrl = `feeds/${ch.slug}.xml`;
     section.innerHTML = `
       <div class="channel-header">
-        <h2>${escapeHtml(ch.name)}</h2>
-        <a class="rss-link" href="${feedUrl}" target="_blank">RSS Feed</a>
-      </div>
-      <div class="state loading">Chargement des épisodes…</div>`;
-    document.getElementById('app').appendChild(section);
+        <div class="channel-header-left">
+          <img class="channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt=""
+               onerror="this.style.display='none'">
+          <h2>${escapeHtml(ch.name)}</h2>
+        </div>
+        <a class="rss-link" href="feeds/${escapeHtml(ch.slug)}.xml" target="_blank">RSS</a>
+      </div>`;
 
-    let episodes = [];
-    try {
-      const res = await fetch(`feeds/${ch.slug}.entries.json`);
-      if (res.ok) episodes = await res.json();
-    } catch (_) {}
-
-    episodes.sort((a, b) => new Date(b.published) - new Date(a.published));
-
-    if (episodes.length === 0) {
-      section.querySelector('.state.loading').outerHTML =
-        '<div class="state">Aucun épisode disponible pour le moment.</div>';
-      return;
+    if (!entries.length) {
+      section.insertAdjacentHTML('beforeend', '<div class="state">Aucun épisode disponible.</div>');
+      return section;
     }
 
     const ul = document.createElement('ul');
     ul.className = 'episode-list';
-    ul.innerHTML = episodes.map(renderEpisode).join('');
-    section.querySelector('.state.loading').replaceWith(ul);
+    ul.innerHTML = entries.map((ep, i) => renderEpisode(ep, ch.slug, i)).join('');
+    section.appendChild(ul);
 
-    // Hide episodes beyond the preview count
     const items = ul.querySelectorAll('.episode');
-    items.forEach((el, i) => {
-      if (i >= PREVIEW_COUNT) el.hidden = true;
-    });
+    items.forEach((el, i) => { if (i >= PREVIEW_COUNT) el.hidden = true; });
 
-    // Add "show more" button if needed
-    if (episodes.length > PREVIEW_COUNT) {
+    if (entries.length > PREVIEW_COUNT) {
       const bar = document.createElement('div');
       bar.className = 'show-more-bar';
       const btn = document.createElement('button');
       btn.className = 'show-more-btn';
-      const hidden = episodes.length - PREVIEW_COUNT;
-      btn.textContent = `Voir les ${hidden} épisodes suivants`;
-      btn.addEventListener('click', () => {
-        items.forEach(el => el.hidden = false);
-        bar.remove();
-      });
+      btn.textContent = `Voir les ${entries.length - PREVIEW_COUNT} épisodes suivants`;
+      btn.addEventListener('click', () => { items.forEach(el => el.hidden = false); bar.remove(); });
       bar.appendChild(btn);
       section.appendChild(bar);
     }
+    return section;
+  }
+
+  function setupSearch() {
+    const input    = document.getElementById('search');
+    const recents  = document.getElementById('recents-section');
+    const noRes    = document.getElementById('no-results');
+
+    input.addEventListener('input', () => {
+      const q = input.value.toLowerCase().trim();
+      recents.hidden = q.length > 0;
+
+      let anyVisible = false;
+      document.querySelectorAll('.channel').forEach(ch => {
+        const eps = ch.querySelectorAll('.episode');
+        let chVisible = false;
+        eps.forEach((ep, i) => {
+          const match = !q || ep.dataset.title.includes(q);
+          ep.hidden = q ? !match : i >= PREVIEW_COUNT;
+          if (match) chVisible = true;
+        });
+        if (!q) {
+          const bar = ch.querySelector('.show-more-bar');
+          if (bar) bar.style.display = '';
+          ch.hidden = false;
+        } else {
+          const bar = ch.querySelector('.show-more-bar');
+          if (bar) bar.style.display = 'none';
+          ch.hidden = !chVisible;
+          if (chVisible) anyVisible = true;
+        }
+      });
+
+      noRes.hidden = !q || anyVisible;
+    });
   }
 
   (async () => {
+    const app = document.getElementById('app');
     let channels = [];
     try {
       const res = await fetch('channels.json');
       if (res.ok) {
-        const all = await res.json();
-        channels = all
+        channels = (await res.json())
           .filter(ch => ch.enabled)
           .map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
       }
     } catch (_) {}
 
-    for (const ch of channels) {
-      await loadChannel(ch);
+    if (!channels.length) {
+      app.innerHTML = '<p class="state">Aucune chaîne disponible.</p>';
+      return;
     }
+
+    allData = await Promise.all(channels.map(async ch => {
+      try {
+        const r = await fetch(`feeds/${ch.slug}.entries.json`);
+        const entries = r.ok ? await r.json() : [];
+        entries.sort((a, b) => new Date(b.published) - new Date(a.published));
+        return { ch, entries };
+      } catch (_) { return { ch, entries: [] }; }
+    }));
+
+    app.innerHTML = '';
+    app.appendChild(buildRecents());
+
+    const noRes = document.createElement('div');
+    noRes.id = 'no-results';
+    noRes.className = 'no-results';
+    noRes.hidden = true;
+    noRes.textContent = 'Aucun épisode trouvé.';
+    app.appendChild(noRes);
+
+    for (const { ch, entries } of allData) {
+      app.appendChild(buildChannel(ch, entries));
+    }
+
+    setupSearch();
 
     if (location.hash) {
       const el = document.querySelector(location.hash);
