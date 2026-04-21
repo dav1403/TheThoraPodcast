@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Par Thème — The Thora Podcast</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f0;
+      color: #222;
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 28px 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 2rem; margin-bottom: 6px; }
+    header p  { color: #aab; font-size: 0.95rem; margin-bottom: 14px; }
+    .header-nav { font-size: 0.85rem; display: flex; justify-content: center; gap: 20px; }
+    .header-nav a { color: #aab; text-decoration: none; border-bottom: 1px solid rgba(170,170,187,0.4); }
+    .header-nav a:hover { color: #fff; border-color: #fff; }
+
+    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    /* Theme grid */
+    #theme-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .theme-btn {
+      background: #fff;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      transition: border-color .15s, box-shadow .15s, transform .12s;
+    }
+    .theme-btn:hover { border-color: #1a1a2e; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .theme-btn.active { border-color: #e87722; background: #fff8f3; }
+    .theme-btn .theme-name { font-size: 0.88rem; font-weight: 600; color: #222; }
+    .theme-btn .theme-count { font-size: 0.72rem; color: #aaa; margin-top: 3px; }
+
+    /* Episodes panel */
+    #episodes-panel { display: none; }
+    #episodes-panel.visible { display: block; }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+    .panel-title { font-size: 1.25rem; font-weight: 700; }
+    .panel-close {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      color: #666;
+      cursor: pointer;
+    }
+    .panel-close:hover { background: #eee; }
+
+    .episode-list { list-style: none; }
+    .ep-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      margin-bottom: 10px;
+      display: flex;
+      gap: 14px;
+      padding: 13px 16px;
+      align-items: flex-start;
+    }
+    .ep-thumb {
+      width: 80px; height: 54px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background: #ddd;
+    }
+    .ep-thumb-ph {
+      width: 80px; height: 54px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background: #e8e8e8;
+    }
+    .ep-body { flex: 1; min-width: 0; }
+    .ep-ch {
+      font-size: 0.68rem;
+      color: #e87722;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+    .ep-title {
+      font-weight: 600;
+      font-size: 0.88rem;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ep-date { font-size: 0.73rem; color: #888; margin-bottom: 6px; }
+    .ep-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+    .ep-tag {
+      font-size: 0.65rem;
+      background: #f0f0f0;
+      color: #555;
+      border-radius: 10px;
+      padding: 2px 8px;
+    }
+    .play-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 13px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .play-btn:hover { background: #2d2d50; }
+    .play-btn.playing { background: #e87722; }
+    .play-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
+
+    .state {
+      padding: 28px 20px;
+      text-align: center;
+      color: #888;
+      font-size: 0.9rem;
+    }
+    .state.loading::before {
+      content: '';
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #ccc;
+      border-top-color: #555;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Persistent player */
+    #player {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #1a1a2e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      box-shadow: 0 -2px 16px rgba(0,0,0,.25);
+      z-index: 200;
+      transform: translateY(0);
+      transition: transform .25s ease;
+    }
+    #player.hidden { transform: translateY(100%); }
+    #player-art {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #333;
+      flex-shrink: 0;
+    }
+    #player-info { min-width: 0; flex: 1; }
+    #player-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #player-channel { font-size: 0.68rem; color: #99a; }
+    #player-audio {
+      flex: 2;
+      min-width: 120px;
+      height: 32px;
+      accent-color: #e87722;
+    }
+    #player-close {
+      background: none;
+      border: none;
+      color: #778;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    #player-close:hover { color: #fff; }
+
+    @media (max-width: 500px) {
+      .ep-thumb, .ep-thumb-ph { display: none; }
+      #player-art { display: none; }
+      #theme-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>The Thora Podcast</h1>
+  <p>Cours de Torah par thème</p>
+  <div class="header-nav">
+    <a href="index.html">Accueil</a>
+    <a href="links.html">S'abonner</a>
+    <a href="parasha.html">Par Paracha</a>
+  </div>
+</header>
+
+<main>
+  <div id="theme-grid"><div class="state loading">Chargement…</div></div>
+
+  <div id="episodes-panel">
+    <div class="panel-header">
+      <div class="panel-title" id="panel-title"></div>
+      <button class="panel-close" id="panel-close">Fermer ✕</button>
+    </div>
+    <ul class="episode-list" id="episode-list"></ul>
+  </div>
+</main>
+
+<div id="player" class="hidden">
+  <img id="player-art" src="" alt="">
+  <div id="player-info">
+    <div id="player-title"></div>
+    <div id="player-channel"></div>
+  </div>
+  <audio id="player-audio" controls></audio>
+  <button id="player-close" title="Fermer">✕</button>
+</div>
+
+<script>
+  const THEMES = [
+    "Chabbat","Tefila","Téchouva","Emouna","Etude de Torah","Moussar",
+    "Halakha","Kabbala & Spiritualité","Mariage & Famille",
+    "Roch Hachana & Yom Kippour","Souccot & Sim'hat Torah","Hanoucca",
+    "Pourim","Pessa'h","Chavouot","Paracha","Histoire juive",
+    "Am Israël & Actualité","Santé & Réfoua","Parnassa"
+  ];
+
+  const CHANNELS = [
+    { slug: "rabbin-jonas",         name: "Rabbin Jonas" },
+    { slug: "rav-barak-ben-nissan", name: "Rav Barak Ben Nissan" },
+    { slug: "rav-itshak-cohen",     name: "Rav Itshak Cohen" },
+    { slug: "rav-liran-ishai",      name: "Rav Liran Ishaï" },
+    { slug: "rav-meir-david-shmueli", name: "Rav Meir David Shmueli" },
+    { slug: "rav-menahem-sakhoun",  name: "Rav Menahem Sakhoun" },
+    { slug: "rav-ruben-attal",      name: "Rav Ruben Attal" },
+    { slug: "rav-yaakov-sitruk",    name: "Rav Yaakov Sitruk" },
+    { slug: "rav-yonathan-mergui",  name: "Rav Yonathan Mergui" },
+  ];
+
+  let allData = [];        // [{ ch, entries }]
+  let themeIndex = {};     // theme -> [{ep, ch, globalIdx}]
+  let activeBtn  = null;
+  let currentTheme = null;
+
+  const playerEl    = document.getElementById('player');
+  const playerAudio = document.getElementById('player-audio');
+  const playerTitle = document.getElementById('player-title');
+  const playerCh    = document.getElementById('player-channel');
+  const playerArt   = document.getElementById('player-art');
+
+  function playIcon()  { return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`; }
+  function pauseIcon() { return `<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>`; }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function formatDate(iso) {
+    return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+  }
+
+  function loadInPlayer(ep, chName, slug) {
+    playerTitle.textContent = ep.title;
+    playerCh.textContent    = chName;
+    playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
+    playerAudio.src         = ep.audio_url;
+    playerAudio.play();
+    playerEl.classList.remove('hidden');
+  }
+
+  // Global click delegation
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.play-btn[data-gidx]');
+    if (btn) {
+      const gidx = +btn.dataset.gidx;
+      const item = allEpisodes[gidx];
+      if (!item) return;
+      if (btn === activeBtn) {
+        if (playerAudio.paused) {
+          playerAudio.play();
+          btn.classList.add('playing');
+          btn.innerHTML = pauseIcon() + ' En cours…';
+        } else {
+          playerAudio.pause();
+          btn.classList.remove('playing');
+          btn.innerHTML = playIcon() + ' Écouter';
+        }
+        return;
+      }
+      if (activeBtn) {
+        activeBtn.classList.remove('playing');
+        activeBtn.innerHTML = playIcon() + ' Écouter';
+      }
+      activeBtn = btn;
+      btn.classList.add('playing');
+      btn.innerHTML = pauseIcon() + ' En cours…';
+      loadInPlayer(item.ep, item.ch.name, item.ch.slug);
+    }
+  });
+
+  document.getElementById('player-close').addEventListener('click', () => {
+    playerAudio.pause();
+    playerEl.classList.add('hidden');
+    if (activeBtn) {
+      activeBtn.classList.remove('playing');
+      activeBtn.innerHTML = playIcon() + ' Écouter';
+      activeBtn = null;
+    }
+  });
+
+  playerAudio.addEventListener('ended', () => {
+    if (activeBtn) {
+      activeBtn.classList.remove('playing');
+      activeBtn.innerHTML = playIcon() + ' Écouter';
+      activeBtn = null;
+    }
+  });
+
+  document.getElementById('panel-close').addEventListener('click', () => {
+    document.getElementById('episodes-panel').classList.remove('visible');
+    document.querySelectorAll('.theme-btn.active').forEach(b => b.classList.remove('active'));
+    currentTheme = null;
+    window.location.hash = '';
+  });
+
+  let allEpisodes = []; // flat array for gidx lookup
+
+  async function loadAll() {
+    const results = await Promise.allSettled(
+      CHANNELS.map(ch =>
+        fetch(`feeds/${ch.slug}.entries.json`)
+          .then(r => r.ok ? r.json() : [])
+          .then(entries => ({ ch, entries }))
+      )
+    );
+    allData = results
+      .filter(r => r.status === 'fulfilled')
+      .map(r => r.value);
+
+    // Build flat array and theme index
+    THEMES.forEach(t => themeIndex[t] = []);
+    allData.forEach(({ ch, entries }) => {
+      entries.forEach(ep => {
+        const gidx = allEpisodes.length;
+        allEpisodes.push({ ep, ch, gidx });
+        (ep.tags || []).forEach(tag => {
+          if (themeIndex[tag]) themeIndex[tag].push({ ep, ch, gidx });
+        });
+      });
+    });
+
+    // Sort each theme by date desc
+    Object.values(themeIndex).forEach(arr =>
+      arr.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published))
+    );
+
+    renderGrid();
+
+    const hash = window.location.hash.replace('#', '');
+    if (hash) openTheme(decodeURIComponent(hash));
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('theme-grid');
+    grid.innerHTML = THEMES.map(t => {
+      const count = themeIndex[t] ? themeIndex[t].length : 0;
+      return `<button class="theme-btn" data-theme="${escapeHtml(t)}">
+        <div class="theme-name">${escapeHtml(t)}</div>
+        <div class="theme-count">${count} épisode${count !== 1 ? 's' : ''}</div>
+      </button>`;
+    }).join('');
+
+    grid.addEventListener('click', e => {
+      const btn = e.target.closest('.theme-btn');
+      if (!btn) return;
+      const theme = btn.dataset.theme;
+      if (currentTheme === theme) {
+        document.getElementById('episodes-panel').classList.remove('visible');
+        btn.classList.remove('active');
+        currentTheme = null;
+        window.location.hash = '';
+        return;
+      }
+      document.querySelectorAll('.theme-btn.active').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      openTheme(theme);
+    });
+  }
+
+  function openTheme(theme) {
+    currentTheme = theme;
+    window.location.hash = encodeURIComponent(theme);
+
+    const panel = document.getElementById('episodes-panel');
+    document.getElementById('panel-title').textContent = theme;
+    const list = document.getElementById('episode-list');
+    const items = themeIndex[theme] || [];
+
+    if (items.length === 0) {
+      list.innerHTML = `<li class="state">Aucun épisode pour ce thème.</li>`;
+    } else {
+      list.innerHTML = items.map(({ ep, ch, gidx }) => {
+        const thumb = ep.thumbnail
+          ? `<img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+          : `<div class="ep-thumb-ph"></div>`;
+        const otherTags = (ep.tags || []).filter(t => t !== theme);
+        const tagPills  = otherTags.length
+          ? `<div class="ep-tags">${otherTags.map(t => `<span class="ep-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+          : '';
+        const playBtn = ep.audio_url
+          ? `<button class="play-btn" data-gidx="${gidx}">${playIcon()} Écouter</button>`
+          : '';
+        return `<li class="ep-card">
+          ${thumb}
+          <div class="ep-body">
+            <div class="ep-ch">${escapeHtml(ch.name)}</div>
+            <div class="ep-title" title="${escapeHtml(ep.title)}">${escapeHtml(ep.title)}</div>
+            <div class="ep-date">${formatDate(ep.published)}</div>
+            ${tagPills}${playBtn}
+          </div>
+        </li>`;
+      }).join('');
+    }
+
+    panel.classList.add('visible');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Sync active button highlight
+    document.querySelectorAll('.theme-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.theme === theme);
+    });
+  }
+
+  loadAll();
+</script>
+</body>
+</html>
