@@ -380,6 +380,18 @@ function pauseIcon() { return `<svg viewBox="0 0 10 10" fill="currentColor"><rec
 document.addEventListener('click', e => {
   const btn = e.target.closest('.play-btn[data-audio]');
   if (!btn) return;
+  if (btn === activeBtn) {
+    if (playerAudio.paused) {
+      playerAudio.play();
+      btn.classList.add('playing');
+      btn.innerHTML = pauseIcon() + ' En cours…';
+    } else {
+      playerAudio.pause();
+      btn.classList.remove('playing');
+      btn.innerHTML = playIcon() + ' Écouter';
+    }
+    return;
+  }
   if (activeBtn && activeBtn !== btn) {
     activeBtn.classList.remove('playing');
     activeBtn.innerHTML = playIcon() + ' Écouter';

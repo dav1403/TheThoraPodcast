@@ -382,6 +382,18 @@
   document.addEventListener('click', e => {
     const btn = e.target.closest('.play-btn[data-slug]');
     if (btn) {
+      if (btn === activeBtn) {
+        if (playerAudio.paused) {
+          playerAudio.play();
+          btn.classList.add('playing');
+          btn.innerHTML = pauseIcon() + ' En cours…';
+        } else {
+          playerAudio.pause();
+          btn.classList.remove('playing');
+          btn.innerHTML = playIcon() + ' Écouter';
+        }
+        return;
+      }
       const slug = btn.dataset.slug;
       const idx  = +btn.dataset.idx;
       const d    = allData.find(x => x.ch.slug === slug);
