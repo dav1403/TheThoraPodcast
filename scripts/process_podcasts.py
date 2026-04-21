@@ -165,13 +165,16 @@ def get_channel_info(channel_id: str) -> dict:
 
 def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
     """
-    Fetch the latest 10 videos from the channel.
+    Fetch the latest 10 videos from the channel's uploads playlist.
+    Uses playlistItems (1 quota unit) instead of search (100 quota units).
     Return only those whose IDs are not in already_processed.
     """
+    # Uploads playlist: replace leading "UC" with "UU"
+    playlist_id = "UU" + channel_id[2:]
     url = (
-        f"https://www.googleapis.com/youtube/v3/search"
-        f"?key={API_KEY}&channelId={channel_id}"
-        f"&part=snippet,id&order=date&maxResults=10&type=video"
+        f"https://www.googleapis.com/youtube/v3/playlistItems"
+        f"?key={API_KEY}&playlistId={playlist_id}"
+        f"&part=snippet&maxResults=10"
     )
     r = requests.get(url)
     data = r.json()
@@ -184,14 +187,15 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
 
     new_videos = []
     for item in data["items"]:
-        vid_id = item["id"]["videoId"]
+        snippet = item["snippet"]
+        vid_id  = snippet["resourceId"]["videoId"]
         if vid_id not in already_processed:
-            thumbs = item["snippet"]["thumbnails"]
+            thumbs = snippet.get("thumbnails", {})
             new_videos.append({
                 "id":          vid_id,
-                "title":       html.unescape(item["snippet"]["title"]),
-                "description": html.unescape(item["snippet"].get("description", "")),
-                "published":   item["snippet"]["publishedAt"],
+                "title":       html.unescape(snippet["title"]),
+                "description": html.unescape(snippet.get("description", "")),
+                "published":   snippet["publishedAt"],
                 "thumbnail":   (thumbs.get("maxres") or thumbs.get("high") or {}).get("url", ""),
                 "url":         f"https://www.youtube.com/watch?v={vid_id}",
             })

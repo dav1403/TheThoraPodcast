@@ -54,36 +54,48 @@ def save_backfill_state(state: dict):
     BACKFILL_STATE_FILE.write_text(json.dumps(state, indent=2))
 
 
-def get_historical_videos(channel_id: str, before_date: str,
-                          already_processed: set, max_results: int = 5) -> list[dict]:
-    """Fetch videos published strictly before before_date, excluding already processed."""
+def get_next_playlist_page(channel_id: str, page_token: str | None,
+                           already_processed: set, before_date: str) -> tuple[list[dict], str | None]:
+    """
+    Fetch one page of the channel's uploads playlist (newest → oldest).
+    Uses playlistItems (1 quota unit) instead of search (100 quota units).
+    Returns (videos_before_date_not_yet_processed, next_page_token_or_None).
+    """
+    playlist_id = "UU" + channel_id[2:]
     url = (
-        f"https://www.googleapis.com/youtube/v3/search"
-        f"?key={API_KEY}&channelId={channel_id}"
-        f"&part=snippet,id&order=date&maxResults={max_results}"
-        f"&publishedBefore={before_date}&type=video"
+        f"https://www.googleapis.com/youtube/v3/playlistItems"
+        f"?key={API_KEY}&playlistId={playlist_id}"
+        f"&part=snippet&maxResults=50"
     )
+    if page_token:
+        url += f"&pageToken={page_token}"
+
     r = requests.get(url)
     data = r.json()
 
     if "error" in data:
         raise Exception(f"YouTube API error: {data['error']['message']}")
 
+    cutoff = datetime.fromisoformat(before_date.replace("Z", "+00:00"))
     videos = []
     for item in data.get("items", []):
-        vid_id = item["id"]["videoId"]
-        if vid_id in already_processed:
+        snippet = item["snippet"]
+        vid_id  = snippet["resourceId"]["videoId"]
+        pub     = datetime.fromisoformat(snippet["publishedAt"].replace("Z", "+00:00"))
+        if pub >= cutoff or vid_id in already_processed:
             continue
-        thumbs = item["snippet"]["thumbnails"]
+        thumbs = snippet.get("thumbnails", {})
         videos.append({
             "id":          vid_id,
-            "title":       html.unescape(item["snippet"]["title"]),
-            "description": html.unescape(item["snippet"].get("description", "")),
-            "published":   item["snippet"]["publishedAt"],
+            "title":       html.unescape(snippet["title"]),
+            "description": html.unescape(snippet.get("description", "")),
+            "published":   snippet["publishedAt"],
             "thumbnail":   (thumbs.get("maxres") or thumbs.get("high") or {}).get("url", ""),
             "url":         f"https://www.youtube.com/watch?v={vid_id}",
         })
-    return videos
+
+    next_token = data.get("nextPageToken")
+    return videos, next_token
 
 
 def backfill_channel(channel_cfg: dict, processed: dict, state: dict) -> int:
@@ -108,19 +120,30 @@ def backfill_channel(channel_cfg: dict, processed: dict, state: dict) -> int:
 
     # Find our oldest episode to use as the publishedBefore boundary
     oldest_date = min(e["published"] for e in entries)
-    # YouTube API wants RFC 3339 with Z suffix
     if oldest_date.endswith("+00:00"):
         oldest_date = oldest_date.replace("+00:00", "Z")
 
     already_done = set(processed.get(slug, []))
     already_done.update(e["video_id"] for e in entries)
 
-    print(f"  [{slug}] Fetching history before {oldest_date}...")
-    candidates = get_historical_videos(channel_id, oldest_date, already_done, max_results=5)
+    # Resume pagination from where we left off (1 quota unit vs 100 for search)
+    page_token = ch_state.get("page_token")
+    print(f"  [{slug}] Fetching playlist page (token={page_token!r}) before {oldest_date}...")
+    candidates, next_token = get_next_playlist_page(channel_id, page_token, already_done, oldest_date)
+
+    # Advance the stored page token regardless of whether we found candidates
+    if next_token:
+        ch_state["page_token"] = next_token
+    else:
+        ch_state.pop("page_token", None)
+        ch_state["exhausted"] = True
+        save_backfill_state(state)
 
     if not candidates:
-        print(f"  [{slug}] No more historical videos — marking exhausted.")
-        ch_state["exhausted"] = True
+        if ch_state.get("exhausted"):
+            print(f"  [{slug}] No more historical videos — marking exhausted.")
+        else:
+            print(f"  [{slug}] No new candidates on this page, advancing to next.")
         save_backfill_state(state)
         return 0
 
