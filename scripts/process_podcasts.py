@@ -23,6 +23,7 @@ import html
 import requests
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote, urlsplit, urlunsplit
 from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
 import boto3
@@ -595,7 +596,9 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
         fe.title(entry["title"])
         fe.description(entry.get("description") or entry["title"])
         fe.published(entry["published"])
-        fe.enclosure(entry["audio_url"], str(entry.get("file_size", 0)), "audio/mpeg")
+        _u = urlsplit(entry["audio_url"])
+        _safe_url = urlunsplit(_u._replace(path=quote(_u.path, safe="/-_.~()")))
+        fe.enclosure(_safe_url, str(entry.get("file_size", 0)), "audio/mpeg")
         fe.podcast.itunes_duration(str(entry.get("duration_secs", 0)))
         fe.podcast.itunes_explicit("no")
         if entry.get("thumbnail"):
