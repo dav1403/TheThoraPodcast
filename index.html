@@ -21,7 +21,15 @@
       text-align: center;
     }
     header h1 { font-size: 2rem; margin-bottom: 6px; }
-    header p  { color: #aab; font-size: 0.95rem; }
+    header p  { color: #aab; font-size: 0.95rem; margin-bottom: 14px; }
+
+    .header-nav { font-size: 0.85rem; }
+    .header-nav a {
+      color: #aab;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(170,170,187,0.4);
+    }
+    .header-nav a:hover { color: #fff; border-color: #fff; }
 
     main { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
 
@@ -151,6 +159,9 @@
 <header>
   <h1>The Thora Podcast</h1>
   <p>Cours de Torah depuis YouTube — flux RSS prêts pour Spotify for Podcasters</p>
+  <div class="header-nav">
+    <a href="links.html">S'abonner sur les plateformes →</a>
+  </div>
 </header>
 
 <main id="app"></main>
@@ -200,6 +211,7 @@
   async function loadChannel(ch) {
     const section = document.createElement('section');
     section.className = 'channel';
+    section.id = ch.slug;
     const feedUrl = `feeds/${ch.slug}.xml`;
     section.innerHTML = `
       <div class="channel-header">

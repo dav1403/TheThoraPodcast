@@ -21,11 +21,16 @@
       text-align: center;
     }
     header h1 { font-size: 2rem; margin-bottom: 6px; }
-    header p  { color: #aab; font-size: 0.95rem; }
-    .header-nav {
-      margin-top: 14px;
-      font-size: 0.85rem;
+    header p  { color: #aab; font-size: 0.95rem; margin-bottom: 6px; }
+
+    .header-stats {
+      font-size: 0.88rem;
+      color: #9ab;
+      min-height: 1.3em;
+      margin-bottom: 12px;
     }
+
+    .header-nav { font-size: 0.85rem; }
     .header-nav a {
       color: #aab;
       text-decoration: none;
@@ -33,12 +38,35 @@
     }
     .header-nav a:hover { color: #fff; border-color: #fff; }
 
+    .sort-bar {
+      max-width: 700px;
+      margin: 20px auto 0;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #777;
+    }
+    .sort-btn {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      padding: 5px 14px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      color: #666;
+      transition: all .15s;
+    }
+    .sort-btn.active          { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .sort-btn:not(.active):hover { border-color: #aaa; color: #333; }
+
     main {
       max-width: 700px;
       margin: 0 auto;
-      padding: 32px 16px 60px;
+      padding: 16px 16px 60px;
       display: grid;
-      gap: 20px;
+      gap: 16px;
     }
 
     .card {
@@ -46,7 +74,7 @@
       border-radius: 14px;
       box-shadow: 0 1px 4px rgba(0,0,0,.08);
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 18px;
       padding: 18px 20px;
     }
@@ -62,20 +90,36 @@
 
     .card-body { flex: 1; min-width: 0; }
 
+    .card-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
     .card-name {
       font-size: 1rem;
       font-weight: 700;
-      margin-bottom: 10px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      min-width: 0;
     }
+    .episodes-link {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      text-decoration: none;
+      border: 1px solid #1a1a2e;
+      border-radius: 4px;
+      padding: 3px 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all .15s;
+    }
+    .episodes-link:hover { background: #1a1a2e; color: #fff; }
 
-    .platform-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .platform-links { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .platform-btn {
       display: inline-flex;
@@ -97,15 +141,33 @@
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
 
-    .no-platforms {
-      font-size: 0.78rem;
-      color: #aaa;
+    .no-platforms { font-size: 0.78rem; color: #aaa; font-style: italic; }
+
+    .card-stats {
+      margin-top: 9px;
+      font-size: 0.72rem;
+      color: #999;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0 4px;
+    }
+    .card-stats strong { color: #555; font-weight: 600; }
+    .latest-title {
+      color: #666;
       font-style: italic;
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      vertical-align: bottom;
     }
 
     @media (max-width: 480px) {
       .card { flex-direction: column; align-items: flex-start; }
       .card-art { width: 60px; height: 60px; }
+      .latest-title { max-width: 160px; }
     }
   </style>
 </head>
@@ -114,10 +176,17 @@
 <header>
   <h1>The Thora Podcast</h1>
   <p>Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-stats" id="header-stats">Chargement…</div>
   <div class="header-nav">
     <a href="index.html">Voir les épisodes</a>
   </div>
 </header>
+
+<div class="sort-bar">
+  <span>Trier par :</span>
+  <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')">Dernier cours</button>
+  <button class="sort-btn"        id="sort-alpha"  onclick="setSort('alpha')">Alphabétique</button>
+</div>
 
 <main id="app"></main>
 
@@ -153,9 +222,21 @@
       .replace(/"/g, '&quot;');
   }
 
-  function renderCard(ch) {
-    const artSrc = `artwork/${ch.slug}.png`;
-    const platforms = ch.platforms || {};
+  function formatDate(iso) {
+    return new Date(iso).toLocaleDateString('fr-FR', {
+      day: 'numeric', month: 'long', year: 'numeric'
+    });
+  }
+
+  function latestEpisode(entries) {
+    if (!entries.length) return null;
+    return entries.reduce((best, ep) =>
+      new Date(ep.published) > new Date(best.published) ? ep : best
+    );
+  }
+
+  function renderCard(ch, entries) {
+    const platforms   = ch.platforms || {};
     const activeLinks = Object.entries(platforms).filter(([, url]) => url && url.trim());
 
     const badges = activeLinks.map(([key, url]) => {
@@ -168,19 +249,63 @@
       ? `<div class="platform-links">${badges}</div>`
       : `<span class="no-platforms">Bientôt disponible</span>`;
 
+    const count  = entries.length;
+    const latest = latestEpisode(entries);
+    const statsHtml = count > 0
+      ? `<div class="card-stats">
+           <strong>${count}</strong>&nbsp;épisode${count > 1 ? 's' : ''}
+           ${latest
+             ? `&nbsp;·&nbsp;Dernier&nbsp;:&nbsp;<span class="latest-title" title="${escapeHtml(latest.title)}">${escapeHtml(latest.title)}</span>&nbsp;—&nbsp;${formatDate(latest.published)}`
+             : ''}
+         </div>`
+      : '';
+
     return `
       <div class="card">
-        <img class="card-art" src="${escapeHtml(artSrc)}" alt="${escapeHtml(ch.podcast_author)}"
+        <img class="card-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.podcast_author)}"
              onerror="this.style.background='#e0e0e0';this.removeAttribute('src')">
         <div class="card-body">
-          <div class="card-name">${escapeHtml(ch.podcast_author)}</div>
+          <div class="card-name-row">
+            <div class="card-name">${escapeHtml(ch.podcast_author)}</div>
+            <a class="episodes-link" href="index.html#${escapeHtml(ch.slug)}">Épisodes →</a>
+          </div>
           ${linksHtml}
+          ${statsHtml}
         </div>
       </div>`;
   }
 
+  let allData     = [];
+  let currentSort = 'latest';
+
+  function getSorted(sort) {
+    const data = [...allData];
+    if (sort === 'alpha') {
+      data.sort((a, b) => a.ch.podcast_author.localeCompare(b.ch.podcast_author, 'fr'));
+    } else {
+      data.sort((a, b) => {
+        const la = latestEpisode(a.entries);
+        const lb = latestEpisode(b.entries);
+        if (!la && !lb) return 0;
+        if (!la) return 1;
+        if (!lb) return -1;
+        return new Date(lb.published) - new Date(la.published);
+      });
+    }
+    return data;
+  }
+
+  function setSort(sort) {
+    currentSort = sort;
+    document.getElementById('sort-latest').classList.toggle('active', sort === 'latest');
+    document.getElementById('sort-alpha').classList.toggle('active', sort === 'alpha');
+    document.getElementById('app').innerHTML =
+      getSorted(sort).map(({ ch, entries }) => renderCard(ch, entries)).join('');
+  }
+
   (async () => {
     const app = document.getElementById('app');
+
     let channels = [];
     try {
       const res = await fetch('channels.json');
@@ -189,10 +314,25 @@
 
     if (!channels.length) {
       app.innerHTML = '<p style="text-align:center;color:#aaa;padding:40px">Aucune chaîne disponible.</p>';
+      document.getElementById('header-stats').textContent = '';
       return;
     }
 
-    app.innerHTML = channels.map(renderCard).join('');
+    allData = await Promise.all(channels.map(async ch => {
+      try {
+        const r = await fetch(`feeds/${ch.slug}.entries.json`);
+        const entries = r.ok ? await r.json() : [];
+        return { ch, entries };
+      } catch (_) {
+        return { ch, entries: [] };
+      }
+    }));
+
+    const totalEpisodes = allData.reduce((sum, { entries }) => sum + entries.length, 0);
+    document.getElementById('header-stats').textContent =
+      `${channels.length} podcasts en ligne · ${totalEpisodes} épisode${totalEpisodes > 1 ? 's' : ''} disponibles`;
+
+    setSort('latest');
   })();
 </script>
 
