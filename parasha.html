@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paracha — The Thora Podcast</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f0;
+      color: #222;
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 28px 20px;
+      text-align: center;
+    }
+    header h1 { font-size: 2rem; margin-bottom: 6px; }
+    header p  { color: #aab; font-size: 0.95rem; margin-bottom: 14px; }
+    .header-nav { font-size: 0.85rem; display: flex; justify-content: center; gap: 20px; }
+    .header-nav a { color: #aab; text-decoration: none; border-bottom: 1px solid rgba(170,170,187,0.4); }
+    .header-nav a:hover { color: #fff; border-color: #fff; }
+
+    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    /* Current parasha banner */
+    #current-banner {
+      background: #1a1a2e;
+      color: #fff;
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    #current-banner:hover { background: #2d2d50; }
+    #current-banner.loading { opacity: .6; cursor: default; }
+    .banner-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #99a; margin-bottom: 4px; }
+    .banner-name  { font-size: 1.4rem; font-weight: 700; }
+    .banner-he    { font-size: 1.1rem; color: #aab; direction: rtl; }
+    .banner-arrow { font-size: 1.4rem; color: #aab; flex-shrink: 0; }
+
+    /* Book sections */
+    .book-section { margin-bottom: 24px; }
+    .book-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #999;
+      margin-bottom: 10px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      border: 1px solid #ddd;
+      background: #fff;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .chip.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .chip.has-episodes { border-color: #bbb; }
+    .chip-count {
+      background: #e8e8e8;
+      color: #555;
+      font-size: 0.68rem;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 6px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .chip.active .chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+    .chip.has-episodes .chip-count { background: #1a1a2e; color: #fff; }
+    .chip.active.has-episodes .chip-count { background: #e87722; }
+
+    /* Results */
+    #results { margin-top: 28px; }
+    #results[hidden] { display: none; }
+    .results-header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .results-title { font-size: 1.2rem; font-weight: 700; }
+    .results-he { font-size: 1rem; color: #888; direction: rtl; }
+    .results-count { font-size: 0.78rem; color: #aaa; margin-left: auto; }
+
+    .no-results {
+      text-align: center;
+      color: #aaa;
+      padding: 40px 20px;
+      background: #fff;
+      border-radius: 12px;
+      font-size: 0.9rem;
+    }
+
+    /* Channel groups in results */
+    .result-channel {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .result-channel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 18px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .result-channel-art {
+      width: 34px; height: 34px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #e0e0e0;
+    }
+    .result-channel-name { font-size: 0.95rem; font-weight: 600; }
+    .result-channel-count { margin-left: auto; font-size: 0.75rem; color: #aaa; }
+
+    .episode-list { list-style: none; }
+    .episode {
+      display: flex;
+      gap: 13px;
+      padding: 12px 18px;
+      border-bottom: 1px solid #f5f5f5;
+      align-items: flex-start;
+    }
+    .episode:last-child { border-bottom: none; }
+    .episode-thumb {
+      width: 72px; height: 48px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0;
+      background: #e0e0e0;
+    }
+    .episode-thumb-ph {
+      width: 72px; height: 48px;
+      border-radius: 5px;
+      flex-shrink: 0;
+      background: #e8e8e8;
+    }
+    .episode-body { flex: 1; min-width: 0; }
+    .episode-title {
+      font-weight: 600;
+      font-size: 0.86rem;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .episode-date { font-size: 0.72rem; color: #888; margin-bottom: 5px; }
+    .play-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .play-btn:hover { background: #2d2d50; }
+    .play-btn.playing { background: #e87722; }
+    .play-btn svg { width: 9px; height: 9px; }
+
+    /* Persistent player */
+    #player {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #1a1a2e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      box-shadow: 0 -2px 16px rgba(0,0,0,.25);
+      z-index: 200;
+      transition: transform .25s ease;
+    }
+    #player.hidden { transform: translateY(100%); }
+    #player-art { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; background: #333; flex-shrink: 0; }
+    #player-info { min-width: 0; flex: 1; }
+    #player-title { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #player-channel { font-size: 0.68rem; color: #99a; }
+    #player-audio { flex: 2; min-width: 120px; height: 32px; accent-color: #e87722; }
+    #player-close { background: none; border: none; color: #778; font-size: 1.1rem; cursor: pointer; padding: 4px 6px; line-height: 1; flex-shrink: 0; }
+    #player-close:hover { color: #fff; }
+
+    .state { padding: 28px 20px; text-align: center; color: #888; font-size: 0.9rem; }
+    .state.loading::before {
+      content: '';
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #ccc;
+      border-top-color: #555;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 500px) {
+      .episode-thumb, .episode-thumb-ph { display: none; }
+      #player-art { display: none; }
+      .banner-he { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>The Thora Podcast</h1>
+  <p>Cours par Paracha</p>
+  <nav class="header-nav">
+    <a href="index.html">← Épisodes</a>
+    <a href="links.html">S'abonner</a>
+  </nav>
+</header>
+
+<main>
+  <div id="current-banner" class="loading">
+    <div>
+      <div class="banner-label">Paracha de la semaine</div>
+      <div class="banner-name" id="banner-name">Chargement…</div>
+    </div>
+    <div class="banner-he" id="banner-he"></div>
+    <div class="banner-arrow">→</div>
+  </div>
+
+  <div id="books-container">
+    <div class="state loading">Chargement des épisodes…</div>
+  </div>
+
+  <div id="results" hidden>
+    <div class="results-header">
+      <div class="results-title" id="results-title"></div>
+      <div class="results-he" id="results-he"></div>
+      <div class="results-count" id="results-count"></div>
+    </div>
+    <div id="results-body"></div>
+  </div>
+</main>
+
+<div id="player" class="hidden">
+  <img id="player-art" src="" alt="">
+  <div id="player-info">
+    <div id="player-title"></div>
+    <div id="player-channel"></div>
+  </div>
+  <audio id="player-audio" controls></audio>
+  <button id="player-close">✕</button>
+</div>
+
+<script>
+// ─── Parasha data ────────────────────────────────────────────────────────────
+const BOOKS = [
+  { name: 'Bereshit', parashiot: ['bereshit','noach','lech-lecha','vayera','chayei-sarah','toledot','vayetze','vayishlach','vayeshev','miketz','vayigash','vayechi'] },
+  { name: 'Shemot',   parashiot: ['shemot','vaera','bo','beshalach','yitro','mishpatim','terumah','tetzaveh','ki-tisa','vayakhel','pekudei'] },
+  { name: 'Vayikra',  parashiot: ['vayikra','tzav','shemini','tazria','metzora','acharei-mot','kedoshim','emor','behar','bechukotai'] },
+  { name: 'Bamidbar', parashiot: ['bamidbar','nasso','behaalotcha','shlach','korah','chukat','balak','pinchas','matot','masei'] },
+  { name: 'Devarim',  parashiot: ['devarim','vaetchanan','ekev','reeh','shoftim','ki-teitzei','ki-tavo','nitzavim','vayelech','haazinu','vezot-habracha'] },
+];
+
+const PARASHIOT = {
+  'bereshit':      { fr: 'Bereshit',       he: 'בְּרֵאשִׁית', hebcal: 'Bereshit',      kw: ['bereshit','béréchit','bereschit','beresheet','בראשית'] },
+  'noach':         { fr: 'Noach',          he: 'נֹחַ',        hebcal: 'Noach',          kw: ['noach','noah','noé','נח'] },
+  'lech-lecha':    { fr: 'Lech Lecha',     he: 'לֶךְ-לְךָ',   hebcal: 'Lech-Lecha',    kw: ['lech lecha','lech-lecha','lekh lekha','לך לך'] },
+  'vayera':        { fr: 'Vayera',         he: 'וַיֵּרָא',    hebcal: 'Vayeira',        kw: ['vayera','vayéra','vaiera','vaïera','וירא'] },
+  'chayei-sarah':  { fr: 'Chayei Sarah',   he: 'חַיֵּי שָׂרָה',hebcal: 'Chayei Sara',   kw: ['chayei sarah','hayé sarah','haïé sarah','vie de sarah','חיי שרה'] },
+  'toledot':       { fr: 'Toledot',        he: 'תּוֹלְדֹת',   hebcal: 'Toldot',         kw: ['toledot','toledoth','toldot','תולדות'] },
+  'vayetze':       { fr: 'Vayetze',        he: 'וַיֵּצֵא',    hebcal: 'Vayetzei',       kw: ['vayetze','vayétsé','vayetzé','vaïetsé','vayetse','ויצא'] },
+  'vayishlach':    { fr: 'Vayishlach',     he: 'וַיִּשְׁלַח',  hebcal: 'Vayishlach',    kw: ['vayishlach','vayichlah','vayishlah','וישלח'] },
+  'vayeshev':      { fr: 'Vayeshev',       he: 'וַיֵּשֶׁב',    hebcal: 'Vayeshev',      kw: ['vayeshev','vayéchev','vaïéchev','וישב'] },
+  'miketz':        { fr: 'Miketz',         he: 'מִקֵּץ',      hebcal: 'Miketz',         kw: ['miketz','mikeits','mikets','מקץ'] },
+  'vayigash':      { fr: 'Vayigash',       he: 'וַיִּגַּשׁ',   hebcal: 'Vayigash',      kw: ['vayigash','vayigach','ויגש'] },
+  'vayechi':       { fr: 'Vayechi',        he: 'וַיְחִי',     hebcal: 'Vayechi',        kw: ['vayechi','vayéhi','vayhi','ויחי'] },
+  'shemot':        { fr: 'Shemot',         he: 'שְׁמוֹת',     hebcal: 'Shemot',         kw: ['shemot','chemot','chémot','שמות'] },
+  'vaera':         { fr: "Va'era",         he: 'וָאֵרָא',     hebcal: 'Vaera',          kw: ["va'éra",'vaéra','vaera','vaïéra','וארא'] },
+  'bo':            { fr: 'Bo',             he: 'בֹּא',        hebcal: 'Bo',             kw: ['bo','בא'] },
+  'beshalach':     { fr: 'Beshalach',      he: 'בְּשַׁלַּח',   hebcal: 'Beshallach',    kw: ["béchala'h",'beshalach','béchalah','bechalach','בשלח'] },
+  'yitro':         { fr: 'Yitro',          he: 'יִתְרוֹ',     hebcal: 'Yitro',          kw: ['yitro','jitro','iéthro','יתרו'] },
+  'mishpatim':     { fr: 'Mishpatim',      he: 'מִשְׁפָּטִים', hebcal: 'Mishpatim',     kw: ['mishpatim','michpatim','מישפטים','משפטים'] },
+  'terumah':       { fr: 'Terouma',        he: 'תְּרוּמָה',   hebcal: 'Terumah',        kw: ['terumah','terouma','trouma','תרומה'] },
+  'tetzaveh':      { fr: 'Tetsavé',        he: 'תְּצַוֶּה',   hebcal: 'Tetzaveh',       kw: ['tetzaveh','tetsavé','tetsave','תצוה'] },
+  'ki-tisa':       { fr: 'Ki Tissa',       he: 'כִּי תִשָּׂא', hebcal: 'Ki Tisa',       kw: ['ki tisa','ki tissa','ki-tissa','כי תשא'] },
+  'vayakhel':      { fr: 'Vayakhel',       he: 'וַיַּקְהֵל',  hebcal: 'Vayakhel',       kw: ['vayakhel','vaïaqhel','ויקהל'] },
+  'pekudei':       { fr: 'Pekudei',        he: 'פְקוּדֵי',    hebcal: 'Pekudei',        kw: ['pekudei','pékoudéi','pekoudei','פקודי'] },
+  'vayikra':       { fr: 'Vayikra',        he: 'וַיִּקְרָא',  hebcal: 'Vayikra',        kw: ['vayikra','vayiqra','ויקרא'] },
+  'tzav':          { fr: 'Tsav',           he: 'צַו',         hebcal: 'Tzav',           kw: ['tzav','tsav','צו'] },
+  'shemini':       { fr: 'Chemini',        he: 'שְּׁמִינִי',   hebcal: 'Shemini',        kw: ['shemini','chemini','שמיני'] },
+  'tazria':        { fr: 'Tazria',         he: 'תַזְרִיעַ',   hebcal: 'Tazria',         kw: ['tazria','תזריע'] },
+  'metzora':       { fr: 'Metsora',        he: 'מְּצֹרָע',    hebcal: 'Metzora',        kw: ['metzora','metsora','מצורע'] },
+  'acharei-mot':   { fr: 'Aharei Mot',     he: 'אַחֲרֵי מוֹת', hebcal: 'Achrei Mot',    kw: ['acharei mot','aharei mot','aharé mot','aharet mot','אחרי מות'] },
+  'kedoshim':      { fr: 'Kedochim',       he: 'קְדֹשִׁים',   hebcal: 'Kedoshim',       kw: ['kedoshim','kedochim','קדושים'] },
+  'emor':          { fr: 'Emor',           he: 'אֱמֹר',       hebcal: 'Emor',           kw: ['emor','אמור'] },
+  'behar':         { fr: 'Behar',          he: 'בְּהַר',      hebcal: 'Behar',          kw: ['behar','בהר'] },
+  'bechukotai':    { fr: 'Bechukotaï',     he: 'בְּחֻקֹּתַי', hebcal: 'Bechukotai',    kw: ['bechukotai','bechukotaï','בחקתי'] },
+  'bamidbar':      { fr: 'Bamidbar',       he: 'בְּמִדְבַּר',  hebcal: 'Bamidbar',      kw: ['bamidbar','bamidvar','במדבר'] },
+  'nasso':         { fr: 'Nasso',          he: 'נָשֹׂא',      hebcal: 'Nasso',          kw: ['nasso','נשא'] },
+  'behaalotcha':   { fr: "Beha'alotcha",   he: 'בְּהַעֲלֹתְךָ',hebcal: "Beha'alotcha",  kw: ["beha'alotcha",'behaalotcha','béhaalotéha','בהעלתך'] },
+  'shlach':        { fr: 'Chelah',         he: 'שְׁלַח',      hebcal: "Sh'lach",        kw: ['shlach','shelah','chelah','שלח'] },
+  'korah':         { fr: 'Koré',           he: 'קֹרַח',       hebcal: 'Korach',         kw: ['korah','koré','coré','קרח'] },
+  'chukat':        { fr: 'Houkat',         he: 'חֻקַּת',      hebcal: 'Chukat',         kw: ['chukat','houkat','houqat','חקת'] },
+  'balak':         { fr: 'Balak',          he: 'בָּלָק',      hebcal: 'Balak',          kw: ['balak','בלק'] },
+  'pinchas':       { fr: 'Pinhas',         he: 'פִּינְחָס',   hebcal: 'Pinchas',        kw: ['pinchas','pinhas','pinéhas','פינחס'] },
+  'matot':         { fr: 'Matot',          he: 'מַטּוֹת',     hebcal: 'Matot',          kw: ['matot','מטות'] },
+  'masei':         { fr: 'Massei',         he: 'מַסְעֵי',     hebcal: 'Masei',          kw: ['masei','massé','massei','מסעי'] },
+  'devarim':       { fr: 'Devarim',        he: 'דְּבָרִים',   hebcal: 'Devarim',        kw: ['devarim','dévarim','דברים'] },
+  'vaetchanan':    { fr: "Va'etchanan",    he: 'וָאֶתְחַנַּן', hebcal: 'Vaetchanan',    kw: ["vaetchanan","va'etchanan",'vaétchanan','ואתחנן'] },
+  'ekev':          { fr: 'Eikev',          he: 'עֵקֶב',       hebcal: 'Eikev',          kw: ['ekev','eikev','éqev','עקב'] },
+  'reeh':          { fr: "Ré'é",           he: 'רְאֵה',       hebcal: "Re'eh",          kw: ["reeh","ré'é",'reé','ראה'] },
+  'shoftim':       { fr: 'Choftim',        he: 'שֹׁפְטִים',   hebcal: 'Shoftim',        kw: ['shoftim','choftim','שופטים'] },
+  'ki-teitzei':    { fr: 'Ki Tetsé',       he: 'כִּי-תֵצֵא',  hebcal: 'Ki Teitzei',    kw: ['ki teitzei','ki tetsé','ki-tetsé','כי תצא'] },
+  'ki-tavo':       { fr: 'Ki Tavo',        he: 'כִּי-תָבֹא',  hebcal: 'Ki Tavo',       kw: ['ki tavo','ki-tavo','כי תבוא'] },
+  'nitzavim':      { fr: 'Nitsavim',       he: 'נִצָּבִים',   hebcal: 'Nitzavim',       kw: ['nitzavim','nitsavim','nécavim','נצבים'] },
+  'vayelech':      { fr: 'Vayelech',       he: 'וַיֵּלֶךְ',   hebcal: 'Vayeilech',      kw: ['vayelech','vaïélech','וילך'] },
+  'haazinu':       { fr: "Ha'azinou",      he: 'הַאֲזִינוּ',   hebcal: "Ha'azinu",      kw: ["haazinu","haazinou","ha'azinou",'האזינו'] },
+  'vezot-habracha':{ fr: 'Vézot Habracha', he: 'וְזֹאת הַבְּרָכָה', hebcal: 'Vezot Habracha', kw: ['vezot habracha','vézot habérakha','simhat torah',"sim'hat torah",'וזאת הברכה'] },
+};
+
+// HebCal name → slug
+const HEBCAL_SLUG = {};
+for (const [slug, p] of Object.entries(PARASHIOT)) {
+  HEBCAL_SLUG[p.hebcal.toLowerCase()] = slug;
+}
+
+// ─── Matching ────────────────────────────────────────────────────────────────
+function matchesParasha(title, keywords) {
+  const t = title.toLowerCase();
+  return keywords.some(kw => {
+    const k = kw.toLowerCase();
+    if (/[֐-׿]/.test(k)) return t.includes(k);
+    const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[-']/g, '.');
+    return new RegExp('(?:^|[\\s\\-_:,!?])' + escaped + '(?:[\\s\\-_:,!?]|$)', 'i').test(t);
+  });
+}
+
+function findEpisodesForParasha(slug, allData) {
+  const p = PARASHIOT[slug];
+  if (!p) return [];
+  const results = [];
+  for (const { ch, entries } of allData) {
+    const matching = entries.filter(ep => matchesParasha(ep.title, p.kw));
+    if (matching.length) results.push({ ch, episodes: matching });
+  }
+  return results;
+}
+
+// ─── Player ──────────────────────────────────────────────────────────────────
+const playerEl    = document.getElementById('player');
+const playerAudio = document.getElementById('player-audio');
+let activeBtn = null;
+
+function playIcon()  { return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`; }
+function pauseIcon() { return `<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>`; }
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.play-btn[data-audio]');
+  if (!btn) return;
+  if (activeBtn && activeBtn !== btn) {
+    activeBtn.classList.remove('playing');
+    activeBtn.innerHTML = playIcon() + ' Écouter';
+  }
+  activeBtn = btn;
+  btn.classList.add('playing');
+  btn.innerHTML = pauseIcon() + ' En cours…';
+  document.getElementById('player-title').textContent   = btn.dataset.title;
+  document.getElementById('player-channel').textContent = btn.dataset.channel;
+  document.getElementById('player-art').src             = btn.dataset.art || '';
+  playerAudio.src = btn.dataset.audio;
+  playerAudio.play();
+  playerEl.classList.remove('hidden');
+});
+
+document.getElementById('player-close').addEventListener('click', () => {
+  playerAudio.pause();
+  playerEl.classList.add('hidden');
+  if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn.innerHTML = playIcon() + ' Écouter'; activeBtn = null; }
+});
+playerAudio.addEventListener('ended', () => {
+  if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn.innerHTML = playIcon() + ' Écouter'; activeBtn = null; }
+});
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+}
+
+function renderResults(slug, allData) {
+  const p = PARASHIOT[slug];
+  const groups = findEpisodesForParasha(slug, allData);
+  const total = groups.reduce((s, g) => s + g.episodes.length, 0);
+
+  document.getElementById('results-title').textContent = p.fr;
+  document.getElementById('results-he').textContent    = p.he;
+  document.getElementById('results-count').textContent = total
+    ? `${total} épisode${total > 1 ? 's' : ''}`
+    : '';
+
+  const body = document.getElementById('results-body');
+
+  if (!groups.length) {
+    body.innerHTML = `<div class="no-results">Aucun épisode trouvé pour cette paracha.<br>Les cours sont peut-être titrés différemment.</div>`;
+    document.getElementById('results').hidden = false;
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  body.innerHTML = groups.map(({ ch, episodes }) => `
+    <div class="result-channel">
+      <div class="result-channel-header">
+        <img class="result-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">
+        <div class="result-channel-name">${escapeHtml(ch.name)}</div>
+        <div class="result-channel-count">${episodes.length} épisode${episodes.length > 1 ? 's' : ''}</div>
+      </div>
+      <ul class="episode-list">
+        ${episodes.map(ep => `
+          <li class="episode">
+            ${ep.thumbnail
+              ? `<img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+              : `<div class="episode-thumb-ph"></div>`}
+            <div class="episode-body">
+              <div class="episode-title">${escapeHtml(ep.title)}</div>
+              <div class="episode-date">${formatDate(ep.published)}</div>
+              ${ep.audio_url ? `
+                <button class="play-btn"
+                  data-audio="${escapeHtml(ep.audio_url)}"
+                  data-title="${escapeHtml(ep.title)}"
+                  data-channel="${escapeHtml(ch.name)}"
+                  data-art="${escapeHtml(ep.thumbnail || `artwork/${ch.slug}.png`)}">
+                  ${playIcon()} Écouter
+                </button>` : ''}
+            </div>
+          </li>`).join('')}
+      </ul>
+    </div>`).join('');
+
+  document.getElementById('results').hidden = false;
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function buildBooks(allData) {
+  // Pre-compute counts
+  const counts = {};
+  for (const slug of Object.keys(PARASHIOT)) {
+    counts[slug] = findEpisodesForParasha(slug, allData)
+      .reduce((s, g) => s + g.episodes.length, 0);
+  }
+
+  return BOOKS.map(book => `
+    <div class="book-section">
+      <div class="book-title">${book.name}</div>
+      <div class="chips">
+        ${book.parashiot.map(slug => {
+          const p = PARASHIOT[slug];
+          const c = counts[slug] || 0;
+          return `<button class="chip ${c > 0 ? 'has-episodes' : ''}"
+            data-slug="${slug}" onclick="selectParasha('${slug}')">
+            ${p.fr}
+            <span class="chip-count">${c}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ─── Current parasha ─────────────────────────────────────────────────────────
+async function fetchCurrentParasha() {
+  try {
+    const res = await fetch('https://www.hebcal.com/shabbat?cfg=json&M=on');
+    const data = await res.json();
+    const item = data.items && data.items.find(i => i.category === 'parashat');
+    if (!item) return null;
+    const name = item.title.replace(/^Parashat\s+/i, '').toLowerCase();
+    // Handle combined: "Vayakhel-Pekudei" → try full then first part
+    const slug = HEBCAL_SLUG[name] || HEBCAL_SLUG[name.split('-')[0]];
+    return slug || null;
+  } catch (_) { return null; }
+}
+
+let selectedSlug = null;
+let globalAllData = null;
+
+function selectParasha(slug) {
+  if (!PARASHIOT[slug]) return;
+  selectedSlug = slug;
+  location.hash = slug;
+
+  document.querySelectorAll('.chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.slug === slug);
+  });
+
+  if (globalAllData) renderResults(slug, globalAllData);
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+(async () => {
+  const [currentSlug, channels] = await Promise.all([
+    fetchCurrentParasha(),
+    fetch('channels.json').then(r => r.ok ? r.json() : []).catch(() => []),
+  ]);
+
+  // Update banner
+  const banner = document.getElementById('current-banner');
+  banner.classList.remove('loading');
+  if (currentSlug) {
+    const p = PARASHIOT[currentSlug];
+    document.getElementById('banner-name').textContent = p.fr;
+    document.getElementById('banner-he').textContent   = p.he;
+    banner.onclick = () => selectParasha(currentSlug);
+  } else {
+    document.getElementById('banner-name').textContent = 'Non disponible';
+    banner.style.cursor = 'default';
+    banner.onclick = null;
+  }
+
+  // Load all episodes
+  const enabled = channels.filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
+  globalAllData = await Promise.all(enabled.map(async ch => {
+    try {
+      const r = await fetch(`feeds/${ch.slug}.entries.json`);
+      const entries = r.ok ? await r.json() : [];
+      entries.sort((a, b) => new Date(b.published) - new Date(a.published));
+      return { ch, entries };
+    } catch (_) { return { ch, entries: [] }; }
+  }));
+
+  // Render book chips
+  document.getElementById('books-container').innerHTML = buildBooks(globalAllData);
+
+  // Auto-select from hash or current parasha
+  const hash = location.hash.replace('#', '');
+  const autoSlug = (hash && PARASHIOT[hash]) ? hash : currentSlug;
+  if (autoSlug) selectParasha(autoSlug);
+})();
+</script>
+
+</body>
+</html>
