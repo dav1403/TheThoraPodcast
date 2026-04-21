@@ -9,8 +9,11 @@ video counts to estimate remaining backfill work.
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.stdout.reconfigure(encoding="utf-8")
 
 import requests
 

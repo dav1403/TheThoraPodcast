@@ -14,6 +14,8 @@ Designed to run daily via GitHub Actions.
 import os
 import sys
 import json
+
+sys.stdout.reconfigure(encoding="utf-8")
 import argparse
 import time
 import subprocess

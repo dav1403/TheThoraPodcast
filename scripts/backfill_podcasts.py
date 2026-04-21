@@ -16,6 +16,8 @@ import html
 import json
 import random
 import sys
+
+sys.stdout.reconfigure(encoding="utf-8")
 import time
 from datetime import datetime, timezone
 from pathlib import Path
