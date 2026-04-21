@@ -361,9 +361,8 @@
     const results = await Promise.allSettled(
       CHANNELS.map(ch =>
         fetch(`feeds/${ch.slug}.entries.json`)
-          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status} for ${ch.slug}`); return r.json(); })
-          .then(entries => { console.log(`${ch.slug}: ${entries.length} entries, tagged: ${entries.filter(e=>e.tags).length}`); return { ch, entries }; })
-          .catch(err => { console.error(`Failed to load ${ch.slug}:`, err); return { ch, entries: [] }; })
+          .then(r => r.ok ? r.json() : [])
+          .then(entries => ({ ch, entries }))
       )
     );
     allData = results
@@ -381,10 +380,6 @@
         });
       });
     });
-
-    const totalEps = allEpisodes.length;
-    const totalTagged = allEpisodes.filter(({ep}) => ep.tags && ep.tags.length).length;
-    console.log(`Total: ${totalEps} episodes, ${totalTagged} tagged`);
 
     // Sort each theme by date desc
     Object.values(themeIndex).forEach(arr =>
