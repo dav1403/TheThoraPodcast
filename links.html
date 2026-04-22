@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Thora Podcast — Écouter</title>
+  <title>The Thora Podcast — Les Rabbins</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -48,6 +51,8 @@
     }
     .header-nav a:hover { color: #fff; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.1); }
     .header-nav a.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
+    .lang-btn { color: rgba(255,255,255,.65); font-size: 0.8rem; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
+    .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
 
     .sort-bar {
       max-width: 700px;
@@ -204,25 +209,64 @@
 
 <header>
   <h1>The Thora Podcast</h1>
-  <p>Cours de Torah — disponibles sur vos plateformes favorites</p>
-  <div class="header-stats" id="header-stats">Chargement…</div>
+  <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-stats" id="header-stats" data-i18n="loading">Chargement…</div>
   <nav class="header-nav">
-    <a href="index.html">Accueil</a>
-    <a href="links.html" class="active">Les Rabbins</a>
-    <a href="parasha.html">Par Paracha</a>
-    <a href="themes.html">Par Thème</a>
+    <a href="index.html" data-i18n="nav_home">Accueil</a>
+    <a href="links.html" class="active" data-i18n="nav_rabbis">Rabbins</a>
+    <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
+    <a href="themes.html" data-i18n="nav_themes">Thème</a>
+    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
 </header>
 
 <div class="sort-bar">
-  <span>Trier par :</span>
-  <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')">Dernier cours</button>
-  <button class="sort-btn"        id="sort-alpha"  onclick="setSort('alpha')">Alphabétique</button>
+  <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')" data-i18n="sort_latest">Dernier cours</button>
+  <button class="sort-btn"        id="sort-alpha"  onclick="setSort('alpha')"  data-i18n="sort_alpha">Alphabétique</button>
 </div>
 
 <main id="app"></main>
 
 <script>
+  // ─── i18n ─────────────────────────────────────────────────────────────────
+  const I18N = {
+    fr: {
+      nav_home:'Accueil', nav_rabbis:'Rabbins', nav_parasha:'Paracha', nav_themes:'Thème',
+      lang_toggle:'עברית',
+      subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      loading:'Chargement…',
+      sort_latest:'Dernier cours', sort_alpha:'Alphabétique',
+      episodes_link:'Épisodes →',
+      copy_rss:'Copier RSS', copied:'✓ Copié !',
+      ep_singular:'épisode', ep_plural:'épisodes',
+      last:'Dernier :', no_channels:'Aucune chaîne disponible.',
+    },
+    he: {
+      nav_home:'ראשי', nav_rabbis:'הרבנים', nav_parasha:'פרשה', nav_themes:'נושא',
+      lang_toggle:'Français',
+      subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
+      loading:'טוען…',
+      sort_latest:'לפי תאריך', sort_alpha:'א–ב',
+      episodes_link:'פרקים →',
+      copy_rss:'העתק RSS', copied:'✓ הועתק !',
+      ep_singular:'פרק', ep_plural:'פרקים',
+      last:'אחרון :', no_channels:'אין ערוצים זמינים.',
+    },
+  };
+  let lang = localStorage.getItem('lang') || 'fr';
+  function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
+  function applyLang() {
+    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.dataset.i18n;
+      if (k.startsWith('|')) el.placeholder = t(k.slice(1));
+      else el.textContent = t(k);
+    });
+  }
+  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  applyLang();
+
   const PLATFORM_META = {
     spotify: {
       label: 'Spotify',
@@ -249,10 +293,10 @@
   function copyRss(btn, url) {
     navigator.clipboard.writeText(url).then(() => {
       btn.classList.add('copied');
-      btn.textContent = '✓ Copié !';
+      btn.textContent = t('copied');
       setTimeout(() => {
         btn.classList.remove('copied');
-        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier RSS`;
+        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${t('copy_rss')}`;
       }, 2000);
     });
   }
@@ -266,9 +310,8 @@
   }
 
   function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('fr-FR', {
-      day: 'numeric', month: 'long', year: 'numeric'
-    });
+    const locale = lang === 'he' ? 'he-IL' : 'fr-FR';
+    return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   function latestEpisode(entries) {
@@ -285,7 +328,7 @@
     const rssUrl = `https://thetorahpodcast.net/feeds/${ch.slug}.xml`;
     const copyBtn = `<button class="copy-rss" onclick="copyRss(this,'${escapeHtml(rssUrl)}')">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-      Copier RSS</button>`;
+      ${t('copy_rss')}</button>`;
 
     const badges = activeLinks.map(([key, url]) => {
       const meta = PLATFORM_META[key];
@@ -299,11 +342,12 @@
 
     const count  = entries.length;
     const latest = latestEpisode(entries);
+    const epWord = count > 1 ? t('ep_plural') : t('ep_singular');
     const statsHtml = count > 0
       ? `<div class="card-stats">
-           <strong>${count}</strong>&nbsp;épisode${count > 1 ? 's' : ''}
+           <strong>${count}</strong>&nbsp;${epWord}
            ${latest
-             ? `&nbsp;·&nbsp;Dernier&nbsp;:&nbsp;<span class="latest-title" title="${escapeHtml(latest.title)}">${escapeHtml(latest.title)}</span>&nbsp;—&nbsp;${formatDate(latest.published)}`
+             ? `&nbsp;·&nbsp;${t('last')}&nbsp;<span class="latest-title" title="${escapeHtml(latest.title)}">${escapeHtml(latest.title)}</span>&nbsp;—&nbsp;${formatDate(latest.published)}`
              : ''}
          </div>`
       : '';
@@ -315,7 +359,7 @@
         <div class="card-body">
           <div class="card-name-row">
             <div class="card-name">${escapeHtml(ch.podcast_author)}</div>
-            <a class="episodes-link" href="index.html#${escapeHtml(ch.slug)}">Épisodes →</a>
+            <a class="episodes-link" href="index.html#${escapeHtml(ch.slug)}">${t('episodes_link')}</a>
           </div>
           ${linksHtml}
           ${statsHtml}
@@ -361,7 +405,7 @@
     } catch (_) {}
 
     if (!channels.length) {
-      app.innerHTML = '<p style="text-align:center;color:#aaa;padding:40px">Aucune chaîne disponible.</p>';
+      app.innerHTML = `<p style="text-align:center;color:#aaa;padding:40px">${t('no_channels')}</p>`;
       document.getElementById('header-stats').textContent = '';
       return;
     }
@@ -377,8 +421,11 @@
     }));
 
     const totalEpisodes = allData.reduce((sum, { entries }) => sum + entries.length, 0);
+    const epWord = totalEpisodes > 1 ? t('ep_plural') : t('ep_singular');
     document.getElementById('header-stats').textContent =
-      `${channels.length} podcasts en ligne · ${totalEpisodes} épisode${totalEpisodes > 1 ? 's' : ''} disponibles`;
+      lang === 'he'
+        ? `${channels.length} פודקאסטים · ${totalEpisodes} ${epWord} זמינים`
+        : `${channels.length} podcasts en ligne · ${totalEpisodes} ${epWord} disponibles`;
 
     setSort('latest');
   })();

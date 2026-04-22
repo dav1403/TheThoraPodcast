@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Thora Podcast</title>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -40,6 +43,18 @@
     }
     .header-nav a:hover { color: #fff; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.1); }
     .header-nav a.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
+    .lang-btn {
+      color: rgba(255,255,255,.65);
+      font-size: 0.8rem;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, color .15s;
+    }
+    .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
 
     /* Search */
     .search-wrap {
@@ -334,12 +349,13 @@
 
 <header>
   <h1>The Thora Podcast</h1>
-  <p>Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
   <nav class="header-nav">
-    <a href="index.html" class="active">Accueil</a>
-    <a href="links.html">Les Rabbins</a>
-    <a href="parasha.html">Par Paracha</a>
-    <a href="themes.html">Par Thème</a>
+    <a href="index.html" class="active" data-i18n="nav_home">Accueil</a>
+    <a href="links.html" data-i18n="nav_rabbis">Rabbins</a>
+    <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
+    <a href="themes.html" data-i18n="nav_themes">Thème</a>
+    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
 </header>
 
@@ -348,7 +364,7 @@
     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
       <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
     </svg>
-    <input class="search-input" id="search" type="search" placeholder="Rechercher un épisode ou un rav…" autocomplete="off">
+    <input class="search-input" id="search" type="search" data-i18n="|search_ph" placeholder="Rechercher un épisode ou un rav…" autocomplete="off">
   </div>
 </div>
 
@@ -367,6 +383,42 @@
 </div>
 
 <script>
+  // ─── i18n ─────────────────────────────────────────────────────────────────
+  const I18N = {
+    fr: {
+      nav_home:'Accueil', nav_rabbis:'Rabbins', nav_parasha:'Paracha', nav_themes:'Thème',
+      lang_toggle:'עברית',
+      subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      search_ph:'Rechercher un épisode ou un rav…',
+      recents:'Derniers épisodes',
+      listen:'Écouter', playing:'En cours…', loading:'Chargement…',
+      no_results:'Aucun épisode trouvé.', no_episodes:'Aucun épisode disponible.', no_channels:'Aucune chaîne disponible.',
+    },
+    he: {
+      nav_home:'ראשי', nav_rabbis:'הרבנים', nav_parasha:'פרשה', nav_themes:'נושא',
+      lang_toggle:'Français',
+      subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
+      search_ph:'חיפוש פרק או רב…',
+      recents:'פרקים אחרונים',
+      listen:'האזן', playing:'מתנגן…', loading:'טוען…',
+      no_results:'לא נמצאו פרקים.', no_episodes:'אין פרקים זמינים.', no_channels:'אין ערוצים זמינים.',
+    },
+  };
+  let lang = localStorage.getItem('lang') || 'fr';
+  function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
+  function applyLang() {
+    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.dataset.i18n;
+      if (k.startsWith('|')) el.placeholder = t(k.slice(1));
+      else el.textContent = t(k);
+    });
+  }
+  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  applyLang();
+
+  // ─── Player ───────────────────────────────────────────────────────────────
   const PREVIEW_COUNT = 3;
   const RECENTS_COUNT = 10;
 
@@ -402,11 +454,11 @@
         if (playerAudio.paused) {
           playerAudio.play();
           btn.classList.add('playing');
-          btn.innerHTML = pauseIcon() + ' En cours…';
+          btn.innerHTML = pauseIcon() + ' ' + t('playing');
         } else {
           playerAudio.pause();
           btn.classList.remove('playing');
-          btn.innerHTML = playIcon() + ' Écouter';
+          btn.innerHTML = playIcon() + ' ' + t('listen');
         }
         return;
       }
@@ -456,7 +508,8 @@
   }
 
   function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+    const locale = lang === 'he' ? 'he-IL' : 'fr-FR';
+    return new Date(iso).toLocaleDateString(locale, { day:'numeric', month:'long', year:'numeric' });
   }
 
   function renderEpisode(ep, slug, idx) {
@@ -467,7 +520,7 @@
       ? `<p class="episode-desc">${escapeHtml(ep.description)}</p>`
       : '';
     const playBtn = ep.audio_url
-      ? `<button class="play-btn" data-slug="${escapeHtml(slug)}" data-idx="${idx}">${playIcon()} Écouter</button>`
+      ? `<button class="play-btn" data-slug="${escapeHtml(slug)}" data-idx="${idx}">${playIcon()} ${t('listen')}</button>`
       : '';
     return `
       <li class="episode" data-title="${escapeHtml(ep.title.toLowerCase())}">
@@ -500,7 +553,7 @@
 
     const wrap = document.createElement('div');
     wrap.id = 'recents-section';
-    wrap.innerHTML = `<div class="section-label">Derniers épisodes</div><div class="recents-row">${cards}</div>`;
+    wrap.innerHTML = `<div class="section-label">${t('recents')}</div><div class="recents-row">${cards}</div>`;
     return wrap;
   }
 
@@ -519,7 +572,7 @@
       </div>`;
 
     if (!entries.length) {
-      section.insertAdjacentHTML('beforeend', '<div class="state">Aucun épisode disponible.</div>');
+      section.insertAdjacentHTML('beforeend', `<div class="state">${t('no_episodes')}</div>`);
       return section;
     }
 
@@ -536,7 +589,8 @@
       bar.className = 'show-more-bar';
       const btn = document.createElement('button');
       btn.className = 'show-more-btn';
-      btn.textContent = `Voir les ${entries.length - PREVIEW_COUNT} épisodes suivants`;
+      const n = entries.length - PREVIEW_COUNT;
+      btn.textContent = lang === 'he' ? `עוד ${n} פרקים` : `Voir les ${n} épisodes suivants`;
       btn.addEventListener('click', () => { items.forEach(el => el.hidden = false); bar.remove(); });
       bar.appendChild(btn);
       section.appendChild(bar);
@@ -591,7 +645,7 @@
     } catch (_) {}
 
     if (!channels.length) {
-      app.innerHTML = '<p class="state">Aucune chaîne disponible.</p>';
+      app.innerHTML = `<p class="state">${t('no_channels')}</p>`;
       return;
     }
 
@@ -611,7 +665,7 @@
     noRes.id = 'no-results';
     noRes.className = 'no-results';
     noRes.hidden = true;
-    noRes.textContent = 'Aucun épisode trouvé.';
+    noRes.textContent = t('no_results');
     app.appendChild(noRes);
 
     for (const { ch, entries } of allData) {
