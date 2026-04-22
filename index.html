@@ -526,7 +526,7 @@
       ? `<button class="play-btn" data-slug="${escapeHtml(slug)}" data-idx="${idx}">${playIcon()} ${t('listen')}</button>`
       : '';
     return `
-      <li class="episode" data-title="${escapeHtml(ep.title.toLowerCase())}">
+      <li class="episode" data-title="${escapeHtml((ep.title + ' ' + (ep.tags || []).join(' ')).toLowerCase())}">
         ${thumb}
         <div class="episode-body">
           <div class="episode-title">${escapeHtml(ep.title)}</div>
