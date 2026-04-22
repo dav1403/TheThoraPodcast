@@ -424,11 +424,10 @@
     }));
 
     const totalEpisodes = allData.reduce((sum, { entries }) => sum + entries.length, 0);
-    const epWord = totalEpisodes > 1 ? t('ep_plural') : t('ep_singular');
     document.getElementById('header-stats').textContent =
       lang === 'he'
-        ? `${channels.length} פודקאסטים · ${totalEpisodes} ${epWord} זמינים`
-        : `${channels.length} podcasts en ligne · ${totalEpisodes} ${epWord} disponibles`;
+        ? `${channels.length} ערוצים · ${totalEpisodes} שיעורים פורסמו`
+        : `Déjà ${channels.length} chaînes · ${totalEpisodes} cours publiés`;
 
     setSort('latest');
   })();
