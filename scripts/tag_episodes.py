@@ -27,6 +27,8 @@ THEMES = [
     "Halakha",
     "Kabbala & Spiritualité",
     "Mariage & Famille",
+    "Daf Hayomi",
+    "Likoutei Moharan",
     "Roch Hachana & Yom Kippour",
     "Souccot & Sim'hat Torah",
     "Hanoucca",
