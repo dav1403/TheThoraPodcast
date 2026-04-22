@@ -564,6 +564,7 @@
     const section = document.createElement('section');
     section.className = 'channel';
     section.id = ch.slug;
+    section.dataset.name = ch.name.toLowerCase();
     section.innerHTML = `
       <div class="channel-header">
         <div class="channel-header-left">
@@ -613,9 +614,10 @@
       let anyVisible = false;
       document.querySelectorAll('.channel').forEach(ch => {
         const eps = ch.querySelectorAll('.episode');
+        const chMatch = ch.dataset.name && ch.dataset.name.includes(q);
         let chVisible = false;
         eps.forEach((ep, i) => {
-          const match = !q || ep.dataset.title.includes(q);
+          const match = !q || chMatch || ep.dataset.title.includes(q);
           ep.hidden = q ? !match : i >= PREVIEW_COUNT;
           if (match) chVisible = true;
         });
