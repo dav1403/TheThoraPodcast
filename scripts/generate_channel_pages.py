@@ -205,6 +205,16 @@ def render_page(ch: dict, entries: list) -> str:
 
     home, rabbis, parasha, themes = nav_labels
 
+    if page_description:
+        paras = "".join(
+            f"<p>{esc(p.strip())}</p>"
+            for p in page_description.splitlines()
+            if p.strip()
+        )
+        about_block = f'<div class="ch-about">{paras}</div>'
+    else:
+        about_block = ""
+
     return f"""<!DOCTYPE html>
 <html lang="{html_lang}"{dir_attr}>
 <head>
@@ -253,7 +263,7 @@ def render_page(ch: dict, entries: list) -> str:
       </div>
     </div>
   </div>
-  {f'<div class="ch-about">' + "".join(f"<p>{esc(p.strip())}</p>" for p in page_description.split("\\n") if p.strip()) + "</div>" if page_description else ""}
+  {about_block}
   <p class="section-label">{esc(all_eps_label)}</p>
   <div class="episode-list">
 {episodes_html}

@@ -546,7 +546,7 @@
         return `<li class="ep-card">
           ${thumb}
           <div class="ep-body">
-            <a class="ep-ch" href="index.html#${escapeHtml(ch.slug)}">${escapeHtml(ch.name)}</a>
+            <a class="ep-ch" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
             <div class="ep-title" title="${escapeHtml(ep.title)}">${escapeHtml(ep.title)}</div>
             <div class="ep-date">${formatDate(ep.published)}</div>
             ${tagPills}${playBtn}

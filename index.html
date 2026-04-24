@@ -262,6 +262,8 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      color: #222;
+      text-decoration: none;
     }
     .episode-date { font-size: 0.73rem; color: #888; margin-bottom: 6px; }
     .episode-desc {
@@ -574,7 +576,7 @@
       <li class="episode" data-title="${escapeHtml((ep.title + ' ' + (ep.tags || []).join(' ')).toLowerCase())}">
         ${thumb}
         <div class="episode-body">
-          <div class="episode-title">${escapeHtml(ep.title)}</div>
+          <a class="episode-title" href="${escapeHtml(slug)}.html">${escapeHtml(ep.title)}</a>
           <div class="episode-date">${formatDate(ep.published)}</div>
           ${desc}${playBtn}
         </div>

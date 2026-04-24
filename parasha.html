@@ -538,7 +538,7 @@ function renderResults(slug, allData) {
     <div class="result-channel">
       <div class="result-channel-header">
         <img class="result-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">
-        <div class="result-channel-name">${escapeHtml(ch.name)}</div>
+        <a class="result-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
         <div class="result-channel-count">${episodes.length} ${episodes.length > 1 ? t('ep_plural') : t('ep_singular')}</div>
       </div>
       <ul class="episode-list">
