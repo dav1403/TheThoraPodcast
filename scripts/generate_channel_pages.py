@@ -69,6 +69,9 @@ CSS = """\
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
+    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 28px; font-size: .9rem; color: #444; line-height: 1.7; }
+    .ch-about p { margin-bottom: .9em; }
+    .ch-about p:last-child { margin-bottom: 0; }
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 12px; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -124,8 +127,9 @@ def render_page(ch: dict, entries: list) -> str:
         subtitle      = "Cours de Torah — disponibles sur vos plateformes favorites"
         nav_labels    = ("Accueil", "Rabbins", "Paracha", "Thème")
 
-    seo_description = (channel_info.get("seo_description") or "").strip()
-    description = seo_description or (yt_description[:155] if yt_description else fallback_desc)
+    seo_description  = (channel_info.get("seo_description") or "").strip()
+    page_description = (channel_info.get("page_description") or "").strip()
+    description      = seo_description or (yt_description[:155] if yt_description else fallback_desc)
 
     # Platform buttons
     btns = []
@@ -249,6 +253,7 @@ def render_page(ch: dict, entries: list) -> str:
       </div>
     </div>
   </div>
+  {f'<div class="ch-about">' + "".join(f"<p>{esc(p.strip())}</p>" for p in page_description.split("\\n") if p.strip()) + "</div>" if page_description else ""}
   <p class="section-label">{esc(all_eps_label)}</p>
   <div class="episode-list">
 {episodes_html}
