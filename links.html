@@ -375,7 +375,7 @@
         <div class="card-body">
           <div class="card-name-row">
             <div class="card-name">${escapeHtml(ch.podcast_author)}</div>
-            <a class="episodes-link" href="index.html#${escapeHtml(ch.slug)}">${t('episodes_link')}</a>
+            <a class="episodes-link" href="${escapeHtml(ch.slug)}.html">${t('episodes_link')}</a>
           </div>
           ${linksHtml}
           ${statsHtml}
