@@ -16,11 +16,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - run: pip install requests
+      - run: pip install requests anthropic
 
-      - name: Fetch channel descriptions from YouTube
+      - name: Fetch channel descriptions and generate SEO copy with Claude
         env:
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_API_KEY:   ${{ secrets.YOUTUBE_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scripts/fetch_channel_info.py
 
       - name: Regenerate channel pages with real descriptions

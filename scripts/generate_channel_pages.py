@@ -124,7 +124,8 @@ def render_page(ch: dict, entries: list) -> str:
         subtitle      = "Cours de Torah — disponibles sur vos plateformes favorites"
         nav_labels    = ("Accueil", "Rabbins", "Paracha", "Thème")
 
-    description = (yt_description[:155] if yt_description else fallback_desc)
+    seo_description = (channel_info.get("seo_description") or "").strip()
+    description = seo_description or (yt_description[:155] if yt_description else fallback_desc)
 
     # Platform buttons
     btns = []
