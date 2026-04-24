@@ -56,6 +56,11 @@ CSS = """\
     .header-nav a { color: rgba(255,255,255,.65); text-decoration: none; font-size: .8rem; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); transition: background .15s, color .15s; }
     .header-nav a:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
     .header-nav a.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
+    .nav-dropdown { position: relative; display: inline-flex; }
+    .nav-submenu { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #252545; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 6px; min-width: 200px; z-index: 300; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    .nav-dropdown:hover .nav-submenu { display: block; }
+    .nav-submenu a { display: block; color: rgba(255,255,255,.78); text-decoration: none; padding: 7px 14px; border-radius: 6px; font-size: .8rem; white-space: nowrap; border: none; }
+    .nav-submenu a:hover { background: rgba(255,255,255,.1); color: #fff; }
     main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
     .ch-card { background: #fff; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,.08); display: flex; align-items: flex-start; gap: 20px; padding: 20px 24px; margin-bottom: 28px; }
     .ch-art { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #e0e0e0; }
@@ -100,7 +105,7 @@ def load_channel_info(slug: str) -> dict:
     return {}
 
 
-def render_page(ch: dict, entries: list) -> str:
+def render_page(ch: dict, entries: list, all_channels: list) -> str:
     slug      = ch["slug"]
     name      = ch["podcast_author"]
     lang      = ch.get("podcast_language", "fr")
@@ -215,6 +220,12 @@ def render_page(ch: dict, entries: list) -> str:
     else:
         about_block = ""
 
+    submenu_links = "\n".join(
+        f'      <a href="{esc(c["slug"])}.html">{esc(c["podcast_author"])}</a>'
+        for c in all_channels
+        if c.get("enabled")
+    )
+
     return f"""<!DOCTYPE html>
 <html lang="{html_lang}"{dir_attr}>
 <head>
@@ -247,7 +258,12 @@ def render_page(ch: dict, entries: list) -> str:
   <p>{esc(subtitle)}</p>
   <nav class="header-nav">
     <a href="index.html">{esc(home)}</a>
-    <a href="links.html" class="active">{esc(rabbis)}</a>
+    <div class="nav-dropdown">
+      <a href="links.html" class="active">{esc(rabbis)} ▾</a>
+      <div class="nav-submenu">
+{submenu_links}
+      </div>
+    </div>
     <a href="parasha.html">{esc(parasha)}</a>
     <a href="themes.html">{esc(themes)}</a>
   </nav>
@@ -325,7 +341,7 @@ def main():
             print(f"  Skipping {slug} — no entries file yet")
             continue
         entries = json.loads(entries_path.read_text(encoding="utf-8"))
-        page    = render_page(ch, entries)
+        page    = render_page(ch, entries, enabled)
         out     = Path(f"{slug}.html")
         out.write_text(page, encoding="utf-8")
         print(f"  {out}  ({len(entries)} episodes)")

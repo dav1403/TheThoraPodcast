@@ -83,6 +83,11 @@
     }
     .header-nav a:hover { color: #fff; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.1); }
     .header-nav a.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
+    .nav-dropdown { position: relative; display: inline-flex; }
+    .nav-submenu { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #252545; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 6px; min-width: 200px; z-index: 300; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+    .nav-dropdown:hover .nav-submenu, .nav-dropdown.open .nav-submenu { display: block; }
+    .nav-submenu a { display: block; color: rgba(255,255,255,.78); text-decoration: none; padding: 7px 14px; border-radius: 6px; font-size: .8rem; white-space: nowrap; border: none; }
+    .nav-submenu a:hover { background: rgba(255,255,255,.1); color: #fff; }
     .lang-btn {
       color: rgba(255,255,255,.65);
       font-size: 0.8rem;
@@ -395,7 +400,10 @@
   <div class="header-stats" id="header-stats"></div>
   <nav class="header-nav">
     <a href="index.html" class="active" data-i18n="nav_home">Accueil</a>
-    <a href="links.html" data-i18n="nav_rabbis">Rabbins</a>
+    <div class="nav-dropdown">
+      <a href="links.html" data-i18n="nav_rabbis">Rabbins ▾</a>
+      <div class="nav-submenu" id="nav-rabbis-submenu"></div>
+    </div>
     <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -712,6 +720,11 @@
 
     const totalEp = allData.reduce((s, {entries}) => s + entries.length, 0);
     renderStats(allData.length, totalEp);
+
+    const sub = document.getElementById('nav-rabbis-submenu');
+    if (sub) sub.innerHTML = channels.map(ch =>
+      `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
+    ).join('');
 
     app.innerHTML = '';
     app.appendChild(buildRecents());
