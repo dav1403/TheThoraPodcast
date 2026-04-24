@@ -1,0 +1,35 @@
+name: Fetch Channel Info (one-time)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install requests
+
+      - name: Fetch channel descriptions from YouTube
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/fetch_channel_info.py
+
+      - name: Regenerate channel pages with real descriptions
+        run: python scripts/generate_channel_pages.py
+
+      - name: Commit results
+        run: |
+          git config --global user.name  "Podcast Bot"
+          git config --global user.email "action@github.com"
+          git add feeds/*.channel_info.json sitemap.xml *.html
+          git diff --staged --quiet || git commit -m "chore: add channel descriptions and regenerate pages [skip ci]"
+          git push

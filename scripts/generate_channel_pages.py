@@ -90,6 +90,13 @@ GTAG = """\
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>"""
 
 
+def load_channel_info(slug: str) -> dict:
+    path = FEEDS_DIR / f"{slug}.channel_info.json"
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
 def render_page(ch: dict, entries: list) -> str:
     slug      = ch["slug"]
     name      = ch["podcast_author"]
@@ -97,10 +104,13 @@ def render_page(ch: dict, entries: list) -> str:
     platforms = ch.get("platforms", {})
     ep_count  = len(entries)
 
+    channel_info    = load_channel_info(slug)
+    yt_description  = (channel_info.get("description") or "").strip()
+
     if lang == "he":
         html_lang     = "he"
         dir_attr      = ' dir="rtl"'
-        description   = f"האזינו לשיעורי התורה של {name}. {ep_count} פרקים זמינים בפודקאסט."
+        fallback_desc = f"האזינו לשיעורי התורה של {name}. {ep_count} פרקים זמינים בפודקאסט."
         all_eps_label = "כל הפרקים"
         ep_count_text = f"{ep_count} פרקים"
         subtitle      = "שיעורי תורה — זמינים בפלטפורמות האהובות עליכם"
@@ -108,11 +118,13 @@ def render_page(ch: dict, entries: list) -> str:
     else:
         html_lang     = "fr"
         dir_attr      = ""
-        description   = f"Écoutez tous les cours de Torah du {name}. {ep_count} épisodes disponibles sur Spotify, Apple Podcasts et Deezer."
+        fallback_desc = f"Écoutez tous les cours de Torah du {name}. {ep_count} épisodes disponibles sur Spotify, Apple Podcasts et Deezer."
         all_eps_label = "Tous les épisodes"
         ep_count_text = f"{ep_count} épisode{'s' if ep_count != 1 else ''}"
         subtitle      = "Cours de Torah — disponibles sur vos plateformes favorites"
         nav_labels    = ("Accueil", "Rabbins", "Paracha", "Thème")
+
+    description = (yt_description[:155] if yt_description else fallback_desc)
 
     # Platform buttons
     btns = []
