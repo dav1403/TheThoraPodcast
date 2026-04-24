@@ -625,7 +625,7 @@
         <div class="channel-header-left">
           <img class="channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt=""
                onerror="this.style.display='none'">
-          <h2>${escapeHtml(ch.name)}</h2>
+          <h2><a href="${escapeHtml(ch.slug)}.html" style="color:inherit;text-decoration:none">${escapeHtml(ch.name)}</a></h2>
         </div>
         <a class="rss-link" href="feeds/${escapeHtml(ch.slug)}.xml" target="_blank">RSS</a>
       </div>`;

@@ -141,6 +141,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 0;
+      text-decoration: none;
+      color: inherit;
     }
     .episodes-link {
       font-size: 0.72rem;
@@ -382,7 +384,7 @@
              onerror="this.style.background='#e0e0e0';this.removeAttribute('src')">
         <div class="card-body">
           <div class="card-name-row">
-            <div class="card-name">${escapeHtml(ch.podcast_author)}</div>
+            <a class="card-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.podcast_author)}</a>
             <a class="episodes-link" href="${escapeHtml(ch.slug)}.html">${t('episodes_link')}</a>
           </div>
           ${linksHtml}

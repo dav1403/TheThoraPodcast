@@ -61,6 +61,8 @@ CSS = """\
     .nav-dropdown:hover .nav-submenu { display: block; }
     .nav-submenu a { display: block; color: rgba(255,255,255,.78); text-decoration: none; padding: 7px 14px; border-radius: 6px; font-size: .8rem; white-space: nowrap; border: none; }
     .nav-submenu a:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .lang-btn { color: rgba(255,255,255,.65); font-size: .8rem; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
+    .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
     main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
     .ch-card { background: #fff; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,.08); display: flex; align-items: flex-start; gap: 20px; padding: 20px 24px; margin-bottom: 28px; }
     .ch-art { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #e0e0e0; }
@@ -115,26 +117,14 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     channel_info    = load_channel_info(slug)
     yt_description  = (channel_info.get("description") or "").strip()
 
-    if lang == "he":
-        html_lang     = "he"
-        dir_attr      = ' dir="rtl"'
-        fallback_desc = f"האזינו לשיעורי התורה של {name}. {ep_count} פרקים זמינים בפודקאסט."
-        all_eps_label = "כל הפרקים"
-        ep_count_text = f"{ep_count} פרקים"
-        subtitle      = "שיעורי תורה — זמינים בפלטפורמות האהובות עליכם"
-        nav_labels    = ("ראשי", "הרבנים", "פרשה", "נושא")
-    else:
-        html_lang     = "fr"
-        dir_attr      = ""
-        fallback_desc = f"Écoutez tous les cours de Torah du {name}. {ep_count} épisodes disponibles sur Spotify, Apple Podcasts et Deezer."
-        all_eps_label = "Tous les épisodes"
-        ep_count_text = f"{ep_count} épisode{'s' if ep_count != 1 else ''}"
-        subtitle      = "Cours de Torah — disponibles sur vos plateformes favorites"
-        nav_labels    = ("Accueil", "Rabbins", "Paracha", "Thème")
+    default_lang = lang  # channel's native language is the default
+
+    fallback_desc_fr = f"Écoutez tous les cours de Torah du {name}. {ep_count} épisodes disponibles sur Spotify, Apple Podcasts et Deezer."
+    fallback_desc_he = f"האזינו לשיעורי התורה של {name}. {ep_count} פרקים זמינים בפודקאסט."
 
     seo_description  = (channel_info.get("seo_description") or "").strip()
     page_description = (channel_info.get("page_description") or "").strip()
-    description      = seo_description or (yt_description[:155] if yt_description else fallback_desc)
+    description      = seo_description or (yt_description[:155] if yt_description else (fallback_desc_he if lang == "he" else fallback_desc_fr))
 
     # Platform buttons
     btns = []
@@ -208,8 +198,6 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     }
     schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
 
-    home, rabbis, parasha, themes = nav_labels
-
     if page_description:
         paras = "".join(
             f"<p>{esc(p.strip())}</p>"
@@ -227,13 +215,16 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     )
 
     return f"""<!DOCTYPE html>
-<html lang="{html_lang}"{dir_attr}>
+<html lang="{default_lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{esc(name)} — The Torah Podcast</title>
   <meta name="description" content="{esc(description)}">
   <link rel="canonical" href="{BASE_URL}/{slug}.html">
+  <link rel="alternate" hreflang="fr" href="{BASE_URL}/{slug}.html">
+  <link rel="alternate" hreflang="he" href="{BASE_URL}/{slug}.html">
+  <link rel="alternate" hreflang="x-default" href="{BASE_URL}/{slug}.html">
   <meta property="og:type" content="website">
   <meta property="og:url" content="{BASE_URL}/{slug}.html">
   <meta property="og:title" content="{esc(name)} — The Torah Podcast">
@@ -255,17 +246,18 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
 <body>
 <header>
   <h1><a href="index.html">The Thora Podcast</a></h1>
-  <p>{esc(subtitle)}</p>
+  <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
   <nav class="header-nav">
-    <a href="index.html">{esc(home)}</a>
+    <a href="index.html" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown">
-      <a href="links.html" class="active">{esc(rabbis)} ▾</a>
+      <a href="links.html" class="active" data-i18n="nav_rabbis">Rabbins ▾</a>
       <div class="nav-submenu">
 {submenu_links}
       </div>
     </div>
-    <a href="parasha.html">{esc(parasha)}</a>
-    <a href="themes.html">{esc(themes)}</a>
+    <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
+    <a href="themes.html" data-i18n="nav_themes">Thème</a>
+    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
 </header>
 <main>
@@ -273,18 +265,50 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     <img class="ch-art" src="artwork/{slug}.png" alt="{esc(name)}" onerror="this.style.display='none'">
     <div>
       <h1 class="ch-name">{esc(name)}</h1>
-      <p class="ch-count">{ep_count_text}</p>
+      <p class="ch-count" id="ep-count"></p>
       <div class="platform-links">
         {platform_html}
       </div>
     </div>
   </div>
   {about_block}
-  <p class="section-label">{esc(all_eps_label)}</p>
+  <p class="section-label" data-i18n="all_episodes">Tous les épisodes</p>
   <div class="episode-list">
 {episodes_html}
   </div>
 </main>
+<script>
+  const I18N = {{
+    fr: {{
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_parasha:'Paracha', nav_themes:'Thème',
+      lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      all_episodes:'Tous les épisodes',
+      ep_count: n => `${{n}} épisode${{n !== 1 ? 's' : ''}}`,
+    }},
+    he: {{
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_parasha:'פרשה', nav_themes:'נושא',
+      lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
+      all_episodes:'כל הפרקים',
+      ep_count: n => `${{n}} פרקים`,
+    }},
+  }};
+  let lang = localStorage.getItem('lang') || '{default_lang}';
+  function t(k) {{ const d = I18N[lang] || {{}}; return d[k] || I18N.fr[k] || k; }}
+  function applyLang() {{
+    document.documentElement.lang = lang;
+    document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(el => {{
+      el.textContent = t(el.dataset.i18n);
+    }});
+    const epCount = document.getElementById('ep-count');
+    if (epCount) epCount.textContent = I18N[lang].ep_count({ep_count});
+  }}
+  function toggleLang() {{
+    localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
+    location.reload();
+  }}
+  applyLang();
+</script>
 </body>
 </html>
 """
