@@ -15,12 +15,12 @@ BACKFILL_STATE_FILE = Path("backfill_state.json")
 
 def load_backfill_state():
     if BACKFILL_STATE_FILE.exists():
-        content = BACKFILL_STATE_FILE.read_text().strip()
+        content = BACKFILL_STATE_FILE.read_text(encoding="utf-8-sig").strip()
         return json.loads(content) if content else {}
     return {}
 
 def save_backfill_state(state):
-    BACKFILL_STATE_FILE.write_text(json.dumps(state, indent=2))
+    BACKFILL_STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
 def discover_missing_videos(channel_id, already_done):
     channel_url = "https://www.youtube.com/channel/" + channel_id + "/videos"
