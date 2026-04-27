@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -100,14 +103,14 @@ jobs:
           import subprocess
           import sys
 
-          channels = json.loads(Path("channels.json").read_text())
+          channels = json.loads(Path("channels.json").read_text(encoding="utf-8-sig"))
           for ch in channels:
               if not ch.get("enabled", True):
                   continue
               entries_file = Path(f"feeds/{ch['slug']}.entries.json")
               needs_bootstrap = (
                   not entries_file.exists() or
-                  json.loads(entries_file.read_text() or "[]") == []
+                  json.loads(entries_file.read_text(encoding="utf-8-sig") or "[]") == []
               )
               if needs_bootstrap:
                   print(f"Bootstrapping {ch['slug']}...")

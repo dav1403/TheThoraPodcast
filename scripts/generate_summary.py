@@ -24,7 +24,7 @@ FEEDS_DIR = Path("feeds")
 def load_pre_run_counts() -> dict:
     p = Path("/tmp/pre_run_counts.json")
     if p.exists():
-        return json.loads(p.read_text())
+        return json.loads(p.read_text(encoding="utf-8-sig"))
     return {}
 
 
@@ -46,10 +46,10 @@ def get_channel_video_count(channel_id: str) -> int | None:
 
 
 def main():
-    channels = json.loads(Path("channels.json").read_text())
+    channels = json.loads(Path("channels.json").read_text(encoding="utf-8-sig"))
     backfill_state = {}
     if Path("backfill_state.json").exists():
-        content = Path("backfill_state.json").read_text().strip()
+        content = Path("backfill_state.json").read_text(encoding="utf-8-sig").strip()
         if content:
             backfill_state = json.loads(content)
 

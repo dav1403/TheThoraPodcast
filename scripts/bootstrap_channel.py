@@ -99,7 +99,7 @@ def main():
     parser.add_argument("--max",   type=int, default=10, help="Max historical episodes to backfill (default: 10)")
     args = parser.parse_args()
 
-    channels    = json.loads(Path("channels.json").read_text())
+    channels    = json.loads(Path("channels.json").read_text(encoding="utf-8-sig"))
     channel_cfg = next((c for c in channels if c["slug"] == args.slug), None)
     if not channel_cfg:
         print(f"ERROR: No channel with slug '{args.slug}' found in channels.json")

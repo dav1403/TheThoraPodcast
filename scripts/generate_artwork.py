@@ -176,7 +176,7 @@ def main():
 
     ARTWORK_DIR.mkdir(exist_ok=True)
 
-    channels = json.loads(Path(CHANNELS_FILE).read_text())
+    channels = json.loads(Path(CHANNELS_FILE).read_text(encoding="utf-8-sig"))
     generated = 0
     skipped   = 0
     errors    = []

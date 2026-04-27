@@ -658,14 +658,14 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
 def load_processed() -> dict:
     p = Path(PROCESSED_FILE)
     if p.exists():
-        text = p.read_text().strip()
+        text = p.read_text(encoding="utf-8-sig").strip()
         if text:
             return json.loads(text)
     return {}
 
 
 def save_processed(data: dict):
-    Path(PROCESSED_FILE).write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    Path(PROCESSED_FILE).write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -778,7 +778,7 @@ def main():
     print(f"Timestamp: {datetime.now(timezone.utc).isoformat()}")
     print(f"Budget: {args.budget} video(s) this run")
 
-    channels  = json.loads(Path(CHANNELS_FILE).read_text())
+    channels  = json.loads(Path(CHANNELS_FILE).read_text(encoding="utf-8-sig"))
     processed = load_processed()
 
     # Sync processed.json with entries.json so they're always in agreement
