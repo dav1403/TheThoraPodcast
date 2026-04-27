@@ -189,6 +189,15 @@
     },
     {
       "@type": "PodcastEpisode",
+      "name": "Peux t-on Faire Basculer Son Destin ?",
+      "datePublished": "2023-11-30",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/FOIEu4SmGnw_Peux_t-on_Faire_Basculer_Son_Destin.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "\"HACHEM ME SNOB\" Malgré Mes Prières Alors A Quoi Bon... Rav Ruben Attal",
       "datePublished": "2023-11-23",
       "associatedMedia": {
@@ -462,6 +471,15 @@ Eliyahou yohanan ben a</p>
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/FOIEu4SmGnw/hqdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Peux t-on Faire Basculer Son Destin ?</h2>
+        <time class="ep-date" datetime="2023-11-30">30 novembre 2023</time>
+        <p class="ep-desc">Cours du lundi 27 novembre 2023 #Paracha #Vayishlah #Rav #RubenAttal #Mazal #Combat #Destin #Destinée #Vie d&#x27;un #Juif #Cours de #Thora #Rahel #Lea #Yaacov #Essav #Patriarche #Matriarch #RavAttal#israe</p>
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/FOIEu4SmGnw_Peux_t-on_Faire_Basculer_Son_Destin.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/ZD0sEH3zKeM/maxresdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">&quot;HACHEM ME SNOB&quot; Malgré Mes Prières Alors A Quoi Bon... Rav Ruben Attal</h2>
@@ -500,7 +518,7 @@ Cours du Lu</p>
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(18);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(19);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
