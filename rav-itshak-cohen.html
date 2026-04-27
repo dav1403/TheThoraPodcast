@@ -1347,6 +1347,15 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/vEc4vXisGKs/hqdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">AYEZ PITIE DE VOS ENFANTS.</h2>
+        <time class="ep-date" datetime="2019-03-28">28 mars 2019</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/vEc4vXisGKs_AYEZ_PITIE_DE_VOS_ENFANTS.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/7I3-MAiVhGw/hqdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">COUPLE : NOUS SOMMES COMPLETEMENT DIFFERENTS. POURQUOI ?</h2>
@@ -1408,7 +1417,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(108);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(109);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');

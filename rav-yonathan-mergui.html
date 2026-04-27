@@ -960,6 +960,15 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/KRpzEpj4uIg/hqdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Parachat Balak: le cèdre et le roseau</h2>
+        <time class="ep-date" datetime="2021-06-24">24 juin 2021</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KRpzEpj4uIg_Parachat_Balak__le_cèdre_et_le_roseau.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/Aa3jvrYWYmk/maxresdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">Parachat HOUKAT: parler ou frapper ?</h2>
@@ -1012,7 +1021,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(64);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(65);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
