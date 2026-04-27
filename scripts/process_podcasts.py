@@ -535,6 +535,7 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
         }],
         "quiet":            True,
         "no_warnings":      True,
+        "noprogress":       True,
         "retries":          10,
         "fragment_retries": 10,
         "ignoreerrors":     False,
