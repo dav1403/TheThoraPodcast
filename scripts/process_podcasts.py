@@ -543,13 +543,25 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
     cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
     if cookies_file and Path(cookies_file).exists():
         ydl_opts["cookiefile"] = cookies_file
-    with YoutubeDL(ydl_opts) as ydl:
-        ydl.extract_info(video_url, download=True)
+    try:
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.extract_info(video_url, download=True)
+    except Exception as e:
+        _flag_auth_error_if_needed(e)
+        raise
 
     mp3_files = list(out_dir.glob("*.mp3"))
     if not mp3_files:
         raise FileNotFoundError(f"No MP3 found in {out_dir} after downloading {video_url}")
     return mp3_files[0]
+
+
+_AUTH_PATTERNS = ("sign in", "bot", "403", "cookies", "login", "authentication", "private")
+
+def _flag_auth_error_if_needed(exc: Exception) -> None:
+    msg = str(exc).lower()
+    if any(p in msg for p in _AUTH_PATTERNS):
+        Path("/tmp/auth_error").write_text(str(exc))
 
 
 # ---------------------------------------------------------------------------
