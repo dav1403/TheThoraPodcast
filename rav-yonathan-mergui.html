@@ -960,6 +960,15 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/Aa3jvrYWYmk/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Parachat HOUKAT: parler ou frapper ?</h2>
+        <time class="ep-date" datetime="2021-06-18">18 juin 2021</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Aa3jvrYWYmk_Parachat_HOUKAT__parler_ou_frapper.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/RfihkgJBS5I/maxresdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">La Matsa : Retrouver le gout de l&#x27;essentiel</h2>
@@ -1003,7 +1012,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(63);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(64);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
