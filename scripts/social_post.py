@@ -293,7 +293,7 @@ def post_paracha(channels, state, dry_run=False):
 
     total = sum(r["count"] for r in results)
     rabbi_lines = "\n".join(
-        f"  🎙️ {r['channel']['name']} — {r['count']} cours"
+        f"  🎙️ {r['channel']['podcast_author']} — {r['count']} cours"
         for r in sorted(results, key=lambda x: -x["count"])
     )
 
@@ -344,7 +344,7 @@ def post_rabbi(channels, state, dry_run=False):
 
     prompt = (
         f"Tu gères le compte Instagram/Facebook de 'The Torah Podcast'.\n"
-        f"Écris un post 'Zoom Rabbi' pour mettre en avant : {ch['name']}.\n"
+        f"Écris un post 'Zoom Rabbi' pour mettre en avant : {ch['podcast_author']}.\n"
         f"Description du rabbi : {info.get('description', '')[:300]}\n"
         f"Il a {total} cours disponibles en podcast. Cours récents :\n{titles}\n"
         f"Le post doit :\n"
@@ -356,8 +356,8 @@ def post_rabbi(channels, state, dry_run=False):
         f"Ne pas inclure les hashtags ni l'URL."
     )
     body = generate_text(prompt) or (
-        f"🎙️ Zoom Rabbi — {ch['name']}\n\n"
-        f"Découvrez ou redécouvrez les enseignements de {ch['name']} !\n"
+        f"🎙️ Zoom Rabbi — {ch['podcast_author']}\n\n"
+        f"Découvrez ou redécouvrez les enseignements de {ch['podcast_author']} !\n"
         f"{total} cours disponibles en podcast, à écouter partout et à tout moment 🎧"
     )
 
