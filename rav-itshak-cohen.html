@@ -1338,12 +1338,30 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/ZI1DBuW939I/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">AUCUNE LOGIQUE POUR LES PARENTS.</h2>
+        <time class="ep-date" datetime="2019-07-04">4 juillet 2019</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ZI1DBuW939I_AUCUNE_LOGIQUE_POUR_LES_PARENTS.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/Xr1uQOZtPeI/maxresdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">MORNING MOUSSAR : SMARTPHONES ? VOUS DROGUEZ VOS ENFANTS.</h2>
         <time class="ep-date" datetime="2019-06-26">26 juin 2019</time>
         
         <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Xr1uQOZtPeI_MORNING_MOUSSAR___SMARTPHONES___VOUS_DROGUEZ_VOS_ENFANTS.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/WE7VKZUpsCQ/hqdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">MORNING MOUSSAR : &quot;Ma belle-fille a une belle-mére géniale !&quot;</h2>
+        <time class="ep-date" datetime="2019-06-06">6 juin 2019</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/WE7VKZUpsCQ_MORNING_MOUSSAR____Ma_belle-fille_a_une_belle-mére_géniale.mp3" preload="none"></audio>
       </div>
     </article>
     <article class="episode">
@@ -1579,7 +1597,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(127);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(129);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
