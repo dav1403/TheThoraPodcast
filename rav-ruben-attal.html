@@ -198,6 +198,15 @@
     },
     {
       "@type": "PodcastEpisode",
+      "name": "SHORT SPÉCIAL POURIM - Rav Ruben Attal",
+      "datePublished": "2024-03-22",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/I_aaOjlkenI_SHORT_SPÉCIAL_POURIM_-_Rav_Ruben_Attal.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "POURIM, Un Pouvoir Inimaginable Et Les Messages Codés De La Meguila - Rav Ruben Attal",
       "datePublished": "2024-03-20",
       "associatedMedia": {
@@ -293,15 +302,6 @@
       "associatedMedia": {
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/YkSrBa5zpzw_Comment_Devenir_Un_Vrai_Leader_-_Rav_Ruben_Attal.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Pleurer : Effet Bénéfique Ou Néfastes - Rav Ruben Attal",
-      "datePublished": "2023-12-20",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/W8Ulyxu97hQ_Pleurer___Effet_Bénéfique_Ou_Néfastes_-_Rav_Ruben_Attal.mp3"
       }
     }
   ]
@@ -579,6 +579,15 @@ Eliyahou yohanan ben a</p>
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/I_aaOjlkenI/hqdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">SHORT SPÉCIAL POURIM - Rav Ruben Attal</h2>
+        <time class="ep-date" datetime="2024-03-22">22 mars 2024</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/I_aaOjlkenI_SHORT_SPÉCIAL_POURIM_-_Rav_Ruben_Attal.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/IwrQq79bBPQ/hqdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">POURIM, Un Pouvoir Inimaginable Et Les Messages Codés De La Meguila - Rav Ruben Attal</h2>
@@ -791,7 +800,7 @@ Cours du Lu</p>
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(36);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(37);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
