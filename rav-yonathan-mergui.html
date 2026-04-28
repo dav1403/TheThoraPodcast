@@ -951,6 +951,24 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/KssprucVRcM/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Vayetse ; une grande femme derrière un grand homme ?</h2>
+        <time class="ep-date" datetime="2023-11-23">23 novembre 2023</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KssprucVRcM_Vayetse___une_grande_femme_derrière_un_grand_homme.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/s25WOkCXTlA/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Haye Sarah : la guerre contre Ishmael !</h2>
+        <time class="ep-date" datetime="2023-11-07">7 novembre 2023</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/s25WOkCXTlA_Haye_Sarah___la_guerre_contre_Ishmael.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/9anGjRYfQdg/hqdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">Dvar torah Daat Haim Vayera</h2>
@@ -1219,7 +1237,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(87);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(89);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
