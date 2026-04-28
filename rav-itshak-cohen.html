@@ -1347,6 +1347,24 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/2mJB5xZqHoc/hqdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">MORNING MOUSSAR | INSTINCT, QUAND TU NOUS TIENS...</h2>
+        <time class="ep-date" datetime="2019-05-01">1 mai 2019</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/2mJB5xZqHoc_MORNING_MOUSSAR___INSTINCT__QUAND_TU_NOUS_TIENS.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/0uFOIF-cuDY/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">MORNING MOUSSAR | L&#x27;ETUDE DU MARI, UN GAGE DE MERITES POUR SA FEMME..</h2>
+        <time class="ep-date" datetime="2019-04-05">5 avril 2019</time>
+        <p class="ep-desc">Rav Isaac Cohen s&#x27;appuie sur la Paracha Tazria pour dévoiler un formidable secret à toutes les femmes mariées.</p>
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/0uFOIF-cuDY_MORNING_MOUSSAR___L_ETUDE_DU_MARI__UN_GAGE_DE_MERITES_POUR_SA_FEMME.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/i0iZTIDNyzg/hqdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">MORNING MOUSSAR | NOURRIR SA NECHAMA, LE BUT ULTIME.</h2>
@@ -1543,7 +1561,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(123);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(125);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
