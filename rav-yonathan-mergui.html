@@ -960,6 +960,24 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/Whw6dRvyxaY/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Vayakel : au Cœur du Chabat</h2>
+        <time class="ep-date" datetime="2024-03-06">6 mars 2024</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Whw6dRvyxaY_Vayakel___au_Cœur_du_Chabat.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/OMotETWS97M/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">ki tissa : sois patient, un jour tu comprendras</h2>
+        <time class="ep-date" datetime="2024-02-27">27 février 2024</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OMotETWS97M_ki_tissa___sois_patient__un_jour_tu_comprendras.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/9QlA2U_8up0/maxresdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">Tetsave : l habit fait- il le rabbin?</h2>
@@ -1336,7 +1354,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(100);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(102);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
