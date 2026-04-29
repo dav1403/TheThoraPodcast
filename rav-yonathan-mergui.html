@@ -144,6 +144,24 @@
     },
     {
       "@type": "PodcastEpisode",
+      "name": "Aharei mot/kedoshim : si je ne suis pas pour moi, qui le sera ?",
+      "datePublished": "2025-05-09",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/eQPYEgD6jFA_Aharei_mot_kedoshim___si_je_ne_suis_pas_pour_moi__qui_le_sera.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
+      "name": "Le lachon Ara,",
+      "datePublished": "2025-05-01",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/EsWP9Ty1snc_Le_lachon_Ara.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "Chemini : les lois du COEUR",
       "datePublished": "2025-04-24",
       "associatedMedia": {
@@ -284,24 +302,6 @@
       "associatedMedia": {
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/aOVJUIkqgIQ_Baba.Batra.161.162.163.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Vayetse : Le pouvoir du mois de Kislev",
-      "datePublished": "2024-12-04",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Nxxs_IGtq_Y_Vayetse._.Le.pouvoir.du.mois.de.Kislev.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Baba Batra 160",
-      "datePublished": "2024-12-02",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tzmudpKeaMM_Baba.Batra.160.mp3"
       }
     }
   ]
@@ -517,6 +517,24 @@
         <time class="ep-date" datetime="2025-11-18">18 novembre 2025</time>
         
         <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/HYXSvKG4Ktk_Its_hak._.le.patriarche.que.personne.ne.connait.vraiment.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/eQPYEgD6jFA/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Aharei mot/kedoshim : si je ne suis pas pour moi, qui le sera ?</h2>
+        <time class="ep-date" datetime="2025-05-09">9 mai 2025</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/eQPYEgD6jFA_Aharei_mot_kedoshim___si_je_ne_suis_pas_pour_moi__qui_le_sera.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/EsWP9Ty1snc/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Le lachon Ara,</h2>
+        <time class="ep-date" datetime="2025-05-01">1 mai 2025</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/EsWP9Ty1snc_Le_lachon_Ara.mp3" preload="none"></audio>
       </div>
     </article>
     <article class="episode">
@@ -1427,7 +1445,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(110);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(112);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
