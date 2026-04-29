@@ -144,6 +144,24 @@
     },
     {
       "@type": "PodcastEpisode",
+      "name": "KI tavo : Je suis JUIF !",
+      "datePublished": "2025-09-11",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/jnppPCPw0Hc_KI_tavo___Je_suis_JUIF.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
+      "name": "4 septembre 2025",
+      "datePublished": "2025-09-04",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tf75-xUuDLM_4_septembre_2025.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "Aharei mot/kedoshim : si je ne suis pas pour moi, qui le sera ?",
       "datePublished": "2025-05-09",
       "associatedMedia": {
@@ -284,24 +302,6 @@
       "associatedMedia": {
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/utfFPdoauVo_Vayshlah_.Les.Petits.Gestes_.Armes.de.Geants.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Baba Batra 167",
-      "datePublished": "2024-12-09",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8ccm_pZqDs8_Baba.Batra.167.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Baba Batra 161 162 163",
-      "datePublished": "2024-12-04",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/aOVJUIkqgIQ_Baba.Batra.161.162.163.mp3"
       }
     }
   ]
@@ -517,6 +517,24 @@
         <time class="ep-date" datetime="2025-11-18">18 novembre 2025</time>
         
         <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/HYXSvKG4Ktk_Its_hak._.le.patriarche.que.personne.ne.connait.vraiment.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/jnppPCPw0Hc/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">KI tavo : Je suis JUIF !</h2>
+        <time class="ep-date" datetime="2025-09-11">11 septembre 2025</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/jnppPCPw0Hc_KI_tavo___Je_suis_JUIF.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/tf75-xUuDLM/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">4 septembre 2025</h2>
+        <time class="ep-date" datetime="2025-09-04">4 septembre 2025</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tf75-xUuDLM_4_septembre_2025.mp3" preload="none"></audio>
       </div>
     </article>
     <article class="episode">
@@ -1445,7 +1463,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(112);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(114);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
