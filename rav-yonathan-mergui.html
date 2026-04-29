@@ -960,6 +960,24 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/6JPhNAZ_LxQ/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Para : comprendre qu on n a jamais compris</h2>
+        <time class="ep-date" datetime="2024-03-27">27 mars 2024</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/6JPhNAZ_LxQ_Para___comprendre_qu_on_n_a_jamais_compris.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/qlcmojOU7Lo/maxresdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Zahor : le vrai visage d Amalek</h2>
+        <time class="ep-date" datetime="2024-03-20">20 mars 2024</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/qlcmojOU7Lo_Zahor___le_vrai_visage_d_Amalek.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/Whw6dRvyxaY/maxresdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">Vayakel : au Cœur du Chabat</h2>
@@ -1354,7 +1372,7 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(102);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(104);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
