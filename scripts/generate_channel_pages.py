@@ -49,8 +49,8 @@ CSS = """\
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f0; color: #222; line-height: 1.5; padding-bottom: 60px; }
     header { background: #1a1a2e; color: #fff; padding: 28px 20px 0; text-align: center; }
-    header h1 { font-size: 2rem; margin-bottom: 6px; }
-    header h1 a { color: inherit; text-decoration: none; }
+    .site-brand { font-size: 2rem; font-weight: 700; margin-bottom: 6px; }
+    .site-brand a { color: inherit; text-decoration: none; }
     header p { color: #aab; font-size: .95rem; margin-bottom: 14px; }
     .header-nav { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; padding: 0 16px 20px; }
     .header-nav a { color: rgba(255,255,255,.65); text-decoration: none; font-size: .8rem; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); transition: background .15s, color .15s; }
@@ -157,7 +157,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
         audio_url = ep.get("audio_url", "")
 
         thumb_tag = (
-            f'<img class="ep-thumb" src="{esc(thumb)}" alt="" loading="lazy">'
+            f'<img class="ep-thumb" src="{esc(thumb)}" alt="{esc(ep["title"])}" loading="lazy">'
             if thumb else '<div class="ep-thumb-ph"></div>'
         )
         desc_tag  = f'<p class="ep-desc">{esc(desc_raw)}</p>' if desc_raw else ""
@@ -169,7 +169,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
             f'    <article class="episode">\n'
             f'      {thumb_tag}\n'
             f'      <div class="ep-body">\n'
-            f'        <h2 class="ep-title">{esc(ep["title"])}</h2>\n'
+            f'        <h3 class="ep-title">{esc(ep["title"])}</h3>\n'
             f'        <time class="ep-date" datetime="{ep["published"][:10]}">{fmt_date(ep["published"], lang)}</time>\n'
             f'        {desc_tag}\n'
             f'        {audio_tag}\n'
@@ -256,10 +256,10 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
 </head>
 <body>
 <header>
-  <h1><a href="index.html">The Thora Podcast</a></h1>
+  <p class="site-brand"><a href="./">The Torah Podcast</a></p>
   <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
   <nav class="header-nav">
-    <a href="index.html" data-i18n="nav_home">Accueil</a>
+    <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link active" href="links.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
       <div class="nav-submenu">
@@ -284,7 +284,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     </div>
   </div>
   {about_block}
-  <p class="section-label" data-i18n="all_episodes">Tous les épisodes</p>
+  <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
   <div class="episode-list">
 {episodes_html}
   </div>
@@ -320,6 +320,29 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     location.reload();
   }}
   applyLang();
+  // GA4 event tracking
+  if (typeof gtag !== 'undefined') {{
+    document.querySelectorAll('audio.ep-audio').forEach(function(audio, idx) {{
+      var title = (audio.closest('.episode') || document).querySelector('.ep-title');
+      title = title ? title.textContent : '';
+      var played = false, completed = false;
+      audio.addEventListener('play', function() {{
+        if (!played) {{ played = true; gtag('event', 'audio_play', {{ep_title: title, rav: '{esc(name)}', ep_index: idx}}); }}
+      }});
+      audio.addEventListener('timeupdate', function() {{
+        if (!completed && audio.duration > 0 && audio.currentTime / audio.duration >= 0.9) {{
+          completed = true;
+          gtag('event', 'audio_complete', {{ep_title: title, rav: '{esc(name)}', ep_index: idx}});
+        }}
+      }});
+    }});
+    document.querySelectorAll('.platform-btn').forEach(function(btn) {{
+      btn.addEventListener('click', function() {{
+        var cls = Array.from(btn.classList).find(function(c) {{ return c.startsWith('btn-') && c !== 'btn-rss'; }});
+        gtag('event', 'click_platform', {{platform: cls ? cls.replace('btn-', '') : 'rss', rav: '{esc(name)}'}});
+      }});
+    }});
+  }}
   document.addEventListener('click', e => {{
     if (e.target.closest('.nav-submenu')) return;
     const caret = e.target.closest('.nav-dd-caret');
