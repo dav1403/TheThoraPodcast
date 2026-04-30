@@ -102,6 +102,8 @@ CSS = """\
     }"""
 
 GTAG = """\
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>"""
@@ -199,7 +201,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
         "url": f"{BASE_URL}/{slug}.html",
         "webFeed": f"{BASE_URL}/feeds/{slug}.xml",
         "image": f"{BASE_URL}/artwork/{slug}.png",
-        "inLanguage": lang,
+        "inLanguage": ["fr", "he"],
         "author": {"@type": "Person", "name": name},
         "episode": ep_schema,
     }
@@ -238,6 +240,8 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
   <meta property="og:description" content="{esc(description)}">
   <meta property="og:image" content="{BASE_URL}/artwork/{slug}.png">
   <meta property="og:site_name" content="The Torah Podcast">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:locale:alternate" content="he_IL">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(name)} — The Torah Podcast">
   <meta name="twitter:description" content="{esc(description)}">
@@ -331,9 +335,11 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
 
 
 def update_sitemap(slugs: list[str]):
+    today = datetime.utcnow().strftime("%Y-%m-%d")
     channel_entries = "\n".join(
         f"  <url>\n"
         f"    <loc>{BASE_URL}/{slug}.html</loc>\n"
+        f"    <lastmod>{today}</lastmod>\n"
         f"    <changefreq>daily</changefreq>\n"
         f"    <priority>0.9</priority>\n"
         f"  </url>"
@@ -344,21 +350,25 @@ def update_sitemap(slugs: list[str]):
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         '  <url>\n'
         f'    <loc>{BASE_URL}/</loc>\n'
+        f'    <lastmod>{today}</lastmod>\n'
         '    <changefreq>daily</changefreq>\n'
         '    <priority>1.0</priority>\n'
         '  </url>\n'
         '  <url>\n'
         f'    <loc>{BASE_URL}/links.html</loc>\n'
+        f'    <lastmod>{today}</lastmod>\n'
         '    <changefreq>weekly</changefreq>\n'
         '    <priority>0.8</priority>\n'
         '  </url>\n'
         '  <url>\n'
         f'    <loc>{BASE_URL}/parasha.html</loc>\n'
+        f'    <lastmod>{today}</lastmod>\n'
         '    <changefreq>weekly</changefreq>\n'
         '    <priority>0.7</priority>\n'
         '  </url>\n'
         '  <url>\n'
         f'    <loc>{BASE_URL}/themes.html</loc>\n'
+        f'    <lastmod>{today}</lastmod>\n'
         '    <changefreq>weekly</changefreq>\n'
         '    <priority>0.7</priority>\n'
         '  </url>\n'
