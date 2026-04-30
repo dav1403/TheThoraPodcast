@@ -15,6 +15,8 @@
   <meta property="og:description" content="Écoutez les enseignements du Rav Itshak Cohen en arrière-plan, sans publicités ni contenu inapproprié. Podcasts pour la pureté de l&#x27;âme.">
   <meta property="og:image" content="https://thetorahpodcast.net/artwork/rav-itshak-cohen.png">
   <meta property="og:site_name" content="The Torah Podcast">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:locale:alternate" content="he_IL">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Rav Itshak Cohen — The Torah Podcast">
   <meta name="twitter:description" content="Écoutez les enseignements du Rav Itshak Cohen en arrière-plan, sans publicités ni contenu inapproprié. Podcasts pour la pureté de l&#x27;âme.">
@@ -28,7 +30,10 @@
   "url": "https://thetorahpodcast.net/rav-itshak-cohen.html",
   "webFeed": "https://thetorahpodcast.net/feeds/rav-itshak-cohen.xml",
   "image": "https://thetorahpodcast.net/artwork/rav-itshak-cohen.png",
-  "inLanguage": "fr",
+  "inLanguage": [
+    "fr",
+    "he"
+  ],
   "author": {
     "@type": "Person",
     "name": "Rav Itshak Cohen"
@@ -307,6 +312,8 @@
   ]
 }
   </script>
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -1348,6 +1355,24 @@
       </div>
     </article>
     <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/n0FTtlK0IaI/hqdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Rav Ithsak Cohen : Ils m&#x27;ont tous tourné le dos Parashat Vayera</h2>
+        <time class="ep-date" datetime="2020-11-06">6 novembre 2020</time>
+        <p class="ep-desc">Parashat Vayera</p>
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/n0FTtlK0IaI_Rav_Ithsak_Cohen___Ils_m_ont_tous_tourne__le_dos_Parashat_Vayera.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/8aovUdMtsSk/hqdefault.jpg" alt="" loading="lazy">
+      <div class="ep-body">
+        <h2 class="ep-title">Rav Ithsak Cohen : Je n&#x27;arrive pas à aimer</h2>
+        <time class="ep-date" datetime="2020-11-05">5 novembre 2020</time>
+        
+        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8aovUdMtsSk_Rav_Ithsak_Cohen___Je_n_arrive_pas_a__aimer.mp3" preload="none"></audio>
+      </div>
+    </article>
+    <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/tH1oI7gbzag/hqdefault.jpg" alt="" loading="lazy">
       <div class="ep-body">
         <h2 class="ep-title">Rav Ithsak Cohen : Je suis Nul, on me l&#x27;a toujours dit  Pensée Positive</h2>
@@ -2068,7 +2093,7 @@ Retrouvez l&#x27;intégralité de nos vidéos sur facebook : https://www.faceboo
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(181);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(183);
   }
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
