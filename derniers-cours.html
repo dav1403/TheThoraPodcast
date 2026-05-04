@@ -419,6 +419,11 @@
   // ─── Player ────────────────────────────────────────────────────────────────
   let activeBtn = null, currentEpId = null;
   let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+  const playerEl    = document.getElementById('player');
+  const playerAudio = document.getElementById('player-audio');
+  const playerTitle = document.getElementById('player-title');
+  const playerCh    = document.getElementById('player-channel');
+  const playerArt   = document.getElementById('player-art');
 
   function setSpeed(rate) {
     currentSpeed = rate;
@@ -441,12 +446,6 @@
     if (navigator.share) navigator.share({ title: btn.dataset.title, url });
     else navigator.clipboard.writeText(url).then(() => showToast(t('copied')));
   });
-  const playerEl    = document.getElementById('player');
-  const playerAudio = document.getElementById('player-audio');
-  const playerTitle = document.getElementById('player-title');
-  const playerCh    = document.getElementById('player-channel');
-  const playerArt   = document.getElementById('player-art');
-
   function playIcon() {
     return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`;
   }

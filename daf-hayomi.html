@@ -112,6 +112,8 @@
     .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
     .toast.show { opacity:1; }
     @media (max-width:500px) { .ep-thumb, .ep-thumb-ph { display:none; } #player-art { display:none; } }
+    .daf-intro { background:#fff; border-left:4px solid #e87722; border-radius:0 8px 8px 0; padding:14px 18px; margin-bottom:20px; font-size:0.88rem; color:#444; line-height:1.7; }
+    .daf-intro p + p { margin-top:8px; }
   </style>
 </head>
 <body>
@@ -138,6 +140,16 @@
     <div class="page-title" data-i18n="page_title">Daf Hayomi</div>
     <div class="page-subtitle" id="page-subtitle"></div>
   </div>
+
+  <div class="daf-intro" id="daf-intro-fr">
+    <p>Le <strong>Daf Hayomi</strong> (דף היומי, « la page du jour ») est un programme d'étude du Talmud Babylonien créé en 1923 par le Rav Meir Shapiro. Chaque jour, des centaines de milliers de Juifs à travers le monde étudient la <strong>même page de Gemara</strong>, créant ainsi une communauté d'étude mondiale synchronisée. Le cycle complet compte 2 711 pages (dafim) et s'étend sur environ <strong>7 ans et demi</strong>.</p>
+    <p>Retrouvez ici les cours Daf Hayomi de nos rabbins, enregistrés chaque jour pour vous accompagner dans cette étude.</p>
+  </div>
+  <div class="daf-intro" id="daf-intro-he" style="display:none; direction:rtl; text-align:right;">
+    <p><strong>דף היומי</strong> הוא לוח לימוד התלמוד הבבלי שנוסד בשנת תרפ"ג (1923) על ידי הרב מאיר שפירא מלובלין. בכל יום לומדים מאות אלפי יהודים ברחבי העולם את <strong>אותה הדף מהגמרא</strong>, ויוצרים קהילת לימוד עולמית מסונכרנת. המחזור המלא כולל 2,711 דפים ונמשך כ-<strong>שבע וחצי שנים</strong>.</p>
+    <p>כאן תמצאו שיעורי דף היומי של הרבנים שלנו, המוקלטים מדי יום כדי ללוות אתכם בלימוד.</p>
+  </div>
+
   <div class="filter-row" id="filter-row">
     <button class="filter-chip active" data-slug="all" data-i18n="filter_all">Tous les rabbins</button>
   </div>
@@ -194,6 +206,10 @@
     document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    const fr = document.getElementById('daf-intro-fr');
+    const he = document.getElementById('daf-intro-he');
+    if (fr) fr.style.display = lang === 'he' ? 'none' : '';
+    if (he) he.style.display = lang === 'he' ? '' : 'none';
   }
   function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
   applyLang();
