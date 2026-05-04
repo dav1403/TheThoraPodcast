@@ -53,6 +53,7 @@ Rules:
 - Assign 1 to 3 themes per episode, only clear matches
 - Titles can be in French, Hebrew, or both — understand both languages
 - "Paracha" theme = episode is primarily about a weekly Torah portion
+- "Daf Hayomi" ONLY applies to episodes that follow the standard Daf HaYomi cycle (daily Talmud Bavli / Gemara page). Do NOT apply it to other daily learning programs such as האוצר היומי, סדר ר"מ, Mishnah Yomit, Halacha Yomit, or any other daily schedule. When in doubt, do not use this tag.
 - Return ONLY a valid JSON array of arrays, no explanation, no markdown
 """
 

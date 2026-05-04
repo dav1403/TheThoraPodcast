@@ -429,8 +429,9 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
 """
 
 
-def update_sitemap(slugs: list[str]):
+def update_sitemap(slug_entries: list[tuple]):
     today = datetime.utcnow().strftime("%Y-%m-%d")
+    slugs = [s for s, _ in slug_entries]
     channel_entries = "\n".join(
         f"  <url>\n"
         f"    <loc>{BASE_URL}/{slug}.html</loc>\n"
@@ -439,6 +440,17 @@ def update_sitemap(slugs: list[str]):
         f"    <priority>0.9</priority>\n"
         f"  </url>"
         for slug in slugs
+    )
+    episode_entries = "\n".join(
+        f"  <url>\n"
+        f"    <loc>{BASE_URL}/episode.html?v={ep['video_id']}&amp;ch={slug}</loc>\n"
+        f"    <lastmod>{ep['published'][:10]}</lastmod>\n"
+        f"    <changefreq>never</changefreq>\n"
+        f"    <priority>0.6</priority>\n"
+        f"  </url>"
+        for slug, entries in slug_entries
+        for ep in entries
+        if ep.get("video_id") and ep.get("published")
     )
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -480,10 +492,12 @@ def update_sitemap(slugs: list[str]):
         '    <priority>0.8</priority>\n'
         '  </url>\n'
         f'{channel_entries}\n'
+        f'{episode_entries}\n'
         '</urlset>\n'
     )
+    total_eps = sum(len(e) for _, e in slug_entries)
     Path("sitemap.xml").write_text(sitemap, encoding="utf-8")
-    print(f"  sitemap.xml → {len(slugs)} channel pages added")
+    print(f"  sitemap.xml → {len(slugs)} channel pages + {total_eps} episode pages added")
 
 
 def main():
@@ -502,7 +516,7 @@ def main():
         out     = Path(f"{slug}.html")
         out.write_text(page, encoding="utf-8")
         print(f"  {out}  ({len(entries)} episodes)")
-        generated.append(slug)
+        generated.append((slug, entries))
 
     update_sitemap(generated)
     print(f"\nDone — {len(generated)} channel pages generated.")
