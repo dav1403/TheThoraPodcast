@@ -31,7 +31,7 @@
       var s = slugify(ep.title || '');
       var prefix = slug + '-';
       if (s.startsWith(prefix)) s = s.slice(prefix.length) || (ep.video_id || 'episode');
-      return 'episodes/' + slug + '/' + s + '-' + (ep.published || '').slice(0, 10) + '.html';
+      return slug + '/' + s + '-' + (ep.published || '').slice(0, 10) + '.html';
     }
     function tryFeed(slug, callback) {
       fetch('feeds/' + slug + '.entries.json')

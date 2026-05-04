@@ -40,7 +40,7 @@ def ep_filename(ep: dict, ch_slug: str = "") -> str:
 
 
 def ep_path(ch_slug: str, ep: dict) -> str:
-    return f"episodes/{ch_slug}/{ep_filename(ep, ch_slug)}"
+    return f"{ch_slug}/{ep_filename(ep, ch_slug)}"
 
 
 def esc(s):
@@ -802,10 +802,9 @@ def main():
         generated.append((slug, entries))
 
     ep_count = 0
-    Path("episodes").mkdir(exist_ok=True)
     for slug, entries in generated:
         ch = next(c for c in enabled if c["slug"] == slug)
-        ch_dir = Path("episodes") / slug
+        ch_dir = Path(slug)
         ch_dir.mkdir(exist_ok=True)
         for ep in entries:
             if not ep.get("title") or not ep.get("published"):
@@ -813,7 +812,7 @@ def main():
             ep_page = render_episode_page(ep, ch, entries, enabled)
             (ch_dir / ep_filename(ep, slug)).write_text(ep_page, encoding="utf-8")
             ep_count += 1
-    print(f"  episodes/  ({ep_count} episode pages generated)")
+    print(f"  rabbi subdirs/  ({ep_count} episode pages generated)")
 
     update_sitemap(generated)
     print(f"\nDone — {len(generated)} channel pages + {ep_count} episode pages generated.")

@@ -304,7 +304,7 @@
     var s = slugify(ep.title || '');
     var prefix = chSlug + '-';
     if (s.startsWith(prefix)) s = s.slice(prefix.length) || (ep.video_id || 'episode');
-    return `episodes/${chSlug}/${s}-${(ep.published || '').slice(0, 10)}.html`;
+    return `${chSlug}/${s}-${(ep.published || '').slice(0, 10)}.html`;
   }
   function formatDate(iso) {
     return new Date(iso).toLocaleDateString(lang === 'he' ? 'he-IL' : 'fr-FR', { day:'numeric', month:'long', year:'numeric' });

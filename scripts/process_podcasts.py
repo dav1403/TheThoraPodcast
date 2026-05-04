@@ -51,7 +51,7 @@ def ep_page_url(ch_slug: str, entry: dict) -> str:
     if slug.startswith(prefix):
         slug = slug[len(prefix):] or entry.get("video_id", "episode")
     fname = f"{slug}-{entry['published'][:10]}.html"
-    return f"https://thetorahpodcast.net/episodes/{ch_slug}/{fname}"
+    return f"https://thetorahpodcast.net/{ch_slug}/{fname}"
 
 # ---------------------------------------------------------------------------
 # Configuration
