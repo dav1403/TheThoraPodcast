@@ -395,6 +395,12 @@ def update_sitemap(slugs: list[str]):
         '    <changefreq>weekly</changefreq>\n'
         '    <priority>0.7</priority>\n'
         '  </url>\n'
+        '  <url>\n'
+        f'    <loc>{BASE_URL}/derniers-cours.html</loc>\n'
+        f'    <lastmod>{today}</lastmod>\n'
+        '    <changefreq>daily</changefreq>\n'
+        '    <priority>0.8</priority>\n'
+        '  </url>\n'
         f'{channel_entries}\n'
         '</urlset>\n'
     )
