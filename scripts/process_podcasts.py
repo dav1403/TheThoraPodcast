@@ -649,7 +649,7 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
     fg.id(feed_url)
     fg.title(channel_info["title"])
     fg.author({"name": channel_cfg["podcast_author"], "email": channel_cfg["podcast_email"]})
-    fg.link(href=BASE_URL, rel="alternate")
+    fg.link(href=f"{BASE_URL}{channel_cfg['slug']}.html", rel="alternate")
     fg.link(href=feed_url, rel="self")
     fg.description(channel_info["description"] or channel_info["title"])
     fg.language(channel_cfg.get("podcast_language", "en"))
