@@ -17,6 +17,8 @@ import json
 
 sys.stdout.reconfigure(encoding="utf-8")
 import argparse
+import re
+import unicodedata
 import time
 import subprocess
 import html
@@ -33,6 +35,20 @@ except ImportError:
     _anthropic = None
 from botocore.config import Config
 from botocore.exceptions import ClientError
+
+def slugify(title: str, max_len: int = 70) -> str:
+    nfd = unicodedata.normalize("NFD", title)
+    result = "".join(c for c in nfd if unicodedata.category(c) != "Mn")
+    result = result.lower()
+    result = re.sub(r"[^a-z0-9א-תװ-״]+", "-", result)
+    result = result.strip("-")
+    result = re.sub(r"-+", "-", result)
+    return result[:max_len].rstrip("-")
+
+def ep_page_url(ch_slug: str, entry: dict) -> str:
+    slug = slugify(entry.get("title", "")) or entry.get("video_id", "episode")
+    fname = f"{slug}-{entry['published'][:10]}.html"
+    return f"https://thetorahpodcast.net/{ch_slug}/{fname}"
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -52,7 +68,7 @@ if not GITHUB_REPO:
     sys.exit(1)
 
 _owner, _repo_name = GITHUB_REPO.split("/", 1)
-BASE_URL = f"https://{_owner}.github.io/{_repo_name}/"
+BASE_URL = "https://thetorahpodcast.net/"
 
 CHANNELS_FILE  = "channels.json"
 PROCESSED_FILE = "processed.json"
@@ -652,6 +668,8 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
         fe.title(entry["title"])
         fe.description(entry.get("description") or entry["title"])
         fe.published(entry["published"])
+        ep_url = ep_page_url(channel_cfg["slug"], entry)
+        fe.link(href=ep_url, rel="alternate")
         _u = urlsplit(entry["audio_url"])
         _safe_url = urlunsplit(_u._replace(path=quote(_u.path, safe="/-_.~()")))
         fe.enclosure(_safe_url, str(entry.get("file_size", 0)), "audio/mpeg")

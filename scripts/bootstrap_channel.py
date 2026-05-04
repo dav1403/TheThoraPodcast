@@ -172,9 +172,7 @@ def main():
     save_feed_entries(feed_path, entries)
     build_rss_feed(channel_cfg, channel_info, entries, feed_path)
 
-    owner     = GITHUB_REPO.split("/")[0]
-    repo_name = GITHUB_REPO.split("/")[1]
-    feed_url  = f"https://{owner}.github.io/{repo_name}/feeds/{args.slug}.xml"
+    feed_url  = f"https://thetorahpodcast.net/feeds/{args.slug}.xml"
     print(f"\nBootstrap complete. Feed: feeds/{args.slug}.xml ({len(entries)} episodes)")
     print(f"\nNext step: Submit this RSS URL to Spotify for Podcasters:")
     print(f"  {feed_url}")
