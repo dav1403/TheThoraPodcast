@@ -12,6 +12,7 @@ from process_podcasts import (
 )
 
 BACKFILL_STATE_FILE = Path("backfill_state.json")
+RESCAN_DAYS = 7  # re-scan channel for new videos after this many days
 
 def load_backfill_state():
     if BACKFILL_STATE_FILE.exists():
@@ -74,12 +75,30 @@ def backfill_channel(channel_cfg, processed, state):
     already_done = set(processed.get(slug, []))
     already_done.update(e["video_id"] for e in entries)
     todo = ch_state.get("todo")
+
+    # Decide whether to run a fresh channel scan.
+    # todo=None  → never scanned yet.
+    # todo=[]    → previous scan found nothing new; re-scan after RESCAN_DAYS.
+    needs_rescan = False
     if todo is None:
-        if ch_state.get("exhausted"):
-            return 0
+        needs_rescan = True
+    elif not todo:
+        last_scan = ch_state.get("last_scan", "")
+        if not last_scan:
+            needs_rescan = True
+        else:
+            try:
+                days_since = (datetime.utcnow() - datetime.fromisoformat(last_scan)).days
+                needs_rescan = days_since >= RESCAN_DAYS
+            except Exception:
+                needs_rescan = True
+
+    if needs_rescan:
         todo = discover_missing_videos(channel_id, already_done)
+        ch_state["last_scan"] = datetime.utcnow().isoformat()
+        ch_state.pop("exhausted", None)  # clean up legacy flag
         if not todo:
-            ch_state["exhausted"] = True
+            ch_state["todo"] = []
             save_backfill_state(state)
             print("  [" + slug + "] No missing videos found.")
             return 0
@@ -88,8 +107,9 @@ def backfill_channel(channel_cfg, processed, state):
     else:
         todo = [v for v in todo if v not in already_done]
         if not todo:
-            ch_state.pop("todo", None)
-            ch_state["exhausted"] = True
+            ch_state["todo"] = []
+            if not ch_state.get("last_scan"):
+                ch_state["last_scan"] = datetime.utcnow().isoformat()
             save_backfill_state(state)
             print("  [" + slug + "] Todo list empty.")
             return 0
@@ -159,7 +179,18 @@ def main():
     enabled = [ch for ch in channels if ch.get("enabled", True)]
     def is_done(slug):
         s = state.get(slug, {})
-        return s.get("exhausted") and "todo" not in s
+        todo = s.get("todo")
+        if todo is None or todo:
+            return False  # never scanned, or has work to do
+        # todo is an empty list — done only if scanned recently enough
+        last_scan = s.get("last_scan", "")
+        if not last_scan:
+            return False
+        try:
+            days_since = (datetime.utcnow() - datetime.fromisoformat(last_scan)).days
+            return days_since < RESCAN_DAYS
+        except Exception:
+            return False
     if all(is_done(ch["slug"]) for ch in enabled):
         print("All channels fully backfilled.")
         return
