@@ -625,7 +625,7 @@
     const sub = document.getElementById('nav-rabbis-submenu');
     if (sub) sub.innerHTML = channels.map(ch =>
       `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
-    ).join('');
+    ).join('') + `<a class="nav-submenu-all" href="links.html">Tous les rabbins →</a>`;
 
     // Load all episodes
     const allData = await Promise.all(channels.map(async ch => {
