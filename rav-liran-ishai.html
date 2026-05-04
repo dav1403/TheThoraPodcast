@@ -21,6 +21,10 @@
   <meta name="twitter:title" content="Rav Liran Ishai — The Torah Podcast">
   <meta name="twitter:description" content="פודקאסט של הרב לירן אישי - השיעורים, התובנות והדברי תורה להעמקת הנפש. האזינו בחופשיות ללא הפרעות, ללא פרסומות מטרידות. תוכן טהור המכוון לטיהור הנפש והשגת שלום פנימי דרך חכמת קדומה.">
   <meta name="twitter:image" content="https://thetorahpodcast.net/artwork/rav-liran-ishai.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/artwork/rav-liran-ishai.png">
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -363,6 +367,15 @@
       .ch-card { flex-direction: column; }
       .ep-thumb, .ep-thumb-ph { display: none; }
     }
+    .speed-bar { display:flex; align-items:center; gap:6px; margin-bottom:16px; font-size:.78rem; color:#888; flex-wrap:wrap; }
+    .speed-btn { background:none; border:1px solid #ddd; color:#777; border-radius:4px; padding:3px 9px; font-size:.72rem; cursor:pointer; font-family:inherit; transition:background .12s,color .12s,border-color .12s; }
+    .speed-btn:hover,.speed-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
+    .ep-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:4px; }
+    .ep-actions .ep-audio { flex:1; min-width:200px; }
+    .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
+    .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+    .toast.show { opacity:1; }
   </style>
 </head>
 <body>
@@ -388,6 +401,7 @@
       </div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
+    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
     <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -409,280 +423,288 @@
   </div>
   <div class="ch-about"><p>הפודקאסט של הרב לירן ישי שליט&quot;א מביא לכם את עושרה של התורה הקדושה בדרך זמינה, קרובה ותידידותית. הרב, בנשיאותו של ארגון &quot;אחים&quot;, הוא גדול עומק בתורת ישראל, ומכל שיעור ממנו פורחת חכמה עמוקה המתקשרת ישירות ללבו של כל יהודי שוקד על עבודת ה&#x27;. באמצעות הפודקאסט, חכמת התורה והיהדות המובחרת של הרב מגיעה אליכם בצורה טהורה, ממוקדת, ללא הסחות דעת או הפרעות.</p><p>כל היום הוא הזדמנות ללמוד — בדרככם לעבודה, בהליכה ברחוב עם הטלפון בכיס, בזמן טיפול במטלות הבית והמשק. בפודקאסט, התורה נעשית חברה נאמנה בכל רגע של חייכם, וממשיכה ללוות אתכם בכל מקום ובכל עת. לא מסה אנרגיה יקרה על התעלמות מהסחות דעת — אלא טיהור מוחלט של הלימוד, של התוכן, של כל מילה שנשמעת.</p><p>ככל שמתקדמים בפרקים, נוצרת תחושה של הישג אמיתי, של התקדמות במסלול לימוד משמעותי. כל שיעור משאיר בעקבותיו עשרה של ידע וחיזוק רוחני, והצורך בקדימה אל הפרק הבא הופך ללוקח אתכם עמוקה יותר לתוך אוצרות התורה. בנוסף, הפודקאסט מגן שמ</p></div>
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
+  <div class="speed-bar">
+    <span>Vitesse :</span>
+    <button class="speed-btn active" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="1.25">1.25×</button>
+    <button class="speed-btn" data-speed="1.5">1.5×</button>
+    <button class="speed-btn" data-speed="2">2×</button>
+  </div>
   <div class="episode-list">
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/KQY2_jTdIJo/hqdefault.jpg" alt="הילולת רבותינו: הילולת מורנו הגאון רבי בוגיד סעדון ומרן רבנו מאיר מאזוז זכר צדיקים לברכה" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">הילולת רבותינו: הילולת מורנו הגאון רבי בוגיד סעדון ומרן רבנו מאיר מאזוז זכר צדיקים לברכה</h3>
+        <a class="ep-title" href="episode.html?v=KQY2_jTdIJo&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">הילולת רבותינו: הילולת מורנו הגאון רבי בוגיד סעדון ומרן רבנו מאיר מאזוז זכר צדיקים לברכה</a>
         <time class="ep-date" datetime="2026-04-09">9.04.2026</time>
         
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KQY2_jTdIJo_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KQY2_jTdIJo_._.mp3" preload="none" data-ep-id="KQY2_jTdIJo"></audio><button class="share-btn" data-vid="KQY2_jTdIJo" data-slug="rav-liran-ishai" data-title="הילולת רבותינו: הילולת מורנו הגאון רבי בוגיד סעדון ומרן רבנו מאיר מאזוז זכר צדיקים לברכה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/KSjW9aQbEwY/hqdefault.jpg" alt="קונים מצות לפסח? שיעור מיוחד על ההבדלים בין סוגי המצות מאת מורנו הגאון הגדול הרב לירן ישי שליט&quot;א" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">קונים מצות לפסח? שיעור מיוחד על ההבדלים בין סוגי המצות מאת מורנו הגאון הגדול הרב לירן ישי שליט&quot;א</h3>
+        <a class="ep-title" href="episode.html?v=KSjW9aQbEwY&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">קונים מצות לפסח? שיעור מיוחד על ההבדלים בין סוגי המצות מאת מורנו הגאון הגדול הרב לירן ישי שליט&quot;א</a>
         <time class="ep-date" datetime="2026-03-17">17.03.2026</time>
         <p class="ep-desc">מסתפקים בין מצות יד מצות מכונה? רוצים לדעת מה זה מצות רש&quot;י? רוצים לדעת ממתי המצה &#x27;שמורה&#x27;? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בשיעור ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KSjW9aQbEwY_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KSjW9aQbEwY_._.mp3" preload="none" data-ep-id="KSjW9aQbEwY"></audio><button class="share-btn" data-vid="KSjW9aQbEwY" data-slug="rav-liran-ishai" data-title="קונים מצות לפסח? שיעור מיוחד על ההבדלים בין סוגי המצות מאת מורנו הגאון הגדול הרב לירן ישי שליט&quot;א"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/VIx3FRA-Kao/hqdefault.jpg" alt="מחצית השקל: האם אפשר לשנות מייעוד של צדקה? צפו בשיעורו של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">מחצית השקל: האם אפשר לשנות מייעוד של צדקה? צפו בשיעורו של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א</h3>
+        <a class="ep-title" href="episode.html?v=VIx3FRA-Kao&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">מחצית השקל: האם אפשר לשנות מייעוד של צדקה? צפו בשיעורו של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א</a>
         <time class="ep-date" datetime="2026-02-23">23.02.2026</time>
         <p class="ep-desc">בשיעורו השבועי המרתק של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א מתייחס הרב לענייני דיומא, בהלכה למעשה. ​   אל תשכחו להירשם לערוץ וללחוץ ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VIx3FRA-Kao_._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VIx3FRA-Kao_._._.mp3" preload="none" data-ep-id="VIx3FRA-Kao"></audio><button class="share-btn" data-vid="VIx3FRA-Kao" data-slug="rav-liran-ishai" data-title="מחצית השקל: האם אפשר לשנות מייעוד של צדקה? צפו בשיעורו של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/C8Kd4mFULSI/hqdefault.jpg" alt="מתחילים מסכת מנחות? אל תפספסו את ההקדמה של הרב רועי כהן (כולל המחשות!)" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">מתחילים מסכת מנחות? אל תפספסו את ההקדמה של הרב רועי כהן (כולל המחשות!)</h3>
+        <a class="ep-title" href="episode.html?v=C8Kd4mFULSI&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">מתחילים מסכת מנחות? אל תפספסו את ההקדמה של הרב רועי כהן (כולל המחשות!)</a>
         <time class="ep-date" datetime="2026-01-13">13.01.2026</time>
         <p class="ep-desc">מתחילים את מסכת מנחות ברגל ימין! הצטרפו להסבר מרתק וממחיש על עבודת הקורבנות והמנחות עם הרב רועי כהן שליט&quot;א. ​בשיעור זה, הרב לא רק ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/C8Kd4mFULSI_._._.__.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/C8Kd4mFULSI_._._.__.mp3" preload="none" data-ep-id="C8Kd4mFULSI"></audio><button class="share-btn" data-vid="C8Kd4mFULSI" data-slug="rav-liran-ishai" data-title="מתחילים מסכת מנחות? אל תפספסו את ההקדמה של הרב רועי כהן (כולל המחשות!)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/Gr-7QzYdpAQ/hqdefault.jpg" alt="האם צריך להתפלל לשלומו של השלטון האיראני? צפו בשיעורו של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">האם צריך להתפלל לשלומו של השלטון האיראני? צפו בשיעורו של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א</h3>
+        <a class="ep-title" href="episode.html?v=Gr-7QzYdpAQ&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">האם צריך להתפלל לשלומו של השלטון האיראני? צפו בשיעורו של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א</a>
         <time class="ep-date" datetime="2026-01-13">13.01.2026</time>
         <p class="ep-desc">בשיעורו השבועי המרתק של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א מתייחס הרב לאירועים הבוערים באיראן ומחבר אותם באופן מפתיע לימי השובבי&quot;ם ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Gr-7QzYdpAQ_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Gr-7QzYdpAQ_._.mp3" preload="none" data-ep-id="Gr-7QzYdpAQ"></audio><button class="share-btn" data-vid="Gr-7QzYdpAQ" data-slug="rav-liran-ishai" data-title="האם צריך להתפלל לשלומו של השלטון האיראני? צפו בשיעורו של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/HwI1OgbBC4k/hqdefault.jpg" alt="החסד הנסתר בחורבן הבית | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א על עשרה בטבת" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">החסד הנסתר בחורבן הבית | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א על עשרה בטבת</h3>
+        <a class="ep-title" href="episode.html?v=HwI1OgbBC4k&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">החסד הנסתר בחורבן הבית | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א על עשרה בטבת</a>
         <time class="ep-date" datetime="2025-12-30">30.12.2025</time>
         <p class="ep-desc">בעשרה בטבת, יום תחילת המצור על ירושלים – חושף מורנו הגאון הגדול הרב לירן ישי שליט&quot;א נקודת עומק מפתיעה: גם בתוך החורבן – טמון חסד גדול ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/HwI1OgbBC4k_._._quot_.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/HwI1OgbBC4k_._._quot_.mp3" preload="none" data-ep-id="HwI1OgbBC4k"></audio><button class="share-btn" data-vid="HwI1OgbBC4k" data-slug="rav-liran-ishai" data-title="החסד הנסתר בחורבן הבית | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א על עשרה בטבת"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/kAfMQdocu8Q/hqdefault.jpg" alt="ברקע האנטישמיות בעולם | השגרירים התכנסו להדלקת נרות חגיגית במעמד מורנו הגאון הגדול הרב לירן ישי" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">ברקע האנטישמיות בעולם | השגרירים התכנסו להדלקת נרות חגיגית במעמד מורנו הגאון הגדול הרב לירן ישי</h3>
+        <a class="ep-title" href="episode.html?v=kAfMQdocu8Q&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">ברקע האנטישמיות בעולם | השגרירים התכנסו להדלקת נרות חגיגית במעמד מורנו הגאון הגדול הרב לירן ישי</a>
         <time class="ep-date" datetime="2025-12-20">20.12.2025</time>
         <p class="ep-desc">אירוע מיוחד של מועדון השגרירים בישראל שהופק בשיתוף פעולה עם בית הכנסת הגדול &quot;היכל מרדכי&quot; בעיר הרצליה, הפגיש תחת קורת גג אחת את ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/kAfMQdocu8Q_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/kAfMQdocu8Q_._.mp3" preload="none" data-ep-id="kAfMQdocu8Q"></audio><button class="share-btn" data-vid="kAfMQdocu8Q" data-slug="rav-liran-ishai" data-title="ברקע האנטישמיות בעולם | השגרירים התכנסו להדלקת נרות חגיגית במעמד מורנו הגאון הגדול הרב לירן ישי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/VYVY1Vb6_-o/hqdefault.jpg" alt="אור לגויים | השגרירים הנמצאים בהרצליה מדליקים נרות חנוכה עם מורנו הגאון הגדול הרב לירן ישי" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">אור לגויים | השגרירים הנמצאים בהרצליה מדליקים נרות חנוכה עם מורנו הגאון הגדול הרב לירן ישי</h3>
+        <a class="ep-title" href="episode.html?v=VYVY1Vb6_-o&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">אור לגויים | השגרירים הנמצאים בהרצליה מדליקים נרות חנוכה עם מורנו הגאון הגדול הרב לירן ישי</a>
         <time class="ep-date" datetime="2025-12-17">17.12.2025</time>
         <p class="ep-desc">רגעים מרגשים של אחדות בבית הכנסת הגדול &quot;היכל מרדכי&quot; בהרצליה. קבוצת שגרירים ודיפלומטים עם בני משפחותיהם, הנמצאים בעיר הרצליה, הצטרפו ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VYVY1Vb6_-o_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VYVY1Vb6_-o_._.mp3" preload="none" data-ep-id="VYVY1Vb6_-o"></audio><button class="share-btn" data-vid="VYVY1Vb6_-o" data-slug="rav-liran-ishai" data-title="אור לגויים | השגרירים הנמצאים בהרצליה מדליקים נרות חנוכה עם מורנו הגאון הגדול הרב לירן ישי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/bTQmax1Ztjg/hqdefault.jpg" alt="שהחיינו | הסגולה בחג החנוכה שתגרום לכם להאריך ימים: מורנו הגאון הגדול הרב לירן ישיש שליט&quot;א" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">שהחיינו | הסגולה בחג החנוכה שתגרום לכם להאריך ימים: מורנו הגאון הגדול הרב לירן ישיש שליט&quot;א</h3>
+        <a class="ep-title" href="episode.html?v=bTQmax1Ztjg&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">שהחיינו | הסגולה בחג החנוכה שתגרום לכם להאריך ימים: מורנו הגאון הגדול הרב לירן ישיש שליט&quot;א</a>
         <time class="ep-date" datetime="2025-12-14">14.12.2025</time>
         <p class="ep-desc">מורנו הגאון הגדול הרב לירן ישי שליט&quot;א מגלה את עומק עניין ברכת &#x27;שהחיינו&#x27; בחנוכה, ואת הסגולה הנפלאה הטמונה בה – סגולה שמקורה בדברי חז&quot;ל ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bTQmax1Ztjg_._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bTQmax1Ztjg_._._.mp3" preload="none" data-ep-id="bTQmax1Ztjg"></audio><button class="share-btn" data-vid="bTQmax1Ztjg" data-slug="rav-liran-ishai" data-title="שהחיינו | הסגולה בחג החנוכה שתגרום לכם להאריך ימים: מורנו הגאון הגדול הרב לירן ישיש שליט&quot;א"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/G1BbASvOOqI/hqdefault.jpg" alt="“נר של חנוכה” | הסגולה העצומה שבברכת ההדלקה: מורנו הגאון הגדול הרב לירן ישי שליט&quot;א במסר מיוחד" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">“נר של חנוכה” | הסגולה העצומה שבברכת ההדלקה: מורנו הגאון הגדול הרב לירן ישי שליט&quot;א במסר מיוחד</h3>
+        <a class="ep-title" href="episode.html?v=G1BbASvOOqI&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">“נר של חנוכה” | הסגולה העצומה שבברכת ההדלקה: מורנו הגאון הגדול הרב לירן ישי שליט&quot;א במסר מיוחד</a>
         <time class="ep-date" datetime="2025-12-10">10.12.2025</time>
         <p class="ep-desc">במסר מיוחד לקראת ימי החנוכה, מורנו המרא דאתרא הגאון הגדול הרב לירן ישי שליט״א מגלה את הסגולה הגדולה הטמונה בברכת הדלקת נרות חנוכה ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G1BbASvOOqI__._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G1BbASvOOqI__._._._.mp3" preload="none" data-ep-id="G1BbASvOOqI"></audio><button class="share-btn" data-vid="G1BbASvOOqI" data-slug="rav-liran-ishai" data-title="“נר של חנוכה” | הסגולה העצומה שבברכת ההדלקה: מורנו הגאון הגדול הרב לירן ישי שליט&quot;א במסר מיוחד"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/wo4LxGr3KNM/hqdefault.jpg" alt="י&quot;ט כסלו תשפ&quot;ו | מה מהות החסידות? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בהסבר קצר וברור" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">י&quot;ט כסלו תשפ&quot;ו | מה מהות החסידות? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בהסבר קצר וברור</h3>
+        <a class="ep-title" href="episode.html?v=wo4LxGr3KNM&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">י&quot;ט כסלו תשפ&quot;ו | מה מהות החסידות? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בהסבר קצר וברור</a>
         <time class="ep-date" datetime="2025-12-09">9.12.2025</time>
         <p class="ep-desc">לרגל יום י״ט בכסלו – חג הגאולה של חסידות חב&quot;ד – מורנו הגאון הגדול הרב לירן ישי שליט״א מוסר הסבר קצר, בהיר ומדויק על מהותה האמיתית של ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/wo4LxGr3KNM_._quot_._quot_._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/wo4LxGr3KNM_._quot_._quot_._._._.mp3" preload="none" data-ep-id="wo4LxGr3KNM"></audio><button class="share-btn" data-vid="wo4LxGr3KNM" data-slug="rav-liran-ishai" data-title="י&quot;ט כסלו תשפ&quot;ו | מה מהות החסידות? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בהסבר קצר וברור"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/5Bl9yCTV3kU/hqdefault.jpg" alt="&quot;מסרת טמאים ביד טהורים&quot; | הקשר החשוב בין החסידות לחנוכה: מורנו הגאון הגדול הרב לירן ישי במסר מיוחד" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">&quot;מסרת טמאים ביד טהורים&quot; | הקשר החשוב בין החסידות לחנוכה: מורנו הגאון הגדול הרב לירן ישי במסר מיוחד</h3>
+        <a class="ep-title" href="episode.html?v=5Bl9yCTV3kU&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">&quot;מסרת טמאים ביד טהורים&quot; | הקשר החשוב בין החסידות לחנוכה: מורנו הגאון הגדול הרב לירן ישי במסר מיוחד</a>
         <time class="ep-date" datetime="2025-12-09">9.12.2025</time>
         <p class="ep-desc">בשיעור מיוחד לכבוד ימי החנוכה וחג הגאולה של חסידות חב&quot;ד, מורנו הגאון הגדול הרב לירן ישי שליט״א מעמיק בנוסח על הניסים “מסרת טמאים ביד ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/5Bl9yCTV3kU__._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/5Bl9yCTV3kU__._._._.mp3" preload="none" data-ep-id="5Bl9yCTV3kU"></audio><button class="share-btn" data-vid="5Bl9yCTV3kU" data-slug="rav-liran-ishai" data-title="&quot;מסרת טמאים ביד טהורים&quot; | הקשר החשוב בין החסידות לחנוכה: מורנו הגאון הגדול הרב לירן ישי במסר מיוחד"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/EXqc2BP4gJU/hqdefault.jpg" alt="רלוונטי מתמיד: בציר 2022, מותר או אסור? | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א מסביר את ההלכות" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">רלוונטי מתמיד: בציר 2022, מותר או אסור? | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א מסביר את ההלכות</h3>
+        <a class="ep-title" href="episode.html?v=EXqc2BP4gJU&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">רלוונטי מתמיד: בציר 2022, מותר או אסור? | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א מסביר את ההלכות</a>
         <time class="ep-date" datetime="2025-12-07">7.12.2025</time>
         <p class="ep-desc">האם מותר לשתות יין מבציר 2022? בשנה זו חלה שנת השמיטה, והדבר מעלה שאלות הלכתיות רבות בנוגע לקדושת היין, דיניו, ואופן הטיפול בו.</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/EXqc2BP4gJU_._.2022_._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/EXqc2BP4gJU_._.2022_._._._.mp3" preload="none" data-ep-id="EXqc2BP4gJU"></audio><button class="share-btn" data-vid="EXqc2BP4gJU" data-slug="rav-liran-ishai" data-title="רלוונטי מתמיד: בציר 2022, מותר או אסור? | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א מסביר את ההלכות"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/tPx58Ta8fn8/hqdefault.jpg" alt="בזכותו ננצל | הילולת הבת עין: מורנו הגאון הרב לירן ישי שליט&quot;א במסר מיוחד אודות הרב אברהם דב מאבריטש" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">בזכותו ננצל | הילולת הבת עין: מורנו הגאון הרב לירן ישי שליט&quot;א במסר מיוחד אודות הרב אברהם דב מאבריטש</h3>
+        <a class="ep-title" href="episode.html?v=tPx58Ta8fn8&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">בזכותו ננצל | הילולת הבת עין: מורנו הגאון הרב לירן ישי שליט&quot;א במסר מיוחד אודות הרב אברהם דב מאבריטש</a>
         <time class="ep-date" datetime="2025-12-02">2.12.2025</time>
         <p class="ep-desc">הרב אברהם דב בן רבי דוד מאווריטש, בעל ה&#x27;בת עין&#x27;, טמון בבית החיים העתיק בצפת, ונקרא על שם הספר שחיבר. מדובר באחד מספרי היסוד בתורת ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tPx58Ta8fn8_._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tPx58Ta8fn8_._._._.mp3" preload="none" data-ep-id="tPx58Ta8fn8"></audio><button class="share-btn" data-vid="tPx58Ta8fn8" data-slug="rav-liran-ishai" data-title="בזכותו ננצל | הילולת הבת עין: מורנו הגאון הרב לירן ישי שליט&quot;א במסר מיוחד אודות הרב אברהם דב מאבריטש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/KmhFEU17nNk/hqdefault.jpg" alt="ספרי הקודש ואיך להקפיד על קדושתם? שיעור מיוחד עם מורנו הגאון הגדול הרב לירן ישי שליט&quot;א | צפו" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">ספרי הקודש ואיך להקפיד על קדושתם? שיעור מיוחד עם מורנו הגאון הגדול הרב לירן ישי שליט&quot;א | צפו</h3>
+        <a class="ep-title" href="episode.html?v=KmhFEU17nNk&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">ספרי הקודש ואיך להקפיד על קדושתם? שיעור מיוחד עם מורנו הגאון הגדול הרב לירן ישי שליט&quot;א | צפו</a>
         <time class="ep-date" datetime="2025-11-24">24.11.2025</time>
         <p class="ep-desc">ספרי קודש – איך שומרים על קדושתם? בשיעור מיוחד ומרתק מוסר מורנו הגאון הרב לירן ישי שליט&quot;א יסודות ועקרונות בהלכות כבוד ספרי הקודש: מה ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KmhFEU17nNk_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KmhFEU17nNk_._.mp3" preload="none" data-ep-id="KmhFEU17nNk"></audio><button class="share-btn" data-vid="KmhFEU17nNk" data-slug="rav-liran-ishai" data-title="ספרי הקודש ואיך להקפיד על קדושתם? שיעור מיוחד עם מורנו הגאון הגדול הרב לירן ישי שליט&quot;א | צפו"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/VeG3iMzj53o/hqdefault.jpg" alt="ביתא ישראל | מורנו הגאון הרב לירן ישי שליט&quot;א בדברים על חג הסיגד ויהודי אתיופיה" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">ביתא ישראל | מורנו הגאון הרב לירן ישי שליט&quot;א בדברים על חג הסיגד ויהודי אתיופיה</h3>
+        <a class="ep-title" href="episode.html?v=VeG3iMzj53o&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">ביתא ישראל | מורנו הגאון הרב לירן ישי שליט&quot;א בדברים על חג הסיגד ויהודי אתיופיה</a>
         <time class="ep-date" datetime="2025-11-21">21.11.2025</time>
         <p class="ep-desc">חידוש הברית והערגה לציון – במשך דורות חלמו יהודי אתיופיה על השיבה לירושלים כדי להתאחד מחדש עם שאר היהודים. חג הסיגד היה ליום של צום, ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VeG3iMzj53o_._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VeG3iMzj53o_._._.mp3" preload="none" data-ep-id="VeG3iMzj53o"></audio><button class="share-btn" data-vid="VeG3iMzj53o" data-slug="rav-liran-ishai" data-title="ביתא ישראל | מורנו הגאון הרב לירן ישי שליט&quot;א בדברים על חג הסיגד ויהודי אתיופיה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/iCDfBpeEGpo/hqdefault.jpg" alt="ציור אומנותי של מרן הרב מאיר מאזוז | הגאון הרב לירן ישי בברכה לצייר ולעוסקים במלאכה" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">ציור אומנותי של מרן הרב מאיר מאזוז | הגאון הרב לירן ישי בברכה לצייר ולעוסקים במלאכה</h3>
+        <a class="ep-title" href="episode.html?v=iCDfBpeEGpo&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">ציור אומנותי של מרן הרב מאיר מאזוז | הגאון הרב לירן ישי בברכה לצייר ולעוסקים במלאכה</a>
         <time class="ep-date" datetime="2025-11-19">19.11.2025</time>
         <p class="ep-desc">ציור דיוקנו של מרן ראש הישיבההרב מאיר מאזוז זצוק&quot;ל – יצירה מרהיבה שנמשכה חודשים רבים ועתידה לפאר את הישיבה הקדושה &quot;כסא רחמים&quot; ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/iCDfBpeEGpo_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/iCDfBpeEGpo_._.mp3" preload="none" data-ep-id="iCDfBpeEGpo"></audio><button class="share-btn" data-vid="iCDfBpeEGpo" data-slug="rav-liran-ishai" data-title="ציור אומנותי של מרן הרב מאיר מאזוז | הגאון הרב לירן ישי בברכה לצייר ולעוסקים במלאכה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/PsApYBi6fV0/hqdefault.jpg" alt="מתכוננים לחתונה? שיעור מיוחד עם מורנו הגאון הגדול הרב לירן ישי שליט&quot;א על הכתובה ומה שחשוב להקפיד בה" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">מתכוננים לחתונה? שיעור מיוחד עם מורנו הגאון הגדול הרב לירן ישי שליט&quot;א על הכתובה ומה שחשוב להקפיד בה</h3>
+        <a class="ep-title" href="episode.html?v=PsApYBi6fV0&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">מתכוננים לחתונה? שיעור מיוחד עם מורנו הגאון הגדול הרב לירן ישי שליט&quot;א על הכתובה ומה שחשוב להקפיד בה</a>
         <time class="ep-date" datetime="2025-11-12">12.11.2025</time>
         <p class="ep-desc">שיעור מיוחד ומרתק של מורנו הגאון הרב לירן ישי שליט&quot;א, בנושא הכתובה – אחד הנושאים החשובים ביותר לקראת החתונה. השיעור הוקדש בעקבות ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PsApYBi6fV0_._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PsApYBi6fV0_._._.mp3" preload="none" data-ep-id="PsApYBi6fV0"></audio><button class="share-btn" data-vid="PsApYBi6fV0" data-slug="rav-liran-ishai" data-title="מתכוננים לחתונה? שיעור מיוחד עם מורנו הגאון הגדול הרב לירן ישי שליט&quot;א על הכתובה ומה שחשוב להקפיד בה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/Su9oAyQFV40/hqdefault.jpg" alt="הטוב והמטיב | חזרתו של הדר גולדין הי&quot;ד: מורנו הגאון הרב לירן ישי שליט&quot;א בדברים מיוחדים" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">הטוב והמטיב | חזרתו של הדר גולדין הי&quot;ד: מורנו הגאון הרב לירן ישי שליט&quot;א בדברים מיוחדים</h3>
+        <a class="ep-title" href="episode.html?v=Su9oAyQFV40&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">הטוב והמטיב | חזרתו של הדר גולדין הי&quot;ד: מורנו הגאון הרב לירן ישי שליט&quot;א בדברים מיוחדים</a>
         <time class="ep-date" datetime="2025-11-10">10.11.2025</time>
         <p class="ep-desc">אחרי כמעט 11 וחצי שנים של ציפייה, כאב ותפילות מצד משפחת גולדין ועם ישראל כולו, גופתו של סגן הדר גולדין הי&quot;ד שנשבה בידי מחבלי חמאס במהלך ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Su9oAyQFV40_._._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Su9oAyQFV40_._._._._.mp3" preload="none" data-ep-id="Su9oAyQFV40"></audio><button class="share-btn" data-vid="Su9oAyQFV40" data-slug="rav-liran-ishai" data-title="הטוב והמטיב | חזרתו של הדר גולדין הי&quot;ד: מורנו הגאון הרב לירן ישי שליט&quot;א בדברים מיוחדים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/8NFuXnKwPns/hqdefault.jpg" alt="&quot;התמונה כולה זה לטובתנו&quot; | מורנו הגאון הרב לירן ישי שליט&quot;א בעקבות נצחון זוהראן ממדאני בניו יורק" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">&quot;התמונה כולה זה לטובתנו&quot; | מורנו הגאון הרב לירן ישי שליט&quot;א בעקבות נצחון זוהראן ממדאני בניו יורק</h3>
+        <a class="ep-title" href="episode.html?v=8NFuXnKwPns&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">&quot;התמונה כולה זה לטובתנו&quot; | מורנו הגאון הרב לירן ישי שליט&quot;א בעקבות נצחון זוהראן ממדאני בניו יורק</a>
         <time class="ep-date" datetime="2025-11-05">5.11.2025</time>
         <p class="ep-desc">בעקבות תוצאות הבחירות בניו יורק, בהן ניצח המועמד המוסלמי זוהראן ממדאני – הידוע בעמדותיו האנטי-ישראליות – התייחס לכך מרא דאתרא הרצליה ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8NFuXnKwPns__._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8NFuXnKwPns__._._._.mp3" preload="none" data-ep-id="8NFuXnKwPns"></audio><button class="share-btn" data-vid="8NFuXnKwPns" data-slug="rav-liran-ishai" data-title="&quot;התמונה כולה זה לטובתנו&quot; | מורנו הגאון הרב לירן ישי שליט&quot;א בעקבות נצחון זוהראן ממדאני בניו יורק"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/v0_A7Az4ixQ/hqdefault.jpg" alt="בקבר רחל אמנו: מורנו הגאון הרב לירן ישי שליט&quot;א בברכה ותפילה על החטופים החללים שיבואו לקבר ישראל" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">בקבר רחל אמנו: מורנו הגאון הרב לירן ישי שליט&quot;א בברכה ותפילה על החטופים החללים שיבואו לקבר ישראל</h3>
+        <a class="ep-title" href="episode.html?v=v0_A7Az4ixQ&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">בקבר רחל אמנו: מורנו הגאון הרב לירן ישי שליט&quot;א בברכה ותפילה על החטופים החללים שיבואו לקבר ישראל</a>
         <time class="ep-date" datetime="2025-11-05">5.11.2025</time>
         <p class="ep-desc">מורנו הגאון הרב לירן ישי שליט&quot;א הגיע לקברה של רחל אמנו ע&quot;ה, ונשא תפילה נרגשת למען החטופים החללים ע&quot;ה – שיזכו לשוב לקבר ישראל ברחמים ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/v0_A7Az4ixQ_._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/v0_A7Az4ixQ_._._.mp3" preload="none" data-ep-id="v0_A7Az4ixQ"></audio><button class="share-btn" data-vid="v0_A7Az4ixQ" data-slug="rav-liran-ishai" data-title="בקבר רחל אמנו: מורנו הגאון הרב לירן ישי שליט&quot;א בברכה ותפילה על החטופים החללים שיבואו לקבר ישראל"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/uVyqTDJnQIo/hqdefault.jpg" alt="&quot;תהיה טוב&quot; | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בדברים מיוחדים אודות החייל עומר בלווה הי&quot;ד" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">&quot;תהיה טוב&quot; | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בדברים מיוחדים אודות החייל עומר בלווה הי&quot;ד</h3>
+        <a class="ep-title" href="episode.html?v=uVyqTDJnQIo&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">&quot;תהיה טוב&quot; | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בדברים מיוחדים אודות החייל עומר בלווה הי&quot;ד</a>
         <time class="ep-date" datetime="2025-10-30">30.10.2025</time>
         <p class="ep-desc">רס&quot;ל עומר בלווה ז&quot;ל בנם של סיגל ואייל, אח לברק, שחר ואיתי. נפל ביום ה&#x27; חשוון תשפ&quot;ד (20.10.2023) מירי נ&quot;ט של חיזבאללה, בעת פעילות מבצעית ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uVyqTDJnQIo__._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uVyqTDJnQIo__._._._.mp3" preload="none" data-ep-id="uVyqTDJnQIo"></audio><button class="share-btn" data-vid="uVyqTDJnQIo" data-slug="rav-liran-ishai" data-title="&quot;תהיה טוב&quot; | מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בדברים מיוחדים אודות החייל עומר בלווה הי&quot;ד"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/7yBDhQqoDsA/hqdefault.jpg" alt="האם מותר להשתמש במשאבה חשמלית בשבת? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בשיעור מיוחד" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">האם מותר להשתמש במשאבה חשמלית בשבת? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בשיעור מיוחד</h3>
+        <a class="ep-title" href="episode.html?v=7yBDhQqoDsA&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">האם מותר להשתמש במשאבה חשמלית בשבת? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בשיעור מיוחד</a>
         <time class="ep-date" datetime="2025-10-27">27.10.2025</time>
         <p class="ep-desc">שיעור מיוחד מאת מורנו הגאון הרב לירן ישי שליט&quot;א, מרא דאתרא הרצליה פיתוח, העוסק בהלכה למעשה באחד הנושאים המעשיים ביותר בבתי ישראל ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7yBDhQqoDsA_._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7yBDhQqoDsA_._._.mp3" preload="none" data-ep-id="7yBDhQqoDsA"></audio><button class="share-btn" data-vid="7yBDhQqoDsA" data-slug="rav-liran-ishai" data-title="האם מותר להשתמש במשאבה חשמלית בשבת? מורנו הגאון הגדול הרב לירן ישי שליט&quot;א בשיעור מיוחד"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/0Pm_BbG-Kdc/hqdefault.jpg" alt="הילולת מרן הרב עובדיה יוסף: מורנו הגאון הרב לירן ישי בדברים וסיפור מיוחד על מרן ועל ספרו &quot;טהרת הבית&quot;" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">הילולת מרן הרב עובדיה יוסף: מורנו הגאון הרב לירן ישי בדברים וסיפור מיוחד על מרן ועל ספרו &quot;טהרת הבית&quot;</h3>
+        <a class="ep-title" href="episode.html?v=0Pm_BbG-Kdc&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">הילולת מרן הרב עובדיה יוסף: מורנו הגאון הרב לירן ישי בדברים וסיפור מיוחד על מרן ועל ספרו &quot;טהרת הבית&quot;</a>
         <time class="ep-date" datetime="2025-10-22">22.10.2025</time>
         <p class="ep-desc">ציון שתים עשרה שנים לפטירת מרן מאור ישראל הרב עובדיה יוסף זצוק&quot;ל ○ מרא דאתרא הרצליה פיתוח מורנו הגאון הרב לירן ישי שליט&quot;א בדברים וסיפור ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/0Pm_BbG-Kdc_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/0Pm_BbG-Kdc_._.mp3" preload="none" data-ep-id="0Pm_BbG-Kdc"></audio><button class="share-btn" data-vid="0Pm_BbG-Kdc" data-slug="rav-liran-ishai" data-title="הילולת מרן הרב עובדיה יוסף: מורנו הגאון הרב לירן ישי בדברים וסיפור מיוחד על מרן ועל ספרו &quot;טהרת הבית&quot;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/Iq42NxosZQY/hqdefault.jpg" alt="​&quot;עוד יותר טוב&quot; | ערב מיוחד בבסיס צאלים בהשתתפות מורנו הגאון הרב לירן ישי והגאון הרב ליאור כהן" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">​&quot;עוד יותר טוב&quot; | ערב מיוחד בבסיס צאלים בהשתתפות מורנו הגאון הרב לירן ישי והגאון הרב ליאור כהן</h3>
+        <a class="ep-title" href="episode.html?v=Iq42NxosZQY&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">​&quot;עוד יותר טוב&quot; | ערב מיוחד בבסיס צאלים בהשתתפות מורנו הגאון הרב לירן ישי והגאון הרב ליאור כהן</a>
         <time class="ep-date" datetime="2025-10-20">20.10.2025</time>
         <p class="ep-desc">ערב של חיזוק רוחני והודאה לה&#x27; על כל הניסים בבסיס צאלים בדרום הארץ, בהשתתפות למעלה מ 600 חיילים, בראשות מרא דאתרא הרצליה פיתוח הגאון ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Iq42NxosZQY___._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Iq42NxosZQY___._._.mp3" preload="none" data-ep-id="Iq42NxosZQY"></audio><button class="share-btn" data-vid="Iq42NxosZQY" data-slug="rav-liran-ishai" data-title="​&quot;עוד יותר טוב&quot; | ערב מיוחד בבסיס צאלים בהשתתפות מורנו הגאון הרב לירן ישי והגאון הרב ליאור כהן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/E4MXbRdnyIU/hqdefault.jpg" alt="&quot;שמחת תורה לכולם&quot; מורנו הגאון הרב לירן ישי שליט&quot;א בדברים מיוחדים על עסקת החטופים" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">&quot;שמחת תורה לכולם&quot; מורנו הגאון הרב לירן ישי שליט&quot;א בדברים מיוחדים על עסקת החטופים</h3>
+        <a class="ep-title" href="episode.html?v=E4MXbRdnyIU&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">&quot;שמחת תורה לכולם&quot; מורנו הגאון הרב לירן ישי שליט&quot;א בדברים מיוחדים על עסקת החטופים</a>
         <time class="ep-date" datetime="2025-10-09">9.10.2025</time>
         <p class="ep-desc">במעמד שמחת החג והקבלת פני רבו שנערך מידי שנה בסוכתו של מרא דאתרא הרצליה פיתוח הגר&quot;ל ישי שליט&quot;א, התייחס הרב בדברים שנשא לעסקת ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/E4MXbRdnyIU__._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/E4MXbRdnyIU__._._.mp3" preload="none" data-ep-id="E4MXbRdnyIU"></audio><button class="share-btn" data-vid="E4MXbRdnyIU" data-slug="rav-liran-ishai" data-title="&quot;שמחת תורה לכולם&quot; מורנו הגאון הרב לירן ישי שליט&quot;א בדברים מיוחדים על עסקת החטופים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/XJd4-y_PT0o/hqdefault.jpg" alt="חילול קברו של מרן הרב מאיר מאזוז: מרא דאתרא הרצליה פיתוח הגאון הרב לירן ישי שליט&quot;א מוחה" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">חילול קברו של מרן הרב מאיר מאזוז: מרא דאתרא הרצליה פיתוח הגאון הרב לירן ישי שליט&quot;א מוחה</h3>
+        <a class="ep-title" href="episode.html?v=XJd4-y_PT0o&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">חילול קברו של מרן הרב מאיר מאזוז: מרא דאתרא הרצליה פיתוח הגאון הרב לירן ישי שליט&quot;א מוחה</a>
         <time class="ep-date" datetime="2025-09-28">28.09.2025</time>
         <p class="ep-desc">סערת חילול מצבת מרן ראש הישיבה הרב מאיר מאזוז זצוק&quot;ל ○ דבריו של מורנו המרא דאתרא הגאון הרב לירן ישי שליט&quot;א: &quot;אנחנו מזועזעים על מה ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/XJd4-y_PT0o_._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/XJd4-y_PT0o_._.mp3" preload="none" data-ep-id="XJd4-y_PT0o"></audio><button class="share-btn" data-vid="XJd4-y_PT0o" data-slug="rav-liran-ishai" data-title="חילול קברו של מרן הרב מאיר מאזוז: מרא דאתרא הרצליה פיתוח הגאון הרב לירן ישי שליט&quot;א מוחה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/gQeSThzol0g/hqdefault.jpg" alt="איך לבחור חזן ותוקע לראש השנה? מורנו הגאון הרב לירן ישי שליט&quot;א מסביר" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">איך לבחור חזן ותוקע לראש השנה? מורנו הגאון הרב לירן ישי שליט&quot;א מסביר</h3>
+        <a class="ep-title" href="episode.html?v=gQeSThzol0g&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">איך לבחור חזן ותוקע לראש השנה? מורנו הגאון הרב לירן ישי שליט&quot;א מסביר</a>
         <time class="ep-date" datetime="2025-09-17">17.09.2025</time>
         
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/gQeSThzol0g_._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/gQeSThzol0g_._._.mp3" preload="none" data-ep-id="gQeSThzol0g"></audio><button class="share-btn" data-vid="gQeSThzol0g" data-slug="rav-liran-ishai" data-title="איך לבחור חזן ותוקע לראש השנה? מורנו הגאון הרב לירן ישי שליט&quot;א מסביר"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/W_bQw4dO_8E/hqdefault.jpg" alt="מה הבעיה במשלוחים של &#x27;וולט&#x27; &#x27;תן ביס&#x27; וכדומה? שיעורו השבועי של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א" loading="lazy">
       <div class="ep-body">
-        <h3 class="ep-title">מה הבעיה במשלוחים של &#x27;וולט&#x27; &#x27;תן ביס&#x27; וכדומה? שיעורו השבועי של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א</h3>
+        <a class="ep-title" href="episode.html?v=W_bQw4dO_8E&ch=rav-liran-ishai" style="color:inherit;text-decoration:none;display:block">מה הבעיה במשלוחים של &#x27;וולט&#x27; &#x27;תן ביס&#x27; וכדומה? שיעורו השבועי של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א</a>
         <time class="ep-date" datetime="2025-09-01">1.09.2025</time>
         <p class="ep-desc">יש בעיה הלכתית במשלוחי &#x27;וולט&#x27; וכדומה? מה קשור &#x27;קפילא&#x27; לשליח של &#x27;תן ביס&#x27;? ומה עדיף, לאכול במסעדה או להזמין לבית? בשיעור זה מברר מורנו ...</p>
-        <audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/W_bQw4dO_8E_._._._._._.mp3" preload="none"></audio>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/W_bQw4dO_8E_._._._._._.mp3" preload="none" data-ep-id="W_bQw4dO_8E"></audio><button class="share-btn" data-vid="W_bQw4dO_8E" data-slug="rav-liran-ishai" data-title="מה הבעיה במשלוחים של &#x27;וולט&#x27; &#x27;תן ביס&#x27; וכדומה? שיעורו השבועי של מורנו הגאון הגדול הרב לירן ישי שליט&quot;א"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
   </div>
+  <div class="toast" id="toast"></div>
 </main>
 <script>
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_parasha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_parasha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${n} épisode${n !== 1 ? 's' : ''}`,
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_parasha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${n} פרקים`,
@@ -735,6 +757,46 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
+  // Speed control
+  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+  function applySpeed(rate) {
+    currentSpeed = rate;
+    localStorage.setItem('playbackSpeed', rate);
+    document.querySelectorAll('.ep-audio').forEach(a => { a.playbackRate = rate; });
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
+  }
+  document.querySelectorAll('.speed-btn').forEach(b => {
+    b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
+    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+  });
+  document.querySelectorAll('.ep-audio').forEach(a => {
+    a.addEventListener('play', () => { a.playbackRate = currentSpeed; });
+  });
+  // Resume playback
+  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
+    const epId = audio.dataset.epId;
+    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
+    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
+    audio.addEventListener('timeupdate', () => {
+      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
+    });
+    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
+  });
+  // Toast
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+  // Share
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.share-btn[data-vid]');
+    if (!btn) return;
+    const url = `https://thetorahpodcast.net/episode.html?v=${btn.dataset.vid}&ch=${btn.dataset.slug}`;
+    if (navigator.share) navigator.share({title: btn.dataset.title, url});
+    else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
+  });
 </script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>
