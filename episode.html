@@ -28,7 +28,10 @@
         .slice(0, maxLen).replace(/-+$/, '');
     }
     function epUrl(ep, slug) {
-      return slug + '/' + slugify(ep.title || '') + '-' + (ep.published || '').slice(0, 10) + '.html';
+      var s = slugify(ep.title || '');
+      var prefix = slug + '-';
+      if (s.startsWith(prefix)) s = s.slice(prefix.length) || (ep.video_id || 'episode');
+      return 'episodes/' + slug + '/' + s + '-' + (ep.published || '').slice(0, 10) + '.html';
     }
     function tryFeed(slug, callback) {
       fetch('feeds/' + slug + '.entries.json')

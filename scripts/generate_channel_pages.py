@@ -30,13 +30,17 @@ def slugify(title: str, max_len: int = 70) -> str:
     return result[:max_len].rstrip("-")
 
 
-def ep_filename(ep: dict) -> str:
+def ep_filename(ep: dict, ch_slug: str = "") -> str:
     slug = slugify(ep.get("title", "")) or ep.get("video_id", "episode")
+    if ch_slug:
+        prefix = ch_slug + "-"
+        if slug.startswith(prefix):
+            slug = slug[len(prefix):] or ep.get("video_id", "episode")
     return f"{slug}-{ep['published'][:10]}.html"
 
 
 def ep_path(ch_slug: str, ep: dict) -> str:
-    return f"{ch_slug}/{ep_filename(ep)}"
+    return f"episodes/{ch_slug}/{ep_filename(ep, ch_slug)}"
 
 
 def esc(s):
@@ -462,7 +466,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     thumb    = ep.get("thumbnail", "")
     desc     = (ep.get("description") or "").strip()
     tags     = ep.get("tags") or []
-    ep_slug  = ep_filename(ep)
+    ep_slug  = ep_filename(ep, slug)
 
     others  = [e for e in all_entries if e.get("video_id") != video_id and e.get("audio_url")]
     related = sorted(others, key=lambda x: x.get("published", ""), reverse=True)[:5]
@@ -479,7 +483,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
             f'<article class="episode">'
             f'{r_thumb_tag}'
             f'<div class="ep-body">'
-            f'<a class="ep-title" href="{esc(ep_filename(r))}" style="color:inherit;text-decoration:none;display:block">{esc(r["title"])}</a>'  # same dir
+            f'<a class="ep-title" href="{esc(ep_filename(r, slug))}" style="color:inherit;text-decoration:none;display:block">{esc(r["title"])}</a>'
             f'<time class="ep-date" datetime="{r["published"][:10]}">{fmt_date(r["published"], lang)}</time>'
             f'<div class="ep-actions"><audio class="ep-audio" controls src="{esc(r["audio_url"])}" preload="none" data-ep-id="{esc(r_vid)}"></audio>'
             f'<button class="share-btn" data-vid="{esc(r_vid)}" data-slug="{esc(slug)}" data-title="{esc(r["title"])}">'
@@ -798,17 +802,18 @@ def main():
         generated.append((slug, entries))
 
     ep_count = 0
+    Path("episodes").mkdir(exist_ok=True)
     for slug, entries in generated:
         ch = next(c for c in enabled if c["slug"] == slug)
-        ch_dir = Path(slug)
+        ch_dir = Path("episodes") / slug
         ch_dir.mkdir(exist_ok=True)
         for ep in entries:
             if not ep.get("title") or not ep.get("published"):
                 continue
             ep_page = render_episode_page(ep, ch, entries, enabled)
-            (ch_dir / ep_filename(ep)).write_text(ep_page, encoding="utf-8")
+            (ch_dir / ep_filename(ep, slug)).write_text(ep_page, encoding="utf-8")
             ep_count += 1
-    print(f"  rabbi subdirs/  ({ep_count} episode pages generated)")
+    print(f"  episodes/  ({ep_count} episode pages generated)")
 
     update_sitemap(generated)
     print(f"\nDone — {len(generated)} channel pages + {ep_count} episode pages generated.")
