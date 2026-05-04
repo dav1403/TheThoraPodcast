@@ -267,8 +267,9 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{esc(name)} — The Torah Podcast</title>
+  <title>{esc(name)} — Cours de Torah en podcast — The Torah Podcast</title>
   <meta name="description" content="{esc(description)}">
+  <meta name="robots" content="index, follow">
   <link rel="canonical" href="{BASE_URL}/{slug}.html">
   <link rel="alternate" hreflang="fr" href="{BASE_URL}/{slug}.html">
   <link rel="alternate" hreflang="he" href="{BASE_URL}/{slug}.html">
@@ -540,13 +541,19 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{esc(title)} — {esc(name)} — The Torah Podcast</title>
   <meta name="description" content="{esc(seo_desc)}">
+  <meta name="robots" content="index, follow">
   <link rel="canonical" href="{BASE_URL}/{ep_path(slug, ep)}">
-  <meta property="og:type" content="website">
+  <link rel="alternate" hreflang="fr" href="{BASE_URL}/{ep_path(slug, ep)}">
+  <link rel="alternate" hreflang="he" href="{BASE_URL}/{ep_path(slug, ep)}">
+  <link rel="alternate" hreflang="x-default" href="{BASE_URL}/{ep_path(slug, ep)}">
+  <meta property="og:type" content="article">
   <meta property="og:url" content="{BASE_URL}/{ep_path(slug, ep)}">
   <meta property="og:title" content="{esc(title)} — The Torah Podcast">
   <meta property="og:description" content="{esc(seo_desc)}">
   <meta property="og:image" content="{esc(og_image)}">
   <meta property="og:site_name" content="The Torah Podcast">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:locale:alternate" content="he_IL">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(title)} — The Torah Podcast">
   <meta name="twitter:description" content="{esc(seo_desc)}">
