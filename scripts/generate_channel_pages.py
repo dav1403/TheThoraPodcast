@@ -99,7 +99,16 @@ CSS = """\
     @media (max-width: 500px) {
       .ch-card { flex-direction: column; }
       .ep-thumb, .ep-thumb-ph { display: none; }
-    }"""
+    }
+    .speed-bar { display:flex; align-items:center; gap:6px; margin-bottom:16px; font-size:.78rem; color:#888; flex-wrap:wrap; }
+    .speed-btn { background:none; border:1px solid #ddd; color:#777; border-radius:4px; padding:3px 9px; font-size:.72rem; cursor:pointer; font-family:inherit; transition:background .12s,color .12s,border-color .12s; }
+    .speed-btn:hover,.speed-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
+    .ep-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:4px; }
+    .ep-actions .ep-audio { flex:1; min-width:200px; }
+    .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
+    .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+    .toast.show { opacity:1; }"""
 
 GTAG = """\
   <link rel="preconnect" href="https://www.googletagmanager.com">
@@ -161,18 +170,27 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
             if thumb else '<div class="ep-thumb-ph"></div>'
         )
         desc_tag  = f'<p class="ep-desc">{esc(desc_raw)}</p>' if desc_raw else ""
+        video_id  = ep.get("video_id", "")
         audio_tag = (
-            f'<audio class="ep-audio" controls src="{esc(audio_url)}" preload="none"></audio>'
+            f'<audio class="ep-audio" controls src="{esc(audio_url)}" preload="none" data-ep-id="{esc(video_id)}"></audio>'
             if audio_url else ""
+        )
+        share_tag = (
+            f'<button class="share-btn" data-vid="{esc(video_id)}" data-slug="{esc(slug)}" data-title="{esc(ep["title"])}">'
+            f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">'
+            f'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>'
+            f'<polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
+            f' Partager</button>'
+            if video_id else ""
         )
         ep_parts.append(
             f'    <article class="episode">\n'
             f'      {thumb_tag}\n'
             f'      <div class="ep-body">\n'
-            f'        <h3 class="ep-title">{esc(ep["title"])}</h3>\n'
+            f'        <a class="ep-title" href="episode.html?v={esc(video_id)}&ch={esc(slug)}" style="color:inherit;text-decoration:none;display:block">{esc(ep["title"])}</a>\n'
             f'        <time class="ep-date" datetime="{ep["published"][:10]}">{fmt_date(ep["published"], lang)}</time>\n'
             f'        {desc_tag}\n'
-            f'        {audio_tag}\n'
+            f'        <div class="ep-actions">{audio_tag}{share_tag}</div>\n'
             f'      </div>\n'
             f'    </article>'
         )
@@ -246,6 +264,10 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
   <meta name="twitter:title" content="{esc(name)} — The Torah Podcast">
   <meta name="twitter:description" content="{esc(description)}">
   <meta name="twitter:image" content="{BASE_URL}/artwork/{slug}.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/artwork/{slug}.png">
   <script type="application/ld+json">
 {schema_json}
   </script>
@@ -268,6 +290,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
       </div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
+    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
     <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -286,20 +309,28 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
   </div>
   {about_block}
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
+  <div class="speed-bar">
+    <span>Vitesse :</span>
+    <button class="speed-btn active" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="1.25">1.25×</button>
+    <button class="speed-btn" data-speed="1.5">1.5×</button>
+    <button class="speed-btn" data-speed="2">2×</button>
+  </div>
   <div class="episode-list">
 {episodes_html}
   </div>
+  <div class="toast" id="toast"></div>
 </main>
 <script>
   const I18N = {{
     fr: {{
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_parasha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_parasha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${{n}} épisode${{n !== 1 ? 's' : ''}}`,
     }},
     he: {{
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_parasha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${{n}} פרקים`,
@@ -352,7 +383,47 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     }});
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   }});
+  // Speed control
+  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+  function applySpeed(rate) {{
+    currentSpeed = rate;
+    localStorage.setItem('playbackSpeed', rate);
+    document.querySelectorAll('.ep-audio').forEach(a => {{ a.playbackRate = rate; }});
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
+  }}
+  document.querySelectorAll('.speed-btn').forEach(b => {{
+    b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
+    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+  }});
+  document.querySelectorAll('.ep-audio').forEach(a => {{
+    a.addEventListener('play', () => {{ a.playbackRate = currentSpeed; }});
+  }});
+  // Resume playback
+  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {{
+    const epId = audio.dataset.epId;
+    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
+    if (saved > 5) audio.addEventListener('loadedmetadata', () => {{ audio.currentTime = saved; }}, {{once:true}});
+    audio.addEventListener('timeupdate', () => {{
+      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
+    }});
+    audio.addEventListener('ended', () => {{ localStorage.removeItem('resume_' + epId); }});
+  }});
+  // Toast
+  function showToast(msg) {{
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+  }}
+  // Share
+  document.addEventListener('click', e => {{
+    const btn = e.target.closest('.share-btn[data-vid]');
+    if (!btn) return;
+    const url = `https://thetorahpodcast.net/episode.html?v=${{btn.dataset.vid}}&ch=${{btn.dataset.slug}}`;
+    if (navigator.share) navigator.share({{title: btn.dataset.title, url}});
+    else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
+  }});
 </script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>
 """
@@ -398,6 +469,12 @@ def update_sitemap(slugs: list[str]):
         '  </url>\n'
         '  <url>\n'
         f'    <loc>{BASE_URL}/derniers-cours.html</loc>\n'
+        f'    <lastmod>{today}</lastmod>\n'
+        '    <changefreq>daily</changefreq>\n'
+        '    <priority>0.8</priority>\n'
+        '  </url>\n'
+        '  <url>\n'
+        f'    <loc>{BASE_URL}/daf-hayomi.html</loc>\n'
         f'    <lastmod>{today}</lastmod>\n'
         '    <changefreq>daily</changefreq>\n'
         '    <priority>0.8</priority>\n'

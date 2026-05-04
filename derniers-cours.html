@@ -16,6 +16,10 @@
   <meta name="twitter:title" content="Derniers cours — The Torah Podcast">
   <meta name="twitter:description" content="Les derniers cours de Torah publiés par tous nos rabbins.">
   <meta name="twitter:image" content="https://thetorahpodcast.net/artwork/rav-itshak-cohen.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/artwork/rav-itshak-cohen.png">
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
@@ -285,6 +289,14 @@
       .ep-thumb, .ep-thumb-ph { display: none; }
       #player-art { display: none; }
     }
+    .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
+    .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
+    .player-speed { display:flex; gap:3px; flex-shrink:0; }
+    .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; transition:background .12s,color .12s; }
+    .speed-btn:hover,.speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+    .toast.show { opacity:1; }
+    .ep-actions { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
   </style>
 </head>
 <body>
@@ -299,6 +311,7 @@
       <div class="nav-submenu" id="nav-rabbis-submenu"></div>
     </div>
     <a href="derniers-cours.html" class="active" data-i18n="nav_last_classes">Derniers cours</a>
+    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
     <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -327,14 +340,21 @@
     <div id="player-channel"></div>
   </div>
   <audio id="player-audio" controls></audio>
+  <div class="player-speed">
+    <button class="speed-btn active" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="1.25">1.25×</button>
+    <button class="speed-btn" data-speed="1.5">1.5×</button>
+    <button class="speed-btn" data-speed="2">2×</button>
+  </div>
   <button id="player-close" title="Fermer">✕</button>
 </div>
+<div class="toast" id="toast"></div>
 
 <script>
   // ─── i18n ──────────────────────────────────────────────────────────────────
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours',
+      nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi',
       nav_parasha:'Paracha', nav_themes:'Thème', nav_all_rabbis:'Tous les rabbins →',
       lang_toggle:'עברית',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
@@ -343,9 +363,10 @@
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       load_more:'Voir plus',
       no_episodes:'Aucun épisode trouvé.',
+      copied:'Lien copié !',
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים',
+      nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי',
       nav_parasha:'פרשה', nav_themes:'נושא', nav_all_rabbis:'כל הרבנים →',
       lang_toggle:'Français',
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
@@ -354,6 +375,7 @@
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       load_more:'טען עוד',
       no_episodes:'לא נמצאו פרקים.',
+      copied:'הקישור הועתק!',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -378,7 +400,31 @@
   });
 
   // ─── Player ────────────────────────────────────────────────────────────────
-  let activeBtn = null;
+  let activeBtn = null, currentEpId = null;
+  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+
+  function setSpeed(rate) {
+    currentSpeed = rate;
+    localStorage.setItem('playbackSpeed', rate);
+    playerAudio.playbackRate = rate;
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
+  }
+  document.querySelectorAll('.speed-btn').forEach(b => b.addEventListener('click', () => setSpeed(parseFloat(b.dataset.speed))));
+  setSpeed(currentSpeed);
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.share-btn[data-vid]');
+    if (btn) {
+      const url = `https://thetorahpodcast.net/episode.html?v=${encodeURIComponent(btn.dataset.vid)}&ch=${encodeURIComponent(btn.dataset.slug)}`;
+      if (navigator.share) navigator.share({ title: btn.dataset.title, url });
+      else navigator.clipboard.writeText(url).then(() => showToast(t('copied')));
+    }
+  });
   const playerEl    = document.getElementById('player');
   const playerAudio = document.getElementById('player-audio');
   const playerTitle = document.getElementById('player-title');
@@ -393,13 +439,22 @@
   }
 
   function loadInPlayer(ep, chName, slug) {
+    currentEpId = ep.video_id;
     playerTitle.textContent = ep.title;
     playerCh.textContent    = chName;
     playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
     playerAudio.src         = ep.audio_url;
+    playerAudio.playbackRate = currentSpeed;
+    const saved = parseInt(localStorage.getItem('resume_' + ep.video_id) || '0');
+    if (saved > 5) playerAudio.addEventListener('loadedmetadata', () => { playerAudio.currentTime = saved; }, { once: true });
     playerAudio.play();
     playerEl.classList.remove('hidden');
   }
+
+  playerAudio.addEventListener('timeupdate', () => {
+    if (currentEpId && playerAudio.currentTime > 5)
+      localStorage.setItem('resume_' + currentEpId, Math.floor(playerAudio.currentTime));
+  });
 
   document.addEventListener('click', e => {
     const btn = e.target.closest('.play-btn[data-ep-id]');
@@ -432,21 +487,14 @@
   });
 
   document.getElementById('player-close').addEventListener('click', () => {
-    playerAudio.pause();
-    playerEl.classList.add('hidden');
-    if (activeBtn) {
-      activeBtn.classList.remove('playing');
-      activeBtn.innerHTML = playIcon() + ' ' + t('listen');
-      activeBtn = null;
-    }
+    playerAudio.pause(); playerEl.classList.add('hidden'); currentEpId = null;
+    if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn.innerHTML = playIcon() + ' ' + t('listen'); activeBtn = null; }
   });
 
   playerAudio.addEventListener('ended', () => {
-    if (activeBtn) {
-      activeBtn.classList.remove('playing');
-      activeBtn.innerHTML = playIcon() + ' ' + t('listen');
-      activeBtn = null;
-    }
+    if (currentEpId) localStorage.removeItem('resume_' + currentEpId);
+    currentEpId = null;
+    if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn.innerHTML = playIcon() + ' ' + t('listen'); activeBtn = null; }
   });
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -459,6 +507,9 @@
     return new Date(iso).toLocaleDateString(locale, { day:'numeric', month:'long', year:'numeric' });
   }
 
+  function shareIcon() {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
+  }
   function renderEpisodeItem(item) {
     const { ep, ch } = item;
     const thumb = ep.thumbnail
@@ -468,8 +519,9 @@
       ? `<p class="ep-desc">${escapeHtml(ep.description.slice(0, 200))}</p>`
       : '';
     const playBtn = ep.audio_url
-      ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>`
-      : '';
+      ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>` : '';
+    const shareBtn = ep.video_id
+      ? `<button class="share-btn" data-vid="${escapeHtml(ep.video_id)}" data-slug="${escapeHtml(ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
     return `
       <li class="episode-item" data-slug="${escapeHtml(ch.slug)}">
         ${thumb}
@@ -478,9 +530,10 @@
             <img class="ep-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" loading="lazy">
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
-          <a class="ep-title" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ep.title)}</a>
+          <a class="ep-title" href="episode.html?v=${escapeHtml(ep.video_id)}&ch=${escapeHtml(ch.slug)}">${escapeHtml(ep.title)}</a>
           <div class="ep-date">${formatDate(ep.published)}</div>
-          ${desc}${playBtn}
+          ${desc}
+          <div class="ep-actions">${playBtn}${shareBtn}</div>
         </div>
       </li>`;
   }
@@ -592,6 +645,6 @@
     renderList();
   })();
 </script>
-
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>

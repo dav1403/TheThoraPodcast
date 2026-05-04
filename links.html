@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/artwork/rav-itshak-cohen.png">
   <title>Les Rabbins — The Torah Podcast | Cours de Torah en podcast</title>
   <meta name="description" content="Retrouvez tous les rabbins du Torah Podcast : Rav Itshak Cohen, Rav Yonathan Mergui, Rav Yaakov Sitruk, Rabbin Jonas et plus. Abonnez-vous sur Spotify, Apple Podcasts ou Deezer.">
   <link rel="canonical" href="https://thetorahpodcast.net/links.html">
@@ -268,6 +272,7 @@
       <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="links.html">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
+    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
     <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -285,7 +290,7 @@
   // ─── i18n ─────────────────────────────────────────────────────────────────
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_parasha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_parasha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       loading:'Chargement…',
@@ -296,7 +301,7 @@
       last:'Dernier :', no_channels:'Aucune chaîne disponible.',
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_parasha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français',
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       loading:'טוען…',
@@ -498,5 +503,6 @@
   })();
 </script>
 
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>
