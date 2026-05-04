@@ -155,13 +155,15 @@ jobs:
         run: python scripts/tag_episodes.py
 
       - name: Generate per-channel HTML pages and update sitemap
-        run: python scripts/generate_channel_pages.py
+        run: |
+          rm -rf episodes/
+          python scripts/generate_channel_pages.py
 
       - name: Commit and push updated feeds
         run: |
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"
-          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html episodes/
+          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html rav-*/ rabbin-*/
           git diff --staged --quiet || git commit -m "chore: update podcast feeds [skip ci]"
           git pull --rebase origin main
           git push

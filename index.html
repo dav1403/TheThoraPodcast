@@ -662,8 +662,8 @@
       .replace(/^-+|-+$/g, '').replace(/-+/g, '-')
       .slice(0, maxLen).replace(/-+$/, '');
   }
-  function epUrl(ep) {
-    return `episodes/${slugify(ep.title || '')}-${(ep.published || '').slice(0, 10)}.html`;
+  function epUrl(ep, chSlug) {
+    return `${chSlug}/${slugify(ep.title || '')}-${(ep.published || '').slice(0, 10)}.html`;
   }
 
   function formatDate(iso) {
@@ -685,13 +685,13 @@
       ? `<button class="play-btn" data-slug="${escapeHtml(slug)}" data-idx="${idx}">${playIcon()} ${t('listen')}</button>`
       : '';
     const shareBtn = ep.title && ep.published
-      ? `<button class="share-btn" data-epfile="${epUrl(ep)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>`
+      ? `<button class="share-btn" data-epfile="${epUrl(ep, slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>`
       : '';
     return `
       <li class="episode" data-title="${escapeHtml((ep.title + ' ' + (ep.tags || []).join(' ')).toLowerCase())}">
         ${thumb}
         <div class="episode-body">
-          <a class="episode-title" href="${epUrl(ep)}">${escapeHtml(ep.title)}</a>
+          <a class="episode-title" href="${epUrl(ep, slug)}">${escapeHtml(ep.title)}</a>
           <div class="episode-date">${formatDate(ep.published)}</div>
           ${desc}
           <div class="ep-btn-row">${playBtn}${shareBtn}</div>

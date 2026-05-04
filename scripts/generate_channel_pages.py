@@ -35,6 +35,10 @@ def ep_filename(ep: dict) -> str:
     return f"{slug}-{ep['published'][:10]}.html"
 
 
+def ep_path(ch_slug: str, ep: dict) -> str:
+    return f"{ch_slug}/{ep_filename(ep)}"
+
+
 def esc(s):
     return _html.escape(str(s), quote=True)
 
@@ -193,7 +197,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
             if audio_url else ""
         )
         share_tag = (
-            f'<button class="share-btn" data-epfile="episodes/{esc(ep_filename(ep))}" data-title="{esc(ep["title"])}">'
+            f'<button class="share-btn" data-epfile="{esc(ep_path(slug, ep))}" data-title="{esc(ep["title"])}">'
             f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">'
             f'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>'
             f'<polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
@@ -204,7 +208,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
             f'    <article class="episode">\n'
             f'      {thumb_tag}\n'
             f'      <div class="ep-body">\n'
-            f'        <a class="ep-title" href="episodes/{esc(ep_filename(ep))}" style="color:inherit;text-decoration:none;display:block">{esc(ep["title"])}</a>\n'
+            f'        <a class="ep-title" href="{esc(ep_path(slug, ep))}" style="color:inherit;text-decoration:none;display:block">{esc(ep["title"])}</a>\n'
             f'        <time class="ep-date" datetime="{ep["published"][:10]}">{fmt_date(ep["published"], lang)}</time>\n'
             f'        {desc_tag}\n'
             f'        <div class="ep-actions">{audio_tag}{share_tag}</div>\n'
@@ -474,7 +478,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
             f'<article class="episode">'
             f'{r_thumb_tag}'
             f'<div class="ep-body">'
-            f'<a class="ep-title" href="{esc(ep_filename(r))}" style="color:inherit;text-decoration:none;display:block">{esc(r["title"])}</a>'
+            f'<a class="ep-title" href="{esc(ep_filename(r))}" style="color:inherit;text-decoration:none;display:block">{esc(r["title"])}</a>'  # same dir
             f'<time class="ep-date" datetime="{r["published"][:10]}">{fmt_date(r["published"], lang)}</time>'
             f'<div class="ep-actions"><audio class="ep-audio" controls src="{esc(r["audio_url"])}" preload="none" data-ep-id="{esc(r_vid)}"></audio>'
             f'<button class="share-btn" data-vid="{esc(r_vid)}" data-slug="{esc(slug)}" data-title="{esc(r["title"])}">'
@@ -493,7 +497,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         "@type": "PodcastEpisode",
         "name": title,
         "datePublished": pub,
-        "url": f"{BASE_URL}/episodes/{ep_slug}",
+        "url": f"{BASE_URL}/{ep_path(slug, ep)}",
         "partOfSeries": {
             "@type": "PodcastSeries",
             "name": name,
@@ -536,9 +540,9 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{esc(title)} — {esc(name)} — The Torah Podcast</title>
   <meta name="description" content="{esc(seo_desc)}">
-  <link rel="canonical" href="{BASE_URL}/episodes/{ep_slug}">
+  <link rel="canonical" href="{BASE_URL}/{ep_path(slug, ep)}">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{BASE_URL}/episodes/{ep_slug}">
+  <meta property="og:url" content="{BASE_URL}/{ep_path(slug, ep)}">
   <meta property="og:title" content="{esc(title)} — The Torah Podcast">
   <meta property="og:description" content="{esc(seo_desc)}">
   <meta property="og:image" content="{esc(og_image)}">
@@ -601,7 +605,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
       <button class="speed-btn" data-speed="1.5">1.5×</button>
       <button class="speed-btn" data-speed="2">2×</button>
     </div>
-    <button class="share-btn" data-epfile="episodes/{esc(ep_slug)}" data-title="{esc(title)}" style="margin-top:8px">
+    <button class="share-btn" data-epfile="{esc(ep_path(slug, ep))}" data-title="{esc(title)}" style="margin-top:8px">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
         <polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
@@ -709,7 +713,7 @@ def update_sitemap(slug_entries: list[tuple]):
     )
     episode_entries = "\n".join(
         f"  <url>\n"
-        f"    <loc>{BASE_URL}/episodes/{ep_filename(ep)}</loc>\n"
+        f"    <loc>{BASE_URL}/{ep_path(slug, ep)}</loc>\n"
         f"    <lastmod>{ep['published'][:10]}</lastmod>\n"
         f"    <changefreq>never</changefreq>\n"
         f"    <priority>0.6</priority>\n"
@@ -770,8 +774,7 @@ def main():
     channels = json.loads(CHANNELS_FILE.read_text(encoding="utf-8"))
     enabled  = [ch for ch in channels if ch.get("enabled")]
 
-    episodes_dir = Path("episodes")
-    episodes_dir.mkdir(exist_ok=True)
+    # per-rabbi subdirs created below per channel
 
     generated = []
     for ch in enabled:
@@ -790,13 +793,15 @@ def main():
     ep_count = 0
     for slug, entries in generated:
         ch = next(c for c in enabled if c["slug"] == slug)
+        ch_dir = Path(slug)
+        ch_dir.mkdir(exist_ok=True)
         for ep in entries:
             if not ep.get("title") or not ep.get("published"):
                 continue
             ep_page = render_episode_page(ep, ch, entries, enabled)
-            (episodes_dir / ep_filename(ep)).write_text(ep_page, encoding="utf-8")
+            (ch_dir / ep_filename(ep)).write_text(ep_page, encoding="utf-8")
             ep_count += 1
-    print(f"  episodes/  ({ep_count} episode pages generated)")
+    print(f"  rabbi subdirs/  ({ep_count} episode pages generated)")
 
     update_sitemap(generated)
     print(f"\nDone — {len(generated)} channel pages + {ep_count} episode pages generated.")

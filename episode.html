@@ -27,22 +27,22 @@
         .replace(/^-+|-+$/g, '').replace(/-+/g, '-')
         .slice(0, maxLen).replace(/-+$/, '');
     }
-    function epUrl(ep) {
-      return 'episodes/' + slugify(ep.title || '') + '-' + (ep.published || '').slice(0, 10) + '.html';
+    function epUrl(ep, slug) {
+      return slug + '/' + slugify(ep.title || '') + '-' + (ep.published || '').slice(0, 10) + '.html';
     }
     function tryFeed(slug, callback) {
       fetch('feeds/' + slug + '.entries.json')
         .then(function(r) { return r.ok ? r.json() : []; })
         .then(function(entries) {
           var ep = entries.find(function(e) { return e.video_id === vid; });
-          callback(ep || null);
+          callback(ep ? { ep: ep, slug: slug } : null);
         })
         .catch(function() { callback(null); });
     }
 
     if (ch) {
-      tryFeed(ch, function(ep) {
-        if (ep) { location.replace(epUrl(ep)); }
+      tryFeed(ch, function(res) {
+        if (res) { location.replace(epUrl(res.ep, res.slug)); }
         else { location.replace('./'); }
       });
     } else {
@@ -53,8 +53,8 @@
           var i = 0;
           function next() {
             if (i >= slugs.length) { location.replace('./'); return; }
-            tryFeed(slugs[i++], function(ep) {
-              if (ep) { location.replace(epUrl(ep)); } else { next(); }
+            tryFeed(slugs[i++], function(res) {
+              if (res) { location.replace(epUrl(res.ep, res.slug)); } else { next(); }
             });
           }
           next();

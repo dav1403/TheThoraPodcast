@@ -283,8 +283,8 @@
       .replace(/^-+|-+$/g, '').replace(/-+/g, '-')
       .slice(0, maxLen).replace(/-+$/, '');
   }
-  function epUrl(ep) {
-    return `episodes/${slugify(ep.title || '')}-${(ep.published || '').slice(0, 10)}.html`;
+  function epUrl(ep, chSlug) {
+    return `${chSlug}/${slugify(ep.title || '')}-${(ep.published || '').slice(0, 10)}.html`;
   }
   function formatDate(iso) {
     return new Date(iso).toLocaleDateString(lang === 'he' ? 'he-IL' : 'fr-FR', { day:'numeric', month:'long', year:'numeric' });
@@ -302,7 +302,7 @@
     const playBtn = ep.audio_url
       ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>` : '';
     const shareBtn = ep.title && ep.published
-      ? `<button class="share-btn" data-epfile="${epUrl(ep)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
+      ? `<button class="share-btn" data-epfile="${epUrl(ep, ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
     return `
       <li class="episode-item" data-slug="${escapeHtml(ch.slug)}">
         ${thumb}
@@ -311,7 +311,7 @@
             <img class="ep-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" loading="lazy">
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
-          <a class="ep-title" href="${epUrl(ep)}">${escapeHtml(ep.title)}</a>
+          <a class="ep-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
           <div class="ep-date">${formatDate(ep.published)}</div>
           ${desc}
           <div class="ep-actions">${playBtn}${shareBtn}</div>
