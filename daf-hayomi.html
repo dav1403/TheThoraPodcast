@@ -265,9 +265,9 @@
     clearTimeout(toast._t); toast._t = setTimeout(() => toast.classList.remove('show'), 2000);
   }
   document.addEventListener('click', e => {
-    const btn = e.target.closest('.share-btn[data-vid]');
+    const btn = e.target.closest('.share-btn[data-epfile]');
     if (!btn) return;
-    const url = `https://thetorahpodcast.net/episode.html?v=${btn.dataset.vid}&ch=${btn.dataset.slug}`;
+    const url = `https://thetorahpodcast.net/${btn.dataset.epfile}`;
     if (navigator.share) navigator.share({ title: btn.dataset.title, url });
     else navigator.clipboard.writeText(url).then(() => showToast(t('copied')));
   });
@@ -275,6 +275,16 @@
   // ─── Helpers ──────────────────────────────────────────────────────────────
   function escapeHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function slugify(title, maxLen = 70) {
+    return title.toLowerCase().normalize('NFD')
+      .replace(/\p{Mn}/gu, '')
+      .replace(/[^a-z0-9א-תװ-׻]+/gu, '-')
+      .replace(/^-+|-+$/g, '').replace(/-+/g, '-')
+      .slice(0, maxLen).replace(/-+$/, '');
+  }
+  function epUrl(ep) {
+    return `episodes/${slugify(ep.title || '')}-${(ep.published || '').slice(0, 10)}.html`;
   }
   function formatDate(iso) {
     return new Date(iso).toLocaleDateString(lang === 'he' ? 'he-IL' : 'fr-FR', { day:'numeric', month:'long', year:'numeric' });
@@ -291,8 +301,8 @@
     const desc = ep.description ? `<p class="ep-desc">${escapeHtml(ep.description.slice(0,200))}</p>` : '';
     const playBtn = ep.audio_url
       ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>` : '';
-    const shareBtn = ep.video_id
-      ? `<button class="share-btn" data-vid="${escapeHtml(ep.video_id)}" data-slug="${escapeHtml(ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
+    const shareBtn = ep.title && ep.published
+      ? `<button class="share-btn" data-epfile="${epUrl(ep)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
     return `
       <li class="episode-item" data-slug="${escapeHtml(ch.slug)}">
         ${thumb}
@@ -301,7 +311,7 @@
             <img class="ep-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" loading="lazy">
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
-          <a class="ep-title" href="episode.html?v=${escapeHtml(ep.video_id)}&ch=${escapeHtml(ch.slug)}">${escapeHtml(ep.title)}</a>
+          <a class="ep-title" href="${epUrl(ep)}">${escapeHtml(ep.title)}</a>
           <div class="ep-date">${formatDate(ep.published)}</div>
           ${desc}
           <div class="ep-actions">${playBtn}${shareBtn}</div>

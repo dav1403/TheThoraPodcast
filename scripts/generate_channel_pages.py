@@ -6,6 +6,8 @@ No external dependencies — stdlib only.
 """
 import json
 import html as _html
+import re
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -17,6 +19,21 @@ MONTHS_FR = [
     "janvier", "février", "mars", "avril", "mai", "juin",
     "juillet", "août", "septembre", "octobre", "novembre", "décembre",
 ]
+
+def slugify(title: str, max_len: int = 70) -> str:
+    nfd = unicodedata.normalize("NFD", title)
+    result = "".join(c for c in nfd if unicodedata.category(c) != "Mn")
+    result = result.lower()
+    result = re.sub(r"[^a-z0-9א-תװ-״]+", "-", result)
+    result = result.strip("-")
+    result = re.sub(r"-+", "-", result)
+    return result[:max_len].rstrip("-")
+
+
+def ep_filename(ep: dict) -> str:
+    slug = slugify(ep.get("title", "")) or ep.get("video_id", "episode")
+    return f"{slug}-{ep['published'][:10]}.html"
+
 
 def esc(s):
     return _html.escape(str(s), quote=True)
@@ -176,18 +193,18 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
             if audio_url else ""
         )
         share_tag = (
-            f'<button class="share-btn" data-vid="{esc(video_id)}" data-slug="{esc(slug)}" data-title="{esc(ep["title"])}">'
+            f'<button class="share-btn" data-epfile="episodes/{esc(ep_filename(ep))}" data-title="{esc(ep["title"])}">'
             f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">'
             f'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>'
             f'<polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
             f' Partager</button>'
-            if video_id else ""
+            if ep.get("title") and ep.get("published") else ""
         )
         ep_parts.append(
             f'    <article class="episode">\n'
             f'      {thumb_tag}\n'
             f'      <div class="ep-body">\n'
-            f'        <a class="ep-title" href="episode.html?v={esc(video_id)}&ch={esc(slug)}" style="color:inherit;text-decoration:none;display:block">{esc(ep["title"])}</a>\n'
+            f'        <a class="ep-title" href="episodes/{esc(ep_filename(ep))}" style="color:inherit;text-decoration:none;display:block">{esc(ep["title"])}</a>\n'
             f'        <time class="ep-date" datetime="{ep["published"][:10]}">{fmt_date(ep["published"], lang)}</time>\n'
             f'        {desc_tag}\n'
             f'        <div class="ep-actions">{audio_tag}{share_tag}</div>\n'
@@ -416,9 +433,258 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
   }}
   // Share
   document.addEventListener('click', e => {{
-    const btn = e.target.closest('.share-btn[data-vid]');
+    const btn = e.target.closest('.share-btn[data-epfile]');
     if (!btn) return;
-    const url = `https://thetorahpodcast.net/episode.html?v=${{btn.dataset.vid}}&ch=${{btn.dataset.slug}}`;
+    const url = `https://thetorahpodcast.net/${{btn.dataset.epfile}}`;
+    if (navigator.share) navigator.share({{title: btn.dataset.title, url}});
+    else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
+  }});
+</script>
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>
+"""
+
+
+def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: list) -> str:
+    slug     = ch["slug"]
+    name     = ch["podcast_author"]
+    lang     = ch.get("podcast_language", "fr")
+    video_id = ep.get("video_id", "")
+    title    = ep.get("title", "")
+    pub      = ep.get("published", "")[:10]
+    audio    = ep.get("audio_url", "")
+    thumb    = ep.get("thumbnail", "")
+    desc     = (ep.get("description") or "").strip()
+    tags     = ep.get("tags") or []
+    ep_slug  = ep_filename(ep)
+
+    others  = [e for e in all_entries if e.get("video_id") != video_id and e.get("audio_url")]
+    related = sorted(others, key=lambda x: x.get("published", ""), reverse=True)[:5]
+
+    related_parts = []
+    for r in related:
+        r_vid = r.get("video_id", "")
+        r_thumb = r.get("thumbnail", "")
+        r_thumb_tag = (
+            f'<img class="ep-thumb" src="{esc(r_thumb)}" alt="{esc(r["title"])}" loading="lazy">'
+            if r_thumb else '<div class="ep-thumb-ph"></div>'
+        )
+        related_parts.append(
+            f'<article class="episode">'
+            f'{r_thumb_tag}'
+            f'<div class="ep-body">'
+            f'<a class="ep-title" href="{esc(ep_filename(r))}" style="color:inherit;text-decoration:none;display:block">{esc(r["title"])}</a>'
+            f'<time class="ep-date" datetime="{r["published"][:10]}">{fmt_date(r["published"], lang)}</time>'
+            f'<div class="ep-actions"><audio class="ep-audio" controls src="{esc(r["audio_url"])}" preload="none" data-ep-id="{esc(r_vid)}"></audio>'
+            f'<button class="share-btn" data-vid="{esc(r_vid)}" data-slug="{esc(slug)}" data-title="{esc(r["title"])}">'
+            f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">'
+            f'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>'
+            f'<polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
+            f' Partager</button></div>'
+            f'</div></article>'
+        )
+    related_html = "\n".join(related_parts)
+
+    tags_html = " ".join(f'<span class="ep-tag">{esc(t)}</span>' for t in tags) if tags else ""
+
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "PodcastEpisode",
+        "name": title,
+        "datePublished": pub,
+        "url": f"{BASE_URL}/episodes/{ep_slug}",
+        "partOfSeries": {
+            "@type": "PodcastSeries",
+            "name": name,
+            "url": f"{BASE_URL}/{slug}.html",
+        },
+        "author": {"@type": "Person", "name": name},
+        "description": desc[:500] if desc else f"Épisode de {name}",
+    }
+    if audio:
+        schema["associatedMedia"] = {"@type": "MediaObject", "contentUrl": audio}
+    if thumb:
+        schema["image"] = thumb
+    schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
+
+    submenu_links = "\n".join(
+        f'      <a href="../{esc(c["slug"])}.html">{esc(c["podcast_author"])}</a>'
+        for c in all_channels
+        if c.get("enabled")
+    )
+
+    seo_desc = desc[:155] if desc else f"Écoutez {title} — cours de {name} sur The Torah Podcast."
+    og_image = thumb if thumb else f"{BASE_URL}/artwork/{slug}.png"
+    audio_tag = (
+        f'<audio id="ep-audio" controls src="{esc(audio)}" preload="none" data-ep-id="{esc(video_id)}"'
+        f' style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>'
+        if audio else ""
+    )
+    thumb_tag = (
+        f'<img src="{esc(thumb)}" alt="{esc(title)}"'
+        f' style="width:100%;max-width:480px;border-radius:10px;margin-bottom:16px;object-fit:cover">'
+        if thumb else ""
+    )
+    desc_tag  = f'<p style="font-size:.9rem;color:#444;line-height:1.7;white-space:pre-line;margin-top:16px">{esc(desc)}</p>' if desc else ""
+    breadcrumb_title = (title[:60] + "…") if len(title) > 60 else title
+
+    return f"""<!DOCTYPE html>
+<html lang="{lang}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{esc(title)} — {esc(name)} — The Torah Podcast</title>
+  <meta name="description" content="{esc(seo_desc)}">
+  <link rel="canonical" href="{BASE_URL}/episodes/{ep_slug}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{BASE_URL}/episodes/{ep_slug}">
+  <meta property="og:title" content="{esc(title)} — The Torah Podcast">
+  <meta property="og:description" content="{esc(seo_desc)}">
+  <meta property="og:image" content="{esc(og_image)}">
+  <meta property="og:site_name" content="The Torah Podcast">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{esc(title)} — The Torah Podcast">
+  <meta name="twitter:description" content="{esc(seo_desc)}">
+  <meta name="twitter:image" content="{esc(og_image)}">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <link rel="apple-touch-icon" href="/artwork/{slug}.png">
+  <script type="application/ld+json">
+{schema_json}
+  </script>
+{GTAG}
+  <style>
+{CSS}
+  .ep-hero {{ background:#fff; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.08); padding:24px; margin-bottom:24px; }}
+  .ep-hero h1 {{ font-size:1.3rem; font-weight:700; margin-bottom:8px; line-height:1.4; }}
+  .ep-meta {{ font-size:.82rem; color:#888; margin-bottom:12px; }}
+  .ep-tag {{ display:inline-block; background:#f0f0e8; color:#666; border-radius:20px; padding:2px 10px; font-size:.72rem; margin:2px 2px 10px 0; }}
+  .breadcrumb {{ font-size:.8rem; color:#888; margin-bottom:20px; }}
+  .breadcrumb a {{ color:#888; text-decoration:none; }}
+  .breadcrumb a:hover {{ text-decoration:underline; }}
+  .related-label {{ font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }}
+  </style>
+</head>
+<body>
+<header>
+  <p class="site-brand"><a href="../">The Torah Podcast</a></p>
+  <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <nav class="header-nav">
+    <a href="../" data-i18n="nav_home">Accueil</a>
+    <div class="nav-dropdown" id="nav-dropdown">
+      <a class="nav-dd-link" href="../links.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
+      <div class="nav-submenu">
+{submenu_links}
+        <a class="nav-submenu-all" href="../links.html">Tous les rabbins →</a>
+      </div>
+    </div>
+    <a href="../derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
+    <a href="../daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+    <a href="../parasha.html" data-i18n="nav_parasha">Paracha</a>
+    <a href="../themes.html" data-i18n="nav_themes">Thème</a>
+    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
+  </nav>
+</header>
+<main>
+  <p class="breadcrumb"><a href="../">Accueil</a> › <a href="../{slug}.html">{esc(name)}</a> › {esc(breadcrumb_title)}</p>
+  <div class="ep-hero">
+    {thumb_tag}
+    <h1>{esc(title)}</h1>
+    <p class="ep-meta"><a href="../{slug}.html" style="color:#888;text-decoration:none">{esc(name)}</a> · <time datetime="{pub}">{fmt_date(ep["published"], lang)}</time></p>
+    {f'<div style="margin-bottom:8px">{tags_html}</div>' if tags_html else ''}
+    {audio_tag}
+    <div class="speed-bar">
+      <span>Vitesse :</span>
+      <button class="speed-btn active" data-speed="1">1×</button>
+      <button class="speed-btn" data-speed="1.25">1.25×</button>
+      <button class="speed-btn" data-speed="1.5">1.5×</button>
+      <button class="speed-btn" data-speed="2">2×</button>
+    </div>
+    <button class="share-btn" data-epfile="episodes/{esc(ep_slug)}" data-title="{esc(title)}" style="margin-top:8px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+        <polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+      </svg> Partager cet épisode
+    </button>
+    {desc_tag}
+  </div>
+  {f'<p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list">{related_html}</div>' if related_html else ''}
+  <div class="toast" id="toast"></div>
+</main>
+<script>
+  const I18N = {{
+    fr: {{
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_parasha:'Paracha', nav_themes:'Thème',
+      lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      related:'Épisodes récents',
+    }},
+    he: {{
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
+      lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
+      related:'פרקים אחרונים',
+    }},
+  }};
+  let lang = localStorage.getItem('lang') || '{lang}';
+  function t(k) {{ const d = I18N[lang] || {{}}; return d[k] || I18N.fr[k] || k; }}
+  function applyLang() {{
+    document.documentElement.lang = lang;
+    document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(el => {{ el.textContent = t(el.dataset.i18n); }});
+  }}
+  function toggleLang() {{
+    localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
+    location.reload();
+  }}
+  applyLang();
+  document.addEventListener('click', e => {{
+    if (e.target.closest('.nav-submenu')) return;
+    const caret = e.target.closest('.nav-dd-caret');
+    document.querySelectorAll('.nav-dropdown.open').forEach(el => {{
+      if (!caret || el !== caret.closest('.nav-dropdown')) el.classList.remove('open');
+    }});
+    if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
+  }});
+  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+  function applySpeed(rate) {{
+    currentSpeed = rate;
+    localStorage.setItem('playbackSpeed', rate);
+    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => {{ a.playbackRate = rate; }});
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
+  }}
+  document.querySelectorAll('.speed-btn').forEach(b => {{
+    b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
+    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+  }});
+  const mainAudio = document.getElementById('ep-audio');
+  if (mainAudio) {{
+    const saved = parseInt(localStorage.getItem('resume_{video_id}') || '0');
+    if (saved > 5) mainAudio.addEventListener('loadedmetadata', () => {{ mainAudio.currentTime = saved; }}, {{once:true}});
+    mainAudio.addEventListener('play', () => {{ mainAudio.playbackRate = currentSpeed; }});
+    mainAudio.addEventListener('timeupdate', () => {{
+      if (mainAudio.currentTime > 5) localStorage.setItem('resume_{video_id}', Math.floor(mainAudio.currentTime));
+    }});
+    mainAudio.addEventListener('ended', () => {{ localStorage.removeItem('resume_{video_id}'); }});
+  }}
+  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {{
+    const epId = audio.dataset.epId;
+    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
+    if (saved > 5) audio.addEventListener('loadedmetadata', () => {{ audio.currentTime = saved; }}, {{once:true}});
+    audio.addEventListener('play', () => {{ audio.playbackRate = currentSpeed; }});
+    audio.addEventListener('timeupdate', () => {{
+      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
+    }});
+    audio.addEventListener('ended', () => {{ localStorage.removeItem('resume_' + epId); }});
+  }});
+  function showToast(msg) {{
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+  }}
+  document.addEventListener('click', e => {{
+    const btn = e.target.closest('.share-btn[data-epfile]');
+    if (!btn) return;
+    const url = `{BASE_URL}/${{btn.dataset.epfile}}`;
     if (navigator.share) navigator.share({{title: btn.dataset.title, url}});
     else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
   }});
@@ -443,14 +709,14 @@ def update_sitemap(slug_entries: list[tuple]):
     )
     episode_entries = "\n".join(
         f"  <url>\n"
-        f"    <loc>{BASE_URL}/episode.html?v={ep['video_id']}&amp;ch={slug}</loc>\n"
+        f"    <loc>{BASE_URL}/episodes/{ep_filename(ep)}</loc>\n"
         f"    <lastmod>{ep['published'][:10]}</lastmod>\n"
         f"    <changefreq>never</changefreq>\n"
         f"    <priority>0.6</priority>\n"
         f"  </url>"
         for slug, entries in slug_entries
         for ep in entries
-        if ep.get("video_id") and ep.get("published")
+        if ep.get("title") and ep.get("published")
     )
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -504,6 +770,9 @@ def main():
     channels = json.loads(CHANNELS_FILE.read_text(encoding="utf-8"))
     enabled  = [ch for ch in channels if ch.get("enabled")]
 
+    episodes_dir = Path("episodes")
+    episodes_dir.mkdir(exist_ok=True)
+
     generated = []
     for ch in enabled:
         slug         = ch["slug"]
@@ -518,8 +787,19 @@ def main():
         print(f"  {out}  ({len(entries)} episodes)")
         generated.append((slug, entries))
 
+    ep_count = 0
+    for slug, entries in generated:
+        ch = next(c for c in enabled if c["slug"] == slug)
+        for ep in entries:
+            if not ep.get("title") or not ep.get("published"):
+                continue
+            ep_page = render_episode_page(ep, ch, entries, enabled)
+            (episodes_dir / ep_filename(ep)).write_text(ep_page, encoding="utf-8")
+            ep_count += 1
+    print(f"  episodes/  ({ep_count} episode pages generated)")
+
     update_sitemap(generated)
-    print(f"\nDone — {len(generated)} channel pages generated.")
+    print(f"\nDone — {len(generated)} channel pages + {ep_count} episode pages generated.")
 
 
 if __name__ == "__main__":
