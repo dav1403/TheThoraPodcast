@@ -91,8 +91,12 @@ def main():
         else:
             bf_status = "⏳ ongoing"
 
-        yt_total  = get_channel_video_count(ch["youtube_channel_id"])
-        remaining = f"{yt_total - total_now:,}" if yt_total is not None else "?"
+        yt_dlp_count = ch_state.get("yt_video_count")
+        if yt_dlp_count is not None:
+            remaining = f"{max(0, yt_dlp_count - total_now):,}"
+        else:
+            yt_total  = get_channel_video_count(ch["youtube_channel_id"])
+            remaining = f"{yt_total - total_now:,}" if yt_total is not None else "?"
 
         added_str = f"**+{added}**" if added > 0 else "—"
         lines.append(f"| `{slug}` | {added_str} | {total_now} | {remaining} | {bf_status} |")

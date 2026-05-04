@@ -37,10 +37,10 @@ def discover_missing_videos(channel_id, already_done):
         missing = [v for v in all_ids if v not in already_done]
         missing.reverse()
         print("    " + str(len(all_ids)) + " total on channel, " + str(len(missing)) + " not yet in feed.")
-        return missing
+        return missing, len(all_ids)
     except Exception as e:
         print("    yt-dlp discovery error: " + str(e))
-        return []
+        return [], 0
 
 def get_video_info(video_id):
     if not API_KEY:
@@ -94,8 +94,9 @@ def backfill_channel(channel_cfg, processed, state):
                 needs_rescan = True
 
     if needs_rescan:
-        todo = discover_missing_videos(channel_id, already_done)
+        todo, yt_count = discover_missing_videos(channel_id, already_done)
         ch_state["last_scan"] = datetime.utcnow().isoformat()
+        ch_state["yt_video_count"] = yt_count
         ch_state.pop("exhausted", None)  # clean up legacy flag
         if not todo:
             ch_state["todo"] = []
