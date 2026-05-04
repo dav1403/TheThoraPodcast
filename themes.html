@@ -397,17 +397,7 @@
     "Am Israël & Actualité","Santé & Réfoua","Parnassa"
   ];
 
-  const CHANNELS = [
-    { slug: "rabbin-jonas",         name: "Rabbin Jonas" },
-    { slug: "rav-barak-ben-nissan", name: "Rav Barak Ben Nissan" },
-    { slug: "rav-itshak-cohen",     name: "Rav Itshak Cohen" },
-    { slug: "rav-liran-ishai",      name: "Rav Liran Ishaï" },
-    { slug: "rav-meir-david-shmueli", name: "Rav Meir David Shmueli" },
-    { slug: "rav-menahem-sakhoun",  name: "Rav Menahem Sakhoun" },
-    { slug: "rav-ruben-attal",      name: "Rav Ruben Attal" },
-    { slug: "rav-yaakov-sitruk",    name: "Rav Yaakov Sitruk" },
-    { slug: "rav-yonathan-mergui",  name: "Rav Yonathan Mergui" },
-  ];
+  let CHANNELS = [];
 
   let allData = [];        // [{ ch, entries }]
   let themeIndex = {};     // theme -> [{ep, ch, globalIdx}]
@@ -510,6 +500,11 @@
   let allEpisodes = []; // flat array for gidx lookup
 
   async function loadAll() {
+    try {
+      const res = await fetch('channels.json');
+      if (res.ok) CHANNELS = (await res.json()).filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
+    } catch(_) {}
+
     const results = await Promise.allSettled(
       CHANNELS.map(ch =>
         fetch(`feeds/${ch.slug}.entries.json`)
