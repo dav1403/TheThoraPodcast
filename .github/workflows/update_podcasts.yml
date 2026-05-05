@@ -154,6 +154,11 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scripts/tag_episodes.py
 
+      - name: Fetch episode transcripts (auto-captions from YouTube)
+        env:
+          YOUTUBE_COOKIES_FILE: ${{ env.YOUTUBE_COOKIES_FILE }}
+        run: python scripts/fetch_transcripts.py --budget 50
+
       - name: Generate per-channel HTML pages and update sitemap
         run: python scripts/generate_channel_pages.py
 

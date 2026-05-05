@@ -133,7 +133,14 @@ CSS = """\
     .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
     .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
     .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
-    .toast.show { opacity:1; }"""
+    .toast.show { opacity:1; }
+    details.transcript { margin-top:20px; border:1px solid #e8e8e8; border-radius:10px; overflow:hidden; }
+    details.transcript summary { padding:10px 16px; font-size:.78rem; font-weight:600; color:#555; cursor:pointer; background:#fafafa; list-style:none; display:flex; align-items:center; gap:6px; }
+    details.transcript summary::-webkit-details-marker { display:none; }
+    details.transcript summary::before { content:'▶'; font-size:.6rem; color:#999; transition:transform .2s; }
+    details.transcript[open] summary::before { transform:rotate(90deg); }
+    details.transcript summary:hover { background:#f5f5f0; }
+    .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }"""
 
 GTAG = """\
   <link rel="preconnect" href="https://www.googletagmanager.com">
@@ -534,7 +541,11 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         if c.get("enabled")
     )
 
-    seo_desc = desc[:155] if desc else f"Écoutez {title} — cours de {name} sur The Torah Podcast."
+    transcript_path = FEEDS_DIR / "transcripts" / f"{video_id}.txt"
+    transcript = transcript_path.read_text(encoding="utf-8").strip() if transcript_path.exists() else ""
+
+    seo_desc_src = desc or transcript
+    seo_desc = seo_desc_src[:155] if seo_desc_src else f"Écoutez {title} — cours de {name} sur The Torah Podcast."
     og_locale = "he_IL" if lang == "he" else "fr_FR"
     og_locale_alt = "fr_FR" if lang == "he" else "he_IL"
     og_image = thumb if thumb else f"{BASE_URL}/artwork/{slug}.png"
@@ -639,6 +650,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
       </svg> Partager cet épisode
     </button>
     {desc_tag}
+    {f'<details class="transcript"><summary data-i18n="transcript_label">Transcription</summary><div class="transcript-body">{esc(transcript)}</div></details>' if transcript else ''}
   </div>
   {f'<p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list">{related_html}</div>' if related_html else ''}
   <div class="toast" id="toast"></div>
@@ -648,12 +660,12 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_parasha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents',
+      related:'Épisodes récents', transcript_label:'Transcription',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים',
+      related:'פרקים אחרונים', transcript_label:'תמליל',
     }},
   }};
   let lang = localStorage.getItem('lang') || '{lang}';
