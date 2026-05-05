@@ -172,11 +172,6 @@ jobs:
           git pull --rebase --autostash origin main
           git push
 
-      - name: Ping Google sitemap
-        if: steps.commit.outputs.committed == 'true'
-        run: |
-          curl -s "https://www.google.com/ping?sitemap=https://thetorahpodcast.net/sitemap.xml"
-          echo "Sitemap ping sent to Google"
 
       - name: Alert if YouTube auth error detected
         if: always()
