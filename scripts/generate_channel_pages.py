@@ -517,6 +517,17 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         schema["image"] = thumb
     schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
 
+    breadcrumb_schema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Accueil", "item": f"{BASE_URL}/"},
+            {"@type": "ListItem", "position": 2, "name": name, "item": f"{BASE_URL}/{slug}.html"},
+            {"@type": "ListItem", "position": 3, "name": title, "item": f"{BASE_URL}/{ep_path(slug, ep)}"},
+        ],
+    }
+    breadcrumb_json = json.dumps(breadcrumb_schema, ensure_ascii=False, indent=2)
+
     submenu_links = "\n".join(
         f'      <a href="../{esc(c["slug"])}.html">{esc(c["podcast_author"])}</a>'
         for c in all_channels
@@ -524,6 +535,8 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     )
 
     seo_desc = desc[:155] if desc else f"Écoutez {title} — cours de {name} sur The Torah Podcast."
+    og_locale = "he_IL" if lang == "he" else "fr_FR"
+    og_locale_alt = "fr_FR" if lang == "he" else "he_IL"
     og_image = thumb if thumb else f"{BASE_URL}/artwork/{slug}.png"
     audio_tag = (
         f'<audio id="ep-audio" controls src="{esc(audio)}" preload="none" data-ep-id="{esc(video_id)}"'
@@ -556,8 +569,8 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   <meta property="og:description" content="{esc(seo_desc)}">
   <meta property="og:image" content="{esc(og_image)}">
   <meta property="og:site_name" content="The Torah Podcast">
-  <meta property="og:locale" content="fr_FR">
-  <meta property="og:locale:alternate" content="he_IL">
+  <meta property="og:locale" content="{og_locale}">
+  <meta property="og:locale:alternate" content="{og_locale_alt}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(title)} — The Torah Podcast">
   <meta name="twitter:description" content="{esc(seo_desc)}">
@@ -567,6 +580,9 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   <link rel="apple-touch-icon" href="/artwork/{slug}.png">
   <script type="application/ld+json">
 {schema_json}
+  </script>
+  <script type="application/ld+json">
+{breadcrumb_json}
   </script>
 {GTAG}
   <style>
