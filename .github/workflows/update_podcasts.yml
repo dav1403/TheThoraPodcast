@@ -173,6 +173,23 @@ jobs:
           git push
 
 
+      - name: Submit new episode pages to IndexNow
+        if: steps.commit.outputs.committed == 'true'
+        run: |
+          NEW_URLS=$(git diff --name-only HEAD~1 HEAD -- '*.html' | \
+            grep -E '^(rav-|rabbin-)[^/]+/.+\.html$' | head -100 | \
+            sed 's|^|https://thetorahpodcast.net/|' | \
+            jq -Rsc '[split("\n")[] | select(length > 0)]')
+          COUNT=$(echo "$NEW_URLS" | jq 'length')
+          if [ "$COUNT" -gt 0 ]; then
+            curl -s -X POST "https://api.indexnow.org/indexnow" \
+              -H "Content-Type: application/json; charset=utf-8" \
+              -d "{\"host\":\"thetorahpodcast.net\",\"key\":\"b9e2d8f1c3a74065b8e2d8f1c3a74065\",\"keyLocation\":\"https://thetorahpodcast.net/b9e2d8f1c3a74065b8e2d8f1c3a74065.txt\",\"urlList\":${NEW_URLS}}"
+            echo "IndexNow: submitted $COUNT new episode URL(s)"
+          else
+            echo "IndexNow: no new episode pages to submit"
+          fi
+
       - name: Alert if YouTube auth error detected
         if: always()
         run: |
