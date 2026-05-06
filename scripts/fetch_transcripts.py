@@ -87,7 +87,8 @@ def main():
     TRANSCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
 
     channels = json.loads(Path("channels.json").read_text(encoding="utf-8-sig"))
-    enabled = [ch for ch in channels if ch.get("enabled", True)]
+    # RSS channels have GUIDs, not YouTube video IDs — skip them entirely
+    enabled = [ch for ch in channels if ch.get("enabled", True) and ch.get("source") != "rss"]
 
     print(f"=== Fetch Transcripts — budget: {args.budget} ===")
     fetched = 0
@@ -119,12 +120,17 @@ def main():
             vid = ep["video_id"]
             out_path = TRANSCRIPTS_DIR / f"{vid}.txt"
             print(f"    {vid}  {ep.get('title', '')[:55]}")
-            text = fetch_transcript(vid, yt_lang)
+            try:
+                text = fetch_transcript(vid, yt_lang)
+            except Exception as e:
+                print(f"      → ERROR: {e}")
+                text = None
             if text:
                 out_path.write_text(text, encoding="utf-8")
                 print(f"      → {len(text):,} chars saved")
                 fetched += 1
             else:
+                # Empty file marks episode as checked — skipped on next run
                 out_path.write_text("", encoding="utf-8")
                 print(f"      → no captions available")
             time.sleep(1.5)
