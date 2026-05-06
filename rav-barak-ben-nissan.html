@@ -386,6 +386,13 @@
     .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
     .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
     .toast.show { opacity:1; }
+    details.transcript { margin-top:20px; border:1px solid #e8e8e8; border-radius:10px; overflow:hidden; }
+    details.transcript summary { padding:10px 16px; font-size:.78rem; font-weight:600; color:#555; cursor:pointer; background:#fafafa; list-style:none; display:flex; align-items:center; gap:6px; }
+    details.transcript summary::-webkit-details-marker { display:none; }
+    details.transcript summary::before { content:'▶'; font-size:.6rem; color:#999; transition:transform .2s; }
+    details.transcript[open] summary::before { transform:rotate(90deg); }
+    details.transcript summary:hover { background:#f5f5f0; }
+    .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }
   </style>
 </head>
 <body>
