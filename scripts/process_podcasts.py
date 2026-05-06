@@ -817,7 +817,7 @@ def main():
 
     # Sync processed.json with entries.json so they're always in agreement
     for ch in channels:
-        if not ch.get("enabled", True):
+        if not ch.get("enabled", True) or ch.get("source") == "rss":
             continue
         slug = ch["slug"]
         feed_path = FEEDS_DIR / f"{slug}.xml"
@@ -835,8 +835,7 @@ def main():
         if budget_remaining <= 0:
             print(f"\nBudget exhausted — skipping remaining channels.")
             break
-        if not ch.get("enabled", True):
-            print(f"\nSkipping disabled channel: {ch['slug']}")
+        if not ch.get("enabled", True) or ch.get("source") == "rss":
             continue
         try:
             used = process_channel(ch, processed, budget_remaining)

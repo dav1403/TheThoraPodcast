@@ -185,7 +185,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
                 f'<a class="platform-btn {cls}" href="{esc(url)}" target="_blank" rel="noopener">'
                 f'{icon}{label}</a>'
             )
-    rss_url = f"{BASE_URL}/feeds/{slug}.xml"
+    rss_url = ch.get("rss_url") or f"{BASE_URL}/feeds/{slug}.xml"
     btns.append(f'<a class="platform-btn btn-rss" href="{esc(rss_url)}" target="_blank" rel="noopener">RSS</a>')
     platform_html = "\n        ".join(btns)
 

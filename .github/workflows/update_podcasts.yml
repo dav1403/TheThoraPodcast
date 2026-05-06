@@ -85,6 +85,9 @@ jobs:
           mkdir -p artwork
           python scripts/generate_artwork.py
 
+      - name: Sync external RSS channels
+        run: python scripts/sync_rss_channels.py
+
       - name: Bootstrap new channels (backfill last 10 episodes if feed missing)
         env:
           YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
@@ -105,7 +108,7 @@ jobs:
 
           channels = json.loads(Path("channels.json").read_text(encoding="utf-8-sig"))
           for ch in channels:
-              if not ch.get("enabled", True):
+              if not ch.get("enabled", True) or ch.get("source") == "rss":
                   continue
               entries_file = Path(f"feeds/{ch['slug']}.entries.json")
               needs_bootstrap = (
@@ -167,7 +170,7 @@ jobs:
         run: |
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"
-          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html rav-*/ rabbin-*/
+          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html rav-*/ rabbin-*/ beth-*/
           if git diff --staged --quiet; then
             echo "committed=false" >> $GITHUB_OUTPUT
           else

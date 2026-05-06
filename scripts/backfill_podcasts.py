@@ -177,7 +177,7 @@ def main():
     channels = json.loads(Path("channels.json").read_text())
     processed = load_processed()
     state = load_backfill_state()
-    enabled = [ch for ch in channels if ch.get("enabled", True)]
+    enabled = [ch for ch in channels if ch.get("enabled", True) and ch.get("source") != "rss"]
     def is_done(slug):
         s = state.get(slug, {})
         todo = s.get("todo")

@@ -64,6 +64,7 @@ def main():
     total_added = 0
     for ch in enabled:
         slug         = ch["slug"]
+        is_external  = ch.get("source") == "rss"
         entries_file = FEEDS_DIR / f"{slug}.entries.json"
         if not entries_file.exists():
             continue
@@ -74,29 +75,33 @@ def main():
         added        = total_now - total_before
         total_added += added
 
-        ch_state  = backfill_state.get(slug, {})
-        todo      = ch_state.get("todo")
-        last_scan = ch_state.get("last_scan", "")
-        if todo:  # non-empty list — actively backfilling
-            bf_status = "⏳ ongoing"
-        elif todo is None:  # never scanned
-            bf_status = "⏳ ongoing"
-        elif last_scan:
-            try:
-                from datetime import timedelta
-                days_since = (datetime.now(timezone.utc) - datetime.fromisoformat(last_scan).replace(tzinfo=timezone.utc)).days
-                bf_status = "✅ done" if days_since < 7 else "🔄 re-scan due"
-            except Exception:
+        if is_external:
+            bf_status = "—"
+            remaining = "—"
+        else:
+            ch_state  = backfill_state.get(slug, {})
+            todo      = ch_state.get("todo")
+            last_scan = ch_state.get("last_scan", "")
+            if todo:
                 bf_status = "⏳ ongoing"
-        else:
-            bf_status = "⏳ ongoing"
+            elif todo is None:
+                bf_status = "⏳ ongoing"
+            elif last_scan:
+                try:
+                    from datetime import timedelta
+                    days_since = (datetime.now(timezone.utc) - datetime.fromisoformat(last_scan).replace(tzinfo=timezone.utc)).days
+                    bf_status = "✅ done" if days_since < 7 else "🔄 re-scan due"
+                except Exception:
+                    bf_status = "⏳ ongoing"
+            else:
+                bf_status = "⏳ ongoing"
 
-        yt_dlp_count = ch_state.get("yt_video_count")
-        if yt_dlp_count is not None:
-            remaining = f"{max(0, yt_dlp_count - total_now):,}"
-        else:
-            yt_total  = get_channel_video_count(ch["youtube_channel_id"])
-            remaining = f"{yt_total - total_now:,}" if yt_total is not None else "?"
+            yt_dlp_count = ch_state.get("yt_video_count")
+            if yt_dlp_count is not None:
+                remaining = f"{max(0, yt_dlp_count - total_now):,}"
+            else:
+                yt_total  = get_channel_video_count(ch["youtube_channel_id"])
+                remaining = f"{yt_total - total_now:,}" if yt_total is not None else "?"
 
         added_str = f"**+{added}**" if added > 0 else "—"
         lines.append(f"| `{slug}` | {added_str} | {total_now} | {remaining} | {bf_status} |")
