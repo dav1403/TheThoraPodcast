@@ -360,9 +360,15 @@
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
-    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 28px; font-size: .9rem; color: #444; line-height: 1.7; }
+    .header-stats { font-size: .88rem; color: #9ab; margin-bottom: 12px; min-height: 1.3em; }
+    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 4px; font-size: .9rem; color: #444; line-height: 1.7; position: relative; }
     .ch-about p { margin-bottom: .9em; }
     .ch-about p:last-child { margin-bottom: 0; }
+    .ch-about.collapsed { max-height: 6em; overflow: hidden; }
+    .ch-about.collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2.5em; background: linear-gradient(transparent, #fff); pointer-events: none; }
+    .show-more-btn { background: none; border: none; color: #e87722; font-size: .82rem; font-weight: 600; cursor: pointer; padding: 0 0 20px; display: none; font-family: inherit; }
+    .show-more-btn.visible { display: block; }
+    .show-more-btn:hover { text-decoration: underline; }
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 12px; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -399,6 +405,7 @@
 <header>
   <p class="site-brand"><a href="./">The Torah Podcast</a></p>
   <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-stats" id="header-stats"></div>
   <nav class="header-nav">
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
@@ -439,7 +446,7 @@
       </div>
     </div>
   </div>
-  <div class="ch-about"><p>ברוכים הבאים לפודקאסט של הרב מאיר דוד שמואלי, ראש ישיבת חזון מרדכי בהרצליה. הרב, בנו של הצדיק המקובל רבי שלום שמואלי זצוק&quot;ל, ממשיך בדרך המשפחה בהנהלת ישיבה המעניקה עומק ויסוד ללומדיה. בפודקאסט זה תוכלו ללמוד ישירות מפי מורנו ורבנו תורה עמוקה בפרדס התורה — מקרא, משנה, גמרא וקבלה — תוך דגש על מידות טובות ויראת שמיים אמתית המשנה את החיים. כל שיעור הוא הזמנה להיות חלק מעולמה של ישיבה חיה המעבדת תורה בשקידה וביושר.</p><p>האזנה לפודקאסט מתן לכם חופש שלא היה קיים עד היום. בנסיעתכם לעבודה, בהליכתכם ברחוב, בעת ביצוע המטלות היומיומיות — הטלפון בכיס שלכם הופך לגשר ישיר לתורה וללמידה. אין צורך בסדר ישיבה קבוע או בדיסק להעלות למכונית; הלימוד משלחק כל מקום לבית ישיבה. בכל רגע פנוי, בכל שעה של היום, אתם יכולים להמשיך בדרך העלייה הרוחנית שלכם ולהעשיר את ידיעתכם בתורה.</p><p>במעקב אחר הפרקים שתשמעו, תוכלו להרגיש את התקדמותכם ואת ההשגים המצטברים שלכם. כל פרק הוא צ</p></div>
+  <div class="ch-about" id="ch-about"><p>ברוכים הבאים לפודקאסט של הרב מאיר דוד שמואלי, ראש ישיבת חזון מרדכי בהרצליה. הרב, בנו של הצדיק המקובל רבי שלום שמואלי זצוק&quot;ל, ממשיך בדרך המשפחה בהנהלת ישיבה המעניקה עומק ויסוד ללומדיה. בפודקאסט זה תוכלו ללמוד ישירות מפי מורנו ורבנו תורה עמוקה בפרדס התורה — מקרא, משנה, גמרא וקבלה — תוך דגש על מידות טובות ויראת שמיים אמתית המשנה את החיים. כל שיעור הוא הזמנה להיות חלק מעולמה של ישיבה חיה המעבדת תורה בשקידה וביושר.</p><p>האזנה לפודקאסט מתן לכם חופש שלא היה קיים עד היום. בנסיעתכם לעבודה, בהליכתכם ברחוב, בעת ביצוע המטלות היומיומיות — הטלפון בכיס שלכם הופך לגשר ישיר לתורה וללמידה. אין צורך בסדר ישיבה קבוע או בדיסק להעלות למכונית; הלימוד משלחק כל מקום לבית ישיבה. בכל רגע פנוי, בכל שעה של היום, אתם יכולים להמשיך בדרך העלייה הרוחנית שלכם ולהעשיר את ידיעתכם בתורה.</p><p>במעקב אחר הפרקים שתשמעו, תוכלו להרגיש את התקדמותכם ואת ההשגים המצטברים שלכם. כל פרק הוא צ</p></div><button class="show-more-btn" id="show-more-btn"></button>
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
   <div class="speed-bar">
     <span>Vitesse :</span>
@@ -1268,6 +1275,36 @@ https://nedar.im/aDPy
 וכן באתר שלנו www.hazonm.co.il
 ניתן להצטרף לקבוצת הוואטסאפ שלנו במספר 054-5740</p>
         <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/B8PydZgrP1s_קצרים-הרב_מאיר_דוד_שמואלי_-בפרט_עכשיו_להרבות_בתפילה.mp3" preload="none" data-ep-id="B8PydZgrP1s"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/קצרים-הרב-מאיר-דוד-שמואלי-בפרט-עכשיו-להרבות-בתפילה-2023-07-28.html" data-title="קצרים-הרב מאיר דוד שמואלי -בפרט עכשיו להרבות בתפילה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/z2NqIQrjWD8/maxresdefault.jpg" alt="קצרים - הרב מאיר דוד שמואלי-אמור לי מי חבריך אומר מי אתה" loading="lazy">
+      <div class="ep-body">
+        <a class="ep-title" href="rav-meir-david-shmueli/קצרים-הרב-מאיר-דוד-שמואלי-אמור-לי-מי-חבריך-אומר-מי-אתה-2023-06-29.html" style="color:inherit;text-decoration:none;display:block">קצרים - הרב מאיר דוד שמואלי-אמור לי מי חבריך אומר מי אתה</a>
+        <time class="ep-date" datetime="2023-06-29">29.06.2023</time>
+        
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/z2NqIQrjWD8_קצרים_-_הרב_מאיר_דוד_שמואלי-אמור_לי_מי_חבריך_אומר_מי_אתה.mp3" preload="none" data-ep-id="z2NqIQrjWD8"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/קצרים-הרב-מאיר-דוד-שמואלי-אמור-לי-מי-חבריך-אומר-מי-אתה-2023-06-29.html" data-title="קצרים - הרב מאיר דוד שמואלי-אמור לי מי חבריך אומר מי אתה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/S0JdM74ztzI/maxresdefault.jpg" alt="קצרים- הרב מאיר דוד שמואלי-זכה לילדים בזכות מסירות נפש מדרבנן" loading="lazy">
+      <div class="ep-body">
+        <a class="ep-title" href="rav-meir-david-shmueli/קצרים-הרב-מאיר-דוד-שמואלי-זכה-לילדים-בזכות-מסירות-נפש-מדרבנן-2023-06-28.html" style="color:inherit;text-decoration:none;display:block">קצרים- הרב מאיר דוד שמואלי-זכה לילדים בזכות מסירות נפש מדרבנן</a>
+        <time class="ep-date" datetime="2023-06-28">28.06.2023</time>
+        
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/S0JdM74ztzI_קצרים-_הרב_מאיר_דוד_שמואלי-זכה_לילדים_בזכות_מסירות_נפש_מדרבנן.mp3" preload="none" data-ep-id="S0JdM74ztzI"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/קצרים-הרב-מאיר-דוד-שמואלי-זכה-לילדים-בזכות-מסירות-נפש-מדרבנן-2023-06-28.html" data-title="קצרים- הרב מאיר דוד שמואלי-זכה לילדים בזכות מסירות נפש מדרבנן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/tuSv3jbDq3o/maxresdefault.jpg" alt="הרב מאיר דוד שמואלי -יד ביד עם הקב&quot;ה" loading="lazy">
+      <div class="ep-body">
+        <a class="ep-title" href="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-יד-ביד-עם-הקב-ה-2023-06-27.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי -יד ביד עם הקב&quot;ה</a>
+        <time class="ep-date" datetime="2023-06-27">27.06.2023</time>
+        <p class="ep-desc">שיחתו של מו&quot;ר ראש הישיבה הרב מאיר דוד שמואלי שליט&quot;א בנושא: 
+ניתן להאזין לשיחותיו של מו&quot;ר בקו המידע שלנו שמספרו 0747964728
+וכן באתר שלנו www.hazonm.co.il
+ניתן להצטרף לקבוצת הוואטסאפ שלנו במספר 054-5740</p>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tuSv3jbDq3o_הרב_מאיר_דוד_שמואלי_-יד_ביד_עם_הקב_ה.mp3" preload="none" data-ep-id="tuSv3jbDq3o"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-יד-ביד-עם-הקב-ה-2023-06-27.html" data-title="הרב מאיר דוד שמואלי -יד ביד עם הקב&quot;ה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -4591,8 +4628,27 @@ https://nedar.im/aDPy
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(343);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(346);
+    const statsEl = document.getElementById('header-stats');
+    if (statsEl) statsEl.textContent = I18N[lang].ep_count(346);
   }
+  // Show more / less for channel description
+  (function() {
+    const about = document.getElementById('ch-about');
+    const btn   = document.getElementById('show-more-btn');
+    if (!about || !btn) return;
+    if (about.scrollHeight > 100) {
+      about.classList.add('collapsed');
+      btn.classList.add('visible');
+      btn.textContent = lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾';
+      btn.addEventListener('click', () => {
+        const isCollapsed = about.classList.toggle('collapsed');
+        btn.textContent = isCollapsed
+          ? (lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾')
+          : (lang === 'he' ? 'הצג פחות ▴' : 'Voir moins ▴');
+      });
+    }
+  })();
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
     location.reload();

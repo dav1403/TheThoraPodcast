@@ -121,9 +121,15 @@ La réponse ne se trouve pas dans la dernière vidéo Youtube qui vous explique 
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
-    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 28px; font-size: .9rem; color: #444; line-height: 1.7; }
+    .header-stats { font-size: .88rem; color: #9ab; margin-bottom: 12px; min-height: 1.3em; }
+    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 4px; font-size: .9rem; color: #444; line-height: 1.7; position: relative; }
     .ch-about p { margin-bottom: .9em; }
     .ch-about p:last-child { margin-bottom: 0; }
+    .ch-about.collapsed { max-height: 6em; overflow: hidden; }
+    .ch-about.collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2.5em; background: linear-gradient(transparent, #fff); pointer-events: none; }
+    .show-more-btn { background: none; border: none; color: #e87722; font-size: .82rem; font-weight: 600; cursor: pointer; padding: 0 0 20px; display: none; font-family: inherit; }
+    .show-more-btn.visible { display: block; }
+    .show-more-btn:hover { text-decoration: underline; }
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 12px; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }

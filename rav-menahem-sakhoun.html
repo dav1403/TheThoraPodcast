@@ -360,9 +360,15 @@
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
-    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 28px; font-size: .9rem; color: #444; line-height: 1.7; }
+    .header-stats { font-size: .88rem; color: #9ab; margin-bottom: 12px; min-height: 1.3em; }
+    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 4px; font-size: .9rem; color: #444; line-height: 1.7; position: relative; }
     .ch-about p { margin-bottom: .9em; }
     .ch-about p:last-child { margin-bottom: 0; }
+    .ch-about.collapsed { max-height: 6em; overflow: hidden; }
+    .ch-about.collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2.5em; background: linear-gradient(transparent, #fff); pointer-events: none; }
+    .show-more-btn { background: none; border: none; color: #e87722; font-size: .82rem; font-weight: 600; cursor: pointer; padding: 0 0 20px; display: none; font-family: inherit; }
+    .show-more-btn.visible { display: block; }
+    .show-more-btn:hover { text-decoration: underline; }
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 12px; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -399,6 +405,7 @@
 <header>
   <p class="site-brand"><a href="./">The Torah Podcast</a></p>
   <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-stats" id="header-stats"></div>
   <nav class="header-nav">
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
@@ -439,7 +446,7 @@
       </div>
     </div>
   </div>
-  <div class="ch-about"><p>Découvrez le podcast dédié à Rav Menahem Sakhoun, un maître reconnu de la Torah qui enseigne chaque jour depuis Jérusalem avec profondeur et clarté. À travers ce podcast, vous accédez à ses cours d&#x27;étude du Likouté Moharan et du Daf Hayomi, deux piliers fondamentaux de la transmission du savoir juif. Rav Sakhoun offre un enseignement accessible et enrichissant, qui nourrit l&#x27;âme et approfondit votre compréhension des textes sacrés, indépendamment de votre niveau d&#x27;étude.</p><p>Le format podcast vous libère des contraintes du direct : écoutez où vous le souhaitez, quand vous le souhaitez. Pendant vos trajets en voiture, vos courses, une simple promenade avec votre téléphone en poche, continuez à apprendre et à grandir spirituellement. Chaque moment devient une opportunité d&#x27;enrichissement, et vous progressez dans votre étude sans sacrifier votre quotidien. Suivez vos épisodes écoutés, mesurez votre avancement semaine après semaine, et ressentez cette fierté profonde qui naît de la maîtrise progressive de la Torah. C&#x27;est une satisfaction intérieure qui accompagne chaque pas de votre parcours d&#x27;apprentissage.</p><p>Contrairement aux plateformes vidéo où des contenus inappropriés peuvent surgir sans prévention, le podcast vous offre un espace sanctuarisé, protégé de la pritsout et des distractions nuisibles. Vos yeux, vos oreilles et votre cœur restent préservés dans un environnement pur, dédié uniquement à l&#x27;étude sacrée. C&#x27;est une protection particulièrement précieuse pour les enfants, qui peuvent apprendre en toute sécurité sans exposition aux contenus du monde extérieur. Sans publicités intrusives pour vous interrompre, vous jouissez d&#x27;une écoute fluide et concentrée, une véritable bulle de paix spirituelle.</p></div>
+  <div class="ch-about" id="ch-about"><p>Découvrez le podcast dédié à Rav Menahem Sakhoun, un maître reconnu de la Torah qui enseigne chaque jour depuis Jérusalem avec profondeur et clarté. À travers ce podcast, vous accédez à ses cours d&#x27;étude du Likouté Moharan et du Daf Hayomi, deux piliers fondamentaux de la transmission du savoir juif. Rav Sakhoun offre un enseignement accessible et enrichissant, qui nourrit l&#x27;âme et approfondit votre compréhension des textes sacrés, indépendamment de votre niveau d&#x27;étude.</p><p>Le format podcast vous libère des contraintes du direct : écoutez où vous le souhaitez, quand vous le souhaitez. Pendant vos trajets en voiture, vos courses, une simple promenade avec votre téléphone en poche, continuez à apprendre et à grandir spirituellement. Chaque moment devient une opportunité d&#x27;enrichissement, et vous progressez dans votre étude sans sacrifier votre quotidien. Suivez vos épisodes écoutés, mesurez votre avancement semaine après semaine, et ressentez cette fierté profonde qui naît de la maîtrise progressive de la Torah. C&#x27;est une satisfaction intérieure qui accompagne chaque pas de votre parcours d&#x27;apprentissage.</p><p>Contrairement aux plateformes vidéo où des contenus inappropriés peuvent surgir sans prévention, le podcast vous offre un espace sanctuarisé, protégé de la pritsout et des distractions nuisibles. Vos yeux, vos oreilles et votre cœur restent préservés dans un environnement pur, dédié uniquement à l&#x27;étude sacrée. C&#x27;est une protection particulièrement précieuse pour les enfants, qui peuvent apprendre en toute sécurité sans exposition aux contenus du monde extérieur. Sans publicités intrusives pour vous interrompre, vous jouissez d&#x27;une écoute fluide et concentrée, une véritable bulle de paix spirituelle.</p></div><button class="show-more-btn" id="show-more-btn"></button>
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
   <div class="speed-bar">
     <span>Vitesse :</span>
@@ -2140,7 +2147,26 @@ Tous les jours de 8h40 à 9h20 en direct de Jerusalem - Likouté Moharan par Rav
     });
     const epCount = document.getElementById('ep-count');
     if (epCount) epCount.textContent = I18N[lang].ep_count(157);
+    const statsEl = document.getElementById('header-stats');
+    if (statsEl) statsEl.textContent = I18N[lang].ep_count(157);
   }
+  // Show more / less for channel description
+  (function() {
+    const about = document.getElementById('ch-about');
+    const btn   = document.getElementById('show-more-btn');
+    if (!about || !btn) return;
+    if (about.scrollHeight > 100) {
+      about.classList.add('collapsed');
+      btn.classList.add('visible');
+      btn.textContent = lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾';
+      btn.addEventListener('click', () => {
+        const isCollapsed = about.classList.toggle('collapsed');
+        btn.textContent = isCollapsed
+          ? (lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾')
+          : (lang === 'he' ? 'הצג פחות ▴' : 'Voir moins ▴');
+      });
+    }
+  })();
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
     location.reload();

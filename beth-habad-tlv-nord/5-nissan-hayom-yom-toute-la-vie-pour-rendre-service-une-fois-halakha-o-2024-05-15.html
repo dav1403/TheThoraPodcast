@@ -118,9 +118,15 @@
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
-    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 28px; font-size: .9rem; color: #444; line-height: 1.7; }
+    .header-stats { font-size: .88rem; color: #9ab; margin-bottom: 12px; min-height: 1.3em; }
+    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 4px; font-size: .9rem; color: #444; line-height: 1.7; position: relative; }
     .ch-about p { margin-bottom: .9em; }
     .ch-about p:last-child { margin-bottom: 0; }
+    .ch-about.collapsed { max-height: 6em; overflow: hidden; }
+    .ch-about.collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2.5em; background: linear-gradient(transparent, #fff); pointer-events: none; }
+    .show-more-btn { background: none; border: none; color: #e87722; font-size: .82rem; font-weight: 600; cursor: pointer; padding: 0 0 20px; display: none; font-family: inherit; }
+    .show-more-btn.visible { display: block; }
+    .show-more-btn:hover { text-decoration: underline; }
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 12px; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -197,7 +203,7 @@
     <img src="https://d3t3ozftmdmh3i.cloudfront.net/production/podcast_uploaded/20200248/20200248-1639396129930-e7cf040dd92a3.jpg" alt="5 Nissan - Hayom Yom ( toute la vie pour rendre service une fois ? ) &amp; Halakha : Oneg Shabbat" style="width:100%;max-width:480px;border-radius:10px;margin-bottom:16px;object-fit:cover">
     <h1>5 Nissan - Hayom Yom ( toute la vie pour rendre service une fois ? ) &amp; Halakha : Oneg Shabbat</h1>
     <p class="ep-meta"><a href="../beth-habad-tlv-nord.html" style="color:#888;text-decoration:none">Beth Habad TLV Nord</a> · <time datetime="2024-05-15">15 mai 2024</time></p>
-    <div style="margin-bottom:8px"><span class="ep-tag">Halakha</span></div>
+    <div style="margin-bottom:8px"><span class="ep-tag">Pessa&#x27;h</span> <span class="ep-tag">Halakha</span></div>
     <audio id="ep-audio" controls src="https://anchor.fm/s/78ffb860/podcast/play/86770754/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2024-4-15%2F377683457-44100-1-c8eedba50f5c.mp3" preload="none" data-ep-id="39db32d4-93f4-4fc9-bf70-c09fb490729e" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
     <div class="speed-bar">
       <span>Vitesse :</span>

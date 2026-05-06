@@ -244,6 +244,33 @@
     },
     {
       "@type": "PodcastEpisode",
+      "name": "Incendies de forêt - Ticha Beav",
+      "datePublished": "2022-08-05",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8sf_c9I25rg_Incendies_de_forêt_-_Ticha_Beav.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
+      "name": "Qu'il est long, qu'il est loin ton chemin, papa - Matot Massei",
+      "datePublished": "2022-07-29",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/aOi22n-o_n8_Qu_il_est_long__qu_il_est_loin_ton_chemin__papa_-_Matot_Massei.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
+      "name": "Compter les étoiles - Pinhas",
+      "datePublished": "2022-07-22",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/hN7vtt6a4Zg_Compter_les_étoiles_-_Pinhas.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "Secrets d'alcôve - Balak",
       "datePublished": "2022-07-15",
       "associatedMedia": {
@@ -285,33 +312,6 @@
       "associatedMedia": {
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/W4d5SKIsD_s_Moché_et_les_Gaulois__-_Béaaloté_ha.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Refus d'obtempérer - Nasso",
-      "datePublished": "2022-06-10",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/HnsvG7m0xKA_Refus_d_obtempérer_-_Nasso.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Bienvenue à la Feria! - Chavouot",
-      "datePublished": "2022-06-03",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KRi48a0n8L8_Bienvenue_à_la_Feria__-_Chavouot.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Elie Buzyn -Behoukotaï",
-      "datePublished": "2022-05-26",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/WNrrhB0hPgM_Elie_Buzyn_-Behoukotaï.mp3"
       }
     }
   ]
@@ -360,9 +360,15 @@
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
-    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 28px; font-size: .9rem; color: #444; line-height: 1.7; }
+    .header-stats { font-size: .88rem; color: #9ab; margin-bottom: 12px; min-height: 1.3em; }
+    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 4px; font-size: .9rem; color: #444; line-height: 1.7; position: relative; }
     .ch-about p { margin-bottom: .9em; }
     .ch-about p:last-child { margin-bottom: 0; }
+    .ch-about.collapsed { max-height: 6em; overflow: hidden; }
+    .ch-about.collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2.5em; background: linear-gradient(transparent, #fff); pointer-events: none; }
+    .show-more-btn { background: none; border: none; color: #e87722; font-size: .82rem; font-weight: 600; cursor: pointer; padding: 0 0 20px; display: none; font-family: inherit; }
+    .show-more-btn.visible { display: block; }
+    .show-more-btn:hover { text-decoration: underline; }
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 12px; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -399,6 +405,7 @@
 <header>
   <p class="site-brand"><a href="./">The Torah Podcast</a></p>
   <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-stats" id="header-stats"></div>
   <nav class="header-nav">
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
@@ -439,7 +446,7 @@
       </div>
     </div>
   </div>
-  <div class="ch-about"><p>Rabbin Jonas est un maître de Torah reconnu pour son enseignement profond et accessible qui nourrit l&#x27;âme des Juifs francophones en quête de spiritualité et de sagesse. À travers ses cours, il transmet les richesses inépuisables de la Torah et de la tradition juive, guidant ses auditeurs vers une compréhension plus lumineuse de notre heritage et une vie plus ancrée dans nos valeurs. Son approche bienveillante et sincère en fait un véritable guide spirituel pour tous ceux qui souhaitent grandir dans leur foi et leur observance.</p><p>Le podcast du Rabbin Jonas vous accompagne partout : en voiture sur le trajet du travail, au marché en faisant les courses, en promenade avec votre téléphone dans la poche. Vous pouvez continuer à apprendre la Torah en toutes circonstances, transformant chaque moment de votre journée en occasion de nourrir votre esprit. Progresser dans l&#x27;étude de nos sources sacrées devient un acte naturel et fluide, intégré harmonieusement à votre vie quotidienne sans effort.</p><p>Suivre vos épisodes écoutés vous permet de mesurer votre avancement et de ressentir cette belle fierté d&#x27;avoir parcouru un chemin d&#x27;apprentissage et d&#x27;enrichissement spirituel. Bien plus encore, le podcast protège la pureté de votre âme, de votre cœur, de vos yeux et de vos oreilles, à l&#x27;abri des contenus inappropriés qui envahissent trop souvent les plateformes vidéo. Vos enfants aussi bénéficient de cet environnement sain, préservé de toute exposition à l&#x27;impudeur. Sans publicités interrompant votre méditation, vous jouissez d&#x27;une écoute sereine et ininterrompue, pleinement consacrée à l&#x27;étude.</p></div>
+  <div class="ch-about" id="ch-about"><p>Rabbin Jonas est un maître de Torah reconnu pour son enseignement profond et accessible qui nourrit l&#x27;âme des Juifs francophones en quête de spiritualité et de sagesse. À travers ses cours, il transmet les richesses inépuisables de la Torah et de la tradition juive, guidant ses auditeurs vers une compréhension plus lumineuse de notre heritage et une vie plus ancrée dans nos valeurs. Son approche bienveillante et sincère en fait un véritable guide spirituel pour tous ceux qui souhaitent grandir dans leur foi et leur observance.</p><p>Le podcast du Rabbin Jonas vous accompagne partout : en voiture sur le trajet du travail, au marché en faisant les courses, en promenade avec votre téléphone dans la poche. Vous pouvez continuer à apprendre la Torah en toutes circonstances, transformant chaque moment de votre journée en occasion de nourrir votre esprit. Progresser dans l&#x27;étude de nos sources sacrées devient un acte naturel et fluide, intégré harmonieusement à votre vie quotidienne sans effort.</p><p>Suivre vos épisodes écoutés vous permet de mesurer votre avancement et de ressentir cette belle fierté d&#x27;avoir parcouru un chemin d&#x27;apprentissage et d&#x27;enrichissement spirituel. Bien plus encore, le podcast protège la pureté de votre âme, de votre cœur, de vos yeux et de vos oreilles, à l&#x27;abri des contenus inappropriés qui envahissent trop souvent les plateformes vidéo. Vos enfants aussi bénéficient de cet environnement sain, préservé de toute exposition à l&#x27;impudeur. Sans publicités interrompant votre méditation, vous jouissez d&#x27;une écoute sereine et ininterrompue, pleinement consacrée à l&#x27;étude.</p></div><button class="show-more-btn" id="show-more-btn"></button>
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
   <div class="speed-bar">
     <span>Vitesse :</span>
@@ -651,6 +658,39 @@ C- Il n&#x27;ont pas cet esprit de fraternité nécessa</p>
 En tout cas, la vie de Jacob a pris une autre dimension lorsque son nom a été modifié.
 Re-découvrez la portée du nom </p>
         <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/A1ENi4zdvUU_Patrick_Bruek_-_Vayichla_h.mp3" preload="none" data-ep-id="A1ENi4zdvUU"></audio><button class="share-btn" data-epfile="rabbin-jonas/patrick-bruek-vayichla-h-2022-12-09.html" data-title="Patrick Bruek - Vayichla&#x27;h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/8sf_c9I25rg/maxresdefault.jpg" alt="Incendies de forêt - Ticha Beav" loading="lazy">
+      <div class="ep-body">
+        <a class="ep-title" href="rabbin-jonas/incendies-de-foret-ticha-beav-2022-08-05.html" style="color:inherit;text-decoration:none;display:block">Incendies de forêt - Ticha Beav</a>
+        <time class="ep-date" datetime="2022-08-05">5 août 2022</time>
+        <p class="ep-desc">Il n&#x27;y a pas que les milliers d&#x27;hectare de forêts françaises qui brûlent.
+Au feu les pompiers, le Beth Hamikdach brûle!
+Et si, pour éteindre ces flammes, il fallait raviver les flammes de nos coeurs?
+</p>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8sf_c9I25rg_Incendies_de_forêt_-_Ticha_Beav.mp3" preload="none" data-ep-id="8sf_c9I25rg"></audio><button class="share-btn" data-epfile="rabbin-jonas/incendies-de-foret-ticha-beav-2022-08-05.html" data-title="Incendies de forêt - Ticha Beav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/aOi22n-o_n8/maxresdefault.jpg" alt="Qu&#x27;il est long, qu&#x27;il est loin ton chemin, papa - Matot Massei" loading="lazy">
+      <div class="ep-body">
+        <a class="ep-title" href="rabbin-jonas/qu-il-est-long-qu-il-est-loin-ton-chemin-papa-matot-massei-2022-07-29.html" style="color:inherit;text-decoration:none;display:block">Qu&#x27;il est long, qu&#x27;il est loin ton chemin, papa - Matot Massei</a>
+        <time class="ep-date" datetime="2022-07-29">29 juillet 2022</time>
+        <p class="ep-desc">Comment les juifs ont-ils pu survivre 40 ans de le désert?
+Découvrez l&#x27;histoire et les étapes de leurs pérégrinations à travers ces terres arides.
+Cette histoire truffée de miracles et de bontés de la</p>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/aOi22n-o_n8_Qu_il_est_long__qu_il_est_loin_ton_chemin__papa_-_Matot_Massei.mp3" preload="none" data-ep-id="aOi22n-o_n8"></audio><button class="share-btn" data-epfile="rabbin-jonas/qu-il-est-long-qu-il-est-loin-ton-chemin-papa-matot-massei-2022-07-29.html" data-title="Qu&#x27;il est long, qu&#x27;il est loin ton chemin, papa - Matot Massei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/hN7vtt6a4Zg/maxresdefault.jpg" alt="Compter les étoiles - Pinhas" loading="lazy">
+      <div class="ep-body">
+        <a class="ep-title" href="rabbin-jonas/compter-les-etoiles-pinhas-2022-07-22.html" style="color:inherit;text-decoration:none;display:block">Compter les étoiles - Pinhas</a>
+        <time class="ep-date" datetime="2022-07-22">22 juillet 2022</time>
+        <p class="ep-desc">Comment expliquer les nombreux recensements des juifs effectués dans le désert, et décrits avec moult détails dans la Torah?
+Le Rabbin Jonas rapporte les magnifiques raisons de ces comptes et rappelle</p>
+        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/hN7vtt6a4Zg_Compter_les_étoiles_-_Pinhas.mp3" preload="none" data-ep-id="hN7vtt6a4Zg"></audio><button class="share-btn" data-epfile="rabbin-jonas/compter-les-etoiles-pinhas-2022-07-22.html" data-title="Compter les étoiles - Pinhas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -4073,8 +4113,27 @@ C&#x27;est l&#x27;idée sur la paracha de la semaine, Emor exposée par le Rabbi
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(334);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(337);
+    const statsEl = document.getElementById('header-stats');
+    if (statsEl) statsEl.textContent = I18N[lang].ep_count(337);
   }
+  // Show more / less for channel description
+  (function() {
+    const about = document.getElementById('ch-about');
+    const btn   = document.getElementById('show-more-btn');
+    if (!about || !btn) return;
+    if (about.scrollHeight > 100) {
+      about.classList.add('collapsed');
+      btn.classList.add('visible');
+      btn.textContent = lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾';
+      btn.addEventListener('click', () => {
+        const isCollapsed = about.classList.toggle('collapsed');
+        btn.textContent = isCollapsed
+          ? (lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾')
+          : (lang === 'he' ? 'הצג פחות ▴' : 'Voir moins ▴');
+      });
+    }
+  })();
   function toggleLang() {
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
     location.reload();
