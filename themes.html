@@ -148,6 +148,12 @@
     }
     .panel-close:hover { background: #eee; }
 
+    .filter-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .filter-chip { background: #fff; border: 1px solid #ddd; border-radius: 20px; padding: 5px 13px; font-size: .78rem; color: #555; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: background .12s, border-color .12s, color .12s; }
+    .filter-chip:hover { background: #f0f0ea; border-color: #bbb; color: #222; }
+    .filter-chip.active { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
+    .filter-chip img { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; }
+
     .episode-list { list-style: none; }
     .ep-card {
       background: #fff;
@@ -320,6 +326,7 @@
       <div class="panel-title" id="panel-title"></div>
       <button class="panel-close" id="panel-close" data-i18n="close">Fermer ✕</button>
     </div>
+    <div class="filter-row" id="rabbi-filter-row"></div>
     <ul class="episode-list" id="episode-list"></ul>
   </div>
 </main>
@@ -344,6 +351,7 @@
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       close:'Fermer ✕', no_ep:'Aucun épisode pour ce thème.',
       ep_singular:'épisode', ep_plural:'épisodes',
+      filter_all:'Tous les rabbins',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
@@ -352,6 +360,7 @@
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       close:'סגור ✕', no_ep:'אין פרקים בנושא זה.',
       ep_singular:'פרק', ep_plural:'פרקים',
+      filter_all:'כל הרבנים',
     },
   };
   const THEME_HE = {
@@ -399,10 +408,11 @@
 
   let CHANNELS = [];
 
-  let allData = [];        // [{ ch, entries }]
-  let themeIndex = {};     // theme -> [{ep, ch, globalIdx}]
+  let allData = [];          // [{ ch, entries }]
+  let themeIndex = {};       // theme -> [{ep, ch, globalIdx}]
   let activeBtn  = null;
   let currentTheme = null;
+  let activeRabbiFilter = 'all';
 
   const playerEl    = document.getElementById('player');
   const playerAudio = document.getElementById('player-audio');
@@ -584,45 +594,87 @@
     });
   }
 
+  function renderEpisodeList(items, theme) {
+    const list = document.getElementById('episode-list');
+    const visible = activeRabbiFilter === 'all'
+      ? items
+      : items.filter(x => x.ch.slug === activeRabbiFilter);
+
+    if (visible.length === 0) {
+      list.innerHTML = `<li class="state">${t('no_ep')}</li>`;
+      return;
+    }
+    list.innerHTML = visible.map(({ ep, ch, gidx }) => {
+      const thumb = ep.thumbnail
+        ? `<img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+        : `<div class="ep-thumb-ph"></div>`;
+      const otherTags = (ep.tags || []).filter(tag => tag !== theme);
+      const tagPills  = otherTags.length
+        ? `<div class="ep-tags">${otherTags.map(tag => `<span class="ep-tag">${escapeHtml(themeName(tag))}</span>`).join('')}</div>`
+        : '';
+      const playBtn = ep.audio_url
+        ? `<button class="play-btn" data-gidx="${gidx}">${playIcon()} ${t('listen')}</button>`
+        : '';
+      return `<li class="ep-card">
+        ${thumb}
+        <div class="ep-body">
+          <a class="ep-ch" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
+          <a class="ep-title" href="${epUrl(ep, ch.slug)}" style="color:inherit;text-decoration:none;display:block" title="${escapeHtml(ep.title)}">${escapeHtml(ep.title)}</a>
+          <div class="ep-date">${formatDate(ep.published)}</div>
+          ${tagPills}${playBtn}
+        </div>
+      </li>`;
+    }).join('');
+  }
+
+  function renderRabbiFilter(items, theme) {
+    const row = document.getElementById('rabbi-filter-row');
+
+    // Collect unique channels that have episodes in this theme, in order
+    const seen = new Set();
+    const channels = [];
+    for (const { ch } of items) {
+      if (!seen.has(ch.slug)) { seen.add(ch.slug); channels.push(ch); }
+    }
+
+    // Only show filter row when there are multiple rabbis
+    if (channels.length < 2) { row.innerHTML = ''; return; }
+
+    row.innerHTML = [
+      `<button class="filter-chip${activeRabbiFilter === 'all' ? ' active' : ''}" data-slug="all">${escapeHtml(t('filter_all'))}</button>`,
+      ...channels.map(ch =>
+        `<button class="filter-chip${activeRabbiFilter === ch.slug ? ' active' : ''}" data-slug="${escapeHtml(ch.slug)}">` +
+        `<img src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">` +
+        `${escapeHtml(ch.name)}</button>`
+      ),
+    ].join('');
+
+    row.onclick = e => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      activeRabbiFilter = chip.dataset.slug;
+      row.querySelectorAll('.filter-chip').forEach(c =>
+        c.classList.toggle('active', c.dataset.slug === activeRabbiFilter)
+      );
+      renderEpisodeList(items, theme);
+    };
+  }
+
   function openTheme(theme) {
     currentTheme = theme;
+    activeRabbiFilter = 'all';
     window.location.hash = encodeURIComponent(theme);
 
     const panel = document.getElementById('episodes-panel');
     document.getElementById('panel-title').textContent = themeName(theme);
-    const list = document.getElementById('episode-list');
     const items = themeIndex[theme] || [];
 
-    if (items.length === 0) {
-      list.innerHTML = `<li class="state">${t('no_ep')}</li>`;
-    } else {
-      list.innerHTML = items.map(({ ep, ch, gidx }) => {
-        const thumb = ep.thumbnail
-          ? `<img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
-          : `<div class="ep-thumb-ph"></div>`;
-        const otherTags = (ep.tags || []).filter(tag => tag !== theme);
-        const tagPills  = otherTags.length
-          ? `<div class="ep-tags">${otherTags.map(tag => `<span class="ep-tag">${escapeHtml(themeName(tag))}</span>`).join('')}</div>`
-          : '';
-        const playBtn = ep.audio_url
-          ? `<button class="play-btn" data-gidx="${gidx}">${playIcon()} ${t('listen')}</button>`
-          : '';
-        return `<li class="ep-card">
-          ${thumb}
-          <div class="ep-body">
-            <a class="ep-ch" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
-            <a class="ep-title" href="${epUrl(ep, ch.slug)}" style="color:inherit;text-decoration:none;display:block" title="${escapeHtml(ep.title)}">${escapeHtml(ep.title)}</a>
-            <div class="ep-date">${formatDate(ep.published)}</div>
-            ${tagPills}${playBtn}
-          </div>
-        </li>`;
-      }).join('');
-    }
+    renderRabbiFilter(items, theme);
+    renderEpisodeList(items, theme);
 
     panel.classList.add('visible');
     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // Sync active button highlight
     document.querySelectorAll('.theme-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.theme === theme);
     });
