@@ -22,6 +22,10 @@ import requests
 FEEDS_DIR     = Path("feeds")
 ARTWORK_DIR   = Path("artwork")
 ITUNES_NS     = "http://www.itunes.com/dtds/podcast-1.0.dtd"
+HEALTH_FILE   = FEEDS_DIR / "rss_health.json"
+
+# Number of most-recent episodes to spot-check per channel
+HEALTH_SAMPLE = 5
 
 
 def strip_html(s: str) -> str:
@@ -118,6 +122,39 @@ def download_artwork(url: str, dest: Path) -> bool:
         return False
 
 
+def check_audio_urls(slug: str, entries: list[dict]) -> dict:
+    """HEAD-check the HEALTH_SAMPLE most recent audio URLs. Returns a health record."""
+    sample = [ep for ep in entries if ep.get("audio_url")][:HEALTH_SAMPLE]
+    failures = []
+    for ep in sample:
+        url = ep["audio_url"]
+        try:
+            r = requests.head(url, timeout=10, allow_redirects=True,
+                              headers={"User-Agent": "TheTorahPodcast/1.0"})
+            if r.status_code >= 400:
+                failures.append({"url": url, "status": r.status_code,
+                                  "title": ep.get("title", "")[:60]})
+        except Exception as e:
+            failures.append({"url": url, "status": "error", "error": str(e),
+                              "title": ep.get("title", "")[:60]})
+
+    status = "ok" if not failures else "degraded"
+    record = {
+        "slug":       slug,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "sample":     len(sample),
+        "failures":   failures,
+        "status":     status,
+    }
+    if failures:
+        print(f"  [{slug}] HEALTH WARNING — {len(failures)}/{len(sample)} URLs failed:")
+        for f in failures:
+            print(f"    [{f['status']}] {f['url'][:80]}")
+    else:
+        print(f"  [{slug}] health OK ({len(sample)} URLs checked)")
+    return record
+
+
 def main():
     channels = json.loads(Path("channels.json").read_text(encoding="utf-8-sig"))
     rss_channels = [
@@ -132,6 +169,19 @@ def main():
     print(f"=== Sync RSS Channels ({len(rss_channels)} channel(s)) ===")
     FEEDS_DIR.mkdir(exist_ok=True)
     ARTWORK_DIR.mkdir(exist_ok=True)
+
+    # Load existing health records so we can merge and persist
+    health_records: dict[str, dict] = {}
+    if HEALTH_FILE.exists():
+        try:
+            health_records = {
+                r["slug"]: r
+                for r in json.loads(HEALTH_FILE.read_text(encoding="utf-8"))
+            }
+        except Exception:
+            pass
+
+    any_degraded = False
 
     for ch in rss_channels:
         slug    = ch["slug"]
@@ -181,7 +231,21 @@ def main():
         if download_artwork(meta["artwork_url"], art_dest):
             print(f"  [{slug}] Artwork saved → {art_dest}")
 
+        # Audio URL health check
+        health = check_audio_urls(slug, result)
+        health_records[slug] = health
+        if health["status"] != "ok":
+            any_degraded = True
+
+    # Persist health records
+    HEALTH_FILE.write_text(
+        json.dumps(list(health_records.values()), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
     print("\n=== RSS sync complete ===")
+    if any_degraded:
+        print("WARNING: one or more external channels have broken audio URLs — check feeds/rss_health.json")
 
 
 if __name__ == "__main__":
