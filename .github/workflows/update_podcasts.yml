@@ -185,7 +185,7 @@ jobs:
         if: steps.commit.outputs.committed == 'true'
         run: |
           NEW_URLS=$(git diff --name-only HEAD~1 HEAD -- '*.html' | \
-            grep -E '^(rav-|rabbin-)[^/]+/.+\.html$' | head -100 | \
+            grep -E '^(rav-|rabbin-|beth-)[^/]+/.+\.html$' | head -100 | \
             sed 's|^|https://thetorahpodcast.net/|' | \
             jq -Rsc '[split("\n")[] | select(length > 0)]')
           COUNT=$(echo "$NEW_URLS" | jq 'length')
