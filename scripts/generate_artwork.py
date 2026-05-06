@@ -182,7 +182,7 @@ def main():
     errors    = []
 
     for ch in channels:
-        if not ch.get("enabled", True):
+        if not ch.get("enabled", True) or ch.get("source") == "rss":
             continue
 
         slug       = ch["slug"]
