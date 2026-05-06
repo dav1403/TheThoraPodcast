@@ -108,9 +108,15 @@ CSS = """\
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
-    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 28px; font-size: .9rem; color: #444; line-height: 1.7; }
+    .header-stats { font-size: .88rem; color: #9ab; margin-bottom: 12px; min-height: 1.3em; }
+    .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 4px; font-size: .9rem; color: #444; line-height: 1.7; position: relative; }
     .ch-about p { margin-bottom: .9em; }
     .ch-about p:last-child { margin-bottom: 0; }
+    .ch-about.collapsed { max-height: 6em; overflow: hidden; }
+    .ch-about.collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2.5em; background: linear-gradient(transparent, #fff); pointer-events: none; }
+    .show-more-btn { background: none; border: none; color: #e87722; font-size: .82rem; font-weight: 600; cursor: pointer; padding: 0 0 20px; display: none; font-family: inherit; }
+    .show-more-btn.visible { display: block; }
+    .show-more-btn:hover { text-decoration: underline; }
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 12px; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -263,7 +269,10 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
             for p in page_description.splitlines()
             if p.strip()
         )
-        about_block = f'<div class="ch-about">{paras}</div>'
+        about_block = (
+            f'<div class="ch-about" id="ch-about">{paras}</div>'
+            f'<button class="show-more-btn" id="show-more-btn"></button>'
+        )
     else:
         about_block = ""
 
@@ -313,6 +322,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
 <header>
   <p class="site-brand"><a href="./">The Torah Podcast</a></p>
   <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-stats" id="header-stats"></div>
   <nav class="header-nav">
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
@@ -379,7 +389,26 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     }});
     const epCount = document.getElementById('ep-count');
     if (epCount) epCount.textContent = I18N[lang].ep_count({ep_count});
+    const statsEl = document.getElementById('header-stats');
+    if (statsEl) statsEl.textContent = I18N[lang].ep_count({ep_count});
   }}
+  // Show more / less for channel description
+  (function() {{
+    const about = document.getElementById('ch-about');
+    const btn   = document.getElementById('show-more-btn');
+    if (!about || !btn) return;
+    if (about.scrollHeight > 100) {{
+      about.classList.add('collapsed');
+      btn.classList.add('visible');
+      btn.textContent = lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾';
+      btn.addEventListener('click', () => {{
+        const isCollapsed = about.classList.toggle('collapsed');
+        btn.textContent = isCollapsed
+          ? (lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾')
+          : (lang === 'he' ? 'הצג פחות ▴' : 'Voir moins ▴');
+      }});
+    }}
+  }})();
   function toggleLang() {{
     localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
     location.reload();

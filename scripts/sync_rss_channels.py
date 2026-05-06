@@ -62,6 +62,10 @@ def parse_channel(root: ET.Element) -> tuple[dict, list[dict]]:
         ch_image = img_el.get("href", "")
 
     description = strip_html(channel.findtext("description") or "")
+    if not description:
+        description = strip_html(
+            channel.findtext(f"{{{ITUNES_NS}}}summary") or ""
+        )
 
     meta = {"description": description, "artwork_url": ch_image}
 
@@ -218,7 +222,7 @@ def main():
 
         # Save channel_info for render_page to pick up description + SEO
         info_file = FEEDS_DIR / f"{slug}.channel_info.json"
-        if not info_file.exists() or added > 0:
+        if True:  # always refresh so description and SEO stay up to date
             info = {
                 "description":    meta["description"],
                 "seo_description": meta["description"][:155] if meta["description"] else "",
