@@ -185,7 +185,6 @@ jobs:
           git pull --rebase --autostash origin main
           git push
 
-
       - name: Submit new episode pages to IndexNow
         if: steps.commit.outputs.committed == 'true'
         run: |
@@ -209,10 +208,10 @@ jobs:
           if [ -f /tmp/auth_error ]; then
             ERROR=$(cat /tmp/auth_error)
             gh issue create \
-              --title "🚨 YouTube auth error — cookies may be expired" \
+              --title "YouTube auth error - cookies may be expired" \
               --body "$(printf 'The CI detected a YouTube authentication error during this run. The Pi cookies may need to be refreshed.\n\n**Error:**\n```\n%s\n```\n\n**Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' "$ERROR")" \
               --label "bug" 2>/dev/null || true
-            echo "::warning::YouTube auth error detected — cookies may be expired"
+            echo "::warning::YouTube auth error detected - cookies may be expired"
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
