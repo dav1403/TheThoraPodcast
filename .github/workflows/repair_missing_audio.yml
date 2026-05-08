@@ -126,8 +126,62 @@ jobs:
         run: |
           python scripts/tag_episodes.py || echo "WARNING: tagging failed (API credits?), continuing"
 
+      - name: Fetch episode transcripts (auto-captions from YouTube)
+        env:
+          YOUTUBE_COOKIES_FILE: ${{ env.YOUTUBE_COOKIES_FILE }}
+        run: python scripts/fetch_transcripts.py --budget 50
+
       - name: Generate per-channel HTML pages and update sitemap
         run: python scripts/generate_channel_pages.py
 
-      - name: Done
-        run: echo "test done"
+      - name: Commit and push updated feeds
+        id: commit
+        run: |
+          git config --global user.name  "Podcast Bot"
+          git config --global user.email "action@github.com"
+          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html rav-*/ rabbin-*/ beth-*/
+          if git diff --staged --quiet; then
+            echo "committed=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "chore: update podcast feeds [skip ci]"
+            echo "committed=true" >> $GITHUB_OUTPUT
+          fi
+          git pull --rebase --autostash origin main
+          git push
+
+      - name: Submit new episode pages to IndexNow
+        if: steps.commit.outputs.committed == 'true'
+        run: |
+          NEW_URLS=$(git diff --name-only HEAD~1 HEAD -- '*.html' | \
+            grep -E '^(rav-|rabbin-|beth-)[^/]+/.+\.html$' | head -100 | \
+            sed 's|^|https://thetorahpodcast.net/|' | \
+            jq -Rsc '[split("\n")[] | select(length > 0)]')
+          COUNT=$(echo "$NEW_URLS" | jq 'length')
+          if [ "$COUNT" -gt 0 ]; then
+            curl -s -X POST "https://api.indexnow.org/indexnow" \
+              -H "Content-Type: application/json; charset=utf-8" \
+              -d "{\"host\":\"thetorahpodcast.net\",\"key\":\"b9e2d8f1c3a74065b8e2d8f1c3a74065\",\"keyLocation\":\"https://thetorahpodcast.net/b9e2d8f1c3a74065b8e2d8f1c3a74065.txt\",\"urlList\":${NEW_URLS}}"
+            echo "IndexNow: submitted $COUNT new episode URL(s)"
+          else
+            echo "IndexNow: no new episode pages to submit"
+          fi
+
+      - name: Alert if YouTube auth error detected
+        if: always()
+        run: |
+          if [ -f /tmp/auth_error ]; then
+            ERROR=$(cat /tmp/auth_error)
+            gh issue create \
+              --title "YouTube auth error - cookies may be expired" \
+              --body "$(printf 'CI detected a YouTube auth error. Cookies may need refreshing.\n\nError:\n%s\n\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' "$ERROR")" \
+              --label "bug" 2>/dev/null || true
+            echo "::warning::YouTube auth error detected - cookies may be expired"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate run summary
+        if: always()
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/generate_summary.py >> $GITHUB_STEP_SUMMARY
