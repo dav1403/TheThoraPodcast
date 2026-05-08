@@ -155,7 +155,7 @@ jobs:
       - name: Tag untagged episodes with AI themes
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python scripts/tag_episodes.py
+        run: python scripts/tag_episodes.py || echo "WARNING: tagging failed (API credits?), continuing"
 
       - name: Fetch episode transcripts (auto-captions from YouTube)
         env:
