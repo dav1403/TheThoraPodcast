@@ -1,0 +1,223 @@
+name: Update Podcast Feeds
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual run'
+        required: false
+        default: 'manual'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Set up Deno (for yt-dlp EJS n-challenge solver)
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Ensure feeds/ directory exists
+        run: mkdir -p feeds
+
+      - name: Save pre-run feed counts
+        run: |
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+          counts = {}
+          for f in Path("feeds").glob("*.entries.json"):
+              slug = f.stem.replace(".entries", "")
+              try:
+                  entries = json.loads(f.read_text(encoding="utf-8") or "[]")
+              except Exception:
+                  entries = []
+              counts[slug] = len(entries)
+          Path("/tmp/pre_run_counts.json").write_text(json.dumps(counts))
+          print("Pre-run counts:", counts)
+          EOF
+
+      - name: Write YouTube cookies
+        env:
+          YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
+        run: |
+          if [ -n "$YOUTUBE_COOKIES" ]; then
+            echo "$YOUTUBE_COOKIES" > /tmp/yt_cookies.txt
+            echo "YOUTUBE_COOKIES_FILE=/tmp/yt_cookies.txt" >> $GITHUB_ENV
+          fi
+
+      - name: Generate channel artwork (3000x3000 PNG for Apple Podcasts)
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: |
+          mkdir -p artwork
+          python scripts/generate_artwork.py
+
+      - name: Sync external RSS channels
+        run: python scripts/sync_rss_channels.py
+
+      - name: Bootstrap new channels (backfill last 10 episodes if feed missing)
+        env:
+          YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
+          GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO:          ${{ github.repository }}
+          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_URL:        ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          touch processed.json
+          python - <<'EOF'
+          import json
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          channels = json.loads(Path("channels.json").read_text(encoding="utf-8-sig"))
+          for ch in channels:
+              if not ch.get("enabled", True) or ch.get("source") == "rss":
+                  continue
+              entries_file = Path(f"feeds/{ch['slug']}.entries.json")
+              needs_bootstrap = (
+                  not entries_file.exists() or
+                  json.loads(entries_file.read_text(encoding="utf-8-sig") or "[]") == []
+              )
+              if needs_bootstrap:
+                  print(f"Bootstrapping {ch['slug']}...")
+                  result = subprocess.run(
+                      [sys.executable, "scripts/bootstrap_channel.py", "--slug", ch["slug"], "--max", "10"],
+                      capture_output=False
+                  )
+                  if result.returncode != 0:
+                      print(f"Bootstrap failed for {ch['slug']}")
+          EOF
+
+      - name: Run podcast update (new episodes, budget 15)
+        env:
+          YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
+          GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO:          ${{ github.repository }}
+          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_URL:        ${{ secrets.R2_PUBLIC_URL }}
+        run: python scripts/process_podcasts.py --budget 15
+
+      - name: Run backfill (historical episodes with remaining budget)
+        env:
+          YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
+          GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO:          ${{ github.repository }}
+          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_URL:        ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          BUDGET=$(cat /tmp/backfill_budget 2>/dev/null || echo 0)
+          echo "Backfill budget: $BUDGET"
+          python scripts/backfill_podcasts.py --budget "$BUDGET"
+
+      - name: Tag untagged episodes with AI themes
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/tag_episodes.py || echo "WARNING: tagging failed (API credits?), continuing"
+
+      - name: Fetch episode transcripts (auto-captions from YouTube)
+        env:
+          YOUTUBE_COOKIES_FILE: ${{ env.YOUTUBE_COOKIES_FILE }}
+        run: python scripts/fetch_transcripts.py --budget 50
+
+      - name: Generate per-channel HTML pages and update sitemap
+        run: python scripts/generate_channel_pages.py
+
+      - name: Commit and push updated feeds
+        id: commit
+        run: |
+          git config --global user.name  "Podcast Bot"
+          git config --global user.email "action@github.com"
+          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html rav-*/ rabbin-*/ beth-*/
+          if git diff --staged --quiet; then
+            echo "committed=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "chore: update podcast feeds [skip ci]"
+            echo "committed=true" >> $GITHUB_OUTPUT
+          fi
+          git pull --rebase --autostash origin main
+          git push
+
+      - name: Submit new episode pages to IndexNow
+        if: steps.commit.outputs.committed == 'true'
+        run: |
+          NEW_URLS=$(git diff --name-only HEAD~1 HEAD -- '*.html' | \
+            grep -E '^(rav-|rabbin-|beth-)[^/]+/.+\.html$' | head -100 | \
+            sed 's|^|https://thetorahpodcast.net/|' | \
+            jq -Rsc '[split("\n")[] | select(length > 0)]')
+          COUNT=$(echo "$NEW_URLS" | jq 'length')
+          if [ "$COUNT" -gt 0 ]; then
+            curl -s -X POST "https://api.indexnow.org/indexnow" \
+              -H "Content-Type: application/json; charset=utf-8" \
+              -d "{\"host\":\"thetorahpodcast.net\",\"key\":\"b9e2d8f1c3a74065b8e2d8f1c3a74065\",\"keyLocation\":\"https://thetorahpodcast.net/b9e2d8f1c3a74065b8e2d8f1c3a74065.txt\",\"urlList\":${NEW_URLS}}"
+            echo "IndexNow: submitted $COUNT new episode URL(s)"
+          else
+            echo "IndexNow: no new episode pages to submit"
+          fi
+
+      - name: Alert if YouTube auth error detected
+        if: always()
+        run: |
+          if [ -f /tmp/auth_error ]; then
+            ERROR=$(cat /tmp/auth_error)
+            gh issue create \
+              --title "YouTube auth error - cookies may be expired" \
+              --body "$(printf 'CI detected a YouTube auth error. Cookies may need refreshing.\n\nError:\n%s\n\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' "$ERROR")" \
+              --label "bug" 2>/dev/null || true
+            echo "::warning::YouTube auth error detected - cookies may be expired"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate run summary
+        if: always()
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/generate_summary.py >> $GITHUB_STEP_SUMMARY
