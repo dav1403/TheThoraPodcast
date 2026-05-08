@@ -88,7 +88,7 @@ jobs:
           R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
-          R2_PUBLIC_URL:        ${{ secrets.R2_PUBLIC_URL }}
+          R2_PUBLIC_URL:        ${{ secrets.R2_Public_URL }}
         run: |
           touch processed.json
           python scripts/ci_bootstrap_all.py
@@ -119,14 +119,6 @@ jobs:
           BUDGET=$(cat /tmp/backfill_budget 2>/dev/null || echo 0)
           echo "Backfill budget: $BUDGET"
           python scripts/backfill_podcasts.py --budget "$BUDGET"
-
-      - name: Tag untagged episodes with AI themes
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python scripts/tag_episodes.py || echo "WARNING: tagging failed (API credits?), continuing"
-
-      - name: Generate per-channel HTML pages and update sitemap
-        run: python scripts/generate_channel_pages.py
 
       - name: Done
         run: echo "test done"
