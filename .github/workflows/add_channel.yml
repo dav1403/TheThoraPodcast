@@ -27,6 +27,15 @@ on:
       rss_url:
         description: 'RSS feed URL — only for RSS source'
         required: false
+      spotify_url:
+        description: 'Spotify show URL (optional)'
+        required: false
+      apple_url:
+        description: 'Apple Podcasts show URL (optional)'
+        required: false
+      deezer_url:
+        description: 'Deezer show URL (optional)'
+        required: false
 
 permissions:
   contents: write
@@ -51,13 +60,16 @@ jobs:
           import json, re, sys, urllib.request, urllib.parse
           from pathlib import Path
 
-          slug       = "${{ github.event.inputs.slug }}".strip()
-          author     = "${{ github.event.inputs.author }}".strip()
-          language   = "${{ github.event.inputs.language }}".strip()
-          source     = "${{ github.event.inputs.source }}".strip()
-          yt_url     = "${{ github.event.inputs.youtube_url }}".strip()
-          rss_url    = "${{ github.event.inputs.rss_url }}".strip()
-          api_key    = "${{ env.YOUTUBE_API_KEY }}".strip()
+          slug        = "${{ github.event.inputs.slug }}".strip()
+          author      = "${{ github.event.inputs.author }}".strip()
+          language    = "${{ github.event.inputs.language }}".strip()
+          source      = "${{ github.event.inputs.source }}".strip()
+          yt_url      = "${{ github.event.inputs.youtube_url }}".strip()
+          rss_url     = "${{ github.event.inputs.rss_url }}".strip()
+          spotify_url = "${{ github.event.inputs.spotify_url }}".strip()
+          apple_url   = "${{ github.event.inputs.apple_url }}".strip()
+          deezer_url  = "${{ github.event.inputs.deezer_url }}".strip()
+          api_key     = "${{ env.YOUTUBE_API_KEY }}".strip()
 
           # ── validation ────────────────────────────────────────────────────
           if not slug or not author:
@@ -126,6 +138,14 @@ jobs:
               print(f"ERROR: channel ID '{yt_id}' already exists"); sys.exit(1)
 
           # ── build and append entry ────────────────────────────────────────
+          platforms = {"rss": f"https://thetorahpodcast.net/feeds/{slug}.xml"}
+          if spotify_url:
+              platforms["spotify"] = spotify_url
+          if apple_url:
+              platforms["apple"] = apple_url
+          if deezer_url:
+              platforms["deezer"] = deezer_url
+
           entry = {
               "slug": slug,
               "podcast_author": author,
@@ -133,9 +153,7 @@ jobs:
               "podcast_language": language,
               "podcast_category": "Religion & Spirituality",
               "enabled": True,
-              "platforms": {
-                  "rss": f"https://thetorahpodcast.net/feeds/{slug}.xml"
-              }
+              "platforms": platforms,
           }
 
           if source == "youtube":
