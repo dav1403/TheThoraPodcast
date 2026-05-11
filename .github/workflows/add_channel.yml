@@ -21,8 +21,8 @@ on:
         default: 'youtube'
         type: choice
         options: ['youtube', 'rss']
-      youtube_channel_id:
-        description: 'YouTube channel ID (UC...) — only for YouTube source'
+      youtube_url:
+        description: 'Any YouTube URL: channel page, @handle, or playlist link'
         required: false
       rss_url:
         description: 'RSS feed URL — only for RSS source'
@@ -43,44 +43,89 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Add channel to channels.json
+      - name: Resolve YouTube channel ID and add to channels.json
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
           python - <<'PYEOF'
-          import json, sys
+          import json, re, sys, urllib.request, urllib.parse
           from pathlib import Path
 
-          slug        = "${{ github.event.inputs.slug }}".strip()
-          author      = "${{ github.event.inputs.author }}".strip()
-          language    = "${{ github.event.inputs.language }}".strip()
-          source      = "${{ github.event.inputs.source }}".strip()
-          yt_id       = "${{ github.event.inputs.youtube_channel_id }}".strip()
-          rss_url     = "${{ github.event.inputs.rss_url }}".strip()
+          slug       = "${{ github.event.inputs.slug }}".strip()
+          author     = "${{ github.event.inputs.author }}".strip()
+          language   = "${{ github.event.inputs.language }}".strip()
+          source     = "${{ github.event.inputs.source }}".strip()
+          yt_url     = "${{ github.event.inputs.youtube_url }}".strip()
+          rss_url    = "${{ github.event.inputs.rss_url }}".strip()
+          api_key    = "${{ env.YOUTUBE_API_KEY }}".strip()
 
+          # ── validation ────────────────────────────────────────────────────
           if not slug or not author:
-              print("ERROR: slug and author are required")
-              sys.exit(1)
-
-          if source == "youtube" and not yt_id:
-              print("ERROR: youtube_channel_id is required for YouTube source")
-              sys.exit(1)
-
+              print("ERROR: slug and author are required"); sys.exit(1)
+          if source == "youtube" and not yt_url:
+              print("ERROR: youtube_url is required for YouTube source"); sys.exit(1)
           if source == "rss" and not rss_url:
-              print("ERROR: rss_url is required for RSS source")
+              print("ERROR: rss_url is required for RSS source"); sys.exit(1)
+
+          # ── resolve YouTube URL → channel ID ──────────────────────────────
+          def api_get(endpoint, params):
+              params["key"] = api_key
+              url = f"https://www.googleapis.com/youtube/v3/{endpoint}?" + urllib.parse.urlencode(params)
+              with urllib.request.urlopen(url, timeout=15) as r:
+                  return json.loads(r.read())
+
+          def resolve_channel_id(url):
+              # uploads playlist: list=UUxxxxxxx → UCxxxxxxx
+              m = re.search(r'[?&]list=(UU[A-Za-z0-9_-]+)', url)
+              if m:
+                  return "UC" + m.group(1)[2:]
+
+              # direct channel ID in URL
+              m = re.search(r'/channel/(UC[A-Za-z0-9_-]+)', url)
+              if m:
+                  return m.group(1)
+
+              # @handle in URL
+              m = re.search(r'/@([A-Za-z0-9_.-]+)', url)
+              if m:
+                  handle = m.group(1)
+                  data = api_get("channels", {"part": "id", "forHandle": handle})
+                  items = data.get("items", [])
+                  if not items:
+                      print(f"ERROR: could not find YouTube channel for @{handle}")
+                      sys.exit(1)
+                  return items[0]["id"]
+
+              # /c/name or /user/name — resolve via search
+              m = re.search(r'youtube\.com/(?:c/|user/)([^/?&]+)', url)
+              if m:
+                  name = m.group(1)
+                  data = api_get("channels", {"part": "id", "forUsername": name})
+                  items = data.get("items", [])
+                  if not items:
+                      print(f"ERROR: could not resolve YouTube username '{name}'")
+                      sys.exit(1)
+                  return items[0]["id"]
+
+              print(f"ERROR: unrecognised YouTube URL: {url}")
               sys.exit(1)
 
+          yt_id = None
+          if source == "youtube":
+              yt_id = resolve_channel_id(yt_url)
+              print(f"Resolved channel ID: {yt_id}")
+
+          # ── load and validate channels.json ───────────────────────────────
           channels_path = Path("channels.json")
           channels = json.loads(channels_path.read_text(encoding="utf-8-sig"))
 
-          # Check for duplicate slug
           if any(ch["slug"] == slug for ch in channels):
-              print(f"ERROR: slug '{slug}' already exists")
-              sys.exit(1)
+              print(f"ERROR: slug '{slug}' already exists"); sys.exit(1)
 
-          # Check for duplicate YouTube channel ID
-          if source == "youtube" and any(ch.get("youtube_channel_id") == yt_id for ch in channels):
-              print(f"ERROR: youtube_channel_id '{yt_id}' already exists")
-              sys.exit(1)
+          if yt_id and any(ch.get("youtube_channel_id") == yt_id for ch in channels):
+              print(f"ERROR: channel ID '{yt_id}' already exists"); sys.exit(1)
 
+          # ── build and append entry ────────────────────────────────────────
           entry = {
               "slug": slug,
               "podcast_author": author,
@@ -104,7 +149,7 @@ jobs:
               json.dumps(channels, ensure_ascii=False, indent=2),
               encoding="utf-8"
           )
-          print(f"Added channel: {slug} ({source})")
+          print(f"\nAdded channel '{slug}':")
           print(json.dumps(entry, ensure_ascii=False, indent=2))
           PYEOF
 
