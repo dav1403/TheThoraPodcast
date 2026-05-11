@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: '0 * * * *'
 
+concurrency:
+  group: podcast-pipeline
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
