@@ -1,0 +1,117 @@
+name: Add Channel
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Slug (e.g. rav-david-cohen) — used for file names and URLs'
+        required: true
+      author:
+        description: 'Author display name (e.g. Rav David Cohen)'
+        required: true
+      language:
+        description: 'Language'
+        required: true
+        default: 'fr'
+        type: choice
+        options: ['fr', 'he', 'en']
+      source:
+        description: 'Source type'
+        required: true
+        default: 'youtube'
+        type: choice
+        options: ['youtube', 'rss']
+      youtube_channel_id:
+        description: 'YouTube channel ID (UC...) — only for YouTube source'
+        required: false
+      rss_url:
+        description: 'RSS feed URL — only for RSS source'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  add:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Add channel to channels.json
+        run: |
+          python - <<'PYEOF'
+          import json, sys
+          from pathlib import Path
+
+          slug        = "${{ github.event.inputs.slug }}".strip()
+          author      = "${{ github.event.inputs.author }}".strip()
+          language    = "${{ github.event.inputs.language }}".strip()
+          source      = "${{ github.event.inputs.source }}".strip()
+          yt_id       = "${{ github.event.inputs.youtube_channel_id }}".strip()
+          rss_url     = "${{ github.event.inputs.rss_url }}".strip()
+
+          if not slug or not author:
+              print("ERROR: slug and author are required")
+              sys.exit(1)
+
+          if source == "youtube" and not yt_id:
+              print("ERROR: youtube_channel_id is required for YouTube source")
+              sys.exit(1)
+
+          if source == "rss" and not rss_url:
+              print("ERROR: rss_url is required for RSS source")
+              sys.exit(1)
+
+          channels_path = Path("channels.json")
+          channels = json.loads(channels_path.read_text(encoding="utf-8-sig"))
+
+          # Check for duplicate slug
+          if any(ch["slug"] == slug for ch in channels):
+              print(f"ERROR: slug '{slug}' already exists")
+              sys.exit(1)
+
+          # Check for duplicate YouTube channel ID
+          if source == "youtube" and any(ch.get("youtube_channel_id") == yt_id for ch in channels):
+              print(f"ERROR: youtube_channel_id '{yt_id}' already exists")
+              sys.exit(1)
+
+          entry = {
+              "slug": slug,
+              "podcast_author": author,
+              "podcast_email": "thetorahpodcast@gmail.com",
+              "podcast_language": language,
+              "podcast_category": "Religion & Spirituality",
+              "enabled": True,
+              "platforms": {
+                  "rss": f"https://thetorahpodcast.net/feeds/{slug}.xml"
+              }
+          }
+
+          if source == "youtube":
+              entry["youtube_channel_id"] = yt_id
+          else:
+              entry["source"] = "rss"
+              entry["rss_url"] = rss_url
+
+          channels.append(entry)
+          channels_path.write_text(
+              json.dumps(channels, ensure_ascii=False, indent=2),
+              encoding="utf-8"
+          )
+          print(f"Added channel: {slug} ({source})")
+          print(json.dumps(entry, ensure_ascii=False, indent=2))
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config --global user.name  "Podcast Bot"
+          git config --global user.email "action@github.com"
+          git add channels.json
+          git commit -m "feat: add channel ${{ github.event.inputs.slug }} [skip ci]"
+          git push
