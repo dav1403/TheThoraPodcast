@@ -146,7 +146,24 @@ CSS = """\
     details.transcript summary::before { content:'▶'; font-size:.6rem; color:#999; transition:transform .2s; }
     details.transcript[open] summary::before { transform:rotate(90deg); }
     details.transcript summary:hover { background:#f5f5f0; }
-    .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }"""
+    .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }
+    .play-btn { display:inline-flex; align-items:center; gap:6px; background:#1a1a2e; color:#fff; border:none; border-radius:20px; padding:5px 13px; font-size:.76rem; cursor:pointer; transition:background .15s; font-family:inherit; }
+    .play-btn:hover { background:#2d2d50; }
+    .play-btn.playing { background:#e87722; }
+    .play-btn svg { width:10px; height:10px; flex-shrink:0; }
+    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
+    #player.hidden { transform:translateY(100%); }
+    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
+    #player-info { min-width:0; flex:1; }
+    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #player-channel { font-size:.68rem; color:#99a; }
+    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
+    .player-speed {{ display:flex; gap:3px; flex-shrink:0; }}
+    #player .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; transition:background .12s,color .12s; }
+    #player .speed-btn:hover, #player .speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
+    #player-close:hover { color:#fff; }
+    @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}"""
 
 GTAG = """\
   <link rel="preconnect" href="https://www.googletagmanager.com">
@@ -211,7 +228,9 @@ def render_page(ch: dict, entries: list, all_channels: list,
         desc_tag  = f'<p class="ep-desc">{esc(desc_raw)}</p>' if desc_raw else ""
         video_id  = ep.get("video_id", "")
         audio_tag = (
-            f'<audio class="ep-audio" controls src="{esc(audio_url)}" preload="none" data-ep-id="{esc(video_id)}"></audio>'
+            f'<button class="play-btn" data-ep-id="{esc(video_id)}" '
+            f'data-audio="{esc(audio_url)}" data-title="{esc(ep["title"])}" data-thumb="{esc(thumb)}">'
+            f'<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button>'
             if audio_url else ""
         )
         share_tag = (
@@ -353,18 +372,26 @@ def render_page(ch: dict, entries: list, all_channels: list,
   </div>
   {about_block}
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
-  <div class="speed-bar">
-    <span>Vitesse :</span>
-    <button class="speed-btn active" data-speed="1">1×</button>
-    <button class="speed-btn" data-speed="1.25">1.25×</button>
-    <button class="speed-btn" data-speed="1.5">1.5×</button>
-    <button class="speed-btn" data-speed="2">2×</button>
-  </div>
   <div class="episode-list">
 {episodes_html}
   </div>
   <div class="toast" id="toast"></div>
 </main>
+<div id="player" class="hidden">
+  <img id="player-art" src="" alt="">
+  <div id="player-info">
+    <div id="player-title"></div>
+    <div id="player-channel"></div>
+  </div>
+  <audio id="player-audio" controls></audio>
+  <div class="player-speed">
+    <button class="speed-btn active" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="1.25">1.25×</button>
+    <button class="speed-btn" data-speed="1.5">1.5×</button>
+    <button class="speed-btn" data-speed="2">2×</button>
+  </div>
+  <button id="player-close" title="Fermer">✕</button>
+</div>
 <script>
   const I18N = {{
     fr: {{
@@ -372,12 +399,14 @@ def render_page(ch: dict, entries: list, all_channels: list,
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${{n}} épisode${{n !== 1 ? 's' : ''}}`,
+      listen:'Écouter', playing:'En cours…',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${{n}} פרקים`,
+      listen:'האזן', playing:'מתנגן…',
     }},
   }};
   let lang = localStorage.getItem('lang') || '{default_lang}';
@@ -417,30 +446,41 @@ def render_page(ch: dict, entries: list, all_channels: list,
     location.reload();
   }}
   applyLang();
-  // GA4 event tracking
-  if (typeof gtag !== 'undefined') {{
-    document.querySelectorAll('audio.ep-audio').forEach(function(audio, idx) {{
-      var title = (audio.closest('.episode') || document).querySelector('.ep-title');
-      title = title ? title.textContent : '';
-      var played = false, completed = false;
-      audio.addEventListener('play', function() {{
-        if (!played) {{ played = true; gtag('event', 'audio_play', {{ep_title: title, rav: '{esc(name)}', ep_index: idx}}); }}
-      }});
-      audio.addEventListener('timeupdate', function() {{
-        if (!completed && audio.duration > 0 && audio.currentTime / audio.duration >= 0.9) {{
-          completed = true;
-          gtag('event', 'audio_complete', {{ep_title: title, rav: '{esc(name)}', ep_index: idx}});
-        }}
-      }});
-    }});
-    document.querySelectorAll('.platform-btn').forEach(function(btn) {{
-      btn.addEventListener('click', function() {{
-        var cls = Array.from(btn.classList).find(function(c) {{ return c.startsWith('btn-') && c !== 'btn-rss'; }});
-        gtag('event', 'click_platform', {{platform: cls ? cls.replace('btn-', '') : 'rss', rav: '{esc(name)}'}});
-      }});
-    }});
+  // Floating player
+  const playerEl    = document.getElementById('player');
+  const playerAudio = document.getElementById('player-audio');
+  const playerTitle = document.getElementById('player-title');
+  const playerCh    = document.getElementById('player-channel');
+  const playerArt   = document.getElementById('player-art');
+  let currentEpId   = null;
+  function loadInPlayer(btn) {{
+    const epId  = btn.dataset.epId;
+    const audio = btn.dataset.audio;
+    const title = btn.dataset.title;
+    const thumb = btn.dataset.thumb || '';
+    document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+    if (currentEpId === epId && !playerAudio.paused) {{
+      playerAudio.pause();
+      currentEpId = null;
+      return;
+    }}
+    currentEpId = epId;
+    btn.classList.add('playing');
+    playerTitle.textContent = title;
+    playerCh.textContent    = '{esc(name)}';
+    playerArt.src           = thumb;
+    playerEl.classList.remove('hidden');
+    if (playerAudio.src !== audio) {{
+      playerAudio.src = audio;
+      const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
+      if (saved > 5) playerAudio.addEventListener('loadedmetadata', () => {{ playerAudio.currentTime = saved; }}, {{once:true}});
+    }}
+    playerAudio.playbackRate = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+    playerAudio.play();
   }}
   document.addEventListener('click', e => {{
+    const playBtn = e.target.closest('.play-btn[data-ep-id]');
+    if (playBtn) {{ loadInPlayer(playBtn); return; }}
     if (e.target.closest('.nav-submenu')) return;
     const caret = e.target.closest('.nav-dd-caret');
     document.querySelectorAll('.nav-dropdown.open').forEach(el => {{
@@ -448,31 +488,60 @@ def render_page(ch: dict, entries: list, all_channels: list,
     }});
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   }});
-  // Speed control
+  // Player speed
   let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {{
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio').forEach(a => {{ a.playbackRate = rate; }});
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }}
-  document.querySelectorAll('.speed-btn').forEach(b => {{
+  document.querySelectorAll('#player .speed-btn').forEach(b => {{
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
-  }});
-  document.querySelectorAll('.ep-audio').forEach(a => {{
-    a.addEventListener('play', () => {{ a.playbackRate = currentSpeed; }});
-  }});
-  // Resume playback
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {{
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => {{ audio.currentTime = saved; }}, {{once:true}});
-    audio.addEventListener('timeupdate', () => {{
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
+    b.addEventListener('click', () => {{
+      currentSpeed = parseFloat(b.dataset.speed);
+      localStorage.setItem('playbackSpeed', currentSpeed);
+      if (playerAudio) playerAudio.playbackRate = currentSpeed;
+      document.querySelectorAll('#player .speed-btn').forEach(s => s.classList.toggle('active', parseFloat(s.dataset.speed) === currentSpeed));
     }});
-    audio.addEventListener('ended', () => {{ localStorage.removeItem('resume_' + epId); }});
   }});
+  // Resume save & ended
+  if (playerAudio) {{
+    playerAudio.addEventListener('timeupdate', () => {{
+      if (currentEpId && playerAudio.currentTime > 5)
+        localStorage.setItem('resume_' + currentEpId, Math.floor(playerAudio.currentTime));
+    }});
+    playerAudio.addEventListener('ended', () => {{
+      if (currentEpId) localStorage.removeItem('resume_' + currentEpId);
+      document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+      currentEpId = null;
+    }});
+  }}
+  // Player close
+  document.getElementById('player-close').addEventListener('click', () => {{
+    playerAudio.pause();
+    playerEl.classList.add('hidden');
+    document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+    currentEpId = null;
+  }});
+  // GA4
+  if (typeof gtag !== 'undefined') {{
+    const ga4Played = {{}}, ga4Completed = {{}};
+    if (playerAudio) {{
+      playerAudio.addEventListener('play', () => {{
+        if (currentEpId && !ga4Played[currentEpId]) {{
+          ga4Played[currentEpId] = true;
+          gtag('event', 'audio_play', {{ep_title: playerTitle.textContent, rav: '{esc(name)}'}});
+        }}
+      }});
+      playerAudio.addEventListener('timeupdate', () => {{
+        if (currentEpId && !ga4Completed[currentEpId] && playerAudio.duration > 0 && playerAudio.currentTime / playerAudio.duration >= 0.9) {{
+          ga4Completed[currentEpId] = true;
+          gtag('event', 'audio_complete', {{ep_title: playerTitle.textContent, rav: '{esc(name)}'}});
+        }}
+      }});
+    }}
+    document.querySelectorAll('.platform-btn').forEach(function(btn) {{
+      btn.addEventListener('click', function() {{
+        var cls = Array.from(btn.classList).find(function(c) {{ return c.startsWith('btn-') && c !== 'btn-rss'; }});
+        gtag('event', 'click_platform', {{platform: cls ? cls.replace('btn-', '') : 'rss', rav: '{esc(name)}'}});
+      }});
+    }});
+  }}
   // Toast
   function showToast(msg) {{
     const t = document.getElementById('toast');
