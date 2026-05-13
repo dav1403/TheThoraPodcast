@@ -160,6 +160,23 @@ La réponse pourrait bien se trouver dans les 3 minutes du Rabbin Jonas ">
     details.transcript[open] summary::before { transform:rotate(90deg); }
     details.transcript summary:hover { background:#f5f5f0; }
     .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }
+    .play-btn { display:inline-flex; align-items:center; gap:6px; background:#1a1a2e; color:#fff; border:none; border-radius:20px; padding:5px 13px; font-size:.76rem; cursor:pointer; transition:background .15s; font-family:inherit; }
+    .play-btn:hover { background:#2d2d50; }
+    .play-btn.playing { background:#e87722; }
+    .play-btn svg { width:10px; height:10px; flex-shrink:0; }
+    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
+    #player.hidden { transform:translateY(100%); }
+    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
+    #player-info { min-width:0; flex:1; }
+    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #player-channel { font-size:.68rem; color:#99a; }
+    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
+    .player-speed {{ display:flex; gap:3px; flex-shrink:0; }}
+    #player .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; transition:background .12s,color .12s; }
+    #player .speed-btn:hover, #player .speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
+    #player-close:hover { color:#fff; }
+    @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}
   .ep-hero { background:#fff; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.08); padding:24px; margin-bottom:24px; }
   .ep-hero h1 { font-size:1.3rem; font-weight:700; margin-bottom:8px; line-height:1.4; }
   .ep-meta { font-size:.82rem; color:#888; margin-bottom:12px; }

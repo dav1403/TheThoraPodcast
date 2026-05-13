@@ -157,6 +157,23 @@
     details.transcript[open] summary::before { transform:rotate(90deg); }
     details.transcript summary:hover { background:#f5f5f0; }
     .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }
+    .play-btn { display:inline-flex; align-items:center; gap:6px; background:#1a1a2e; color:#fff; border:none; border-radius:20px; padding:5px 13px; font-size:.76rem; cursor:pointer; transition:background .15s; font-family:inherit; }
+    .play-btn:hover { background:#2d2d50; }
+    .play-btn.playing { background:#e87722; }
+    .play-btn svg { width:10px; height:10px; flex-shrink:0; }
+    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
+    #player.hidden { transform:translateY(100%); }
+    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
+    #player-info { min-width:0; flex:1; }
+    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #player-channel { font-size:.68rem; color:#99a; }
+    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
+    .player-speed {{ display:flex; gap:3px; flex-shrink:0; }}
+    #player .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; transition:background .12s,color .12s; }
+    #player .speed-btn:hover, #player .speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
+    #player-close:hover { color:#fff; }
+    @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}
   .ep-hero { background:#fff; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.08); padding:24px; margin-bottom:24px; }
   .ep-hero h1 { font-size:1.3rem; font-weight:700; margin-bottom:8px; line-height:1.4; }
   .ep-meta { font-size:.82rem; color:#888; margin-bottom:12px; }
@@ -206,7 +223,7 @@
     <img src="https://d3t3ozftmdmh3i.cloudfront.net/production/podcast_uploaded/20200248/20200248-1639396129930-e7cf040dd92a3.jpg" alt="22 Nissan - Hayom Yom ( Seoudat Mashiah ) &amp; Halakha : Ne pas manger un hametz qui a passé Pessah" style="width:100%;max-width:480px;border-radius:10px;margin-bottom:16px;object-fit:cover">
     <h1>22 Nissan - Hayom Yom ( Seoudat Mashiah ) &amp; Halakha : Ne pas manger un hametz qui a passé Pessah</h1>
     <p class="ep-meta"><a href="../beth-habad-tlv-nord.html" style="color:#888;text-decoration:none">Beth Habad TLV Nord</a> · <time datetime="2024-04-30">30 avril 2024</time></p>
-    <div style="margin-bottom:8px"><span class="ep-tag">Pessa&#x27;h</span> <span class="ep-tag">Halakha</span></div>
+    <div style="margin-bottom:8px"><span class="ep-tag">Likoutei Moharan</span> <span class="ep-tag">Halakha</span> <span class="ep-tag">Pessa&#x27;h</span></div>
     <audio id="ep-audio" controls src="https://anchor.fm/s/78ffb860/podcast/play/86121555/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fproduction%2F2024-3-30%2F376082353-44100-1-6d05094e743a.mp3" preload="none" data-ep-id="ac0e2593-ff67-45a1-a06b-bd69714d9ddf" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
     <div class="speed-bar">
       <span>Vitesse :</span>

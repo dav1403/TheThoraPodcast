@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>torah.fr — Cours de Torah en podcast — The Torah Podcast</title>
-  <meta name="description" content="האזינו לשיעורי התורה של torah.fr. 49 פרקים זמינים בפודקאסט.">
+  <meta name="description" content="האזינו לשיעורי התורה של torah.fr. 51 פרקים זמינים בפודקאסט.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://thetorahpodcast.net/torah_fr.html">
   <link rel="alternate" hreflang="fr" href="https://thetorahpodcast.net/torah_fr.html">
@@ -13,14 +13,14 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://thetorahpodcast.net/torah_fr.html">
   <meta property="og:title" content="torah.fr — The Torah Podcast">
-  <meta property="og:description" content="האזינו לשיעורי התורה של torah.fr. 49 פרקים זמינים בפודקאסט.">
+  <meta property="og:description" content="האזינו לשיעורי התורה של torah.fr. 51 פרקים זמינים בפודקאסט.">
   <meta property="og:image" content="https://thetorahpodcast.net/artwork/torah_fr.png">
   <meta property="og:site_name" content="The Torah Podcast">
   <meta property="og:locale" content="fr_FR">
   <meta property="og:locale:alternate" content="he_IL">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="torah.fr — The Torah Podcast">
-  <meta name="twitter:description" content="האזינו לשיעורי התורה של torah.fr. 49 פרקים זמינים בפודקאסט.">
+  <meta name="twitter:description" content="האזינו לשיעורי התורה של torah.fr. 51 פרקים זמינים בפודקאסט.">
   <meta name="twitter:image" content="https://thetorahpodcast.net/artwork/torah_fr.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#1a1a2e">
@@ -31,7 +31,7 @@
   "@context": "https://schema.org",
   "@type": "PodcastSeries",
   "name": "torah.fr",
-  "description": "האזינו לשיעורי התורה של torah.fr. 49 פרקים זמינים בפודקאסט.",
+  "description": "האזינו לשיעורי התורה של torah.fr. 51 פרקים זמינים בפודקאסט.",
   "url": "https://thetorahpodcast.net/torah_fr.html",
   "webFeed": "https://thetorahpodcast.net/feeds/torah_fr.xml",
   "image": "https://thetorahpodcast.net/artwork/torah_fr.png",
@@ -132,6 +132,24 @@
       "associatedMedia": {
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/4XwsgQNT0jE_Commerciaux_et_business_Dev_-_l__39_interdiction_d__39_induire_en_erreur_-_2ème.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
+      "name": "Conseils pour gérer des disputes",
+      "datePublished": "2022-01-30",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/j2-NymKFEds_Conseils_pour_gérer_des_disputes.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
+      "name": "Jalousie et honneur, en contrario de mon intérêt",
+      "datePublished": "2022-01-30",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/XPARXD1nC7s_Jalousie_et_honneur__en_contrario_de_mon_intérêt.mp3"
       }
     },
     {
@@ -295,24 +313,6 @@
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/AWvtXHoL96Y_Ne_pas_étaler_sa_vie.mp3"
       }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Tenir face aux échecs",
-      "datePublished": "2022-01-30",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JpKRhkbk26k_Tenir_face_aux_échecs.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Savoir faire attention aux détails mais aussi avoir du recul",
-      "datePublished": "2022-01-30",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/huf9uGL2-1s_Savoir_faire_attention_aux_détails_mais_aussi_avoir_du_recul.mp3"
-      }
     }
   ]
 }
@@ -399,6 +399,23 @@
     details.transcript[open] summary::before { transform:rotate(90deg); }
     details.transcript summary:hover { background:#f5f5f0; }
     .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }
+    .play-btn { display:inline-flex; align-items:center; gap:6px; background:#1a1a2e; color:#fff; border:none; border-radius:20px; padding:5px 13px; font-size:.76rem; cursor:pointer; transition:background .15s; font-family:inherit; }
+    .play-btn:hover { background:#2d2d50; }
+    .play-btn.playing { background:#e87722; }
+    .play-btn svg { width:10px; height:10px; flex-shrink:0; }
+    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
+    #player.hidden { transform:translateY(100%); }
+    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
+    #player-info { min-width:0; flex:1; }
+    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #player-channel { font-size:.68rem; color:#99a; }
+    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
+    .player-speed {{ display:flex; gap:3px; flex-shrink:0; }}
+    #player .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; transition:background .12s,color .12s; }
+    #player .speed-btn:hover, #player .speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
+    #player-close:hover { color:#fff; }
+    @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}
   </style>
 </head>
 <body>
@@ -451,13 +468,6 @@
   </div>
   
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
-  <div class="speed-bar">
-    <span>Vitesse :</span>
-    <button class="speed-btn active" data-speed="1">1×</button>
-    <button class="speed-btn" data-speed="1.25">1.25×</button>
-    <button class="speed-btn" data-speed="1.5">1.5×</button>
-    <button class="speed-btn" data-speed="2">2×</button>
-  </div>
   <div class="episode-list">
     <article class="episode">
       <img class="ep-thumb" src="https://i.ytimg.com/vi/dakBbwv_DFU/hqdefault.jpg" alt="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?" loading="lazy">
@@ -465,7 +475,7 @@
         <a class="ep-title" href="torah_fr/qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html" style="color:inherit;text-decoration:none;display:block">Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?</a>
         <time class="ep-date" datetime="2024-06-26">26.06.2024</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/dakBbwv_DFU_Qu__39_est_ce_qui_rend_la_communauté_du_7_Clay_si_spéciale.mp3" preload="none" data-ep-id="dakBbwv_DFU"></audio><button class="share-btn" data-epfile="torah_fr/qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html" data-title="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="dakBbwv_DFU" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/dakBbwv_DFU_Qu__39_est_ce_qui_rend_la_communauté_du_7_Clay_si_spéciale.mp3" data-title="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?" data-thumb="https://i.ytimg.com/vi/dakBbwv_DFU/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html" data-title="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -474,7 +484,7 @@
         <a class="ep-title" href="torah_fr/la-parasha-et-moi-vayeshev-2023-12-09.html" style="color:inherit;text-decoration:none;display:block">La Parasha et moi - Vayeshev</a>
         <time class="ep-date" datetime="2023-12-09">9.12.2023</time>
         <p class="ep-desc">Yossef est vendu en esclavage en Egypte - il arrive à y voir la main d&#x27;Hashem.</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NqXdrOt4SHw_La_Parasha_et_moi_-_Vayeshev.mp3" preload="none" data-ep-id="NqXdrOt4SHw"></audio><button class="share-btn" data-epfile="torah_fr/la-parasha-et-moi-vayeshev-2023-12-09.html" data-title="La Parasha et moi - Vayeshev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="NqXdrOt4SHw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NqXdrOt4SHw_La_Parasha_et_moi_-_Vayeshev.mp3" data-title="La Parasha et moi - Vayeshev" data-thumb="https://i.ytimg.com/vi/NqXdrOt4SHw/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/la-parasha-et-moi-vayeshev-2023-12-09.html" data-title="La Parasha et moi - Vayeshev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -483,7 +493,7 @@
         <a class="ep-title" href="torah_fr/il-suffit-de-croire-en-soi-2023-07-28.html" style="color:inherit;text-decoration:none;display:block">Il suffit de croire en soi ...</a>
         <time class="ep-date" datetime="2023-07-28">28.07.2023</time>
         <p class="ep-desc">Moshe Rabbenou aurait pu rentrer en Eretz Israel, si le peuple juif avait cru au pardon d&#x27;Hashem.</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bz5B1-y4Vew_Il_suffit_de_croire_en_soi.mp3" preload="none" data-ep-id="bz5B1-y4Vew"></audio><button class="share-btn" data-epfile="torah_fr/il-suffit-de-croire-en-soi-2023-07-28.html" data-title="Il suffit de croire en soi ..."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="bz5B1-y4Vew" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bz5B1-y4Vew_Il_suffit_de_croire_en_soi.mp3" data-title="Il suffit de croire en soi ..." data-thumb="https://i.ytimg.com/vi/bz5B1-y4Vew/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/il-suffit-de-croire-en-soi-2023-07-28.html" data-title="Il suffit de croire en soi ..."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -492,7 +502,7 @@
         <a class="ep-title" href="torah_fr/la-parasha-emor-2023-05-05.html" style="color:inherit;text-decoration:none;display:block">La parasha Emor</a>
         <time class="ep-date" datetime="2023-05-05">5.05.2023</time>
         <p class="ep-desc">Quand Hashem nous donne les clés du monde.</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bFMXmzGMRes_La_parasha_Emor.mp3" preload="none" data-ep-id="bFMXmzGMRes"></audio><button class="share-btn" data-epfile="torah_fr/la-parasha-emor-2023-05-05.html" data-title="La parasha Emor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="bFMXmzGMRes" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bFMXmzGMRes_La_parasha_Emor.mp3" data-title="La parasha Emor" data-thumb="https://i.ytimg.com/vi/bFMXmzGMRes/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/la-parasha-emor-2023-05-05.html" data-title="La parasha Emor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -501,7 +511,7 @@
         <a class="ep-title" href="torah_fr/kedochim-2023-04-28.html" style="color:inherit;text-decoration:none;display:block">Kedochim</a>
         <time class="ep-date" datetime="2023-04-28">28.04.2023</time>
         <p class="ep-desc">Le respect c&#x27;est donner du poid à l&#x27;autre sans s&#x27;annuler.</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/lUVgxqnewFM_Kedochim.mp3" preload="none" data-ep-id="lUVgxqnewFM"></audio><button class="share-btn" data-epfile="torah_fr/kedochim-2023-04-28.html" data-title="Kedochim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="lUVgxqnewFM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/lUVgxqnewFM_Kedochim.mp3" data-title="Kedochim" data-thumb="https://i.ytimg.com/vi/lUVgxqnewFM/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/kedochim-2023-04-28.html" data-title="Kedochim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -510,7 +520,7 @@
         <a class="ep-title" href="torah_fr/aharei-mot-2023-04-28.html" style="color:inherit;text-decoration:none;display:block">Aharei mot</a>
         <time class="ep-date" datetime="2023-04-28">28.04.2023</time>
         <p class="ep-desc">La Torah nous demande de ne pas venir trop souvent au Beth Hamikdach - pourquoi mettre cette distance avec le peuple juif?</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SAUBFkD7874_Aharei_mot.mp3" preload="none" data-ep-id="SAUBFkD7874"></audio><button class="share-btn" data-epfile="torah_fr/aharei-mot-2023-04-28.html" data-title="Aharei mot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="SAUBFkD7874" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SAUBFkD7874_Aharei_mot.mp3" data-title="Aharei mot" data-thumb="https://i.ytimg.com/vi/SAUBFkD7874/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/aharei-mot-2023-04-28.html" data-title="Aharei mot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -519,7 +529,7 @@
         <a class="ep-title" href="torah_fr/les-lois-de-la-vente-3eme-partie-2023-02-21.html" style="color:inherit;text-decoration:none;display:block">Les lois de la vente - 3ème partie</a>
         <time class="ep-date" datetime="2023-02-21">21.02.2023</time>
         <p class="ep-desc">Le client potentiel a un besoin du produit; peut on exploiter cette information pour gonfler les prix?</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/M8GYNY8ZIZQ_Les_lois_de_la_vente_-_3ème_partie.mp3" preload="none" data-ep-id="M8GYNY8ZIZQ"></audio><button class="share-btn" data-epfile="torah_fr/les-lois-de-la-vente-3eme-partie-2023-02-21.html" data-title="Les lois de la vente - 3ème partie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="M8GYNY8ZIZQ" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/M8GYNY8ZIZQ_Les_lois_de_la_vente_-_3ème_partie.mp3" data-title="Les lois de la vente - 3ème partie" data-thumb="https://i.ytimg.com/vi/M8GYNY8ZIZQ/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/les-lois-de-la-vente-3eme-partie-2023-02-21.html" data-title="Les lois de la vente - 3ème partie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -528,7 +538,7 @@
         <a class="ep-title" href="torah_fr/parashat-mishpatim-etre-esclave-de-son-travail-2023-02-16.html" style="color:inherit;text-decoration:none;display:block">Parashat Mishpatim - Etre esclave de son travail</a>
         <time class="ep-date" datetime="2023-02-16">16.02.2023</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ERaz1jIcYpI_Parashat_Mishpatim_-_Etre_esclave_de_son_travail.mp3" preload="none" data-ep-id="ERaz1jIcYpI"></audio><button class="share-btn" data-epfile="torah_fr/parashat-mishpatim-etre-esclave-de-son-travail-2023-02-16.html" data-title="Parashat Mishpatim - Etre esclave de son travail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="ERaz1jIcYpI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ERaz1jIcYpI_Parashat_Mishpatim_-_Etre_esclave_de_son_travail.mp3" data-title="Parashat Mishpatim - Etre esclave de son travail" data-thumb="https://i.ytimg.com/vi/ERaz1jIcYpI/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/parashat-mishpatim-etre-esclave-de-son-travail-2023-02-16.html" data-title="Parashat Mishpatim - Etre esclave de son travail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -537,7 +547,7 @@
         <a class="ep-title" href="torah_fr/parashat-yitro-quand-recoit-on-le-salaire-des-mitzvot-2023-02-09.html" style="color:inherit;text-decoration:none;display:block">Parashat Yitro - Quand reçoit--on le salaire des Mitzvot?</a>
         <time class="ep-date" datetime="2023-02-09">9.02.2023</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/_jrzmiKir4Y_Parashat_Yitro_-_Quand_reçoit--on_le_salaire_des_Mitzvot.mp3" preload="none" data-ep-id="_jrzmiKir4Y"></audio><button class="share-btn" data-epfile="torah_fr/parashat-yitro-quand-recoit-on-le-salaire-des-mitzvot-2023-02-09.html" data-title="Parashat Yitro - Quand reçoit--on le salaire des Mitzvot?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="_jrzmiKir4Y" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/_jrzmiKir4Y_Parashat_Yitro_-_Quand_reçoit--on_le_salaire_des_Mitzvot.mp3" data-title="Parashat Yitro - Quand reçoit--on le salaire des Mitzvot?" data-thumb="https://i.ytimg.com/vi/_jrzmiKir4Y/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/parashat-yitro-quand-recoit-on-le-salaire-des-mitzvot-2023-02-09.html" data-title="Parashat Yitro - Quand reçoit--on le salaire des Mitzvot?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -546,7 +556,25 @@
         <a class="ep-title" href="torah_fr/commerciaux-et-business-dev-l-39-interdiction-d-39-induire-en-erreur-2-2023-02-07.html" style="color:inherit;text-decoration:none;display:block">Commerciaux et business Dev - l&amp;#39;interdiction d&amp;#39;induire en erreur - 2ème partie</a>
         <time class="ep-date" datetime="2023-02-07">7.02.2023</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/4XwsgQNT0jE_Commerciaux_et_business_Dev_-_l__39_interdiction_d__39_induire_en_erreur_-_2ème.mp3" preload="none" data-ep-id="4XwsgQNT0jE"></audio><button class="share-btn" data-epfile="torah_fr/commerciaux-et-business-dev-l-39-interdiction-d-39-induire-en-erreur-2-2023-02-07.html" data-title="Commerciaux et business Dev - l&amp;#39;interdiction d&amp;#39;induire en erreur - 2ème partie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="4XwsgQNT0jE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/4XwsgQNT0jE_Commerciaux_et_business_Dev_-_l__39_interdiction_d__39_induire_en_erreur_-_2ème.mp3" data-title="Commerciaux et business Dev - l&amp;#39;interdiction d&amp;#39;induire en erreur - 2ème partie" data-thumb="https://i.ytimg.com/vi/4XwsgQNT0jE/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/commerciaux-et-business-dev-l-39-interdiction-d-39-induire-en-erreur-2-2023-02-07.html" data-title="Commerciaux et business Dev - l&amp;#39;interdiction d&amp;#39;induire en erreur - 2ème partie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/j2-NymKFEds/maxresdefault.jpg" alt="Conseils pour gérer des disputes" loading="lazy">
+      <div class="ep-body">
+        <a class="ep-title" href="torah_fr/conseils-pour-gerer-des-disputes-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Conseils pour gérer des disputes</a>
+        <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
+        
+        <div class="ep-actions"><button class="play-btn" data-ep-id="j2-NymKFEds" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/j2-NymKFEds_Conseils_pour_gérer_des_disputes.mp3" data-title="Conseils pour gérer des disputes" data-thumb="https://i.ytimg.com/vi/j2-NymKFEds/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/conseils-pour-gerer-des-disputes-2022-01-30.html" data-title="Conseils pour gérer des disputes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
+    <article class="episode">
+      <img class="ep-thumb" src="https://i.ytimg.com/vi/XPARXD1nC7s/maxresdefault.jpg" alt="Jalousie et honneur, en contrario de mon intérêt" loading="lazy">
+      <div class="ep-body">
+        <a class="ep-title" href="torah_fr/jalousie-et-honneur-en-contrario-de-mon-interet-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Jalousie et honneur, en contrario de mon intérêt</a>
+        <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
+        
+        <div class="ep-actions"><button class="play-btn" data-ep-id="XPARXD1nC7s" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/XPARXD1nC7s_Jalousie_et_honneur__en_contrario_de_mon_intérêt.mp3" data-title="Jalousie et honneur, en contrario de mon intérêt" data-thumb="https://i.ytimg.com/vi/XPARXD1nC7s/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/jalousie-et-honneur-en-contrario-de-mon-interet-2022-01-30.html" data-title="Jalousie et honneur, en contrario de mon intérêt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -555,7 +583,7 @@
         <a class="ep-title" href="torah_fr/savoir-garder-le-cap-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Savoir garder le cap</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3z9jXztXyGk_Savoir_garder_le_cap.mp3" preload="none" data-ep-id="3z9jXztXyGk"></audio><button class="share-btn" data-epfile="torah_fr/savoir-garder-le-cap-2022-01-30.html" data-title="Savoir garder le cap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="3z9jXztXyGk" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3z9jXztXyGk_Savoir_garder_le_cap.mp3" data-title="Savoir garder le cap" data-thumb="https://i.ytimg.com/vi/3z9jXztXyGk/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/savoir-garder-le-cap-2022-01-30.html" data-title="Savoir garder le cap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -564,7 +592,7 @@
         <a class="ep-title" href="torah_fr/il-y-a-un-moment-pour-tout-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Il y a un moment pour tout</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PEy71hqW_4k_Il_y_a_un_moment_pour_tout.mp3" preload="none" data-ep-id="PEy71hqW_4k"></audio><button class="share-btn" data-epfile="torah_fr/il-y-a-un-moment-pour-tout-2022-01-30.html" data-title="Il y a un moment pour tout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="PEy71hqW_4k" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PEy71hqW_4k_Il_y_a_un_moment_pour_tout.mp3" data-title="Il y a un moment pour tout" data-thumb="https://i.ytimg.com/vi/PEy71hqW_4k/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/il-y-a-un-moment-pour-tout-2022-01-30.html" data-title="Il y a un moment pour tout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -573,7 +601,7 @@
         <a class="ep-title" href="torah_fr/ne-pas-avoir-honte-etre-clair-et-transparent-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Ne pas avoir honte, être clair et transparent</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/WClK5amieCs_Ne_pas_avoir_honte__être_clair_et_transparent.mp3" preload="none" data-ep-id="WClK5amieCs"></audio><button class="share-btn" data-epfile="torah_fr/ne-pas-avoir-honte-etre-clair-et-transparent-2022-01-30.html" data-title="Ne pas avoir honte, être clair et transparent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="WClK5amieCs" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/WClK5amieCs_Ne_pas_avoir_honte__être_clair_et_transparent.mp3" data-title="Ne pas avoir honte, être clair et transparent" data-thumb="https://i.ytimg.com/vi/WClK5amieCs/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/ne-pas-avoir-honte-etre-clair-et-transparent-2022-01-30.html" data-title="Ne pas avoir honte, être clair et transparent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -582,7 +610,7 @@
         <a class="ep-title" href="torah_fr/garder-la-tete-froide-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Garder la tête froide</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/edwGd7gcPFA_Garder_la_tête_froide.mp3" preload="none" data-ep-id="edwGd7gcPFA"></audio><button class="share-btn" data-epfile="torah_fr/garder-la-tete-froide-2022-01-30.html" data-title="Garder la tête froide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="edwGd7gcPFA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/edwGd7gcPFA_Garder_la_tête_froide.mp3" data-title="Garder la tête froide" data-thumb="https://i.ytimg.com/vi/edwGd7gcPFA/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/garder-la-tete-froide-2022-01-30.html" data-title="Garder la tête froide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -591,7 +619,7 @@
         <a class="ep-title" href="torah_fr/savoir-lacher-prise-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Savoir lâcher prise</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SHFcRCmWH-U_Savoir_lâcher_prise.mp3" preload="none" data-ep-id="SHFcRCmWH-U"></audio><button class="share-btn" data-epfile="torah_fr/savoir-lacher-prise-2022-01-30.html" data-title="Savoir lâcher prise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="SHFcRCmWH-U" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SHFcRCmWH-U_Savoir_lâcher_prise.mp3" data-title="Savoir lâcher prise" data-thumb="https://i.ytimg.com/vi/SHFcRCmWH-U/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/savoir-lacher-prise-2022-01-30.html" data-title="Savoir lâcher prise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -600,7 +628,7 @@
         <a class="ep-title" href="torah_fr/etre-esclave-de-ses-qualites-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Etre esclave de ses qualités</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/IW2DILIalBw_Etre_esclave_de_ses_qualités.mp3" preload="none" data-ep-id="IW2DILIalBw"></audio><button class="share-btn" data-epfile="torah_fr/etre-esclave-de-ses-qualites-2022-01-30.html" data-title="Etre esclave de ses qualités"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="IW2DILIalBw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/IW2DILIalBw_Etre_esclave_de_ses_qualités.mp3" data-title="Etre esclave de ses qualités" data-thumb="https://i.ytimg.com/vi/IW2DILIalBw/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/etre-esclave-de-ses-qualites-2022-01-30.html" data-title="Etre esclave de ses qualités"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -609,7 +637,7 @@
         <a class="ep-title" href="torah_fr/les-bons-bienfaits-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Les bons bienfaits</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/wt1mA6SWIHc_Les_bons_bienfaits.mp3" preload="none" data-ep-id="wt1mA6SWIHc"></audio><button class="share-btn" data-epfile="torah_fr/les-bons-bienfaits-2022-01-30.html" data-title="Les bons bienfaits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="wt1mA6SWIHc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/wt1mA6SWIHc_Les_bons_bienfaits.mp3" data-title="Les bons bienfaits" data-thumb="https://i.ytimg.com/vi/wt1mA6SWIHc/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/les-bons-bienfaits-2022-01-30.html" data-title="Les bons bienfaits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -618,7 +646,7 @@
         <a class="ep-title" href="torah_fr/prendre-une-decision-et-prendre-le-temps-de-l-expliquer-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Prendre une décision et prendre le temps de l&#x27;expliquer</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KQeCu1QOE7U_Prendre_une_décision_et_prendre_le_temps_de_l_expliquer.mp3" preload="none" data-ep-id="KQeCu1QOE7U"></audio><button class="share-btn" data-epfile="torah_fr/prendre-une-decision-et-prendre-le-temps-de-l-expliquer-2022-01-30.html" data-title="Prendre une décision et prendre le temps de l&#x27;expliquer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="KQeCu1QOE7U" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KQeCu1QOE7U_Prendre_une_décision_et_prendre_le_temps_de_l_expliquer.mp3" data-title="Prendre une décision et prendre le temps de l&#x27;expliquer" data-thumb="https://i.ytimg.com/vi/KQeCu1QOE7U/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/prendre-une-decision-et-prendre-le-temps-de-l-expliquer-2022-01-30.html" data-title="Prendre une décision et prendre le temps de l&#x27;expliquer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -627,7 +655,7 @@
         <a class="ep-title" href="torah_fr/juger-positivement-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Juger positivement</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/noJWNDYNHd0_Juger_positivement.mp3" preload="none" data-ep-id="noJWNDYNHd0"></audio><button class="share-btn" data-epfile="torah_fr/juger-positivement-2022-01-30.html" data-title="Juger positivement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="noJWNDYNHd0" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/noJWNDYNHd0_Juger_positivement.mp3" data-title="Juger positivement" data-thumb="https://i.ytimg.com/vi/noJWNDYNHd0/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/juger-positivement-2022-01-30.html" data-title="Juger positivement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -636,7 +664,7 @@
         <a class="ep-title" href="torah_fr/etre-bien-dans-ses-baskets-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Etre bien dans ses baskets</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OZtzec4uHpk_Etre_bien_dans_ses_baskets.mp3" preload="none" data-ep-id="OZtzec4uHpk"></audio><button class="share-btn" data-epfile="torah_fr/etre-bien-dans-ses-baskets-2022-01-30.html" data-title="Etre bien dans ses baskets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="OZtzec4uHpk" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OZtzec4uHpk_Etre_bien_dans_ses_baskets.mp3" data-title="Etre bien dans ses baskets" data-thumb="https://i.ytimg.com/vi/OZtzec4uHpk/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/etre-bien-dans-ses-baskets-2022-01-30.html" data-title="Etre bien dans ses baskets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -645,7 +673,7 @@
         <a class="ep-title" href="torah_fr/prendre-la-sensibilite-des-autres-en-compte-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Prendre la sensibilité des autres en compte</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/lDDNtFx5UGw_Prendre_la_sensibilité_des_autres_en_compte.mp3" preload="none" data-ep-id="lDDNtFx5UGw"></audio><button class="share-btn" data-epfile="torah_fr/prendre-la-sensibilite-des-autres-en-compte-2022-01-30.html" data-title="Prendre la sensibilité des autres en compte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="lDDNtFx5UGw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/lDDNtFx5UGw_Prendre_la_sensibilité_des_autres_en_compte.mp3" data-title="Prendre la sensibilité des autres en compte" data-thumb="https://i.ytimg.com/vi/lDDNtFx5UGw/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/prendre-la-sensibilite-des-autres-en-compte-2022-01-30.html" data-title="Prendre la sensibilité des autres en compte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -654,7 +682,7 @@
         <a class="ep-title" href="torah_fr/deux-fois-une-demi-heure-c-est-une-heure-trente-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Deux fois une demi-heure, c&#x27;est une heure trente</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/mY8Qv1FGqfs_Deux_fois_une_demi-heure__c_est_une_heure_trente.mp3" preload="none" data-ep-id="mY8Qv1FGqfs"></audio><button class="share-btn" data-epfile="torah_fr/deux-fois-une-demi-heure-c-est-une-heure-trente-2022-01-30.html" data-title="Deux fois une demi-heure, c&#x27;est une heure trente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="mY8Qv1FGqfs" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/mY8Qv1FGqfs_Deux_fois_une_demi-heure__c_est_une_heure_trente.mp3" data-title="Deux fois une demi-heure, c&#x27;est une heure trente" data-thumb="https://i.ytimg.com/vi/mY8Qv1FGqfs/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/deux-fois-une-demi-heure-c-est-une-heure-trente-2022-01-30.html" data-title="Deux fois une demi-heure, c&#x27;est une heure trente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -663,7 +691,7 @@
         <a class="ep-title" href="torah_fr/ne-pas-se-mentir-a-soi-meme-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Ne pas se mentir à soi-même</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/TLRVs9pPybk_Ne_pas_se_mentir_à_soi-même.mp3" preload="none" data-ep-id="TLRVs9pPybk"></audio><button class="share-btn" data-epfile="torah_fr/ne-pas-se-mentir-a-soi-meme-2022-01-30.html" data-title="Ne pas se mentir à soi-même"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="TLRVs9pPybk" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/TLRVs9pPybk_Ne_pas_se_mentir_à_soi-même.mp3" data-title="Ne pas se mentir à soi-même" data-thumb="https://i.ytimg.com/vi/TLRVs9pPybk/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/ne-pas-se-mentir-a-soi-meme-2022-01-30.html" data-title="Ne pas se mentir à soi-même"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -672,7 +700,7 @@
         <a class="ep-title" href="torah_fr/une-chose-a-la-fois-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Une chose à la fois</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OvraLXm9tDg_Une_chose_à_la_fois.mp3" preload="none" data-ep-id="OvraLXm9tDg"></audio><button class="share-btn" data-epfile="torah_fr/une-chose-a-la-fois-2022-01-30.html" data-title="Une chose à la fois"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="OvraLXm9tDg" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OvraLXm9tDg_Une_chose_à_la_fois.mp3" data-title="Une chose à la fois" data-thumb="https://i.ytimg.com/vi/OvraLXm9tDg/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/une-chose-a-la-fois-2022-01-30.html" data-title="Une chose à la fois"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -681,7 +709,7 @@
         <a class="ep-title" href="torah_fr/aller-de-l-avant-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Aller de l&#x27;avant</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PbbACU6k1_Q_Aller_de_l_avant.mp3" preload="none" data-ep-id="PbbACU6k1_Q"></audio><button class="share-btn" data-epfile="torah_fr/aller-de-l-avant-2022-01-30.html" data-title="Aller de l&#x27;avant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="PbbACU6k1_Q" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PbbACU6k1_Q_Aller_de_l_avant.mp3" data-title="Aller de l&#x27;avant" data-thumb="https://i.ytimg.com/vi/PbbACU6k1_Q/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/aller-de-l-avant-2022-01-30.html" data-title="Aller de l&#x27;avant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -690,7 +718,7 @@
         <a class="ep-title" href="torah_fr/toujours-regler-la-cause-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Toujours régler la cause</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uIqCTdS3784_Toujours_régler_la_cause.mp3" preload="none" data-ep-id="uIqCTdS3784"></audio><button class="share-btn" data-epfile="torah_fr/toujours-regler-la-cause-2022-01-30.html" data-title="Toujours régler la cause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="uIqCTdS3784" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uIqCTdS3784_Toujours_régler_la_cause.mp3" data-title="Toujours régler la cause" data-thumb="https://i.ytimg.com/vi/uIqCTdS3784/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/toujours-regler-la-cause-2022-01-30.html" data-title="Toujours régler la cause"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -699,7 +727,7 @@
         <a class="ep-title" href="torah_fr/il-n-y-a-pas-de-mitzva-d-etre-un-pigeon-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Il n&#x27;y a pas de Mitzva d&#x27;être un pigeon</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/6lLhNe8qkf4_Il_n_y_a_pas_de_Mitzva_d_être_un_pigeon.mp3" preload="none" data-ep-id="6lLhNe8qkf4"></audio><button class="share-btn" data-epfile="torah_fr/il-n-y-a-pas-de-mitzva-d-etre-un-pigeon-2022-01-30.html" data-title="Il n&#x27;y a pas de Mitzva d&#x27;être un pigeon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="6lLhNe8qkf4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/6lLhNe8qkf4_Il_n_y_a_pas_de_Mitzva_d_être_un_pigeon.mp3" data-title="Il n&#x27;y a pas de Mitzva d&#x27;être un pigeon" data-thumb="https://i.ytimg.com/vi/6lLhNe8qkf4/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/il-n-y-a-pas-de-mitzva-d-etre-un-pigeon-2022-01-30.html" data-title="Il n&#x27;y a pas de Mitzva d&#x27;être un pigeon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -708,7 +736,7 @@
         <a class="ep-title" href="torah_fr/ne-pas-etaler-sa-vie-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Ne pas étaler sa vie</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/AWvtXHoL96Y_Ne_pas_étaler_sa_vie.mp3" preload="none" data-ep-id="AWvtXHoL96Y"></audio><button class="share-btn" data-epfile="torah_fr/ne-pas-etaler-sa-vie-2022-01-30.html" data-title="Ne pas étaler sa vie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="AWvtXHoL96Y" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/AWvtXHoL96Y_Ne_pas_étaler_sa_vie.mp3" data-title="Ne pas étaler sa vie" data-thumb="https://i.ytimg.com/vi/AWvtXHoL96Y/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/ne-pas-etaler-sa-vie-2022-01-30.html" data-title="Ne pas étaler sa vie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -717,7 +745,7 @@
         <a class="ep-title" href="torah_fr/tenir-face-aux-echecs-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Tenir face aux échecs</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JpKRhkbk26k_Tenir_face_aux_échecs.mp3" preload="none" data-ep-id="JpKRhkbk26k"></audio><button class="share-btn" data-epfile="torah_fr/tenir-face-aux-echecs-2022-01-30.html" data-title="Tenir face aux échecs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="JpKRhkbk26k" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JpKRhkbk26k_Tenir_face_aux_échecs.mp3" data-title="Tenir face aux échecs" data-thumb="https://i.ytimg.com/vi/JpKRhkbk26k/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/tenir-face-aux-echecs-2022-01-30.html" data-title="Tenir face aux échecs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -726,7 +754,7 @@
         <a class="ep-title" href="torah_fr/savoir-faire-attention-aux-details-mais-aussi-avoir-du-recul-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Savoir faire attention aux détails mais aussi avoir du recul</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/huf9uGL2-1s_Savoir_faire_attention_aux_détails_mais_aussi_avoir_du_recul.mp3" preload="none" data-ep-id="huf9uGL2-1s"></audio><button class="share-btn" data-epfile="torah_fr/savoir-faire-attention-aux-details-mais-aussi-avoir-du-recul-2022-01-30.html" data-title="Savoir faire attention aux détails mais aussi avoir du recul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="huf9uGL2-1s" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/huf9uGL2-1s_Savoir_faire_attention_aux_détails_mais_aussi_avoir_du_recul.mp3" data-title="Savoir faire attention aux détails mais aussi avoir du recul" data-thumb="https://i.ytimg.com/vi/huf9uGL2-1s/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/savoir-faire-attention-aux-details-mais-aussi-avoir-du-recul-2022-01-30.html" data-title="Savoir faire attention aux détails mais aussi avoir du recul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -735,7 +763,7 @@
         <a class="ep-title" href="torah_fr/la-ou-tu-regardes-tu-es-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">La où tu regardes, tu es</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/qLZaZD8ZneI_La_où_tu_regardes__tu_es.mp3" preload="none" data-ep-id="qLZaZD8ZneI"></audio><button class="share-btn" data-epfile="torah_fr/la-ou-tu-regardes-tu-es-2022-01-30.html" data-title="La où tu regardes, tu es"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="qLZaZD8ZneI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/qLZaZD8ZneI_La_où_tu_regardes__tu_es.mp3" data-title="La où tu regardes, tu es" data-thumb="https://i.ytimg.com/vi/qLZaZD8ZneI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/la-ou-tu-regardes-tu-es-2022-01-30.html" data-title="La où tu regardes, tu es"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -744,7 +772,7 @@
         <a class="ep-title" href="torah_fr/montrer-l-exemple-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Montrer l&#x27;exemple</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/k56GW_0BHFg_Montrer_l_exemple.mp3" preload="none" data-ep-id="k56GW_0BHFg"></audio><button class="share-btn" data-epfile="torah_fr/montrer-l-exemple-2022-01-30.html" data-title="Montrer l&#x27;exemple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="k56GW_0BHFg" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/k56GW_0BHFg_Montrer_l_exemple.mp3" data-title="Montrer l&#x27;exemple" data-thumb="https://i.ytimg.com/vi/k56GW_0BHFg/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/montrer-l-exemple-2022-01-30.html" data-title="Montrer l&#x27;exemple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -753,7 +781,7 @@
         <a class="ep-title" href="torah_fr/honores-le-mais-proteges-toi-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Honores le, mais protèges toi</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LEfNHrkBZa4_Honores_le__mais_protèges_toi.mp3" preload="none" data-ep-id="LEfNHrkBZa4"></audio><button class="share-btn" data-epfile="torah_fr/honores-le-mais-proteges-toi-2022-01-30.html" data-title="Honores le, mais protèges toi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="LEfNHrkBZa4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LEfNHrkBZa4_Honores_le__mais_protèges_toi.mp3" data-title="Honores le, mais protèges toi" data-thumb="https://i.ytimg.com/vi/LEfNHrkBZa4/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/honores-le-mais-proteges-toi-2022-01-30.html" data-title="Honores le, mais protèges toi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -762,7 +790,7 @@
         <a class="ep-title" href="torah_fr/les-conseilleurs-ne-sont-pas-les-payeurs-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Les conseilleurs ne sont pas les payeurs</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/xj_fG786eqI_Les_conseilleurs_ne_sont_pas_les_payeurs.mp3" preload="none" data-ep-id="xj_fG786eqI"></audio><button class="share-btn" data-epfile="torah_fr/les-conseilleurs-ne-sont-pas-les-payeurs-2022-01-30.html" data-title="Les conseilleurs ne sont pas les payeurs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="xj_fG786eqI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/xj_fG786eqI_Les_conseilleurs_ne_sont_pas_les_payeurs.mp3" data-title="Les conseilleurs ne sont pas les payeurs" data-thumb="https://i.ytimg.com/vi/xj_fG786eqI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/les-conseilleurs-ne-sont-pas-les-payeurs-2022-01-30.html" data-title="Les conseilleurs ne sont pas les payeurs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -771,7 +799,7 @@
         <a class="ep-title" href="torah_fr/peut-on-cacher-certaines-choses-pour-ne-pas-perdre-ses-clients-reponse-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Peut-on cacher certaines choses pour ne pas perdre ses clients? Réponse</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VpBANWVeCto_Peut-on_cacher_certaines_choses_pour_ne_pas_perdre_ses_clients__Réponse.mp3" preload="none" data-ep-id="VpBANWVeCto"></audio><button class="share-btn" data-epfile="torah_fr/peut-on-cacher-certaines-choses-pour-ne-pas-perdre-ses-clients-reponse-2022-01-30.html" data-title="Peut-on cacher certaines choses pour ne pas perdre ses clients? Réponse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="VpBANWVeCto" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VpBANWVeCto_Peut-on_cacher_certaines_choses_pour_ne_pas_perdre_ses_clients__Réponse.mp3" data-title="Peut-on cacher certaines choses pour ne pas perdre ses clients? Réponse" data-thumb="https://i.ytimg.com/vi/VpBANWVeCto/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/peut-on-cacher-certaines-choses-pour-ne-pas-perdre-ses-clients-reponse-2022-01-30.html" data-title="Peut-on cacher certaines choses pour ne pas perdre ses clients? Réponse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -780,7 +808,7 @@
         <a class="ep-title" href="torah_fr/est-il-permis-de-casser-les-prix-reponse-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Est-il permis de casser les prix? Réponse</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/k0iiYW5MhBE_Est-il_permis_de_casser_les_prix__Réponse.mp3" preload="none" data-ep-id="k0iiYW5MhBE"></audio><button class="share-btn" data-epfile="torah_fr/est-il-permis-de-casser-les-prix-reponse-2022-01-30.html" data-title="Est-il permis de casser les prix? Réponse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="k0iiYW5MhBE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/k0iiYW5MhBE_Est-il_permis_de_casser_les_prix__Réponse.mp3" data-title="Est-il permis de casser les prix? Réponse" data-thumb="https://i.ytimg.com/vi/k0iiYW5MhBE/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/est-il-permis-de-casser-les-prix-reponse-2022-01-30.html" data-title="Est-il permis de casser les prix? Réponse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -789,7 +817,7 @@
         <a class="ep-title" href="torah_fr/peut-on-vendre-tout-type-de-produit-reponse-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Peut-on vendre tout type de produit? Réponse</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/BKKNhyBbnHo_Peut-on_vendre_tout_type_de_produit__Réponse.mp3" preload="none" data-ep-id="BKKNhyBbnHo"></audio><button class="share-btn" data-epfile="torah_fr/peut-on-vendre-tout-type-de-produit-reponse-2022-01-30.html" data-title="Peut-on vendre tout type de produit? Réponse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="BKKNhyBbnHo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/BKKNhyBbnHo_Peut-on_vendre_tout_type_de_produit__Réponse.mp3" data-title="Peut-on vendre tout type de produit? Réponse" data-thumb="https://i.ytimg.com/vi/BKKNhyBbnHo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/peut-on-vendre-tout-type-de-produit-reponse-2022-01-30.html" data-title="Peut-on vendre tout type de produit? Réponse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -798,7 +826,7 @@
         <a class="ep-title" href="torah_fr/peut-on-denoncer-quelqu-un-qui-ne-respecte-pas-un-contrat-stipulant-un-2022-01-30.html" style="color:inherit;text-decoration:none;display:block">Peut-on dénoncer quelqu&#x27;un qui ne respecte pas un contrat stipulant un prix minimum? Réponse</a>
         <time class="ep-date" datetime="2022-01-30">30.01.2022</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/t7EEkkuX8EA_Peut-on_dénoncer_quelqu_un_qui_ne_respecte_pas_un_contrat_stipulant_un_prix_mini.mp3" preload="none" data-ep-id="t7EEkkuX8EA"></audio><button class="share-btn" data-epfile="torah_fr/peut-on-denoncer-quelqu-un-qui-ne-respecte-pas-un-contrat-stipulant-un-2022-01-30.html" data-title="Peut-on dénoncer quelqu&#x27;un qui ne respecte pas un contrat stipulant un prix minimum? Réponse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="t7EEkkuX8EA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/t7EEkkuX8EA_Peut-on_dénoncer_quelqu_un_qui_ne_respecte_pas_un_contrat_stipulant_un_prix_mini.mp3" data-title="Peut-on dénoncer quelqu&#x27;un qui ne respecte pas un contrat stipulant un prix minimum? Réponse" data-thumb="https://i.ytimg.com/vi/t7EEkkuX8EA/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/peut-on-denoncer-quelqu-un-qui-ne-respecte-pas-un-contrat-stipulant-un-2022-01-30.html" data-title="Peut-on dénoncer quelqu&#x27;un qui ne respecte pas un contrat stipulant un prix minimum? Réponse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -807,7 +835,7 @@
         <a class="ep-title" href="torah_fr/conference-de-jeremie-berrebi-redefinir-mon-rapport-a-la-technologie-2021-10-05.html" style="color:inherit;text-decoration:none;display:block">Conférence de Jérémie Berrebi - redéfinir mon rapport à la technologie</a>
         <time class="ep-date" datetime="2021-10-05">5.10.2021</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Vs-3dnOuuho_Conférence_de_Jérémie_Berrebi_-_redéfinir_mon_rapport_à_la_technologie.mp3" preload="none" data-ep-id="Vs-3dnOuuho"></audio><button class="share-btn" data-epfile="torah_fr/conference-de-jeremie-berrebi-redefinir-mon-rapport-a-la-technologie-2021-10-05.html" data-title="Conférence de Jérémie Berrebi - redéfinir mon rapport à la technologie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="Vs-3dnOuuho" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Vs-3dnOuuho_Conférence_de_Jérémie_Berrebi_-_redéfinir_mon_rapport_à_la_technologie.mp3" data-title="Conférence de Jérémie Berrebi - redéfinir mon rapport à la technologie" data-thumb="https://i.ytimg.com/vi/Vs-3dnOuuho/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/conference-de-jeremie-berrebi-redefinir-mon-rapport-a-la-technologie-2021-10-05.html" data-title="Conférence de Jérémie Berrebi - redéfinir mon rapport à la technologie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -816,7 +844,7 @@
         <a class="ep-title" href="torah_fr/les-lois-de-la-concurrence-tous-les-coups-sont-ils-permis-partie-ii-2021-06-02.html" style="color:inherit;text-decoration:none;display:block">Les lois de la concurrence: tous les coups sont-ils permis ? - partie II</a>
         <time class="ep-date" datetime="2021-06-02">2.06.2021</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/s5TQcnyaINg_Les_lois_de_la_concurrence__tous_les_coups_sont-ils_permis___-_partie_II.mp3" preload="none" data-ep-id="s5TQcnyaINg"></audio><button class="share-btn" data-epfile="torah_fr/les-lois-de-la-concurrence-tous-les-coups-sont-ils-permis-partie-ii-2021-06-02.html" data-title="Les lois de la concurrence: tous les coups sont-ils permis ? - partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="s5TQcnyaINg" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/s5TQcnyaINg_Les_lois_de_la_concurrence__tous_les_coups_sont-ils_permis___-_partie_II.mp3" data-title="Les lois de la concurrence: tous les coups sont-ils permis ? - partie II" data-thumb="https://i.ytimg.com/vi/s5TQcnyaINg/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/les-lois-de-la-concurrence-tous-les-coups-sont-ils-permis-partie-ii-2021-06-02.html" data-title="Les lois de la concurrence: tous les coups sont-ils permis ? - partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -825,7 +853,7 @@
         <a class="ep-title" href="torah_fr/torah-fr-c-est-quoi-2021-03-04.html" style="color:inherit;text-decoration:none;display:block">Torah.fr - C&#x27;est quoi?</a>
         <time class="ep-date" datetime="2021-03-04">4.03.2021</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/EUDm_wXC7VA_Torah_fr_-_C_est_quoi.mp3" preload="none" data-ep-id="EUDm_wXC7VA"></audio><button class="share-btn" data-epfile="torah_fr/torah-fr-c-est-quoi-2021-03-04.html" data-title="Torah.fr - C&#x27;est quoi?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="EUDm_wXC7VA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/EUDm_wXC7VA_Torah_fr_-_C_est_quoi.mp3" data-title="Torah.fr - C&#x27;est quoi?" data-thumb="https://i.ytimg.com/vi/EUDm_wXC7VA/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/torah-fr-c-est-quoi-2021-03-04.html" data-title="Torah.fr - C&#x27;est quoi?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -834,7 +862,7 @@
         <a class="ep-title" href="torah_fr/changements-des-conditions-de-travail-partie-ii-2021-01-18.html" style="color:inherit;text-decoration:none;display:block">Changements des conditions de travail: Partie II</a>
         <time class="ep-date" datetime="2021-01-18">18.01.2021</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G2VbF3rmA-Y_Changements_des_conditions_de_travail__Partie_II.mp3" preload="none" data-ep-id="G2VbF3rmA-Y"></audio><button class="share-btn" data-epfile="torah_fr/changements-des-conditions-de-travail-partie-ii-2021-01-18.html" data-title="Changements des conditions de travail: Partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="G2VbF3rmA-Y" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G2VbF3rmA-Y_Changements_des_conditions_de_travail__Partie_II.mp3" data-title="Changements des conditions de travail: Partie II" data-thumb="https://i.ytimg.com/vi/G2VbF3rmA-Y/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/changements-des-conditions-de-travail-partie-ii-2021-01-18.html" data-title="Changements des conditions de travail: Partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -844,7 +872,7 @@
         <time class="ep-date" datetime="2020-12-21">21.12.2020</time>
         <p class="ep-desc">Peut-on demander à un programmeur de passer des coups de téléphones pour aider à la vente? Peut-on muter un employer avec ou sans compensation? 
 Partie I -Etude des textes pertinents du Talmud.</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ZweeyKy-RxQ_Changement_de_conditions_de_travail_-_Partie_I.mp3" preload="none" data-ep-id="ZweeyKy-RxQ"></audio><button class="share-btn" data-epfile="torah_fr/changement-de-conditions-de-travail-partie-i-2020-12-21.html" data-title="Changement de conditions de travail - Partie I"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="ZweeyKy-RxQ" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ZweeyKy-RxQ_Changement_de_conditions_de_travail_-_Partie_I.mp3" data-title="Changement de conditions de travail - Partie I" data-thumb="https://i.ytimg.com/vi/ZweeyKy-RxQ/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/changement-de-conditions-de-travail-partie-i-2020-12-21.html" data-title="Changement de conditions de travail - Partie I"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -855,7 +883,7 @@ Partie I -Etude des textes pertinents du Talmud.</p>
         <p class="ep-desc">J&#x27;ai un rendez-vous pour signer l&#x27;achat d&#x27;un appartement - le matin même je reçois une annonce pour un appartement plus grand et moins cher: puis-je annuler la transaction?
 
 Annuler un engagement oral</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/qk4XM2Szh-0_Jusqu_à_quand_peut-on_annuler_un_engagement_financier_-_partie_II.mp3" preload="none" data-ep-id="qk4XM2Szh-0"></audio><button class="share-btn" data-epfile="torah_fr/jusqu-a-quand-peut-on-annuler-un-engagement-financier-partie-ii-2020-11-17.html" data-title="Jusqu&#x27;à quand peut-on annuler un engagement financier - partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="qk4XM2Szh-0" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/qk4XM2Szh-0_Jusqu_à_quand_peut-on_annuler_un_engagement_financier_-_partie_II.mp3" data-title="Jusqu&#x27;à quand peut-on annuler un engagement financier - partie II" data-thumb="https://i.ytimg.com/vi/qk4XM2Szh-0/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/jusqu-a-quand-peut-on-annuler-un-engagement-financier-partie-ii-2020-11-17.html" data-title="Jusqu&#x27;à quand peut-on annuler un engagement financier - partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -864,7 +892,7 @@ Annuler un engagement oral</p>
         <a class="ep-title" href="torah_fr/jusqu-a-quand-peut-on-se-retracter-d-un-engagement-partie-i-2020-11-03.html" style="color:inherit;text-decoration:none;display:block">Jusqu&#x27;a quand peut-on se retracter d&#x27;un engagement - Partie I</a>
         <time class="ep-date" datetime="2020-11-03">3.11.2020</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/xO4PJs9SymA_Jusqu_a_quand_peut-on_se_retracter_d_un_engagement_-_Partie_I.mp3" preload="none" data-ep-id="xO4PJs9SymA"></audio><button class="share-btn" data-epfile="torah_fr/jusqu-a-quand-peut-on-se-retracter-d-un-engagement-partie-i-2020-11-03.html" data-title="Jusqu&#x27;a quand peut-on se retracter d&#x27;un engagement - Partie I"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="xO4PJs9SymA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/xO4PJs9SymA_Jusqu_a_quand_peut-on_se_retracter_d_un_engagement_-_Partie_I.mp3" data-title="Jusqu&#x27;a quand peut-on se retracter d&#x27;un engagement - Partie I" data-thumb="https://i.ytimg.com/vi/xO4PJs9SymA/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/jusqu-a-quand-peut-on-se-retracter-d-un-engagement-partie-i-2020-11-03.html" data-title="Jusqu&#x27;a quand peut-on se retracter d&#x27;un engagement - Partie I"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -875,7 +903,7 @@ Annuler un engagement oral</p>
         <p class="ep-desc">J&#x27;ai un rendez-vous pour signer l&#x27;achat d&#x27;un appartement - le matin même je reçois une annonce pour un appartement plus grand et moins cher: puis-je annuler la transaction?
 
 Annuler un engagement oral</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GFzPNbWdZO8_Les_lois_du_business_-_jusqu_à_quand_peut_on_se_rétracter_-_Partie_II.mp3" preload="none" data-ep-id="GFzPNbWdZO8"></audio><button class="share-btn" data-epfile="torah_fr/les-lois-du-business-jusqu-a-quand-peut-on-se-retracter-partie-ii-2020-10-26.html" data-title="Les lois du business - jusqu&#x27;à quand peut on se rétracter - Partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="GFzPNbWdZO8" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GFzPNbWdZO8_Les_lois_du_business_-_jusqu_à_quand_peut_on_se_rétracter_-_Partie_II.mp3" data-title="Les lois du business - jusqu&#x27;à quand peut on se rétracter - Partie II" data-thumb="https://i.ytimg.com/vi/GFzPNbWdZO8/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/les-lois-du-business-jusqu-a-quand-peut-on-se-retracter-partie-ii-2020-10-26.html" data-title="Les lois du business - jusqu&#x27;à quand peut on se rétracter - Partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -886,7 +914,7 @@ Annuler un engagement oral</p>
         <p class="ep-desc">J&#x27;ai un rendez-vous pour signer l&#x27;achat d&#x27;un appartement - le matin même je reçois une annonce pour un appartement plus grand et moins cher: puis-je annuler la transaction?
 
 Annuler un engagement oral</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/-RuTw-d6fG0_Les_lois_du_business-_jusqu_à_quand_peut_on_se_rétracter_partie_II.mp3" preload="none" data-ep-id="-RuTw-d6fG0"></audio><button class="share-btn" data-epfile="torah_fr/les-lois-du-business-jusqu-a-quand-peut-on-se-retracter-partie-ii-2020-10-26.html" data-title="Les lois du business- jusqu&#x27;à quand peut on se rétracter partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="-RuTw-d6fG0" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/-RuTw-d6fG0_Les_lois_du_business-_jusqu_à_quand_peut_on_se_rétracter_partie_II.mp3" data-title="Les lois du business- jusqu&#x27;à quand peut on se rétracter partie II" data-thumb="https://i.ytimg.com/vi/-RuTw-d6fG0/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/les-lois-du-business-jusqu-a-quand-peut-on-se-retracter-partie-ii-2020-10-26.html" data-title="Les lois du business- jusqu&#x27;à quand peut on se rétracter partie II"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -895,7 +923,7 @@ Annuler un engagement oral</p>
         <a class="ep-title" href="torah_fr/bereshit-par-le-or-hakhayim-2020-10-16.html" style="color:inherit;text-decoration:none;display:block">Bereshit par le Or Hakhayim</a>
         <time class="ep-date" datetime="2020-10-16">16.10.2020</time>
         
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LkuF4auQZ2Q_Bereshit_par_le_Or_Hakhayim.mp3" preload="none" data-ep-id="LkuF4auQZ2Q"></audio><button class="share-btn" data-epfile="torah_fr/bereshit-par-le-or-hakhayim-2020-10-16.html" data-title="Bereshit par le Or Hakhayim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="LkuF4auQZ2Q" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LkuF4auQZ2Q_Bereshit_par_le_Or_Hakhayim.mp3" data-title="Bereshit par le Or Hakhayim" data-thumb="https://i.ytimg.com/vi/LkuF4auQZ2Q/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/bereshit-par-le-or-hakhayim-2020-10-16.html" data-title="Bereshit par le Or Hakhayim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
     <article class="episode">
@@ -904,12 +932,27 @@ Annuler un engagement oral</p>
         <a class="ep-title" href="torah_fr/explications-du-texte-des-confessions-de-yom-kipour-2020-09-24.html" style="color:inherit;text-decoration:none;display:block">Explications du texte des confessions de Yom Kipour</a>
         <time class="ep-date" datetime="2020-09-24">24.09.2020</time>
         <p class="ep-desc">La Mitzva de Yom Kipour est de confesser nos fautes - pour se faire, nous lisons à plusieurs reprises un texte prévu à cet effet - comprenons le pour vivre Kipour différemment</p>
-        <div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GgUS6Sa1I8w_Explications_du_texte_des_confessions_de_Yom_Kipour.mp3" preload="none" data-ep-id="GgUS6Sa1I8w"></audio><button class="share-btn" data-epfile="torah_fr/explications-du-texte-des-confessions-de-yom-kipour-2020-09-24.html" data-title="Explications du texte des confessions de Yom Kipour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="GgUS6Sa1I8w" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GgUS6Sa1I8w_Explications_du_texte_des_confessions_de_Yom_Kipour.mp3" data-title="Explications du texte des confessions de Yom Kipour" data-thumb="https://i.ytimg.com/vi/GgUS6Sa1I8w/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/explications-du-texte-des-confessions-de-yom-kipour-2020-09-24.html" data-title="Explications du texte des confessions de Yom Kipour"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
     </article>
   </div>
   <div class="toast" id="toast"></div>
 </main>
+<div id="player" class="hidden">
+  <img id="player-art" src="" alt="">
+  <div id="player-info">
+    <div id="player-title"></div>
+    <div id="player-channel"></div>
+  </div>
+  <audio id="player-audio" controls></audio>
+  <div class="player-speed">
+    <button class="speed-btn active" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="1.25">1.25×</button>
+    <button class="speed-btn" data-speed="1.5">1.5×</button>
+    <button class="speed-btn" data-speed="2">2×</button>
+  </div>
+  <button id="player-close" title="Fermer">✕</button>
+</div>
 <script>
   const I18N = {
     fr: {
@@ -917,12 +960,14 @@ Annuler un engagement oral</p>
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${n} épisode${n !== 1 ? 's' : ''}`,
+      listen:'Écouter', playing:'En cours…',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${n} פרקים`,
+      listen:'האזן', playing:'מתנגן…',
     },
   };
   let lang = localStorage.getItem('lang') || 'he';
@@ -934,9 +979,11 @@ Annuler un engagement oral</p>
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(49);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(51);
     const statsEl = document.getElementById('header-stats');
-    if (statsEl) statsEl.textContent = 'torah.fr' + ' · ' + I18N[lang].ep_count(49);
+    if (statsEl) statsEl.textContent = lang === 'he'
+      ? `14 ערוצים · 4445 פרקים · ~3334ש`
+      : `14 rabbins · 4445 cours · ~3334h de Torah`;
   }
   // Show more / less for channel description
   (function() {
@@ -960,30 +1007,41 @@ Annuler un engagement oral</p>
     location.reload();
   }
   applyLang();
-  // GA4 event tracking
-  if (typeof gtag !== 'undefined') {
-    document.querySelectorAll('audio.ep-audio').forEach(function(audio, idx) {
-      var title = (audio.closest('.episode') || document).querySelector('.ep-title');
-      title = title ? title.textContent : '';
-      var played = false, completed = false;
-      audio.addEventListener('play', function() {
-        if (!played) { played = true; gtag('event', 'audio_play', {ep_title: title, rav: 'torah.fr', ep_index: idx}); }
-      });
-      audio.addEventListener('timeupdate', function() {
-        if (!completed && audio.duration > 0 && audio.currentTime / audio.duration >= 0.9) {
-          completed = true;
-          gtag('event', 'audio_complete', {ep_title: title, rav: 'torah.fr', ep_index: idx});
-        }
-      });
-    });
-    document.querySelectorAll('.platform-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var cls = Array.from(btn.classList).find(function(c) { return c.startsWith('btn-') && c !== 'btn-rss'; });
-        gtag('event', 'click_platform', {platform: cls ? cls.replace('btn-', '') : 'rss', rav: 'torah.fr'});
-      });
-    });
+  // Floating player
+  const playerEl    = document.getElementById('player');
+  const playerAudio = document.getElementById('player-audio');
+  const playerTitle = document.getElementById('player-title');
+  const playerCh    = document.getElementById('player-channel');
+  const playerArt   = document.getElementById('player-art');
+  let currentEpId   = null;
+  function loadInPlayer(btn) {
+    const epId  = btn.dataset.epId;
+    const audio = btn.dataset.audio;
+    const title = btn.dataset.title;
+    const thumb = btn.dataset.thumb || '';
+    document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+    if (currentEpId === epId && !playerAudio.paused) {
+      playerAudio.pause();
+      currentEpId = null;
+      return;
+    }
+    currentEpId = epId;
+    btn.classList.add('playing');
+    playerTitle.textContent = title;
+    playerCh.textContent    = 'torah.fr';
+    playerArt.src           = thumb;
+    playerEl.classList.remove('hidden');
+    if (playerAudio.src !== audio) {
+      playerAudio.src = audio;
+      const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
+      if (saved > 5) playerAudio.addEventListener('loadedmetadata', () => { playerAudio.currentTime = saved; }, {once:true});
+    }
+    playerAudio.playbackRate = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+    playerAudio.play();
   }
   document.addEventListener('click', e => {
+    const playBtn = e.target.closest('.play-btn[data-ep-id]');
+    if (playBtn) { loadInPlayer(playBtn); return; }
     if (e.target.closest('.nav-submenu')) return;
     const caret = e.target.closest('.nav-dd-caret');
     document.querySelectorAll('.nav-dropdown.open').forEach(el => {
@@ -991,31 +1049,60 @@ Annuler un engagement oral</p>
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  // Speed control
+  // Player speed
   let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
-  document.querySelectorAll('.speed-btn').forEach(b => {
+  document.querySelectorAll('#player .speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
-  });
-  document.querySelectorAll('.ep-audio').forEach(a => {
-    a.addEventListener('play', () => { a.playbackRate = currentSpeed; });
-  });
-  // Resume playback
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
+    b.addEventListener('click', () => {
+      currentSpeed = parseFloat(b.dataset.speed);
+      localStorage.setItem('playbackSpeed', currentSpeed);
+      if (playerAudio) playerAudio.playbackRate = currentSpeed;
+      document.querySelectorAll('#player .speed-btn').forEach(s => s.classList.toggle('active', parseFloat(s.dataset.speed) === currentSpeed));
     });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
   });
+  // Resume save & ended
+  if (playerAudio) {
+    playerAudio.addEventListener('timeupdate', () => {
+      if (currentEpId && playerAudio.currentTime > 5)
+        localStorage.setItem('resume_' + currentEpId, Math.floor(playerAudio.currentTime));
+    });
+    playerAudio.addEventListener('ended', () => {
+      if (currentEpId) localStorage.removeItem('resume_' + currentEpId);
+      document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+      currentEpId = null;
+    });
+  }
+  // Player close
+  document.getElementById('player-close').addEventListener('click', () => {
+    playerAudio.pause();
+    playerEl.classList.add('hidden');
+    document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+    currentEpId = null;
+  });
+  // GA4
+  if (typeof gtag !== 'undefined') {
+    const ga4Played = {}, ga4Completed = {};
+    if (playerAudio) {
+      playerAudio.addEventListener('play', () => {
+        if (currentEpId && !ga4Played[currentEpId]) {
+          ga4Played[currentEpId] = true;
+          gtag('event', 'audio_play', {ep_title: playerTitle.textContent, rav: 'torah.fr'});
+        }
+      });
+      playerAudio.addEventListener('timeupdate', () => {
+        if (currentEpId && !ga4Completed[currentEpId] && playerAudio.duration > 0 && playerAudio.currentTime / playerAudio.duration >= 0.9) {
+          ga4Completed[currentEpId] = true;
+          gtag('event', 'audio_complete', {ep_title: playerTitle.textContent, rav: 'torah.fr'});
+        }
+      });
+    }
+    document.querySelectorAll('.platform-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var cls = Array.from(btn.classList).find(function(c) { return c.startsWith('btn-') && c !== 'btn-rss'; });
+        gtag('event', 'click_platform', {platform: cls ? cls.replace('btn-', '') : 'rss', rav: 'torah.fr'});
+      });
+    });
+  }
   // Toast
   function showToast(msg) {
     const t = document.getElementById('toast');
