@@ -39,6 +39,7 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <link rel="preconnect" href="https://www.sefaria.org" crossorigin>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
   <style>
@@ -115,6 +116,22 @@
     .header-stats { font-size: 0.88rem; color: #9ab; min-height: 1.3em; margin-bottom: 12px; }
     .daf-intro { background:#fff; border-left:4px solid #e87722; border-radius:0 8px 8px 0; padding:14px 18px; margin-bottom:20px; font-size:0.88rem; color:#444; line-height:1.7; }
     .daf-intro p + p { margin-top:8px; }
+    #daf-banner { background:#1a1a2e; color:#fff; border-radius:10px; padding:18px 22px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    #daf-banner.loading { opacity:.4; pointer-events:none; }
+    .daf-banner-info .banner-label { text-transform:uppercase; font-size:.68rem; letter-spacing:.08em; color:#9ab; margin-bottom:5px; }
+    .daf-banner-info .banner-name { font-size:1.35rem; font-weight:700; line-height:1.2; }
+    .daf-banner-info .banner-he { font-size:1.05rem; color:#ccd; margin-top:4px; direction:rtl; }
+    .daf-read-btn { flex-shrink:0; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; border-radius:20px; padding:7px 16px; font-size:.78rem; cursor:pointer; font-family:inherit; white-space:nowrap; transition:background .15s,border-color .15s; }
+    .daf-read-btn:hover { background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.4); }
+    #daf-text-panel { background:#fff; border:1px solid #e8e8e3; border-radius:10px; padding:20px 24px; margin-bottom:20px; }
+    .daf-text-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .daf-text-title { font-weight:700; font-size:.95rem; color:#1a1a2e; }
+    .daf-text-close { background:none; border:none; color:#999; font-size:1.1rem; cursor:pointer; padding:2px 6px; line-height:1; }
+    .daf-text-close:hover { color:#333; }
+    .daf-text-body { direction:rtl; text-align:right; font-size:.95rem; line-height:2; color:#222; }
+    .daf-text-body p { margin-bottom:10px; }
+    .daf-sefaria-link { display:inline-block; margin-top:14px; font-size:.8rem; color:#1a1a2e; opacity:.65; text-decoration:underline; }
+    .daf-sefaria-link:hover { opacity:1; }
   </style>
 </head>
 <body>
@@ -151,6 +168,16 @@
     <p><strong>דף היומי</strong> הוא לוח לימוד התלמוד הבבלי שנוסד בשנת תרפ"ג (1923) על ידי הרב מאיר שפירא מלובלין. בכל יום לומדים מאות אלפי יהודים ברחבי העולם את <strong>אותה הדף מהגמרא</strong>, ויוצרים קהילת לימוד עולמית מסונכרנת. המחזור המלא כולל 2,711 דפים ונמשך כ-<strong>שבע וחצי שנים</strong>.</p>
     <p>כאן תמצאו שיעורי דף היומי של הרבנים שלנו, המוקלטים מדי יום כדי ללוות אתכם בלימוד.</p>
   </div>
+
+  <div id="daf-banner" class="loading" style="display:none">
+    <div class="daf-banner-info">
+      <div class="banner-label" id="daf-banner-label">Daf du jour</div>
+      <div class="banner-name" id="daf-banner-name">…</div>
+      <div class="banner-he" id="daf-banner-he"></div>
+    </div>
+    <button class="daf-read-btn" id="daf-read-btn">📖 Lire le texte</button>
+  </div>
+  <div id="daf-text-panel" style="display:none"></div>
 
   <div class="filter-row" id="filter-row">
     <button class="filter-chip active" data-slug="all" data-i18n="filter_all">Tous les rabbins</button>
@@ -438,6 +465,90 @@
     });
 
     renderList();
+  })();
+
+  // ─── Daf du jour banner ─────────────────────────────────────────────────
+  (async () => {
+    const banner    = document.getElementById('daf-banner');
+    const nameEl    = document.getElementById('daf-banner-name');
+    const heEl      = document.getElementById('daf-banner-he');
+    const labelEl   = document.getElementById('daf-banner-label');
+    const readBtn   = document.getElementById('daf-read-btn');
+    const textPanel = document.getElementById('daf-text-panel');
+
+    function flatText(arr) {
+      if (!arr) return [];
+      if (typeof arr === 'string') return arr ? [arr] : [];
+      return arr.flatMap(x => flatText(x)).filter(Boolean);
+    }
+
+    try {
+      const res = await fetch('https://www.sefaria.org/api/calendars');
+      if (!res.ok) throw 0;
+      const data = await res.json();
+      const item = (data.calendar_items || []).find(i => i.title && i.title.en === 'Daf Yomi');
+      if (!item) throw 0;
+
+      const dispEn = item.displayValue.en;  // e.g. "Chullin 14"
+      const dispHe = item.displayValue.he;  // e.g. "חולין יד"
+      const refUrl = (item.url || item.ref.replace(/ /g, '.')).replace(/\s+/g, '.');
+
+      labelEl.textContent = lang === 'he' ? 'הדף היומי' : 'Daf du jour';
+      nameEl.textContent  = dispEn;
+      heEl.textContent    = dispHe;
+      banner.classList.remove('loading');
+      banner.style.display = '';
+
+      let panelOpen = false, textLoaded = false;
+      readBtn.textContent = lang === 'he' ? '📖 קרא את הדף' : '📖 Lire le texte';
+
+      readBtn.addEventListener('click', async () => {
+        if (panelOpen) {
+          textPanel.style.display = 'none';
+          panelOpen = false;
+          readBtn.textContent = lang === 'he' ? '📖 קרא את הדף' : '📖 Lire le texte';
+          return;
+        }
+        readBtn.textContent = lang === 'he' ? '⏳' : '⏳ Chargement…';
+        if (!textLoaded) {
+          try {
+            const tr  = await fetch(`https://www.sefaria.org/api/texts/${refUrl}?context=0`);
+            const td  = await tr.json();
+            const heLines = flatText(td.he);
+            const sefariaHref = `https://www.sefaria.org/${refUrl}?lang=bi`;
+            textPanel.innerHTML =
+              `<div class="daf-text-header">` +
+                `<div class="daf-text-title">${escapeHtml(dispEn)} · ${escapeHtml(dispHe)}</div>` +
+                `<button class="daf-text-close" id="daf-close-btn">✕</button>` +
+              `</div>` +
+              `<div class="daf-text-body">${heLines.map(l => `<p>${l}</p>`).join('')}</div>` +
+              `<a class="daf-sefaria-link" href="${sefariaHref}" target="_blank" rel="noopener">` +
+                (lang === 'he' ? 'קרא על Sefaria.org ←' : 'Lire sur Sefaria.org →') +
+              `</a>`;
+            document.getElementById('daf-close-btn').addEventListener('click', () => {
+              textPanel.style.display = 'none';
+              panelOpen = false;
+              readBtn.textContent = lang === 'he' ? '📖 קרא את הדף' : '📖 Lire le texte';
+            });
+            textLoaded = true;
+          } catch(_) {
+            textPanel.innerHTML =
+              `<p style="color:#888;font-size:.85rem;padding:8px 0">` +
+              `Impossible de charger le texte. ` +
+              `<a href="https://www.sefaria.org/daf-yomi" target="_blank" rel="noopener" style="color:#1a1a2e">` +
+              `Voir sur Sefaria.org</a></p>`;
+            textLoaded = true;
+          }
+        }
+        textPanel.style.display = '';
+        panelOpen = true;
+        readBtn.textContent = lang === 'he' ? '✕ סגור' : '✕ Fermer';
+      });
+
+    } catch(_) {
+      // Sefaria unavailable — hide banner gracefully
+      banner.style.display = 'none';
+    }
   })();
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
