@@ -1,4 +1,4 @@
-const CACHE = 'ttp-v1';
+const CACHE = 'ttp-v2';
 const PRECACHE = [
   '/', '/index.html', '/links.html', '/parasha.html', '/themes.html',
   '/derniers-cours.html', '/daf-hayomi.html', '/channels.json'
@@ -25,31 +25,27 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   if (url.includes('.mp3') || url.includes('googletagmanager') || url.includes('gtag')) return;
 
-  // Network-first for feeds (update frequently)
-  if (url.includes('/feeds/')) {
+  // Cache-first only for artwork images (immutable once generated)
+  if (url.includes('/artwork/') && (url.endsWith('.png') || url.endsWith('.jpg'))) {
     e.respondWith(
-      fetch(e.request)
-        .then(r => {
-          const clone = r.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+      caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(r => {
+          if (r.ok) { const clone = r.clone(); caches.open(CACHE).then(c => c.put(e.request, clone)); }
           return r;
-        })
-        .catch(() => caches.match(e.request))
+        });
+      })
     );
     return;
   }
 
-  // Cache-first for everything else
+  // Network-first for everything else (HTML, feeds, channels.json, etc.)
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(r => {
-        if (r.ok) {
-          const clone = r.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
+    fetch(e.request)
+      .then(r => {
+        if (r.ok) { const clone = r.clone(); caches.open(CACHE).then(c => c.put(e.request, clone)); }
         return r;
-      });
-    })
+      })
+      .catch(() => caches.match(e.request))
   );
 });

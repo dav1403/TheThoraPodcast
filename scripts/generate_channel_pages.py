@@ -390,7 +390,7 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     const epCount = document.getElementById('ep-count');
     if (epCount) epCount.textContent = I18N[lang].ep_count({ep_count});
     const statsEl = document.getElementById('header-stats');
-    if (statsEl) statsEl.textContent = I18N[lang].ep_count({ep_count});
+    if (statsEl) statsEl.textContent = '{esc(name)}' + ' · ' + I18N[lang].ep_count({ep_count});
   }}
   // Show more / less for channel description
   (function() {{
