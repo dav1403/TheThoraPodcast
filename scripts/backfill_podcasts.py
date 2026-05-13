@@ -24,23 +24,32 @@ def save_backfill_state(state):
     BACKFILL_STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
 def discover_missing_videos(channel_id, already_done):
-    channel_url = "https://www.youtube.com/channel/" + channel_id + "/videos"
+    base_url = "https://www.youtube.com/channel/" + channel_id
     ydl_opts = {"quiet": True, "no_warnings": True, "extract_flat": "in_playlist", "ignoreerrors": True}
     cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
     if cookies_file and Path(cookies_file).exists():
         ydl_opts["cookiefile"] = cookies_file
-    print("    Scanning channel via yt-dlp (may take a moment for large channels)...")
-    try:
-        with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(channel_url, download=False)
-        all_ids = [e["id"] for e in (info.get("entries") or []) if e.get("id")]
-        missing = [v for v in all_ids if v not in already_done]
-        missing.reverse()
-        print("    " + str(len(all_ids)) + " total on channel, " + str(len(missing)) + " not yet in feed.")
-        return missing, len(all_ids)
-    except Exception as e:
-        print("    yt-dlp discovery error: " + str(e))
-        return [], 0
+
+    # Scan both /videos and /streams tabs — streams are often absent from /videos
+    seen = {}  # vid_id -> True, insertion order = newest-first per tab
+    for tab in ("/videos", "/streams"):
+        url = base_url + tab
+        print("    Scanning " + tab + " tab via yt-dlp...")
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+            tab_ids = [e["id"] for e in (info.get("entries") or []) if e.get("id")]
+            print("      " + str(len(tab_ids)) + " videos found.")
+            for vid_id in tab_ids:
+                seen.setdefault(vid_id, True)
+        except Exception as e:
+            print("      yt-dlp error: " + str(e))
+
+    all_ids = list(seen.keys())
+    missing = [v for v in all_ids if v not in already_done]
+    missing.reverse()  # process oldest-first
+    print("    " + str(len(all_ids)) + " total on channel, " + str(len(missing)) + " not yet in feed.")
+    return missing, len(all_ids)
 
 def get_video_info(video_id):
     if not API_KEY:

@@ -200,7 +200,7 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
     url = (
         f"https://www.googleapis.com/youtube/v3/playlistItems"
         f"?key={API_KEY}&playlistId={playlist_id}"
-        f"&part=snippet&maxResults=10"
+        f"&part=snippet&maxResults=50"
     )
     r = requests.get(url)
     data = r.json()
