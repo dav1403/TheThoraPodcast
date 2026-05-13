@@ -163,7 +163,8 @@ def load_channel_info(slug: str) -> dict:
     return {}
 
 
-def render_page(ch: dict, entries: list, all_channels: list) -> str:
+def render_page(ch: dict, entries: list, all_channels: list,
+                site_channels: int = 0, site_episodes: int = 0, site_hours: int = 0) -> str:
     slug      = ch["slug"]
     name      = ch["podcast_author"]
     lang      = ch.get("podcast_language", "fr")
@@ -390,7 +391,9 @@ def render_page(ch: dict, entries: list, all_channels: list) -> str:
     const epCount = document.getElementById('ep-count');
     if (epCount) epCount.textContent = I18N[lang].ep_count({ep_count});
     const statsEl = document.getElementById('header-stats');
-    if (statsEl) statsEl.textContent = '{esc(name)}' + ' · ' + I18N[lang].ep_count({ep_count});
+    if (statsEl) statsEl.textContent = lang === 'he'
+      ? `{site_channels} ערוצים · {site_episodes} פרקים · ~{site_hours}ש`
+      : `{site_channels} rabbins · {site_episodes} cours · ~{site_hours}h de Torah`;
   }}
   // Show more / less for channel description
   (function() {{
@@ -842,18 +845,24 @@ def main():
     channels = json.loads(CHANNELS_FILE.read_text(encoding="utf-8"))
     enabled  = [ch for ch in channels if ch.get("enabled")]
 
-    # per-rabbi subdirs created below per channel
-
-    generated = []
+    # Pre-load all entries to compute site-wide stats for the header
+    all_data = []
     for ch in enabled:
-        slug         = ch["slug"]
-        entries_path = FEEDS_DIR / f"{slug}.entries.json"
+        entries_path = FEEDS_DIR / f"{ch['slug']}.entries.json"
         if not entries_path.exists():
-            print(f"  Skipping {slug} — no entries file yet")
             continue
         entries = json.loads(entries_path.read_text(encoding="utf-8"))
-        page    = render_page(ch, entries, enabled)
-        out     = Path(f"{slug}.html")
+        all_data.append((ch, entries))
+
+    site_channels = len(all_data)
+    site_episodes = sum(len(e) for _, e in all_data)
+    site_hours    = round(site_episodes * 0.75)
+
+    generated = []
+    for ch, entries in all_data:
+        slug = ch["slug"]
+        page = render_page(ch, entries, enabled, site_channels, site_episodes, site_hours)
+        out  = Path(f"{slug}.html")
         out.write_text(page, encoding="utf-8")
         print(f"  {out}  ({len(entries)} episodes)")
         generated.append((slug, entries))
