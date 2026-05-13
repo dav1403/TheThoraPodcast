@@ -128,10 +128,12 @@
     .daf-text-title { font-weight:700; font-size:.95rem; color:#1a1a2e; }
     .daf-text-close { background:none; border:none; color:#999; font-size:1.1rem; cursor:pointer; padding:2px 6px; line-height:1; }
     .daf-text-close:hover { color:#333; }
-    .daf-text-body { direction:rtl; text-align:right; font-size:.95rem; line-height:2; color:#222; }
-    .daf-text-body p { margin-bottom:10px; }
-    .daf-sefaria-link { display:inline-block; margin-top:14px; font-size:.8rem; color:#1a1a2e; opacity:.65; text-decoration:underline; }
-    .daf-sefaria-link:hover { opacity:1; }
+    .daf-amud-tabs { display:flex; gap:4px; }
+    .daf-amud-tab { background:none; border:1px solid #ccc; border-radius:14px; padding:3px 12px; font-size:.75rem; cursor:pointer; font-family:inherit; color:#666; transition:background .12s,border-color .12s,color .12s; }
+    .daf-amud-tab:hover { background:#f0f0ea; border-color:#aaa; color:#222; }
+    .daf-amud-tab.active { background:#1a1a2e; border-color:#1a1a2e; color:#fff; }
+    .daf-open-link { display:inline-block; margin-top:10px; font-size:.78rem; color:#1a1a2e; opacity:.6; text-decoration:underline; }
+    .daf-open-link:hover { opacity:1; }
   </style>
 </head>
 <body>
@@ -469,18 +471,28 @@
 
   // ─── Daf du jour banner ─────────────────────────────────────────────────
   (async () => {
+    const MASECHTA_MAP = {
+      'Berakhot':'berachos','Berachot':'berachos','Shabbat':'shabbos',
+      'Eruvin':'eruvin','Pesachim':'pesachim','Shekalim':'shekalim',
+      'Yoma':'yoma','Sukkah':'sukkah','Beitzah':'beitzah',
+      'Rosh Hashana':'rosh-hashanah','Taanit':'taanis','Megillah':'megillah',
+      'Moed Katan':'moed-katan','Chagigah':'chagigah','Yevamot':'yevamos',
+      'Ketubot':'kesubos','Nedarim':'nedarim','Nazir':'nazir','Sotah':'sotah',
+      'Gittin':'gittin','Kiddushin':'kiddushin','Bava Kamma':'bava-kamma',
+      'Bava Metzia':'bava-metzia','Bava Batra':'bava-basra','Sanhedrin':'sanhedrin',
+      'Makkot':'makkos','Shevuot':'shevuos','Avodah Zarah':'avodah-zarah',
+      'Horayot':'horayos','Zevachim':'zevachim','Menachot':'menachos',
+      'Chullin':'chullin','Bechorot':'bechoros','Arachin':'arachin',
+      'Temurah':'temurah','Keritot':'kereisos','Meilah':'meilah',
+      'Kinnim':'kinim','Tamid':'tamid','Middot':'middos','Niddah':'niddah',
+    };
+
     const banner    = document.getElementById('daf-banner');
     const nameEl    = document.getElementById('daf-banner-name');
     const heEl      = document.getElementById('daf-banner-he');
     const labelEl   = document.getElementById('daf-banner-label');
     const readBtn   = document.getElementById('daf-read-btn');
     const textPanel = document.getElementById('daf-text-panel');
-
-    function flatText(arr) {
-      if (!arr) return [];
-      if (typeof arr === 'string') return arr ? [arr] : [];
-      return arr.flatMap(x => flatText(x)).filter(Boolean);
-    }
 
     try {
       const res = await fetch('https://www.sefaria.org/api/calendars');
@@ -489,9 +501,12 @@
       const item = (data.calendar_items || []).find(i => i.title && i.title.en === 'Daf Yomi');
       if (!item) throw 0;
 
-      const dispEn = item.displayValue.en;  // e.g. "Chullin 14"
-      const dispHe = item.displayValue.he;  // e.g. "חולין יד"
-      const refUrl = (item.url || item.ref.replace(/ /g, '.')).replace(/\s+/g, '.');
+      const dispEn   = item.displayValue.en;  // e.g. "Chullin 13"
+      const dispHe   = item.displayValue.he;  // e.g. "חולין י״ג"
+      const refUrl   = (item.url || item.ref.replace(/ /g, '.')).replace(/\s+/g, '.');
+      const masEn    = refUrl.split('.')[0];
+      const dafNum   = parseInt(refUrl.split('.')[1]) || 2;
+      const shasSlug = MASECHTA_MAP[masEn] || masEn.toLowerCase();
 
       labelEl.textContent = lang === 'he' ? 'הדף היומי' : 'Daf du jour';
       nameEl.textContent  = dispEn;
@@ -499,54 +514,58 @@
       banner.classList.remove('loading');
       banner.style.display = '';
 
-      let panelOpen = false, textLoaded = false;
-      readBtn.textContent = lang === 'he' ? '📖 קרא את הדף' : '📖 Lire le texte';
+      let panelOpen = false, activeAmud = 'a';
+      readBtn.textContent = lang === 'he' ? '📖 צורת הדף' : '📖 Tsurat haDaf';
 
-      readBtn.addEventListener('click', async () => {
+      function pdfUrl(amud) {
+        return `https://www.shas.org/daf-pdf/api/?masechta=${shasSlug}&daf=${dafNum}&amud=${amud}`;
+      }
+
+      function buildPanel() {
+        const labelA   = lang === 'he' ? 'עמוד א׳' : 'Amud A';
+        const labelB   = lang === 'he' ? 'עמוד ב׳' : 'Amud B';
+        const openLbl  = lang === 'he' ? 'פתח בכרטיסייה חדשה ↗' : 'Ouvrir dans un nouvel onglet ↗';
+        const curPdf   = pdfUrl(activeAmud);
+        textPanel.innerHTML =
+          `<div class="daf-text-header">` +
+            `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">` +
+              `<div class="daf-text-title">${escapeHtml(dispEn)} · ${escapeHtml(dispHe)}</div>` +
+              `<div class="daf-amud-tabs">` +
+                `<button class="daf-amud-tab${activeAmud==='a'?' active':''}" data-amud="a">${labelA}</button>` +
+                `<button class="daf-amud-tab${activeAmud==='b'?' active':''}" data-amud="b">${labelB}</button>` +
+              `</div>` +
+            `</div>` +
+            `<button class="daf-text-close" id="daf-close-btn">✕</button>` +
+          `</div>` +
+          `<iframe src="${curPdf}" width="100%" height="680" style="border:none;display:block;border-radius:6px;" title="${escapeHtml(dispEn)}"></iframe>` +
+          `<div style="text-align:center;margin-top:6px;">` +
+            `<a class="daf-open-link" href="${curPdf}" target="_blank" rel="noopener">${openLbl}</a>` +
+          `</div>`;
+
+        document.getElementById('daf-close-btn').addEventListener('click', () => {
+          textPanel.style.display = 'none';
+          panelOpen = false;
+          readBtn.textContent = lang === 'he' ? '📖 צורת הדף' : '📖 Tsurat haDaf';
+        });
+        textPanel.querySelectorAll('.daf-amud-tab').forEach(tab => {
+          tab.addEventListener('click', () => { activeAmud = tab.dataset.amud; buildPanel(); });
+        });
+      }
+
+      readBtn.addEventListener('click', () => {
         if (panelOpen) {
           textPanel.style.display = 'none';
           panelOpen = false;
-          readBtn.textContent = lang === 'he' ? '📖 קרא את הדף' : '📖 Lire le texte';
+          readBtn.textContent = lang === 'he' ? '📖 צורת הדף' : '📖 Tsurat haDaf';
           return;
         }
-        readBtn.textContent = lang === 'he' ? '⏳' : '⏳ Chargement…';
-        if (!textLoaded) {
-          try {
-            const tr  = await fetch(`https://www.sefaria.org/api/texts/${refUrl}?context=0`);
-            const td  = await tr.json();
-            const heLines = flatText(td.he);
-            const sefariaHref = `https://www.sefaria.org/${refUrl}?lang=bi`;
-            textPanel.innerHTML =
-              `<div class="daf-text-header">` +
-                `<div class="daf-text-title">${escapeHtml(dispEn)} · ${escapeHtml(dispHe)}</div>` +
-                `<button class="daf-text-close" id="daf-close-btn">✕</button>` +
-              `</div>` +
-              `<div class="daf-text-body">${heLines.map(l => `<p>${l}</p>`).join('')}</div>` +
-              `<a class="daf-sefaria-link" href="${sefariaHref}" target="_blank" rel="noopener">` +
-                (lang === 'he' ? 'קרא על Sefaria.org ←' : 'Lire sur Sefaria.org →') +
-              `</a>`;
-            document.getElementById('daf-close-btn').addEventListener('click', () => {
-              textPanel.style.display = 'none';
-              panelOpen = false;
-              readBtn.textContent = lang === 'he' ? '📖 קרא את הדף' : '📖 Lire le texte';
-            });
-            textLoaded = true;
-          } catch(_) {
-            textPanel.innerHTML =
-              `<p style="color:#888;font-size:.85rem;padding:8px 0">` +
-              `Impossible de charger le texte. ` +
-              `<a href="https://www.sefaria.org/daf-yomi" target="_blank" rel="noopener" style="color:#1a1a2e">` +
-              `Voir sur Sefaria.org</a></p>`;
-            textLoaded = true;
-          }
-        }
+        buildPanel();
         textPanel.style.display = '';
         panelOpen = true;
         readBtn.textContent = lang === 'he' ? '✕ סגור' : '✕ Fermer';
       });
 
     } catch(_) {
-      // Sefaria unavailable — hide banner gracefully
       banner.style.display = 'none';
     }
   })();
