@@ -3,40 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Derniers cours de Torah en podcast — The Torah Podcast</title>
+  <title>Derniers cours — The Torah Podcast</title>
   <meta name="description" content="Les derniers cours de Torah publiés par tous nos rabbins — Rav Itshak Cohen, Rav Yonathan Mergui, Rav Yaakov Sitruk et plus. Retrouvez les épisodes les plus récents.">
-  <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://thetorahpodcast.net/derniers-cours.html">
-  <link rel="alternate" hreflang="fr" href="https://thetorahpodcast.net/derniers-cours.html">
-  <link rel="alternate" hreflang="he" href="https://thetorahpodcast.net/derniers-cours.html">
-  <link rel="alternate" hreflang="x-default" href="https://thetorahpodcast.net/derniers-cours.html">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://thetorahpodcast.net/derniers-cours.html">
-  <meta property="og:title" content="Derniers cours de Torah en podcast — The Torah Podcast">
+  <meta property="og:title" content="Derniers cours — The Torah Podcast">
   <meta property="og:description" content="Les derniers cours de Torah publiés par tous nos rabbins. Retrouvez les épisodes les plus récents.">
   <meta property="og:image" content="https://thetorahpodcast.net/artwork/rav-itshak-cohen.png">
   <meta property="og:site_name" content="The Torah Podcast">
   <meta property="og:locale" content="fr_FR">
-  <meta property="og:locale:alternate" content="he_IL">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Derniers cours de Torah en podcast — The Torah Podcast">
+  <meta name="twitter:title" content="Derniers cours — The Torah Podcast">
   <meta name="twitter:description" content="Les derniers cours de Torah publiés par tous nos rabbins.">
   <meta name="twitter:image" content="https://thetorahpodcast.net/artwork/rav-itshak-cohen.png">
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "Derniers cours de Torah — The Torah Podcast",
-    "description": "Les derniers cours de Torah publiés par tous nos rabbins.",
-    "url": "https://thetorahpodcast.net/derniers-cours.html",
-    "inLanguage": ["fr", "he"],
-    "isPartOf": { "@type": "WebSite", "url": "https://thetorahpodcast.net/" }
-  }
-  </script>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#1a1a2e">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" href="/artwork/rav-itshak-cohen.png">
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
@@ -80,12 +60,15 @@
     .nav-dropdown { position: relative; display: inline-flex; }
     .nav-dd-link { color: rgba(255,255,255,.65); text-decoration: none; font-size: .8rem; padding: 5px 4px 5px 14px; border-radius: 20px 0 0 20px; border: 1px solid rgba(255,255,255,.2); border-right: none; transition: background .15s, color .15s; }
     .nav-dd-link:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+    .nav-dd-link.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
+    .nav-dd-link.active + .nav-dd-caret { color: #1a1a2e; background: #fff; border-color: #fff; }
     .nav-dd-caret { color: rgba(255,255,255,.65); font-size: .8rem; padding: 5px 10px 5px 6px; border-radius: 0 20px 20px 0; border: 1px solid rgba(255,255,255,.2); border-left: none; background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
     .nav-dd-caret:hover, .nav-dropdown.open .nav-dd-caret { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
     .nav-submenu { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #252545; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 10px; z-index: 300; box-shadow: 0 8px 28px rgba(0,0,0,.5); flex-wrap: wrap; gap: 4px; min-width: 340px; max-width: 92vw; }
     .nav-dropdown.open .nav-submenu { display: flex; }
     .nav-submenu a { color: rgba(255,255,255,.78); text-decoration: none; padding: 6px 12px; border-radius: 20px; font-size: .78rem; white-space: nowrap; border: 1px solid rgba(255,255,255,.15); transition: background .12s, color .12s; }
     .nav-submenu a:hover { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
+    .nav-submenu .nav-submenu-all { color: rgba(255,255,255,.5); border-style: dashed; font-size: .74rem; margin-top: 4px; width: 100%; text-align: center; }
     .lang-btn {
       color: rgba(255,255,255,.65);
       font-size: 0.8rem;
@@ -98,50 +81,99 @@
       transition: background .15s, color .15s;
     }
     .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
-    .header-stats { font-size: 0.88rem; color: #9ab; min-height: 1.3em; margin-bottom: 12px; }
+
+    /* Sticky search + filter bar */
+    .sticky-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #1a1a2e;
+      padding: 10px 16px 14px;
+    }
+    .sticky-bar-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .search-wrap {
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.4);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 9px 16px 9px 40px;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      outline: none;
+      font-family: inherit;
+    }
+    .search-input::placeholder { color: rgba(255,255,255,0.4); }
+    .search-input:focus { background: rgba(255,255,255,0.18); }
+
+    /* Filter chips (inside sticky bar) */
+    .filter-row {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-chip {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.76rem;
+      color: rgba(255,255,255,.65);
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background .12s, border-color .12s, color .12s;
+    }
+    .filter-chip:hover { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.4); }
+    .filter-chip.active { background: #fff; border-color: #fff; color: #1a1a2e; font-weight: 600; }
+    .filter-chip img {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      object-fit: cover;
+    }
 
     main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
 
+    .page-header { margin-bottom: 16px; }
     .page-title {
       font-size: 1.4rem;
       font-weight: 700;
       color: #1a1a2e;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
-    .page-subtitle {
-      font-size: 0.85rem;
-      color: #888;
-      margin-bottom: 20px;
-    }
+    .page-subtitle { font-size: 0.85rem; color: #888; }
 
-    /* Channel filter chips */
-    .filter-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 20px;
-    }
-    .filter-chip {
+    /* Episode card container */
+    .episode-card {
       background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 20px;
-      padding: 5px 13px;
-      font-size: 0.78rem;
-      color: #555;
-      cursor: pointer;
-      font-family: inherit;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: background .12s, border-color .12s, color .12s;
-    }
-    .filter-chip:hover { background: #f0f0ea; border-color: #bbb; color: #222; }
-    .filter-chip.active { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
-    .filter-chip img {
-      width: 18px;
-      height: 18px;
-      border-radius: 4px;
-      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      overflow: hidden;
     }
 
     /* Episode list */
@@ -149,24 +181,23 @@
     .episode-item {
       display: flex;
       gap: 14px;
-      padding: 14px 0;
-      border-bottom: 1px solid #e8e8e3;
+      padding: 13px 20px;
+      border-bottom: 1px solid #f0f0f0;
       align-items: flex-start;
-      background: transparent;
     }
     .episode-item:last-child { border-bottom: none; }
     .ep-thumb {
-      width: 100px;
-      height: 66px;
+      width: 80px;
+      height: 54px;
       object-fit: cover;
-      border-radius: 8px;
+      border-radius: 6px;
       flex-shrink: 0;
       background: #ddd;
     }
     .ep-thumb-ph {
-      width: 100px;
-      height: 66px;
-      border-radius: 8px;
+      width: 80px;
+      height: 54px;
+      border-radius: 6px;
       flex-shrink: 0;
       background: #e8e8e8;
     }
@@ -178,15 +209,15 @@
       margin-bottom: 3px;
     }
     .ep-channel-art {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       border-radius: 3px;
       object-fit: cover;
       flex-shrink: 0;
     }
     .ep-channel-name {
-      font-size: 0.7rem;
-      color: #888;
+      font-size: 0.68rem;
+      color: #999;
       text-decoration: none;
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -198,26 +229,24 @@
     .ep-channel-name:hover { color: #1a1a2e; }
     .ep-title {
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       margin-bottom: 2px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
       color: #222;
       text-decoration: none;
-      line-height: 1.35;
     }
     .ep-title:hover { color: #1a1a2e; text-decoration: underline; }
-    .ep-date { font-size: 0.72rem; color: #aaa; margin-bottom: 6px; }
+    .ep-date { font-size: 0.73rem; color: #888; margin-bottom: 6px; }
     .ep-desc {
       font-size: 0.78rem;
-      color: #666;
+      color: #555;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
     .play-btn {
       display: inline-flex;
@@ -307,14 +336,6 @@
       .ep-thumb, .ep-thumb-ph { display: none; }
       #player-art { display: none; }
     }
-    .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
-    .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
-    .player-speed { display:flex; gap:3px; flex-shrink:0; }
-    .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; transition:background .12s,color .12s; }
-    .speed-btn:hover,.speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
-    .toast.show { opacity:1; }
-    .ep-actions { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
   </style>
 </head>
 <body>
@@ -322,7 +343,6 @@
 <header>
   <h1>The Torah Podcast</h1>
   <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
-  <div class="header-stats" id="header-stats"></div>
   <nav class="header-nav">
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
@@ -330,21 +350,30 @@
       <div class="nav-submenu" id="nav-rabbis-submenu"></div>
     </div>
     <a href="derniers-cours.html" class="active" data-i18n="nav_last_classes">Derniers cours</a>
-    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
     <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
 </header>
 
+<div class="sticky-bar">
+  <div class="sticky-bar-inner">
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input class="search-input" id="search" type="search" placeholder="Rechercher un épisode ou un rav…" autocomplete="off" data-i18n="|search_ph">
+    </div>
+    <div class="filter-row" id="filter-row">
+      <button class="filter-chip active" data-slug="all" data-i18n="filter_all">Tous les rabbins</button>
+    </div>
+  </div>
+</div>
+
 <main>
-  <div id="page-header" style="margin-bottom:16px;">
+  <div class="page-header">
     <div class="page-title" data-i18n="page_title">Derniers cours</div>
     <div class="page-subtitle" id="page-subtitle"></div>
-  </div>
-
-  <div class="filter-row" id="filter-row">
-    <button class="filter-chip active" data-slug="all" data-i18n="filter_all">Tous les rabbins</button>
   </div>
 
   <div id="app">
@@ -359,42 +388,35 @@
     <div id="player-channel"></div>
   </div>
   <audio id="player-audio" controls></audio>
-  <div class="player-speed">
-    <button class="speed-btn active" data-speed="1">1×</button>
-    <button class="speed-btn" data-speed="1.25">1.25×</button>
-    <button class="speed-btn" data-speed="1.5">1.5×</button>
-    <button class="speed-btn" data-speed="2">2×</button>
-  </div>
   <button id="player-close" title="Fermer">✕</button>
 </div>
-<div class="toast" id="toast"></div>
 
 <script>
   // ─── i18n ──────────────────────────────────────────────────────────────────
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi',
+      nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours',
       nav_parasha:'Paracha', nav_themes:'Thème', nav_all_rabbis:'Tous les rabbins →',
       lang_toggle:'עברית',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       page_title:'Derniers cours',
       filter_all:'Tous les rabbins',
+      search_ph:'Rechercher un épisode ou un rav…',
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       load_more:'Voir plus',
       no_episodes:'Aucun épisode trouvé.',
-      copied:'Lien copié !',
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי',
+      nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים',
       nav_parasha:'פרשה', nav_themes:'נושא', nav_all_rabbis:'כל הרבנים →',
       lang_toggle:'Français',
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       page_title:'שיעורים אחרונים',
       filter_all:'כל הרבנים',
+      search_ph:'חיפוש שיעור או רב…',
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       load_more:'טען עוד',
       no_episodes:'לא נמצאו פרקים.',
-      copied:'הקישור הועתק!',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -403,7 +425,9 @@
     document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => {
-      el.textContent = t(el.dataset.i18n);
+      const key = el.dataset.i18n;
+      if (key.startsWith('|')) { el.placeholder = t(key.slice(1)); }
+      else { el.textContent = t(key); }
     });
   }
   function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
@@ -419,35 +443,13 @@
   });
 
   // ─── Player ────────────────────────────────────────────────────────────────
-  let activeBtn = null, currentEpId = null;
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+  let activeBtn = null;
   const playerEl    = document.getElementById('player');
   const playerAudio = document.getElementById('player-audio');
   const playerTitle = document.getElementById('player-title');
   const playerCh    = document.getElementById('player-channel');
   const playerArt   = document.getElementById('player-art');
 
-  function setSpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    playerAudio.playbackRate = rate;
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
-  document.querySelectorAll('.speed-btn').forEach(b => b.addEventListener('click', () => setSpeed(parseFloat(b.dataset.speed))));
-  setSpeed(currentSpeed);
-
-  function showToast(msg) {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg; toast.classList.add('show');
-    clearTimeout(toast._t); toast._t = setTimeout(() => toast.classList.remove('show'), 2000);
-  }
-  document.addEventListener('click', e => {
-    const btn = e.target.closest('.share-btn[data-epfile]');
-    if (!btn) return;
-    const url = `https://thetorahpodcast.net/${btn.dataset.epfile}`;
-    if (navigator.share) navigator.share({ title: btn.dataset.title, url });
-    else navigator.clipboard.writeText(url).then(() => showToast(t('copied')));
-  });
   function playIcon() {
     return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`;
   }
@@ -456,22 +458,13 @@
   }
 
   function loadInPlayer(ep, chName, slug) {
-    currentEpId = ep.video_id;
     playerTitle.textContent = ep.title;
     playerCh.textContent    = chName;
     playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
     playerAudio.src         = ep.audio_url;
-    playerAudio.playbackRate = currentSpeed;
-    const saved = parseInt(localStorage.getItem('resume_' + ep.video_id) || '0');
-    if (saved > 5) playerAudio.addEventListener('loadedmetadata', () => { playerAudio.currentTime = saved; }, { once: true });
     playerAudio.play();
     playerEl.classList.remove('hidden');
   }
-
-  playerAudio.addEventListener('timeupdate', () => {
-    if (currentEpId && playerAudio.currentTime > 5)
-      localStorage.setItem('resume_' + currentEpId, Math.floor(playerAudio.currentTime));
-  });
 
   document.addEventListener('click', e => {
     const btn = e.target.closest('.play-btn[data-ep-id]');
@@ -504,40 +497,26 @@
   });
 
   document.getElementById('player-close').addEventListener('click', () => {
-    playerAudio.pause(); playerEl.classList.add('hidden'); currentEpId = null;
-    if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn.innerHTML = playIcon() + ' ' + t('listen'); activeBtn = null; }
+    playerAudio.pause();
+    playerEl.classList.add('hidden');
+    if (activeBtn) {
+      activeBtn.classList.remove('playing');
+      activeBtn.innerHTML = playIcon() + ' ' + t('listen');
+      activeBtn = null;
+    }
   });
 
   playerAudio.addEventListener('ended', () => {
-    if (currentEpId) localStorage.removeItem('resume_' + currentEpId);
-    currentEpId = null;
-    if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn.innerHTML = playIcon() + ' ' + t('listen'); activeBtn = null; }
+    if (activeBtn) {
+      activeBtn.classList.remove('playing');
+      activeBtn.innerHTML = playIcon() + ' ' + t('listen');
+      activeBtn = null;
+    }
   });
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
-  function renderStats(nCh, nEp) {
-    const el = document.getElementById('header-stats');
-    if (!el) return;
-    el.textContent = lang === 'he'
-      ? `${nCh} ערוצים · ${nEp} שיעורים פורסמו`
-      : `Déjà ${nCh} chaînes · ${nEp} cours publiés`;
-  }
-
   function escapeHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  function slugify(title, maxLen = 70) {
-    return title.toLowerCase().normalize('NFD')
-      .replace(/\p{Mn}/gu, '')
-      .replace(/[^a-z0-9א-תװ-׻]+/gu, '-')
-      .replace(/^-+|-+$/g, '').replace(/-+/g, '-')
-      .slice(0, maxLen).replace(/-+$/, '');
-  }
-  function epUrl(ep, chSlug) {
-    var s = slugify(ep.title || '');
-    var prefix = chSlug + '-';
-    if (s.startsWith(prefix)) s = s.slice(prefix.length) || (ep.video_id || 'episode');
-    return `${chSlug}/${s}-${(ep.published || '').slice(0, 10)}.html`;
   }
 
   function formatDate(iso) {
@@ -545,9 +524,6 @@
     return new Date(iso).toLocaleDateString(locale, { day:'numeric', month:'long', year:'numeric' });
   }
 
-  function shareIcon() {
-    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
-  }
   function renderEpisodeItem(item) {
     const { ep, ch } = item;
     const thumb = ep.thumbnail
@@ -557,9 +533,8 @@
       ? `<p class="ep-desc">${escapeHtml(ep.description.slice(0, 200))}</p>`
       : '';
     const playBtn = ep.audio_url
-      ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>` : '';
-    const shareBtn = ep.title && ep.published
-      ? `<button class="share-btn" data-epfile="${epUrl(ep, ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
+      ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>`
+      : '';
     return `
       <li class="episode-item" data-slug="${escapeHtml(ch.slug)}">
         ${thumb}
@@ -568,10 +543,9 @@
             <img class="ep-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" loading="lazy">
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
-          <a class="ep-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
+          <a class="ep-title" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ep.title)}</a>
           <div class="ep-date">${formatDate(ep.published)}</div>
-          ${desc}
-          <div class="ep-actions">${playBtn}${shareBtn}</div>
+          ${desc}${playBtn}
         </div>
       </li>`;
   }
@@ -580,11 +554,20 @@
   const PAGE_SIZE = 30;
   let visibleCount = PAGE_SIZE;
   let activeFilter = 'all';
+  let searchQuery  = '';
 
   function filteredFlat() {
-    const flat = window._flat || [];
-    if (activeFilter === 'all') return flat;
-    return flat.filter(x => x.ch.slug === activeFilter);
+    let flat = window._flat || [];
+    if (activeFilter !== 'all') flat = flat.filter(x => x.ch.slug === activeFilter);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      flat = flat.filter(x =>
+        x.ep.title.toLowerCase().includes(q) ||
+        x.ch.name.toLowerCase().includes(q) ||
+        (x.ep.description || '').toLowerCase().includes(q)
+      );
+    }
+    return flat;
   }
 
   function renderList() {
@@ -603,7 +586,7 @@
       ? `<div class="load-more-wrap"><button class="load-more-btn" id="load-more-btn">${t('load_more')} (${items.length - visibleCount})</button></div>`
       : '';
 
-    app.innerHTML = `<ul class="episode-list">${listHtml}</ul>${moreHtml}`;
+    app.innerHTML = `<div class="episode-card"><ul class="episode-list">${listHtml}</ul></div>${moreHtml}`;
 
     const loadBtn = document.getElementById('load-more-btn');
     if (loadBtn) {
@@ -633,9 +616,11 @@
 
     // Populate nav submenu
     const sub = document.getElementById('nav-rabbis-submenu');
-    if (sub) sub.innerHTML = channels.map(ch =>
-      `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
-    ).join('') + `<a class="nav-submenu-all" href="links.html">Tous les rabbins →</a>`;
+    if (sub) {
+      sub.innerHTML = channels.map(ch =>
+        `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
+      ).join('') + `<a href="links.html" class="nav-submenu-all">${t('nav_all_rabbis')}</a>`;
+    }
 
     // Load all episodes
     const allData = await Promise.all(channels.map(async ch => {
@@ -661,7 +646,6 @@
 
     // Build channel filter chips
     const filterRow = document.getElementById('filter-row');
-    const existingAll = filterRow.querySelector('[data-slug="all"]');
     for (const { ch } of allData) {
       if (!ch) continue;
       const btn = document.createElement('button');
@@ -680,10 +664,21 @@
       renderList();
     });
 
-    renderStats(channels.length, flat.length);
+    // Search
+    const searchEl = document.getElementById('search');
+    let searchTimer;
+    searchEl.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        searchQuery  = searchEl.value.trim();
+        visibleCount = PAGE_SIZE;
+        renderList();
+      }, 200);
+    });
+
     renderList();
   })();
 </script>
-<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
+
 </body>
 </html>
