@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Torah Podcast — Widget</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #fff;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .widget-header {
+      background: #1a1a2e;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .ch-art {
+      width: 52px; height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #333;
+      flex-shrink: 0;
+    }
+    .ch-info { min-width: 0; flex: 1; }
+    .ch-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ch-meta {
+      font-size: 0.72rem;
+      color: #99a;
+      margin-top: 2px;
+    }
+    .ch-platforms {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .plat-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      text-decoration: none;
+      flex-shrink: 0;
+      transition: opacity .15s;
+    }
+    .plat-btn:hover { opacity: 0.75; }
+    .plat-btn svg { width: 14px; height: 14px; }
+    .plat-spotify { background: #1DB954; color: #fff; }
+    .plat-apple   { background: #872EC4; color: #fff; }
+    .plat-deezer  { background: #EF5466; color: #fff; }
+    .plat-rss     { background: #e87722; color: #fff; }
+
+    /* ── Episode list ───────────────────────────────────────── */
+    .episode-list {
+      flex: 1;
+      overflow-y: auto;
+      list-style: none;
+      scrollbar-width: thin;
+      scrollbar-color: #ddd transparent;
+    }
+    .episode-list::-webkit-scrollbar { width: 4px; }
+    .episode-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+    .ep-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: default;
+    }
+    .ep-item:last-child { border-bottom: none; }
+    .ep-thumb {
+      width: 60px; height: 40px;
+      border-radius: 5px;
+      object-fit: cover;
+      background: #e8e8e8;
+      flex-shrink: 0;
+    }
+    .ep-thumb-ph {
+      width: 60px; height: 40px;
+      border-radius: 5px;
+      background: #e8e8e8;
+      flex-shrink: 0;
+    }
+    .ep-body { flex: 1; min-width: 0; }
+    .ep-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .ep-date { font-size: 0.68rem; color: #aaa; }
+    .play-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .play-btn:hover { background: #2d2d50; }
+    .play-btn.playing { background: #e87722; }
+    .play-btn svg { width: 11px; height: 11px; }
+
+    /* ── Mini player bar ────────────────────────────────────── */
+    #mini-player {
+      background: #f5f5f0;
+      border-top: 1px solid #eee;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #mini-player.hidden { display: none; }
+    #mini-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #mini-audio {
+      flex: 2;
+      min-width: 80px;
+      height: 28px;
+      accent-color: #e87722;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    .widget-footer {
+      border-top: 1px solid #eee;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      background: #fff;
+    }
+    .widget-brand {
+      font-size: 0.68rem;
+      color: #bbb;
+      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .widget-brand:hover { color: #1a1a2e; }
+    .ep-count { font-size: 0.68rem; color: #ccc; }
+
+    /* ── States ─────────────────────────────────────────────── */
+    .state {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #aaa;
+      font-size: 0.85rem;
+    }
+    .loading-spinner {
+      width: 18px; height: 18px;
+      border: 2px solid #ddd;
+      border-top-color: #555;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="widget-header" id="widget-header" style="display:none">
+  <img class="ch-art" id="ch-art" src="" alt="">
+  <div class="ch-info">
+    <div class="ch-name" id="ch-name"></div>
+    <div class="ch-meta" id="ch-meta"></div>
+  </div>
+  <div class="ch-platforms" id="ch-platforms"></div>
+</div>
+
+<ul class="episode-list" id="episode-list">
+  <div class="state">
+    <div class="loading-spinner"></div>
+    Chargement…
+  </div>
+</ul>
+
+<div id="mini-player" class="hidden">
+  <div id="mini-title"></div>
+  <audio id="mini-audio" controls></audio>
+</div>
+
+<div class="widget-footer">
+  <a class="widget-brand" href="https://thetorahpodcast.net" target="_blank" rel="noopener">
+    🎙 The Torah Podcast
+  </a>
+  <span class="ep-count" id="ep-count"></span>
+</div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const slug   = params.get('slug') || '';
+  const lang   = params.get('lang') || 'fr';
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function formatDate(iso) {
+    const locale = lang === 'he' ? 'he-IL' : 'fr-FR';
+    try {
+      return new Date(iso).toLocaleDateString(locale, { day:'numeric', month:'short', year:'numeric' });
+    } catch(_) { return iso.slice(0,10); }
+  }
+
+  function playIcon() {
+    return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`;
+  }
+  function pauseIcon() {
+    return `<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>`;
+  }
+
+  function platformSVG(name) {
+    if (name === 'spotify') return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 01-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 11-.277-1.215c3.809-.87 7.076-.496 9.712 1.115.294.18.387.563.207.857zm1.223-2.72a.78.78 0 01-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 01-.973-.519.781.781 0 01.519-.972c3.632-1.102 8.147-.568 11.234 1.328a.78.78 0 01.257 1.072zm.105-2.83C14.691 8.95 9.375 8.775 6.297 9.71a.937.937 0 11-.543-1.793c3.521-1.068 9.376-.861 13.072 1.332a.937.937 0 01-.912 1.624z"/></svg>`;
+    if (name === 'apple') return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm.5 3.5c.97 0 1.75.43 1.75.43L13 8.5s-.5-.25-1-.25c-1.5 0-2.25 1.25-2.25 2.75v.5h2.5v2H9.75V18h-2v-4.5H6.5v-2h1.25V11c0-2.5 1.75-5.5 4.75-5.5z"/></svg>`;
+    if (name === 'deezer') return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.81 10.5h2.69v1.5h-2.69zm0 2.25h2.69v1.5h-2.69zm0 2.25h2.69v1.5h-2.69zM13.5 7.5h2.69V9H13.5zm0 2.25h2.69v1.5H13.5zm0 2.25h2.69v1.5H13.5zm0 2.25h2.69v1.5H13.5zM8.19 12h2.69v1.5H8.19zm0 2.25h2.69v1.5H8.19zM2.5 14.25h2.69v1.5H2.5z"/></svg>`;
+    if (name === 'rss') return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 010 4.36 2.18 2.18 0 010-4.36M4 4.44A15.56 15.56 0 0119.56 20h-2.83A12.73 12.73 0 004 7.27V4.44m0 5.66a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1z"/></svg>`;
+    return '';
+  }
+
+  // ── Audio player ─────────────────────────────────────────────────────────
+  let activeBtn = null;
+  const miniPlayer = document.getElementById('mini-player');
+  const miniAudio  = document.getElementById('mini-audio');
+  const miniTitle  = document.getElementById('mini-title');
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.play-btn[data-url]');
+    if (!btn) return;
+
+    if (btn === activeBtn) {
+      if (miniAudio.paused) { miniAudio.play(); btn.classList.add('playing'); btn.innerHTML = pauseIcon(); }
+      else { miniAudio.pause(); btn.classList.remove('playing'); btn.innerHTML = playIcon(); }
+      return;
+    }
+    if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn.innerHTML = playIcon(); }
+    activeBtn = btn;
+    btn.classList.add('playing');
+    btn.innerHTML = pauseIcon();
+    miniTitle.textContent = btn.dataset.title;
+    miniAudio.src = btn.dataset.url;
+    miniAudio.play();
+    miniPlayer.classList.remove('hidden');
+  });
+
+  miniAudio.addEventListener('ended', () => {
+    if (activeBtn) { activeBtn.classList.remove('playing'); activeBtn.innerHTML = playIcon(); activeBtn = null; }
+  });
+
+  // ── Load data ────────────────────────────────────────────────────────────
+  (async () => {
+    const listEl = document.getElementById('episode-list');
+
+    if (!slug) {
+      listEl.innerHTML = `<div class="state">Paramètre <code>slug</code> manquant.</div>`;
+      return;
+    }
+
+    let chInfo = null;
+    try {
+      const chRes = await fetch('channels.json');
+      if (chRes.ok) {
+        const all = await chRes.json();
+        chInfo = all.find(c => c.slug === slug && c.enabled);
+      }
+    } catch(_) {}
+
+    if (!chInfo) {
+      listEl.innerHTML = `<div class="state">Canal introuvable.</div>`;
+      return;
+    }
+
+    // Render header
+    const header = document.getElementById('widget-header');
+    document.getElementById('ch-art').src = `artwork/${slug}.png`;
+    document.getElementById('ch-name').textContent = chInfo.podcast_author;
+    document.getElementById('ch-meta').textContent =
+      chInfo.podcast_language === 'he' ? 'עברית' : 'Cours en français';
+    header.style.display = '';
+
+    // Platform buttons
+    const platEl = document.getElementById('ch-platforms');
+    const platDefs = [
+      { key: 'spotify', cls: 'plat-spotify', label: 'Spotify' },
+      { key: 'apple',   cls: 'plat-apple',   label: 'Apple Podcasts' },
+      { key: 'deezer',  cls: 'plat-deezer',  label: 'Deezer' },
+      { key: 'rss',     cls: 'plat-rss',     label: 'RSS' },
+    ];
+    platEl.innerHTML = platDefs
+      .filter(p => chInfo.platforms && chInfo.platforms[p.key])
+      .map(p => `<a class="plat-btn ${p.cls}" href="${escapeHtml(chInfo.platforms[p.key])}" target="_blank" rel="noopener" title="${p.label}">${platformSVG(p.key)}</a>`)
+      .join('');
+
+    // Load episodes
+    let episodes = [];
+    try {
+      const epRes = await fetch(`feeds/${slug}.entries.json`);
+      if (epRes.ok) episodes = await epRes.json();
+    } catch(_) {}
+
+    episodes.sort((a, b) => new Date(b.published) - new Date(a.published));
+
+    if (!episodes.length) {
+      listEl.innerHTML = `<div class="state">Aucun épisode disponible.</div>`;
+      return;
+    }
+
+    document.getElementById('ep-count').textContent =
+      lang === 'he' ? `${episodes.length} שיעורים` : `${episodes.length} épisodes`;
+
+    listEl.innerHTML = episodes.map(ep => {
+      const thumb = ep.thumbnail
+        ? `<img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+        : `<div class="ep-thumb-ph"></div>`;
+      const playBtnHtml = ep.audio_url
+        ? `<button class="play-btn"
+             data-url="${escapeHtml(ep.audio_url)}"
+             data-title="${escapeHtml(ep.title)}"
+             title="Écouter" aria-label="Écouter"
+           >${playIcon()}</button>`
+        : '';
+      return `
+        <li class="ep-item">
+          ${thumb}
+          <div class="ep-body">
+            <div class="ep-title">${escapeHtml(ep.title)}</div>
+            <div class="ep-date">${formatDate(ep.published)}</div>
+          </div>
+          ${playBtnHtml}
+        </li>`;
+    }).join('');
+  })();
+</script>
+
+</body>
+</html>

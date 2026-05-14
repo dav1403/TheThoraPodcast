@@ -416,6 +416,22 @@
     #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
     #player-close:hover { color:#fff; }
     @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}
+    .btn-embed {{ background:#f5f5f0; color:#555; border:1px solid #ddd; }}
+    .btn-embed:hover {{ background:#eee; border-color:#bbb; }}
+    .embed-modal {{ display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }}
+    .embed-modal.open {{ display:flex; }}
+    .embed-box {{ background:#fff; border-radius:16px; padding:24px; max-width:460px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,.3); }}
+    .embed-box-header {{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }}
+    .embed-box-header h3 {{ font-size:.95rem; font-weight:700; }}
+    .embed-close {{ background:none; border:none; color:#aaa; font-size:1.3rem; cursor:pointer; line-height:1; padding:0; }}
+    .embed-close:hover {{ color:#333; }}
+    .embed-code {{ background:#f5f5f0; border-radius:8px; padding:12px; font-family:monospace; font-size:.72rem; color:#333; white-space:pre-wrap; word-break:break-all; margin-bottom:12px; border:1px solid #e0e0e0; user-select:all; cursor:text; }}
+    .embed-actions {{ display:flex; gap:8px; align-items:center; }}
+    .embed-copy-btn {{ background:#1a1a2e; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:.82rem; cursor:pointer; font-family:inherit; transition:background .15s; }}
+    .embed-copy-btn:hover {{ background:#2d2d50; }}
+    .embed-preview-label {{ font-size:.72rem; color:#999; margin:14px 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }}
+    .embed-iframe-wrap {{ border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; height:200px; }}
+    .embed-iframe-wrap iframe {{ width:100%; height:100%; border:none; transform:scale(.6); transform-origin:top left; width:167%; height:167%; pointer-events:none; }}
   </style>
 </head>
 <body>
@@ -463,6 +479,7 @@
         <a class="platform-btn btn-apple" href="https://podcasts.apple.com/us/podcast/shimshone-attali-israeltorah-la-torah-disrael/id1896558116" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.3a7.7 7.7 0 0 1 5.44 13.14c-.37.37-.79.69-1.25.94-.1-.76-.28-1.63-.58-2.35.52-.48.87-1.15.87-1.9 0-1.43-1.16-2.59-2.59-2.59s-2.59 1.16-2.59 2.59c0 .75.32 1.42.83 1.9-.3.72-.48 1.59-.58 2.35a7.68 7.68 0 0 1-1.25-.94A7.7 7.7 0 0 1 12 4.3zm0 2.1a5.6 5.6 0 0 0-3.96 9.56c.18-.83.46-1.74.9-2.45a4.15 4.15 0 0 1-.54-2.03A3.6 3.6 0 0 1 12 7.9a3.6 3.6 0 0 1 3.6 3.58 4.15 4.15 0 0 1-.54 2.03c.44.71.72 1.62.9 2.45A5.6 5.6 0 0 0 12 6.4zm0 3.1a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 5.6c1.05 0 1.82.28 2.3.55-.26 1.18-.38 2.28-.32 3.03a7.65 7.65 0 0 1-1.98.26 7.65 7.65 0 0 1-1.98-.26c.06-.75-.06-1.85-.32-3.03.48-.27 1.25-.55 2.3-.55z"/></svg>Apple Podcasts</a>
         <a class="platform-btn btn-deezer" href="https://deezer.com/show/1003040381" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.944 17.369h4.512v1.601h-4.512zm0-3.075h4.512v1.6h-4.512zm0-3.074h4.512v1.601h-4.512zm-5.944 6.15h4.512v1.6H13zm0-3.075h4.512v1.6H13zm0-3.074h4.512v1.601H13zm-5.944 6.149h4.512v1.6H7.056zm0-3.075h4.512v1.6H7.056zM1.112 17.37h4.512v1.6H1.112z"/></svg>Deezer</a>
         <a class="platform-btn btn-rss" href="https://thetorahpodcast.net/feeds/rav-shimshone-attali.xml" target="_blank" rel="noopener">RSS</a>
+        <button class="platform-btn btn-embed" onclick="openEmbedModal()">⊞ Intégrer</button>
       </div>
     </div>
   </div>
@@ -474,11 +491,11 @@
       <div class="ep-body">
         <a class="ep-title" href="rav-shimshone-attali/des-histoires-incroyables-152-quand-rav-mimoun-etait-enfant-2026-05-14.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…</a>
         <time class="ep-date" datetime="2026-05-14">14 mai 2026</time>
-        <p class="ep-desc">Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.com
-
-Merci de vous abonner à nos vidéos sur YouTube et de partager un Max !
-
-IMPORTANT
+        <p class="ep-desc">Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.com
+
+Merci de vous abonner à nos vidéos sur YouTube et de partager un Max !
+
+IMPORTANT
 Soyez un des pa</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="RD4b8EA50LI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/RD4b8EA50LI_DES_HISTOIRES_INCROYABLES_152_-_Quand_Rav_Mimoun_était_enfant.mp3" data-title="DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…" data-thumb="https://i.ytimg.com/vi/RD4b8EA50LI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/des-histoires-incroyables-152-quand-rav-mimoun-etait-enfant-2026-05-14.html" data-title="DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -516,11 +533,11 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde </p>
       <div class="ep-body">
         <a class="ep-title" href="rav-shimshone-attali/voyage-a-travers-la-parachat-bamidbar-34-2eme-rav-shmouel-timestit-2026-05-13.html" style="color:inherit;text-decoration:none;display:block">VOYAGE à travers la Parachat (BAMIDBAR 34 - 2eme) - Rav Shmouel Timestit</a>
         <time class="ep-date" datetime="2026-05-13">13 mai 2026</time>
-        <p class="ep-desc">Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv
-
-Merci de vous abonner à nos vidéos sur YouTube et de partager un Max !
-
-IMPORTANT
+        <p class="ep-desc">Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv
+
+Merci de vous abonner à nos vidéos sur YouTube et de partager un Max !
+
+IMPORTANT
 Soyez un des par</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="P6BdbHXpRSs" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/P6BdbHXpRSs_VOYAGE_à_travers_la_Parachat__BAMIDBAR_34_-_2eme__-_Rav_Shmouel_Timestit.mp3" data-title="VOYAGE à travers la Parachat (BAMIDBAR 34 - 2eme) - Rav Shmouel Timestit" data-thumb="https://i.ytimg.com/vi/P6BdbHXpRSs/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/voyage-a-travers-la-parachat-bamidbar-34-2eme-rav-shmouel-timestit-2026-05-13.html" data-title="VOYAGE à travers la Parachat (BAMIDBAR 34 - 2eme) - Rav Shmouel Timestit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -650,11 +667,11 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde </p>
       <div class="ep-body">
         <a class="ep-title" href="rav-shimshone-attali/voyage-a-travers-la-parachat-behar-behoukotai-32-33-2eme-rav-shmouel-t-2026-05-07.html" style="color:inherit;text-decoration:none;display:block">VOYAGE à travers la Parachat (BEHAR / BEHOUKOTAI - 32 / 33 2eme) - Rav Shmouel Timestit</a>
         <time class="ep-date" datetime="2026-05-07">7 mai 2026</time>
-        <p class="ep-desc">Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv
-
-Merci de vous abonner à nos vidéos sur YouTube et de partager un Max !
-
-IMPORTANT
+        <p class="ep-desc">Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv
+
+Merci de vous abonner à nos vidéos sur YouTube et de partager un Max !
+
+IMPORTANT
 Soyez un des par</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="feIxhoWTT80" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/feIxhoWTT80_VOYAGE_à_travers_la_Parachat__BEHAR___BEHOUKOTAI_-_32___33_2eme__-_Rav_Shmouel_T.mp3" data-title="VOYAGE à travers la Parachat (BEHAR / BEHOUKOTAI - 32 / 33 2eme) - Rav Shmouel Timestit" data-thumb="https://i.ytimg.com/vi/feIxhoWTT80/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/voyage-a-travers-la-parachat-behar-behoukotai-32-33-2eme-rav-shmouel-t-2026-05-07.html" data-title="VOYAGE à travers la Parachat (BEHAR / BEHOUKOTAI - 32 / 33 2eme) - Rav Shmouel Timestit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -776,11 +793,11 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde </p>
       <div class="ep-body">
         <a class="ep-title" href="rav-shimshone-attali/voyage-a-travers-la-parachat-emor-31-2eme-rav-shmouel-timestit-2026-04-29.html" style="color:inherit;text-decoration:none;display:block">VOYAGE à travers la Parachat (EMOR 31 - 2eme) - Rav Shmouel Timestit</a>
         <time class="ep-date" datetime="2026-04-29">29 avril 2026</time>
-        <p class="ep-desc">Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv
-
-Merci de vous abonner à nos vidéos sur YouTube et de partager un Max !
-
-IMPORTANT
+        <p class="ep-desc">Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv
+
+Merci de vous abonner à nos vidéos sur YouTube et de partager un Max !
+
+IMPORTANT
 Soyez un des par</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="zsvyyaGJG94" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/zsvyyaGJG94_VOYAGE_à_travers_la_Parachat__EMOR_31_-_2eme__-_Rav_Shmouel_Timestit.mp3" data-title="VOYAGE à travers la Parachat (EMOR 31 - 2eme) - Rav Shmouel Timestit" data-thumb="https://i.ytimg.com/vi/zsvyyaGJG94/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/voyage-a-travers-la-parachat-emor-31-2eme-rav-shmouel-timestit-2026-04-29.html" data-title="VOYAGE à travers la Parachat (EMOR 31 - 2eme) - Rav Shmouel Timestit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -1090,7 +1107,7 @@ Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www
       <div class="ep-body">
         <a class="ep-title" href="rav-shimshone-attali/les-plus-grands-debats-de-la-torah-saison-1-2011-12-30.html" style="color:inherit;text-decoration:none;display:block">LES PLUS GRANDS DEBATS DE LA TORAH - SAISON 1</a>
         <time class="ep-date" datetime="2011-12-30">30 décembre 2011</time>
-        <p class="ep-desc">A AVOIR ABSOLUMENT !
+        <p class="ep-desc">A AVOIR ABSOLUMENT !
 POUR ACHETER LE COFFRET SAISON 1 : http://www.israeltorah.com</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="qOorj4rG9pY" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/qOorj4rG9pY_LES_PLUS_GRANDS_DEBATS_DE_LA_TORAH_-_SAISON_1.mp3" data-title="LES PLUS GRANDS DEBATS DE LA TORAH - SAISON 1" data-thumb="https://i.ytimg.com/vi/qOorj4rG9pY/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/les-plus-grands-debats-de-la-torah-saison-1-2011-12-30.html" data-title="LES PLUS GRANDS DEBATS DE LA TORAH - SAISON 1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -1100,7 +1117,7 @@ POUR ACHETER LE COFFRET SAISON 1 : http://www.israeltorah.com</p>
       <div class="ep-body">
         <a class="ep-title" href="rav-shimshone-attali/shalom-bait-le-coffret-2011-12-29.html" style="color:inherit;text-decoration:none;display:block">SHALOM BAIT - LE COFFRET</a>
         <time class="ep-date" datetime="2011-12-29">29 décembre 2011</time>
-        <p class="ep-desc">A AVOIR ABSOLUMENT !
+        <p class="ep-desc">A AVOIR ABSOLUMENT !
 POUR ACHETER SHALOM BAIT, LE COFFRET : http://www.israeltorah.com</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="mOHjZDWaPCw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/mOHjZDWaPCw_SHALOM_BAIT_-_LE_COFFRET.mp3" data-title="SHALOM BAIT - LE COFFRET" data-thumb="https://i.ytimg.com/vi/mOHjZDWaPCw/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/shalom-bait-le-coffret-2011-12-29.html" data-title="SHALOM BAIT - LE COFFRET"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -1230,7 +1247,7 @@ Merci</p>
       <div class="ep-body">
         <a class="ep-title" href="rav-shimshone-attali/eshet-hayil-les-rabbanit-eliahou-assouline-taieb-marouani-mettoudi-2011-02-22.html" style="color:inherit;text-decoration:none;display:block">ESHET HAYIL - LES RABBANIT ELIAHOU, ASSOULINE, TAIEB, MAROUANI, METTOUDI</a>
         <time class="ep-date" datetime="2011-02-22">22 février 2011</time>
-        <p class="ep-desc">A VOIR ABSOLUMENT !
+        <p class="ep-desc">A VOIR ABSOLUMENT !
 POUR ACHETER LE DVD 14 : http://www.israeltorah.com</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="PGFhOI4eaV4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PGFhOI4eaV4_ESHET_HAYIL_-_LES_RABBANIT_ELIAHOU__ASSOULINE__TAIEB__MAROUANI__METTOUDI.mp3" data-title="ESHET HAYIL - LES RABBANIT ELIAHOU, ASSOULINE, TAIEB, MAROUANI, METTOUDI" data-thumb="https://i.ytimg.com/vi/PGFhOI4eaV4/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/eshet-hayil-les-rabbanit-eliahou-assouline-taieb-marouani-mettoudi-2011-02-22.html" data-title="ESHET HAYIL - LES RABBANIT ELIAHOU, ASSOULINE, TAIEB, MAROUANI, METTOUDI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -1252,7 +1269,7 @@ Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www
       <div class="ep-body">
         <a class="ep-title" href="rav-shimshone-attali/rav-elie-kling-et-rav-david-touitou-les-armees-d-israel-2010-12-28.html" style="color:inherit;text-decoration:none;display:block">RAV ELIE KLING ET RAV DAVID TOUITOU - LES ARMEES D&#x27;ISRAEL</a>
         <time class="ep-date" datetime="2010-12-28">28 décembre 2010</time>
-        <p class="ep-desc">A VOIR ABSOLUMENT !
+        <p class="ep-desc">A VOIR ABSOLUMENT !
 POUR ACHETER LE DVD 12: http://www.israeltorah.com</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="kIC9Dv6iCZI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/kIC9Dv6iCZI_RAV_ELIE_KLING_ET_RAV_DAVID_TOUITOU_-_LES_ARMEES_D_ISRAEL.mp3" data-title="RAV ELIE KLING ET RAV DAVID TOUITOU - LES ARMEES D&#x27;ISRAEL" data-thumb="https://i.ytimg.com/vi/kIC9Dv6iCZI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/rav-elie-kling-et-rav-david-touitou-les-armees-d-israel-2010-12-28.html" data-title="RAV ELIE KLING ET RAV DAVID TOUITOU - LES ARMEES D&#x27;ISRAEL"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -1413,6 +1430,22 @@ Merci de vous abonner à nos vidéos</p>
   </div>
   <div class="toast" id="toast"></div>
 </main>
+<div class="embed-modal" id="embed-modal">
+  <div class="embed-box">
+    <div class="embed-box-header">
+      <h3>Intégrer ce podcast</h3>
+      <button class="embed-close" id="embed-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="embed-code" id="embed-code">&lt;iframe src="https://thetorahpodcast.net/embed.html?slug=rav-shimshone-attali" width="380" height="560" frameborder="0" allow="autoplay" style="border-radius:12px"&gt;&lt;/iframe&gt;</div>
+    <div class="embed-actions">
+      <button class="embed-copy-btn" id="embed-copy-btn">Copier le code</button>
+    </div>
+    <div class="embed-preview-label">Aperçu</div>
+    <div class="embed-iframe-wrap">
+      <iframe src="https://thetorahpodcast.net/embed.html?slug=rav-shimshone-attali" title="Aperçu embed" loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
 <div id="player" class="hidden">
   <img id="player-art" src="" alt="">
   <div id="player-info">
@@ -1591,6 +1624,22 @@ Merci de vous abonner à nos vidéos</p>
     const url = `https://thetorahpodcast.net/${btn.dataset.epfile}`;
     if (navigator.share) navigator.share({title: btn.dataset.title, url});
     else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
+  });
+  // Embed modal
+  function openEmbedModal() { document.getElementById('embed-modal').classList.add('open'); }
+  document.getElementById('embed-close').addEventListener('click', () => {
+    document.getElementById('embed-modal').classList.remove('open');
+  });
+  document.getElementById('embed-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+  document.getElementById('embed-copy-btn').addEventListener('click', () => {
+    const code = document.getElementById('embed-code').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById('embed-copy-btn');
+      btn.textContent = '✓ Copié !';
+      setTimeout(() => { btn.textContent = 'Copier le code'; }, 2000);
+    });
   });
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>

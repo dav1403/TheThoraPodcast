@@ -163,7 +163,23 @@ CSS = """\
     #player .speed-btn:hover, #player .speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
     #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
     #player-close:hover { color:#fff; }
-    @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}"""
+    @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}
+    .btn-embed {{ background:#f5f5f0; color:#555; border:1px solid #ddd; }}
+    .btn-embed:hover {{ background:#eee; border-color:#bbb; }}
+    .embed-modal {{ display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }}
+    .embed-modal.open {{ display:flex; }}
+    .embed-box {{ background:#fff; border-radius:16px; padding:24px; max-width:460px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,.3); }}
+    .embed-box-header {{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }}
+    .embed-box-header h3 {{ font-size:.95rem; font-weight:700; }}
+    .embed-close {{ background:none; border:none; color:#aaa; font-size:1.3rem; cursor:pointer; line-height:1; padding:0; }}
+    .embed-close:hover {{ color:#333; }}
+    .embed-code {{ background:#f5f5f0; border-radius:8px; padding:12px; font-family:monospace; font-size:.72rem; color:#333; white-space:pre-wrap; word-break:break-all; margin-bottom:12px; border:1px solid #e0e0e0; user-select:all; cursor:text; }}
+    .embed-actions {{ display:flex; gap:8px; align-items:center; }}
+    .embed-copy-btn {{ background:#1a1a2e; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:.82rem; cursor:pointer; font-family:inherit; transition:background .15s; }}
+    .embed-copy-btn:hover {{ background:#2d2d50; }}
+    .embed-preview-label {{ font-size:.72rem; color:#999; margin:14px 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }}
+    .embed-iframe-wrap {{ border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; height:200px; }}
+    .embed-iframe-wrap iframe {{ width:100%; height:100%; border:none; transform:scale(.6); transform-origin:top left; width:167%; height:167%; pointer-events:none; }}"""
 
 GTAG = """\
   <link rel="preconnect" href="https://www.googletagmanager.com">
@@ -211,6 +227,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
             )
     rss_url = ch.get("rss_url") or f"{BASE_URL}/feeds/{slug}.xml"
     btns.append(f'<a class="platform-btn btn-rss" href="{esc(rss_url)}" target="_blank" rel="noopener">RSS</a>')
+    btns.append(f'<button class="platform-btn btn-embed" onclick="openEmbedModal()">⊞ Intégrer</button>')
     platform_html = "\n        ".join(btns)
 
     # Static episode list
@@ -377,6 +394,22 @@ def render_page(ch: dict, entries: list, all_channels: list,
   </div>
   <div class="toast" id="toast"></div>
 </main>
+<div class="embed-modal" id="embed-modal">
+  <div class="embed-box">
+    <div class="embed-box-header">
+      <h3>Intégrer ce podcast</h3>
+      <button class="embed-close" id="embed-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="embed-code" id="embed-code">&lt;iframe src="https://thetorahpodcast.net/embed.html?slug={slug}" width="380" height="560" frameborder="0" allow="autoplay" style="border-radius:12px"&gt;&lt;/iframe&gt;</div>
+    <div class="embed-actions">
+      <button class="embed-copy-btn" id="embed-copy-btn">Copier le code</button>
+    </div>
+    <div class="embed-preview-label">Aperçu</div>
+    <div class="embed-iframe-wrap">
+      <iframe src="https://thetorahpodcast.net/embed.html?slug={slug}" title="Aperçu embed" loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
 <div id="player" class="hidden">
   <img id="player-art" src="" alt="">
   <div id="player-info">
@@ -555,6 +588,22 @@ def render_page(ch: dict, entries: list, all_channels: list,
     const url = `https://thetorahpodcast.net/${{btn.dataset.epfile}}`;
     if (navigator.share) navigator.share({{title: btn.dataset.title, url}});
     else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
+  }});
+  // Embed modal
+  function openEmbedModal() {{ document.getElementById('embed-modal').classList.add('open'); }}
+  document.getElementById('embed-close').addEventListener('click', () => {{
+    document.getElementById('embed-modal').classList.remove('open');
+  }});
+  document.getElementById('embed-modal').addEventListener('click', e => {{
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  }});
+  document.getElementById('embed-copy-btn').addEventListener('click', () => {{
+    const code = document.getElementById('embed-code').textContent;
+    navigator.clipboard.writeText(code).then(() => {{
+      const btn = document.getElementById('embed-copy-btn');
+      btn.textContent = '✓ Copié !';
+      setTimeout(() => {{ btn.textContent = 'Copier le code'; }}, 2000);
+    }});
   }});
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>

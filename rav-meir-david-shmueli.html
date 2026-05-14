@@ -416,6 +416,22 @@
     #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
     #player-close:hover { color:#fff; }
     @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}
+    .btn-embed {{ background:#f5f5f0; color:#555; border:1px solid #ddd; }}
+    .btn-embed:hover {{ background:#eee; border-color:#bbb; }}
+    .embed-modal {{ display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }}
+    .embed-modal.open {{ display:flex; }}
+    .embed-box {{ background:#fff; border-radius:16px; padding:24px; max-width:460px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,.3); }}
+    .embed-box-header {{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }}
+    .embed-box-header h3 {{ font-size:.95rem; font-weight:700; }}
+    .embed-close {{ background:none; border:none; color:#aaa; font-size:1.3rem; cursor:pointer; line-height:1; padding:0; }}
+    .embed-close:hover {{ color:#333; }}
+    .embed-code {{ background:#f5f5f0; border-radius:8px; padding:12px; font-family:monospace; font-size:.72rem; color:#333; white-space:pre-wrap; word-break:break-all; margin-bottom:12px; border:1px solid #e0e0e0; user-select:all; cursor:text; }}
+    .embed-actions {{ display:flex; gap:8px; align-items:center; }}
+    .embed-copy-btn {{ background:#1a1a2e; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:.82rem; cursor:pointer; font-family:inherit; transition:background .15s; }}
+    .embed-copy-btn:hover {{ background:#2d2d50; }}
+    .embed-preview-label {{ font-size:.72rem; color:#999; margin:14px 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }}
+    .embed-iframe-wrap {{ border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; height:200px; }}
+    .embed-iframe-wrap iframe {{ width:100%; height:100%; border:none; transform:scale(.6); transform-origin:top left; width:167%; height:167%; pointer-events:none; }}
   </style>
 </head>
 <body>
@@ -463,6 +479,7 @@
         <a class="platform-btn btn-apple" href="https://podcasts.apple.com/us/podcast/ישיבת-חזון-מרדכי-הרב-מאיר-דוד-שמואלי/id1895039409" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.3a7.7 7.7 0 0 1 5.44 13.14c-.37.37-.79.69-1.25.94-.1-.76-.28-1.63-.58-2.35.52-.48.87-1.15.87-1.9 0-1.43-1.16-2.59-2.59-2.59s-2.59 1.16-2.59 2.59c0 .75.32 1.42.83 1.9-.3.72-.48 1.59-.58 2.35a7.68 7.68 0 0 1-1.25-.94A7.7 7.7 0 0 1 12 4.3zm0 2.1a5.6 5.6 0 0 0-3.96 9.56c.18-.83.46-1.74.9-2.45a4.15 4.15 0 0 1-.54-2.03A3.6 3.6 0 0 1 12 7.9a3.6 3.6 0 0 1 3.6 3.58 4.15 4.15 0 0 1-.54 2.03c.44.71.72 1.62.9 2.45A5.6 5.6 0 0 0 12 6.4zm0 3.1a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 5.6c1.05 0 1.82.28 2.3.55-.26 1.18-.38 2.28-.32 3.03a7.65 7.65 0 0 1-1.98.26 7.65 7.65 0 0 1-1.98-.26c.06-.75-.06-1.85-.32-3.03.48-.27 1.25-.55 2.3-.55z"/></svg>Apple Podcasts</a>
         <a class="platform-btn btn-deezer" href="https://deezer.com/show/1002921821" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.944 17.369h4.512v1.601h-4.512zm0-3.075h4.512v1.6h-4.512zm0-3.074h4.512v1.601h-4.512zm-5.944 6.15h4.512v1.6H13zm0-3.075h4.512v1.6H13zm0-3.074h4.512v1.601H13zm-5.944 6.149h4.512v1.6H7.056zm0-3.075h4.512v1.6H7.056zM1.112 17.37h4.512v1.6H1.112z"/></svg>Deezer</a>
         <a class="platform-btn btn-rss" href="https://thetorahpodcast.net/feeds/rav-meir-david-shmueli.xml" target="_blank" rel="noopener">RSS</a>
+        <button class="platform-btn btn-embed" onclick="openEmbedModal()">⊞ Intégrer</button>
       </div>
     </div>
   </div>
@@ -8008,6 +8025,22 @@ https://nedar.im/aDPy
   </div>
   <div class="toast" id="toast"></div>
 </main>
+<div class="embed-modal" id="embed-modal">
+  <div class="embed-box">
+    <div class="embed-box-header">
+      <h3>Intégrer ce podcast</h3>
+      <button class="embed-close" id="embed-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="embed-code" id="embed-code">&lt;iframe src="https://thetorahpodcast.net/embed.html?slug=rav-meir-david-shmueli" width="380" height="560" frameborder="0" allow="autoplay" style="border-radius:12px"&gt;&lt;/iframe&gt;</div>
+    <div class="embed-actions">
+      <button class="embed-copy-btn" id="embed-copy-btn">Copier le code</button>
+    </div>
+    <div class="embed-preview-label">Aperçu</div>
+    <div class="embed-iframe-wrap">
+      <iframe src="https://thetorahpodcast.net/embed.html?slug=rav-meir-david-shmueli" title="Aperçu embed" loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
 <div id="player" class="hidden">
   <img id="player-art" src="" alt="">
   <div id="player-info">
@@ -8186,6 +8219,22 @@ https://nedar.im/aDPy
     const url = `https://thetorahpodcast.net/${btn.dataset.epfile}`;
     if (navigator.share) navigator.share({title: btn.dataset.title, url});
     else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
+  });
+  // Embed modal
+  function openEmbedModal() { document.getElementById('embed-modal').classList.add('open'); }
+  document.getElementById('embed-close').addEventListener('click', () => {
+    document.getElementById('embed-modal').classList.remove('open');
+  });
+  document.getElementById('embed-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+  document.getElementById('embed-copy-btn').addEventListener('click', () => {
+    const code = document.getElementById('embed-code').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById('embed-copy-btn');
+      btn.textContent = '✓ Copié !';
+      setTimeout(() => { btn.textContent = 'Copier le code'; }, 2000);
+    });
   });
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>

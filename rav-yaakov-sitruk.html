@@ -416,6 +416,22 @@
     #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
     #player-close:hover { color:#fff; }
     @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}
+    .btn-embed {{ background:#f5f5f0; color:#555; border:1px solid #ddd; }}
+    .btn-embed:hover {{ background:#eee; border-color:#bbb; }}
+    .embed-modal {{ display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }}
+    .embed-modal.open {{ display:flex; }}
+    .embed-box {{ background:#fff; border-radius:16px; padding:24px; max-width:460px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,.3); }}
+    .embed-box-header {{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }}
+    .embed-box-header h3 {{ font-size:.95rem; font-weight:700; }}
+    .embed-close {{ background:none; border:none; color:#aaa; font-size:1.3rem; cursor:pointer; line-height:1; padding:0; }}
+    .embed-close:hover {{ color:#333; }}
+    .embed-code {{ background:#f5f5f0; border-radius:8px; padding:12px; font-family:monospace; font-size:.72rem; color:#333; white-space:pre-wrap; word-break:break-all; margin-bottom:12px; border:1px solid #e0e0e0; user-select:all; cursor:text; }}
+    .embed-actions {{ display:flex; gap:8px; align-items:center; }}
+    .embed-copy-btn {{ background:#1a1a2e; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:.82rem; cursor:pointer; font-family:inherit; transition:background .15s; }}
+    .embed-copy-btn:hover {{ background:#2d2d50; }}
+    .embed-preview-label {{ font-size:.72rem; color:#999; margin:14px 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }}
+    .embed-iframe-wrap {{ border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; height:200px; }}
+    .embed-iframe-wrap iframe {{ width:100%; height:100%; border:none; transform:scale(.6); transform-origin:top left; width:167%; height:167%; pointer-events:none; }}
   </style>
 </head>
 <body>
@@ -463,6 +479,7 @@
         <a class="platform-btn btn-apple" href="https://podcasts.apple.com/us/podcast/alef-ledoroth-rav-yakov-sitruk/id1893373428" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.3a7.7 7.7 0 0 1 5.44 13.14c-.37.37-.79.69-1.25.94-.1-.76-.28-1.63-.58-2.35.52-.48.87-1.15.87-1.9 0-1.43-1.16-2.59-2.59-2.59s-2.59 1.16-2.59 2.59c0 .75.32 1.42.83 1.9-.3.72-.48 1.59-.58 2.35a7.68 7.68 0 0 1-1.25-.94A7.7 7.7 0 0 1 12 4.3zm0 2.1a5.6 5.6 0 0 0-3.96 9.56c.18-.83.46-1.74.9-2.45a4.15 4.15 0 0 1-.54-2.03A3.6 3.6 0 0 1 12 7.9a3.6 3.6 0 0 1 3.6 3.58 4.15 4.15 0 0 1-.54 2.03c.44.71.72 1.62.9 2.45A5.6 5.6 0 0 0 12 6.4zm0 3.1a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 5.6c1.05 0 1.82.28 2.3.55-.26 1.18-.38 2.28-.32 3.03a7.65 7.65 0 0 1-1.98.26 7.65 7.65 0 0 1-1.98-.26c.06-.75-.06-1.85-.32-3.03.48-.27 1.25-.55 2.3-.55z"/></svg>Apple Podcasts</a>
         <a class="platform-btn btn-deezer" href="https://www.deezer.com/en/show/1002884601" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.944 17.369h4.512v1.601h-4.512zm0-3.075h4.512v1.6h-4.512zm0-3.074h4.512v1.601h-4.512zm-5.944 6.15h4.512v1.6H13zm0-3.075h4.512v1.6H13zm0-3.074h4.512v1.601H13zm-5.944 6.149h4.512v1.6H7.056zm0-3.075h4.512v1.6H7.056zM1.112 17.37h4.512v1.6H1.112z"/></svg>Deezer</a>
         <a class="platform-btn btn-rss" href="https://thetorahpodcast.net/feeds/rav-yaakov-sitruk.xml" target="_blank" rel="noopener">RSS</a>
+        <button class="platform-btn btn-embed" onclick="openEmbedModal()">⊞ Intégrer</button>
       </div>
     </div>
   </div>
@@ -1866,7 +1883,7 @@ Sans oublier notre groupe Facebook, pour suivre nos événemen</p>
       <div class="ep-body">
         <a class="ep-title" href="rav-yaakov-sitruk/yakov-sitruk-a-chacun-son-assistance-d-hashem-vayeshev-5780-2019-12-18.html" style="color:inherit;text-decoration:none;display:block">Yakov Sitruk - A chacun son &quot;assistance d&#x27;Hashem&quot; (Vayeshev 5780)</a>
         <time class="ep-date" datetime="2019-12-18">18 décembre 2019</time>
-        <p class="ep-desc">Abonnez-vous sur notre chaîne YouTube pour une nouvelle vidéo tous les jeudis (quand il y a cours) : https://www.youtube.com/c/alefledoroth
+        <p class="ep-desc">Abonnez-vous sur notre chaîne YouTube pour une nouvelle vidéo tous les jeudis (quand il y a cours) : https://www.youtube.com/c/alefledoroth
 Sans oublier notre groupe Facebook, pour suivre nos événeme</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="PyeDF1NYb6g" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PyeDF1NYb6g_Yakov_Sitruk_-_A_chacun_son__assistance_d_Hashem___Vayeshev_5780.mp3" data-title="Yakov Sitruk - A chacun son &quot;assistance d&#x27;Hashem&quot; (Vayeshev 5780)" data-thumb="https://i.ytimg.com/vi/PyeDF1NYb6g/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/yakov-sitruk-a-chacun-son-assistance-d-hashem-vayeshev-5780-2019-12-18.html" data-title="Yakov Sitruk - A chacun son &quot;assistance d&#x27;Hashem&quot; (Vayeshev 5780)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -1876,7 +1893,7 @@ Sans oublier notre groupe Facebook, pour suivre nos événeme</p>
       <div class="ep-body">
         <a class="ep-title" href="rav-yaakov-sitruk/yakov-sitruk-l-interet-de-connaitre-l-avenir-vayishlah-5780-2019-12-11.html" style="color:inherit;text-decoration:none;display:block">Yakov Sitruk - L&#x27;intérêt de connaître l&#x27;avenir (Vayishlaḥ 5780)</a>
         <time class="ep-date" datetime="2019-12-11">11 décembre 2019</time>
-        <p class="ep-desc">Abonnez-vous sur notre chaîne YouTube pour une nouvelle vidéo tous les jeudis (quand il y a cours) : https://www.youtube.com/c/alefledoroth
+        <p class="ep-desc">Abonnez-vous sur notre chaîne YouTube pour une nouvelle vidéo tous les jeudis (quand il y a cours) : https://www.youtube.com/c/alefledoroth
 Sans oublier notre groupe Facebook, pour suivre nos événeme</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="28fjjIebhS8" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/28fjjIebhS8_Yakov_Sitruk_-_L_intérêt_de_connaître_l_avenir__Vayishlaḥ_5780.mp3" data-title="Yakov Sitruk - L&#x27;intérêt de connaître l&#x27;avenir (Vayishlaḥ 5780)" data-thumb="https://i.ytimg.com/vi/28fjjIebhS8/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/yakov-sitruk-l-interet-de-connaitre-l-avenir-vayishlah-5780-2019-12-11.html" data-title="Yakov Sitruk - L&#x27;intérêt de connaître l&#x27;avenir (Vayishlaḥ 5780)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -1886,7 +1903,7 @@ Sans oublier notre groupe Facebook, pour suivre nos événeme</p>
       <div class="ep-body">
         <a class="ep-title" href="rav-yaakov-sitruk/yakov-sitruk-succes-ou-epreuve-une-question-de-positionnement-vayetse-2019-12-05.html" style="color:inherit;text-decoration:none;display:block">Yakov Sitruk - Succès ou épreuve ?  Une question de  positionnement (Vayetse 5780)</a>
         <time class="ep-date" datetime="2019-12-05">5 décembre 2019</time>
-        <p class="ep-desc">Abonnez-vous sur notre chaîne YouTube pour une nouvelle vidéo tous les jeudis (quand il y a cours) : https://www.youtube.com/c/alefledoroth
+        <p class="ep-desc">Abonnez-vous sur notre chaîne YouTube pour une nouvelle vidéo tous les jeudis (quand il y a cours) : https://www.youtube.com/c/alefledoroth
 Sans oublier notre groupe Facebook, pour suivre nos événeme</p>
         <div class="ep-actions"><button class="play-btn" data-ep-id="IDlU4AYV930" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/IDlU4AYV930_Yakov_Sitruk_-_Succès_ou_épreuve____Une_question_de__positionnement__Vayetse_578.mp3" data-title="Yakov Sitruk - Succès ou épreuve ?  Une question de  positionnement (Vayetse 5780)" data-thumb="https://i.ytimg.com/vi/IDlU4AYV930/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/yakov-sitruk-succes-ou-epreuve-une-question-de-positionnement-vayetse-2019-12-05.html" data-title="Yakov Sitruk - Succès ou épreuve ?  Une question de  positionnement (Vayetse 5780)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
       </div>
@@ -7155,6 +7172,22 @@ Sans oublier notre groupe Facebook, pour suivre nos événemen</p>
   </div>
   <div class="toast" id="toast"></div>
 </main>
+<div class="embed-modal" id="embed-modal">
+  <div class="embed-box">
+    <div class="embed-box-header">
+      <h3>Intégrer ce podcast</h3>
+      <button class="embed-close" id="embed-close" aria-label="Fermer">✕</button>
+    </div>
+    <div class="embed-code" id="embed-code">&lt;iframe src="https://thetorahpodcast.net/embed.html?slug=rav-yaakov-sitruk" width="380" height="560" frameborder="0" allow="autoplay" style="border-radius:12px"&gt;&lt;/iframe&gt;</div>
+    <div class="embed-actions">
+      <button class="embed-copy-btn" id="embed-copy-btn">Copier le code</button>
+    </div>
+    <div class="embed-preview-label">Aperçu</div>
+    <div class="embed-iframe-wrap">
+      <iframe src="https://thetorahpodcast.net/embed.html?slug=rav-yaakov-sitruk" title="Aperçu embed" loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
 <div id="player" class="hidden">
   <img id="player-art" src="" alt="">
   <div id="player-info">
@@ -7333,6 +7366,22 @@ Sans oublier notre groupe Facebook, pour suivre nos événemen</p>
     const url = `https://thetorahpodcast.net/${btn.dataset.epfile}`;
     if (navigator.share) navigator.share({title: btn.dataset.title, url});
     else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
+  });
+  // Embed modal
+  function openEmbedModal() { document.getElementById('embed-modal').classList.add('open'); }
+  document.getElementById('embed-close').addEventListener('click', () => {
+    document.getElementById('embed-modal').classList.remove('open');
+  });
+  document.getElementById('embed-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+  document.getElementById('embed-copy-btn').addEventListener('click', () => {
+    const code = document.getElementById('embed-code').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById('embed-copy-btn');
+      btn.textContent = '✓ Copié !';
+      setTimeout(() => { btn.textContent = 'Copier le code'; }, 2000);
+    });
   });
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>

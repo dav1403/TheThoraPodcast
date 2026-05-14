@@ -1,0 +1,880 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Torah Podcast — Cours de Torah en podcast</title>
+  <meta name="description" content="Écoutez les cours de Torah de vos rabbins préférés — Rav Itshak Cohen, Rav Yonathan Mergui, Rav Yaakov Sitruk et plus. Plus de 300 épisodes gratuits sur Spotify, Apple Podcasts et Deezer.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://thetorahpodcast.net/">
+  <link rel="alternate" hreflang="fr" href="https://thetorahpodcast.net/">
+  <link rel="alternate" hreflang="he" href="https://thetorahpodcast.net/">
+  <link rel="alternate" hreflang="x-default" href="https://thetorahpodcast.net/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://thetorahpodcast.net/">
+  <meta property="og:title" content="The Torah Podcast — Cours de Torah en podcast">
+  <meta property="og:description" content="Écoutez les cours de Torah de vos rabbins préférés. Plus de 300 épisodes gratuits sur Spotify, Apple Podcasts et Deezer.">
+  <meta property="og:image" content="https://thetorahpodcast.net/artwork/rav-itshak-cohen.png">
+  <meta property="og:site_name" content="The Torah Podcast">
+  <meta property="og:locale" content="fr_FR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Torah Podcast — Cours de Torah en podcast">
+  <meta name="twitter:description" content="Écoutez les cours de Torah de vos rabbins préférés. Plus de 300 épisodes gratuits sur Spotify, Apple Podcasts et Deezer.">
+  <meta name="twitter:image" content="https://thetorahpodcast.net/artwork/rav-itshak-cohen.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/",
+    "description": "Cours de Torah en podcast — Rav Itshak Cohen, Rav Yonathan Mergui, Rav Yaakov Sitruk et plus.",
+    "inLanguage": ["fr", "he"],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://thetorahpodcast.net/?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/artwork/rav-itshak-cohen.png">
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f5f0;
+      color: #222;
+      line-height: 1.5;
+      padding-bottom: 80px;
+    }
+
+    header {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 28px 20px 0;
+      text-align: center;
+    }
+    header h1 { font-size: 2rem; margin-bottom: 6px; }
+    header p  { color: #aab; font-size: 0.95rem; margin-bottom: 14px; }
+    .header-stats {
+      font-size: 0.88rem;
+      color: #9ab;
+      min-height: 1.3em;
+      margin-bottom: 12px;
+    }
+    .header-nav {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 16px 20px;
+    }
+    .header-nav a {
+      color: rgba(255,255,255,.65);
+      text-decoration: none;
+      font-size: 0.8rem;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.2);
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .header-nav a:hover { color: #fff; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.1); }
+    .header-nav a.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
+    .nav-dropdown { position: relative; display: inline-flex; }
+    .nav-dd-link { color: rgba(255,255,255,.65); text-decoration: none; font-size: .8rem; padding: 5px 4px 5px 14px; border-radius: 20px 0 0 20px; border: 1px solid rgba(255,255,255,.2); border-right: none; transition: background .15s, color .15s; }
+    .nav-dd-link:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+    .nav-dd-caret { color: rgba(255,255,255,.65); font-size: .8rem; padding: 5px 10px 5px 6px; border-radius: 0 20px 20px 0; border: 1px solid rgba(255,255,255,.2); border-left: none; background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
+    .nav-dd-caret:hover, .nav-dropdown.open .nav-dd-caret { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+    .nav-dd-link.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
+    .nav-dd-link.active + .nav-dd-caret { color: #1a1a2e; background: #fff; border-color: #fff; }
+    .nav-submenu { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #252545; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 10px; z-index: 300; box-shadow: 0 8px 28px rgba(0,0,0,.5); flex-wrap: wrap; gap: 4px; min-width: 340px; max-width: 92vw; }
+    .nav-dropdown.open .nav-submenu { display: flex; }
+    .nav-submenu a { color: rgba(255,255,255,.78); text-decoration: none; padding: 6px 12px; border-radius: 20px; font-size: .78rem; white-space: nowrap; border: 1px solid rgba(255,255,255,.15); transition: background .12s, color .12s; }
+    .nav-submenu a:hover { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
+    .nav-submenu .nav-submenu-all { color: rgba(255,255,255,.5); border-style: dashed; font-size: .74rem; margin-top: 4px; width: 100%; text-align: center; }
+    .lang-btn {
+      color: rgba(255,255,255,.65);
+      font-size: 0.8rem;
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s, color .15s;
+    }
+    .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+
+    /* Search */
+    .search-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #1a1a2e;
+      padding: 10px 16px 14px;
+    }
+    .search-inner {
+      position: relative;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.4);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 9px 16px 9px 40px;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      outline: none;
+    }
+    .search-input::placeholder { color: rgba(255,255,255,0.4); }
+    .search-input:focus { background: rgba(255,255,255,0.18); }
+
+    main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
+
+    /* Recents */
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #999;
+      margin-bottom: 10px;
+    }
+    #recents-section { margin-bottom: 32px; }
+    .recents-row {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: thin;
+    }
+    .recents-row::-webkit-scrollbar { height: 4px; }
+    .recents-row::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+    .recent-card {
+      flex-shrink: 0;
+      width: 150px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .recent-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .recent-card img {
+      width: 100%;
+      height: 84px;
+      object-fit: cover;
+      background: #e0e0e0;
+      display: block;
+    }
+    .recent-card-body { padding: 7px 9px 9px; }
+    .recent-card-ch {
+      font-size: 0.62rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .recent-card-title {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #222;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.3;
+      margin-bottom: 3px;
+    }
+    .recent-card-date { font-size: 0.62rem; color: #bbb; }
+
+    /* Channel sections */
+    .channel {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+    .channel[hidden] { display: none; }
+    .channel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid #eee;
+    }
+    .channel-header-left { display: flex; align-items: center; gap: 10px; }
+    .channel-art {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #e0e0e0;
+      flex-shrink: 0;
+    }
+    .channel-header h2 { font-size: 1.05rem; }
+    .rss-link {
+      font-size: 0.72rem;
+      color: #e87722;
+      text-decoration: none;
+      border: 1px solid #e87722;
+      border-radius: 4px;
+      padding: 3px 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .rss-link:hover { background: #e87722; color: #fff; }
+
+    .channel-platforms { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .ch-plat-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 50%;
+      text-decoration: none; transition: opacity .15s; flex-shrink: 0;
+    }
+    .ch-plat-btn:hover { opacity: 0.75; }
+    .ch-plat-btn svg { width: 13px; height: 13px; }
+    .ch-plat-spotify { background: #1DB954; color: #fff; }
+    .ch-plat-apple   { background: #872EC4; color: #fff; }
+    .ch-plat-deezer  { background: #EF5466; color: #fff; }
+
+    .episode-list { list-style: none; }
+    .episode {
+      display: flex;
+      gap: 14px;
+      padding: 13px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      align-items: flex-start;
+    }
+    .episode:last-child { border-bottom: none; }
+    .episode[hidden] { display: none; }
+    .episode-thumb {
+      width: 80px; height: 54px;
+      object-fit: cover;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background: #ddd;
+    }
+    .episode-thumb-ph {
+      width: 80px; height: 54px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      background: #e8e8e8;
+    }
+    .episode-body { flex: 1; min-width: 0; }
+    .episode-title {
+      font-weight: 600;
+      font-size: 0.88rem;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #222;
+      text-decoration: none;
+    }
+    .episode-date { font-size: 0.73rem; color: #888; margin-bottom: 6px; }
+    .episode-desc {
+      font-size: 0.78rem;
+      color: #555;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 7px;
+    }
+    .play-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 13px;
+      font-size: 0.76rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .play-btn:hover { background: #2d2d50; }
+    .play-btn.playing { background: #e87722; }
+    .play-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
+
+    .show-more-bar { padding: 11px 20px; border-top: 1px solid #f0f0f0; }
+    .show-more-btn {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      color: #555;
+      cursor: pointer;
+      width: 100%;
+    }
+    .show-more-btn:hover { background: #f5f5f0; border-color: #aaa; }
+
+    .state {
+      padding: 28px 20px;
+      text-align: center;
+      color: #888;
+      font-size: 0.9rem;
+    }
+    .state.loading::before {
+      content: '';
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid #ccc;
+      border-top-color: #555;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .no-results {
+      text-align: center;
+      color: #aaa;
+      padding: 48px 20px;
+      font-size: 0.9rem;
+    }
+
+    /* Persistent player */
+    #player {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #1a1a2e;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      box-shadow: 0 -2px 16px rgba(0,0,0,.25);
+      z-index: 200;
+      transform: translateY(0);
+      transition: transform .25s ease;
+    }
+    #player.hidden { transform: translateY(100%); }
+    #player-art {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #333;
+      flex-shrink: 0;
+    }
+    #player-info { min-width: 0; flex: 1; }
+    #player-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #player-channel { font-size: 0.68rem; color: #99a; }
+    #player-audio {
+      flex: 2;
+      min-width: 120px;
+      height: 32px;
+      accent-color: #e87722;
+    }
+    #player-close {
+      background: none;
+      border: none;
+      color: #778;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    #player-close:hover { color: #fff; }
+
+    @media (max-width: 500px) {
+      .episode-thumb, .episode-thumb-ph { display: none; }
+      #player-art { display: none; }
+    }
+    .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
+    .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
+    .player-speed { display:flex; gap:3px; flex-shrink:0; }
+    .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; transition:background .12s,color .12s; }
+    .speed-btn:hover,.speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+    .toast.show { opacity:1; }
+    .ep-btn-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>The Torah Podcast</h1>
+  <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <div class="header-stats" id="header-stats"></div>
+  <nav class="header-nav">
+    <a href="./" class="active" data-i18n="nav_home">Accueil</a>
+    <div class="nav-dropdown" id="nav-dropdown">
+      <a class="nav-dd-link" href="links.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
+      <div class="nav-submenu" id="nav-rabbis-submenu"></div>
+    </div>
+    <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
+    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+    <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
+    <a href="themes.html" data-i18n="nav_themes">Thème</a>
+    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
+  </nav>
+</header>
+
+<div class="search-wrap">
+  <div class="search-inner">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input class="search-input" id="search" type="search" data-i18n="|search_ph" placeholder="Rechercher un épisode ou un rav…" autocomplete="off">
+  </div>
+</div>
+
+<main id="app">
+  <div class="state loading">Chargement…</div>
+</main>
+
+<div id="player" class="hidden">
+  <img id="player-art" src="" alt="">
+  <div id="player-info">
+    <div id="player-title"></div>
+    <div id="player-channel"></div>
+  </div>
+  <audio id="player-audio" controls></audio>
+  <div class="player-speed">
+    <button class="speed-btn active" data-speed="1">1×</button>
+    <button class="speed-btn" data-speed="1.25">1.25×</button>
+    <button class="speed-btn" data-speed="1.5">1.5×</button>
+    <button class="speed-btn" data-speed="2">2×</button>
+  </div>
+  <button id="player-close" title="Fermer">✕</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── i18n ─────────────────────────────────────────────────────────────────
+  const I18N = {
+    fr: {
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_parasha:'Paracha', nav_themes:'Thème', nav_all_rabbis:'Tous les rabbins →',
+      lang_toggle:'עברית',
+      subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      search_ph:'Rechercher un épisode ou un rav…',
+      recents:'Derniers épisodes',
+      listen:'Écouter', playing:'En cours…', loading:'Chargement…',
+      no_results:'Aucun épisode trouvé.', no_episodes:'Aucun épisode disponible.', no_channels:'Aucune chaîne disponible.',
+      copied:'Lien copié !',
+    },
+    he: {
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא', nav_all_rabbis:'כל הרבנים →',
+      lang_toggle:'Français',
+      subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
+      search_ph:'חיפוש פרק או רב…',
+      recents:'פרקים אחרונים',
+      listen:'האזן', playing:'מתנגן…', loading:'טוען…',
+      no_results:'לא נמצאו פרקים.', no_episodes:'אין פרקים זמינים.', no_channels:'אין ערוצים זמינים.',
+      copied:'הקישור הועתק!',
+    },
+  };
+  let lang = localStorage.getItem('lang') || 'fr';
+  function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
+  function applyLang() {
+    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.dataset.i18n;
+      if (k.startsWith('|')) el.placeholder = t(k.slice(1));
+      else el.textContent = t(k);
+    });
+  }
+  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function renderStats(nCh, nEp) {
+    const el = document.getElementById('header-stats');
+    if (!el) return;
+    const approxH = Math.round(nEp * 0.75);
+    el.textContent = lang === 'he'
+      ? `${nCh} ערוצים · ${nEp} שיעורים · ~${approxH} שעות`
+      : `${nCh} chaînes · ${nEp} cours · ~${approxH}h de Torah`;
+  }
+  applyLang();
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('.nav-submenu')) return;
+    const caret = e.target.closest('.nav-dd-caret');
+    document.querySelectorAll('.nav-dropdown.open').forEach(el => {
+      if (!caret || el !== caret.closest('.nav-dropdown')) el.classList.remove('open');
+    });
+    if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
+  });
+
+  // ─── Player ───────────────────────────────────────────────────────────────
+  const PREVIEW_COUNT = 3;
+  const RECENTS_COUNT = 10;
+
+  let allData = [];
+  let activeBtn = null, currentEpId = null;
+  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+
+  const playerEl    = document.getElementById('player');
+  const playerAudio = document.getElementById('player-audio');
+  const playerTitle = document.getElementById('player-title');
+  const playerCh    = document.getElementById('player-channel');
+  const playerArt   = document.getElementById('player-art');
+
+  function setSpeed(rate) {
+    currentSpeed = rate;
+    localStorage.setItem('playbackSpeed', rate);
+    playerAudio.playbackRate = rate;
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
+  }
+  document.querySelectorAll('.speed-btn').forEach(b => b.addEventListener('click', () => setSpeed(parseFloat(b.dataset.speed))));
+  setSpeed(currentSpeed);
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg; toast.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.share-btn[data-epfile]');
+    if (!btn) return;
+    const url = `https://thetorahpodcast.net/${btn.dataset.epfile}`;
+    if (navigator.share) navigator.share({ title: btn.dataset.title, url });
+    else navigator.clipboard.writeText(url).then(() => showToast(t('copied')));
+  });
+
+  function playIcon() {
+    return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`;
+  }
+  function pauseIcon() {
+    return `<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>`;
+  }
+
+  function loadInPlayer(ep, chName, slug) {
+    currentEpId = ep.video_id;
+    playerTitle.textContent = ep.title;
+    playerCh.textContent    = chName;
+    playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
+    playerAudio.src         = ep.audio_url;
+    playerAudio.playbackRate = currentSpeed;
+    const saved = parseInt(localStorage.getItem('resume_' + ep.video_id) || '0');
+    if (saved > 5) {
+      playerAudio.addEventListener('loadedmetadata', () => { playerAudio.currentTime = saved; }, { once: true });
+    }
+    playerAudio.play();
+    playerEl.classList.remove('hidden');
+  }
+
+  playerAudio.addEventListener('timeupdate', () => {
+    if (currentEpId && playerAudio.currentTime > 5)
+      localStorage.setItem('resume_' + currentEpId, Math.floor(playerAudio.currentTime));
+  });
+
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.play-btn[data-slug]');
+    if (btn) {
+      if (btn === activeBtn) {
+        if (playerAudio.paused) {
+          playerAudio.play();
+          btn.classList.add('playing');
+          btn.innerHTML = pauseIcon() + ' ' + t('playing');
+        } else {
+          playerAudio.pause();
+          btn.classList.remove('playing');
+          btn.innerHTML = playIcon() + ' ' + t('listen');
+        }
+        return;
+      }
+      const slug = btn.dataset.slug;
+      const idx  = +btn.dataset.idx;
+      const d    = allData.find(x => x.ch.slug === slug);
+      if (!d) return;
+      if (activeBtn && activeBtn !== btn) {
+        activeBtn.classList.remove('playing');
+        activeBtn.innerHTML = playIcon() + ' Écouter';
+      }
+      activeBtn = btn;
+      btn.classList.add('playing');
+      btn.innerHTML = pauseIcon() + ' En cours…';
+      loadInPlayer(d.entries[idx], d.ch.name, slug);
+    }
+
+    const card = e.target.closest('.recent-card[data-slug]');
+    if (card) {
+      const slug = card.dataset.slug;
+      const idx  = +card.dataset.idx;
+      const d    = allData.find(x => x.ch.slug === slug);
+      if (d) loadInPlayer(d.entries[idx], d.ch.name, slug);
+    }
+  });
+
+  document.getElementById('player-close').addEventListener('click', () => {
+    playerAudio.pause();
+    playerEl.classList.add('hidden');
+    currentEpId = null;
+    if (activeBtn) {
+      activeBtn.classList.remove('playing');
+      activeBtn.innerHTML = playIcon() + ' ' + t('listen');
+      activeBtn = null;
+    }
+  });
+
+  playerAudio.addEventListener('ended', () => {
+    if (currentEpId) localStorage.removeItem('resume_' + currentEpId);
+    currentEpId = null;
+    if (activeBtn) {
+      activeBtn.classList.remove('playing');
+      activeBtn.innerHTML = playIcon() + ' ' + t('listen');
+      activeBtn = null;
+    }
+  });
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function slugify(title, maxLen = 70) {
+    return title.toLowerCase().normalize('NFD')
+      .replace(/\p{Mn}/gu, '')
+      .replace(/[^a-z0-9א-תװ-׻]+/gu, '-')
+      .replace(/^-+|-+$/g, '').replace(/-+/g, '-')
+      .slice(0, maxLen).replace(/-+$/, '');
+  }
+  function epUrl(ep, chSlug) {
+    var s = slugify(ep.title || '');
+    var prefix = chSlug + '-';
+    if (s.startsWith(prefix)) s = s.slice(prefix.length) || (ep.video_id || 'episode');
+    return `${chSlug}/${s}-${(ep.published || '').slice(0, 10)}.html`;
+  }
+
+  function formatDate(iso) {
+    const locale = lang === 'he' ? 'he-IL' : 'fr-FR';
+    return new Date(iso).toLocaleDateString(locale, { day:'numeric', month:'long', year:'numeric' });
+  }
+
+  function shareIcon() {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>`;
+  }
+  function renderEpisode(ep, slug, idx) {
+    const thumb = ep.thumbnail
+      ? `<img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+      : `<div class="episode-thumb-ph"></div>`;
+    const desc = ep.description
+      ? `<p class="episode-desc">${escapeHtml(ep.description)}</p>`
+      : '';
+    const playBtn = ep.audio_url
+      ? `<button class="play-btn" data-slug="${escapeHtml(slug)}" data-idx="${idx}">${playIcon()} ${t('listen')}</button>`
+      : '';
+    const shareBtn = ep.title && ep.published
+      ? `<button class="share-btn" data-epfile="${epUrl(ep, slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>`
+      : '';
+    return `
+      <li class="episode" data-title="${escapeHtml((ep.title + ' ' + (ep.tags || []).join(' ')).toLowerCase())}">
+        ${thumb}
+        <div class="episode-body">
+          <a class="episode-title" href="${epUrl(ep, slug)}">${escapeHtml(ep.title)}</a>
+          <div class="episode-date">${formatDate(ep.published)}</div>
+          ${desc}
+          <div class="ep-btn-row">${playBtn}${shareBtn}</div>
+        </div>
+      </li>`;
+  }
+
+  function buildRecents() {
+    const flat = [];
+    for (const { ch, entries } of allData) {
+      entries.forEach((ep, idx) => flat.push({ ep, ch, idx }));
+    }
+    flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
+
+    const cards = flat.slice(0, RECENTS_COUNT).map(({ ep, ch, idx }) => `
+      <div class="recent-card" data-slug="${escapeHtml(ch.slug)}" data-idx="${idx}">
+        <img src="${escapeHtml(ep.thumbnail || `artwork/${ch.slug}.png`)}" alt=""
+             loading="lazy" onerror="this.src='artwork/${escapeHtml(ch.slug)}.png'">
+        <div class="recent-card-body">
+          <div class="recent-card-ch">${escapeHtml(ch.name)}</div>
+          <div class="recent-card-title">${escapeHtml(ep.title)}</div>
+          <div class="recent-card-date">${formatDate(ep.published)}</div>
+        </div>
+      </div>`).join('');
+
+    const wrap = document.createElement('div');
+    wrap.id = 'recents-section';
+    wrap.innerHTML = `<div class="section-label">${t('recents')}</div><div class="recents-row">${cards}</div>`;
+    return wrap;
+  }
+
+  const PLAT_SVG = {
+    spotify: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`,
+    apple:   `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.3a7.7 7.7 0 0 1 5.44 13.14c-.37.37-.79.69-1.25.94-.1-.76-.28-1.63-.58-2.35.52-.48.87-1.15.87-1.9 0-1.43-1.16-2.59-2.59-2.59s-2.59 1.16-2.59 2.59c0 .75.32 1.42.83 1.9-.3.72-.48 1.59-.58 2.35a7.68 7.68 0 0 1-1.25-.94A7.7 7.7 0 0 1 12 4.3zm0 2.1a5.6 5.6 0 0 0-3.96 9.56c.18-.83.46-1.74.9-2.45a4.15 4.15 0 0 1-.54-2.03A3.6 3.6 0 0 1 12 7.9a3.6 3.6 0 0 1 3.6 3.58 4.15 4.15 0 0 1-.54 2.03c.44.71.72 1.62.9 2.45A5.6 5.6 0 0 0 12 6.4zm0 3.1a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 5.6c1.05 0 1.82.28 2.3.55-.26 1.18-.38 2.28-.32 3.03a7.65 7.65 0 0 1-1.98.26 7.65 7.65 0 0 1-1.98-.26c.06-.75-.06-1.85-.32-3.03.48-.27 1.25-.55 2.3-.55z"/></svg>`,
+    deezer:  `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.944 17.369h4.512v1.601h-4.512zm0-3.075h4.512v1.6h-4.512zm0-3.074h4.512v1.601h-4.512zm-5.944 6.15h4.512v1.6H13zm0-3.075h4.512v1.6H13zm0-3.074h4.512v1.601H13zm-5.944 6.149h4.512v1.6H7.056zm0-3.075h4.512v1.6H7.056zM1.112 17.37h4.512v1.6H1.112z"/></svg>`,
+  };
+
+  function buildChannel(ch, entries) {
+    const section = document.createElement('section');
+    section.className = 'channel';
+    section.id = ch.slug;
+    section.dataset.name = ch.name.toLowerCase();
+    const platHtml = Object.entries(ch.platforms || {})
+      .filter(([k, url]) => url && PLAT_SVG[k])
+      .map(([k, url]) => `<a class="ch-plat-btn ch-plat-${k}" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="${k.charAt(0).toUpperCase()+k.slice(1)}">${PLAT_SVG[k]}</a>`)
+      .join('');
+
+    section.innerHTML = `
+      <div class="channel-header">
+        <div class="channel-header-left">
+          <img class="channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt=""
+               onerror="this.style.display='none'">
+          <h2><a href="${escapeHtml(ch.slug)}.html" style="color:inherit;text-decoration:none">${escapeHtml(ch.name)}</a></h2>
+        </div>
+        <div class="channel-platforms">
+          ${platHtml}
+          <a class="rss-link" href="feeds/${escapeHtml(ch.slug)}.xml" target="_blank">RSS</a>
+        </div>
+      </div>`;
+
+    if (!entries.length) {
+      section.insertAdjacentHTML('beforeend', `<div class="state">${t('no_episodes')}</div>`);
+      return section;
+    }
+
+    const ul = document.createElement('ul');
+    ul.className = 'episode-list';
+    ul.innerHTML = entries.map((ep, i) => renderEpisode(ep, ch.slug, i)).join('');
+    section.appendChild(ul);
+
+    const items = ul.querySelectorAll('.episode');
+    items.forEach((el, i) => { if (i >= PREVIEW_COUNT) el.hidden = true; });
+
+    if (entries.length > PREVIEW_COUNT) {
+      const bar = document.createElement('div');
+      bar.className = 'show-more-bar';
+      const btn = document.createElement('button');
+      btn.className = 'show-more-btn';
+      const n = entries.length - PREVIEW_COUNT;
+      btn.textContent = lang === 'he' ? `עוד ${n} פרקים` : `Voir les ${n} épisodes suivants`;
+      btn.addEventListener('click', () => { items.forEach(el => el.hidden = false); bar.remove(); });
+      bar.appendChild(btn);
+      section.appendChild(bar);
+    }
+    return section;
+  }
+
+  function setupSearch() {
+    const input    = document.getElementById('search');
+    const recents  = document.getElementById('recents-section');
+    const noRes    = document.getElementById('no-results');
+
+    input.addEventListener('input', () => {
+      const q = input.value.toLowerCase().trim();
+      recents.hidden = q.length > 0;
+
+      let anyVisible = false;
+      document.querySelectorAll('.channel').forEach(ch => {
+        const eps = ch.querySelectorAll('.episode');
+        const chMatch = ch.dataset.name && ch.dataset.name.includes(q);
+        let chVisible = false;
+        eps.forEach((ep, i) => {
+          const match = !q || chMatch || ep.dataset.title.includes(q);
+          ep.hidden = q ? !match : i >= PREVIEW_COUNT;
+          if (match) chVisible = true;
+        });
+        if (!q) {
+          const bar = ch.querySelector('.show-more-bar');
+          if (bar) bar.style.display = '';
+          ch.hidden = false;
+        } else {
+          const bar = ch.querySelector('.show-more-bar');
+          if (bar) bar.style.display = 'none';
+          ch.hidden = !chVisible;
+          if (chVisible) anyVisible = true;
+        }
+      });
+
+      noRes.hidden = !q || anyVisible;
+    });
+  }
+
+  (async () => {
+    const app = document.getElementById('app');
+    let channels = [];
+    try {
+      const res = await fetch('channels.json');
+      if (res.ok) {
+        channels = (await res.json())
+          .filter(ch => ch.enabled)
+          .map(ch => ({ slug: ch.slug, name: ch.podcast_author, platforms: ch.platforms || {} }));
+      }
+    } catch (_) {}
+
+    if (!channels.length) {
+      app.innerHTML = `<p class="state">${t('no_channels')}</p>`;
+      return;
+    }
+
+    allData = await Promise.all(channels.map(async ch => {
+      try {
+        const r = await fetch(`feeds/${ch.slug}.entries.json`);
+        const entries = r.ok ? await r.json() : [];
+        entries.sort((a, b) => new Date(b.published) - new Date(a.published));
+        return { ch, entries };
+      } catch (_) { return { ch, entries: [] }; }
+    }));
+
+    const totalEp = allData.reduce((s, {entries}) => s + entries.length, 0);
+    renderStats(allData.length, totalEp);
+
+    const sub = document.getElementById('nav-rabbis-submenu');
+    if (sub) sub.innerHTML = channels.map(ch =>
+      `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
+    ).join('');
+
+    app.innerHTML = '';
+    app.appendChild(buildRecents());
+
+    const noRes = document.createElement('div');
+    noRes.id = 'no-results';
+    noRes.className = 'no-results';
+    noRes.hidden = true;
+    noRes.textContent = t('no_results');
+    app.appendChild(noRes);
+
+    for (const { ch, entries } of allData) {
+      app.appendChild(buildChannel(ch, entries));
+    }
+
+    setupSearch();
+
+    if (location.hash) {
+      const el = document.querySelector(location.hash);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  })();
+</script>
+
+<script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>
