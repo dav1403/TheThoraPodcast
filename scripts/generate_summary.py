@@ -51,7 +51,10 @@ def main():
     if Path("backfill_state.json").exists():
         content = Path("backfill_state.json").read_text(encoding="utf-8-sig").strip()
         if content:
-            backfill_state = json.loads(content)
+            try:
+                backfill_state = json.loads(content)
+            except json.JSONDecodeError:
+                backfill_state = {}
 
     pre_run = load_pre_run_counts()
     enabled = [ch for ch in channels if ch.get("enabled", True)]

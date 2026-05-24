@@ -21,7 +21,9 @@ def load_backfill_state():
     return {}
 
 def save_backfill_state(state):
-    BACKFILL_STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    tmp = BACKFILL_STATE_FILE.with_suffix('.tmp')
+    tmp.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    tmp.replace(BACKFILL_STATE_FILE)
 
 def discover_missing_videos(channel_id, already_done):
     base_url = "https://www.youtube.com/channel/" + channel_id
