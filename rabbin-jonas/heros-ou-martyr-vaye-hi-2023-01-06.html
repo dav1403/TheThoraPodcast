@@ -174,12 +174,12 @@ Alors en attendant, refaites vivre l&#x27;un des millions de juifs assassinés p
     #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #player-channel { font-size:.68rem; color:#99a; }
     #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    .player-speed {{ display:flex; gap:3px; flex-shrink:0; }}
-    #player .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; transition:background .12s,color .12s; }
-    #player .speed-btn:hover, #player .speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) {{ #player-art {{ display:none; }} .player-speed {{ display:none; }} }}
+    #speed-cycle-btn {{ background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }}
+    #speed-cycle-btn:hover {{ background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }}
+    #speed-cycle-btn.active {{ color:#e87722; border-color:#e87722; }}
+    #player-close {{ background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }}
+    #player-close:hover {{ color:#fff; }}
+    @media (max-width:500px) {{ #player-art {{ display:none; }} }}
     .btn-embed {{ background:#f5f5f0; color:#555; border:1px solid #ddd; }}
     .btn-embed:hover {{ background:#eee; border-color:#bbb; }}
     .embed-modal {{ display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }}

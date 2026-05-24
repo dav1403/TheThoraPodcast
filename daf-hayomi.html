@@ -105,9 +105,9 @@
     #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #player-channel { font-size:.68rem; color:#99a; }
     #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    .player-speed { display:flex; gap:3px; flex-shrink:0; }
-    .speed-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 7px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; transition:background .12s,color .12s; }
-    .speed-btn:hover, .speed-btn.active { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
+    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
     #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
     #player-close:hover { color:#fff; }
     .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
@@ -194,12 +194,7 @@
     <div id="player-channel"></div>
   </div>
   <audio id="player-audio" controls></audio>
-  <div class="player-speed">
-    <button class="speed-btn active" data-speed="1">1×</button>
-    <button class="speed-btn" data-speed="1.25">1.25×</button>
-    <button class="speed-btn" data-speed="1.5">1.5×</button>
-    <button class="speed-btn" data-speed="2">2×</button>
-  </div>
+  <button id="speed-cycle-btn" title="Vitesse de lecture">1×</button>
   <button id="player-close" title="Fermer">✕</button>
 </div>
 <div class="toast" id="toast"></div>
@@ -270,9 +265,19 @@
     currentSpeed = rate;
     localStorage.setItem('playbackSpeed', rate);
     playerAudio.playbackRate = rate;
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
   }
-  document.querySelectorAll('.speed-btn').forEach(b => b.addEventListener('click', () => setSpeed(parseFloat(b.dataset.speed))));
+  const SPEEDS = [1, 1.25, 1.5, 2];
+  const speedCycleBtn = document.getElementById('speed-cycle-btn');
+  function updateSpeedBtn() {
+    speedCycleBtn.textContent = currentSpeed + '×';
+    speedCycleBtn.classList.toggle('active', currentSpeed !== 1);
+  }
+  updateSpeedBtn();
+  speedCycleBtn.addEventListener('click', () => {
+    const idx = SPEEDS.indexOf(currentSpeed);
+    setSpeed(SPEEDS[idx === -1 ? 1 : (idx + 1) % SPEEDS.length]);
+    updateSpeedBtn();
+  });
   setSpeed(currentSpeed);
 
   function loadInPlayer(ep, chName, slug) {
