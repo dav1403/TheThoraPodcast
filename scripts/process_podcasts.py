@@ -777,7 +777,7 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
             "published":     pub_dt.isoformat(),
             "audio_url":     audio_url,
             "file_size":     file_size,
-            "duration_secs": 0,
+            "duration_secs": int(video.get("duration") or 0),
             "thumbnail":     video.get("thumbnail", ""),
             "tags":          tags,
         })
