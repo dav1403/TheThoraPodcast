@@ -114,7 +114,8 @@ PARASHIOT = {
 HEBCAL_TO_SLUG = {p["hebcal"].lower(): slug for slug, p in PARASHIOT.items()}
 
 HASHTAGS_FR = "#Torah #Podcast #TorahPodcast #Judaisme #Shiourim #Cours"
-HASHTAGS_HE = "#תורה #פודקאסט #שיעורים"
+HASHTAGS_HE = "#תורה #פודקאסט #שיעורים #שיעוריתורה #יהדות #רבנים"
+HASHTAGS_BOTH = f"{HASHTAGS_FR} {HASHTAGS_HE}"
 
 # ---------------------------------------------------------------------------
 # State
@@ -122,7 +123,7 @@ HASHTAGS_HE = "#תורה #פודקאסט #שיעורים"
 def load_state():
     if STATE_FILE.exists():
         return json.loads(STATE_FILE.read_text(encoding="utf-8-sig"))
-    return {"rabbi_index": 0, "theme_index": 0, "last_posted": {}}
+    return {"rabbi_index": 0, "theme_index": 0, "last_posted": {}, "announced_rabbis": []}
 
 def save_state(state):
     STATE_FILE.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -325,6 +326,83 @@ def post_paracha(channels, state, dry_run=False):
     post_instagram(message, image_url=image_url, dry_run=dry_run)
 
 # ---------------------------------------------------------------------------
+# Post type: Nouveau rabbin sur la plateforme
+# ---------------------------------------------------------------------------
+def post_new_rabbi(channels, state, dry_run=False):
+    """Post when a new channel was added since the last announcement run."""
+    announced = set(state.get("announced_rabbis", []))
+    pending = [ch for ch in channels if ch["slug"] not in announced]
+    if not pending:
+        print("  [new_rabbi] All channels already announced — skipping")
+        return False
+
+    ch = pending[0]  # announce one per run to avoid flooding
+    print(f"  [new_rabbi] Announcing: {ch['slug']} ({ch.get('podcast_language', 'fr')})")
+
+    info = load_channel_info(ch["slug"])
+    entries = load_entries(ch["slug"])
+    total = len(entries)
+    lang = ch.get("podcast_language", "fr").lower()
+
+    if lang == "he":
+        prompt = (
+            f"אתה מנהל את חשבון האינסטגרם/פייסבוק של 'The Torah Podcast'.\n"
+            f"כתוב פוסט להכריז על הצטרפותו של רב חדש לפלטפורמה: {ch['podcast_author']}.\n"
+            f"תיאור: {info.get('description', '')[:300]}\n"
+            f"יש {total} שיעורים זמינים מההתחלה.\n"
+            f"הפוסט צריך:\n"
+            f"- להתחיל ב‘🆕’ ולהבליט שזה רב חדש\n"
+            f"- להציג אותו בקצרה ובחום\n"
+            f"- להזמין להאזין לשיעוריו בספוטיפיי, אפל פודקאסטס, דיזר\n"
+            f"- להיות בעברית\n"
+            f"- לכלול 3-4 אימוג'ים\n"
+            f"- 80-120 מילים מקסימום\n"
+            f"לא לכלול האשטגים או כתובת URL."
+        )
+        fallback = (
+            f"🆕 רב חדש ב-The Torah Podcast — {ch['podcast_author']}\n\n"
+            f"שמחים להוסיף את {ch['podcast_author']} לרשת! {total} שיעורים זמינים מההתחלה.\n"
+            f"להאזנה בספוטיפיי, אפל פודקאסטס ודיזר 🎧"
+        )
+        hashtags = HASHTAGS_HE
+    else:
+        prompt = (
+            f"Tu gères le compte Instagram/Facebook de 'The Torah Podcast'.\n"
+            f"Écris un post pour annoncer l'arrivée d'un nouveau rabbin sur la plateforme : {ch['podcast_author']}.\n"
+            f"Description : {info.get('description', '')[:300]}\n"
+            f"Il y a {total} cours disponibles dès le départ.\n"
+            f"Le post doit :\n"
+            f"- Commencer par '🆇' et mettre en avant que c'est un nouveau rabbin\n"
+            f"- Le présenter brièvement et chaleureusement\n"
+            f"- Inviter à écouter ses cours sur Spotify, Apple Podcasts, Deezer\n"
+            f"- Être en français\n"
+            f"- Inclure 3-4 emojis\n"
+            f"- Faire 80-120 mots maximum\n"
+            f"Ne pas inclure les hashtags ni l'URL."
+        )
+        fallback = (
+            f"🆕 Nouveau rabbin sur The Torah Podcast — {ch['podcast_author']}\n\n"
+            f"On est ravis d'accueillir {ch['podcast_author']} dans le réseau ! {total} cours disponibles dès maintenant.\n"
+            f"À écouter sur Spotify, Apple Podcasts et Deezer 🎧"
+        )
+        hashtags = HASHTAGS_FR
+
+    body = generate_text(prompt) or fallback
+    link = channel_page_url(ch["slug"])
+    message = f"{body}\n\n🔗 {link}\n\n{hashtags}"
+    image_url = artwork_url(ch["slug"])
+
+    ok_fb = post_facebook(message, link=link, dry_run=dry_run)
+    ok_ig = post_instagram(message, image_url=image_url, dry_run=dry_run)
+
+    # Only mark as announced if at least one platform succeeded (or in dry-run)
+    if dry_run or ok_fb or ok_ig:
+        state.setdefault("announced_rabbis", []).append(ch["slug"])
+        print(f"  [new_rabbi] Marked {ch['slug']} as announced")
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Post type: Zoom Rabbi
 # ---------------------------------------------------------------------------
 def post_rabbi(channels, state, dry_run=False):
@@ -341,28 +419,52 @@ def post_rabbi(channels, state, dry_run=False):
     recent = sorted(entries, key=lambda e: e["published"], reverse=True)[:5]
     titles = "\n".join(f"  • {e['title']}" for e in recent[:3])
     total = len(entries)
+    lang = ch.get("podcast_language", "fr").lower()
 
-    prompt = (
-        f"Tu gères le compte Instagram/Facebook de 'The Torah Podcast'.\n"
-        f"Écris un post 'Zoom Rabbi' pour mettre en avant : {ch['podcast_author']}.\n"
-        f"Description du rabbi : {info.get('description', '')[:300]}\n"
-        f"Il a {total} cours disponibles en podcast. Cours récents :\n{titles}\n"
-        f"Le post doit :\n"
-        f"- Présenter le rabbi chaleureusement (qui il est, son style)\n"
-        f"- Donner envie d'écouter ses cours\n"
-        f"- Être en français\n"
-        f"- Inclure 3-4 emojis\n"
-        f"- Faire 80-120 mots maximum\n"
-        f"Ne pas inclure les hashtags ni l'URL."
-    )
-    body = generate_text(prompt) or (
-        f"🎙️ Zoom Rabbi — {ch['podcast_author']}\n\n"
-        f"Découvrez ou redécouvrez les enseignements de {ch['podcast_author']} !\n"
-        f"{total} cours disponibles en podcast, à écouter partout et à tout moment 🎧"
-    )
+    if lang == "he":
+        prompt = (
+            f"אתה מנהל את חשבון האינסטגרם/פייסבוק של 'The Torah Podcast'.\n"
+            f"כתוב פוסט 'זום על הרב' להבליט את: {ch['podcast_author']}.\n"
+            f"תיאור הרב: {info.get('description', '')[:300]}\n"
+            f"יש לו {total} שיעורים בפודקאסט. שיעורים אחרונים:\n{titles}\n"
+            f"הפוסט צריך:\n"
+            f"- להציג את הרב בחום (מי הוא, סגנונו)\n"
+            f"- לעורר רצון להאזין לשיעוריו\n"
+            f"- להיות בעברית\n"
+            f"- לכלול 3-4 אימוג'ים\n"
+            f"- 80-120 מילים מקסימום\n"
+            f"לא לכלול האשטגים או כתובת URL."
+        )
+        fallback = (
+            f"🎙️ זום על הרב — {ch['podcast_author']}\n\n"
+            f"גלו או גלו מחדש את שיעוריו של {ch['podcast_author']}!\n"
+            f"{total} שיעורים זמינים בפודקאסט, להאזנה בכל מקום ובכל זמן 🎧"
+        )
+        hashtags = HASHTAGS_HE
+    else:
+        prompt = (
+            f"Tu gères le compte Instagram/Facebook de 'The Torah Podcast'.\n"
+            f"Écris un post 'Zoom Rabbi' pour mettre en avant : {ch['podcast_author']}.\n"
+            f"Description du rabbi : {info.get('description', '')[:300]}\n"
+            f"Il a {total} cours disponibles en podcast. Cours récents :\n{titles}\n"
+            f"Le post doit :\n"
+            f"- Présenter le rabbi chaleureusement (qui il est, son style)\n"
+            f"- Donner envie d'écouter ses cours\n"
+            f"- Être en français\n"
+            f"- Inclure 3-4 emojis\n"
+            f"- Faire 80-120 mots maximum\n"
+            f"Ne pas inclure les hashtags ni l'URL."
+        )
+        fallback = (
+            f"🎙️ Zoom Rabbi — {ch['podcast_author']}\n\n"
+            f"Découvrez ou redécouvrez les enseignements de {ch['podcast_author']} !\n"
+            f"{total} cours disponibles en podcast, à écouter partout et à tout moment 🎧"
+        )
+        hashtags = HASHTAGS_FR
 
+    body = generate_text(prompt) or fallback
     link = channel_page_url(ch["slug"])
-    message = f"{body}\n\n🔗 {link}\n\n{HASHTAGS_FR} {HASHTAGS_HE}"
+    message = f"{body}\n\n🔗 {link}\n\n{hashtags}"
     image_url = artwork_url(ch["slug"])
 
     post_facebook(message, link=link, dry_run=dry_run)
@@ -422,7 +524,7 @@ def detect_post_type():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--type", choices=["rabbi", "theme", "paracha"], help="Force post type")
+    parser.add_argument("--type", choices=["rabbi", "theme", "paracha", "new_rabbi"], help="Force post type")
     parser.add_argument("--dry-run", action="store_true", help="Print without posting")
     args = parser.parse_args()
 
@@ -437,12 +539,22 @@ def main():
     channels = load_channels()
     state = load_state()
 
+    # Priority: announce any newly-added rabbi first (one per run max)
+    if post_type != "new_rabbi":
+        # Auto-trigger when there are unannounced channels, regardless of scheduled type
+        announced = set(state.get("announced_rabbis", []))
+        if any(ch["slug"] not in announced for ch in channels):
+            print("New rabbi(s) detected — announcing before scheduled post.")
+            post_new_rabbi(channels, state, dry_run=args.dry_run)
+
     if post_type == "paracha":
         post_paracha(channels, state, dry_run=args.dry_run)
     elif post_type == "rabbi":
         post_rabbi(channels, state, dry_run=args.dry_run)
     elif post_type == "theme":
         post_theme(channels, state, dry_run=args.dry_run)
+    elif post_type == "new_rabbi":
+        post_new_rabbi(channels, state, dry_run=args.dry_run)
 
     if not args.dry_run:
         state["last_posted"][post_type] = datetime.now(timezone.utc).date().isoformat()
