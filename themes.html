@@ -290,6 +290,9 @@
       line-height: 1;
     }
     #player-close:hover { color: #fff; }
+    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
+    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
 
     @media (max-width: 500px) {
       .ep-thumb, .ep-thumb-ph { display: none; }
@@ -338,6 +341,7 @@
     <div id="player-channel"></div>
   </div>
   <audio id="player-audio" controls></audio>
+  <button id="speed-cycle-btn" title="Vitesse de lecture">1×</button>
   <button id="player-close" title="Fermer">✕</button>
 </div>
 
@@ -420,6 +424,22 @@
   const playerCh    = document.getElementById('player-channel');
   const playerArt   = document.getElementById('player-art');
 
+  const SPEEDS = [1, 1.25, 1.5, 2];
+  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+  const speedCycleBtn = document.getElementById('speed-cycle-btn');
+  function updateSpeedBtn() {
+    speedCycleBtn.textContent = currentSpeed + '×';
+    speedCycleBtn.classList.toggle('active', currentSpeed !== 1);
+  }
+  updateSpeedBtn();
+  speedCycleBtn.addEventListener('click', () => {
+    const idx = SPEEDS.indexOf(currentSpeed);
+    currentSpeed = SPEEDS[idx === -1 ? 1 : (idx + 1) % SPEEDS.length];
+    localStorage.setItem('playbackSpeed', currentSpeed);
+    if (playerAudio) playerAudio.playbackRate = currentSpeed;
+    updateSpeedBtn();
+  });
+
   function playIcon()  { return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`; }
   function pauseIcon() { return `<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>`; }
 
@@ -448,6 +468,7 @@
     playerCh.textContent    = chName;
     playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
     playerAudio.src         = ep.audio_url;
+    playerAudio.playbackRate = currentSpeed;
     playerAudio.play();
     playerEl.classList.remove('hidden');
   }
