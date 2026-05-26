@@ -5,6 +5,9 @@ on:
     - cron: '0 8 * * 1'   # Monday    08:00 UTC — Zoom Rabbi
     - cron: '0 8 * * 3'   # Wednesday 08:00 UTC — Zoom Thème
     - cron: '0 7 * * 5'   # Friday    07:00 UTC — Paracha (avant Shabbat)
+  push:
+    branches: [main]
+    paths: ['.github/workflows/social_posts.yml']
   workflow_dispatch:
     inputs:
       type:
@@ -59,7 +62,9 @@ jobs:
         run: |
           TYPE_ARG=""
           DRY_ARG=""
-          if [ -n "${{ github.event.inputs.type }}" ]; then
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TYPE_ARG="--type rabbi"
+          elif [ -n "${{ github.event.inputs.type }}" ]; then
             TYPE_ARG="--type ${{ github.event.inputs.type }}"
           fi
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
