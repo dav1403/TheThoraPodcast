@@ -1,5 +1,4 @@
 name: Social Media Posts
-# re-index 2026-05-26
 
 on:
   schedule:
@@ -13,13 +12,20 @@ on:
         required: false
         default: ''
         type: choice
-        options: ['', 'rabbi', 'theme', 'paracha', 'new_rabbi']
+        options:
+          - ''
+          - rabbi
+          - theme
+          - paracha
+          - new_rabbi
       dry_run:
         description: 'Dry run (no actual posting)'
         required: false
         default: 'false'
         type: choice
-        options: ['false', 'true']
+        options:
+          - 'false'
+          - 'true'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
