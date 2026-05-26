@@ -1,4 +1,4 @@
-"""
+﻿"""
 social_post.py
 --------------
 Generates and publishes weekly social media posts to Facebook and Instagram.
@@ -358,23 +358,23 @@ def post_new_rabbi(channels, state, dry_run=False):
     lang_note = " *(cours en hébreu)*" if lang == "he" else ""
 
     prompt = (
-        "Tu geres le compte Facebook de ‘The Torah Podcast’.\n"
-        f"Ecris un post pour annoncer l’arrivee d’un nouveau rabbin sur la plateforme : {ch[‘podcast_author’]}{lang_note}.\n"
-        f"Description : {info.get(‘description’, ‘’)[:300]}\n"
+        "Tu geres le compte Facebook de 'The Torah Podcast'.\n"
+        f"Ecris un post pour annoncer l'arrivee d'un nouveau rabbin sur la plateforme : {ch['podcast_author']}{lang_note}.\n"
+        f"Description : {info.get('description', '')[:300]}\n"
         f"Il y a {total} cours disponibles des le depart.\n"
         "Le post doit :\n"
-        "- Commencer par ‘🆕’ et mettre en avant que c’est un nouveau rabbin\n"
+        "- Commencer par '🆕' et mettre en avant que c'est un nouveau rabbin\n"
         "- Le presenter brievement et chaleureusement\n"
         "- Inviter a ecouter ses cours sur Spotify, Apple Podcasts, Deezer\n"
         "- Etre entierement en francais\n"
         + ("- Preciser que les cours sont en hebreu\n" if lang == "he" else "")
         + "- Inclure 3-4 emojis\n"
         "- Faire 80-120 mots maximum\n"
-        "Ne pas inclure les hashtags ni l’URL."
+        "Ne pas inclure les hashtags ni l'URL."
     )
     fallback = (
-        f"🆕 Nouveau rabbin sur The Torah Podcast — {ch[‘podcast_author’]}\n\n"
-        f"On est ravis d’accueillir {ch[‘podcast_author’]} dans le réseau !"
+        f"🆕 Nouveau rabbin sur The Torah Podcast — {ch['podcast_author']}\n\n"
+        f"On est ravis d'accueillir {ch['podcast_author']} dans le réseau !"
         + (f" Ses cours sont en hébreu." if lang == "he" else "")
         + f" {total} cours disponibles dès maintenant.\n"
         f"À écouter sur Spotify, Apple Podcasts et Deezer 🎧"
