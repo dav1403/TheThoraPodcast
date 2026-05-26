@@ -152,6 +152,17 @@ def artwork_url(slug):
 def channel_page_url(slug):
     return f"{SITE_URL}/{slug}.html"
 
+def platform_links(ch):
+    p = ch.get("platforms", {})
+    parts = []
+    if p.get("spotify"):
+        parts.append(f"🎵 Spotify: {p['spotify']}")
+    if p.get("apple"):
+        parts.append(f"🎙️ Apple Podcasts: {p['apple']}")
+    if p.get("deezer"):
+        parts.append(f"🎶 Deezer: {p['deezer']}")
+    return "\n".join(parts)
+
 # ---------------------------------------------------------------------------
 # Hebcal — current parasha
 # ---------------------------------------------------------------------------
@@ -389,7 +400,8 @@ def post_new_rabbi(channels, state, dry_run=False):
 
     body = generate_text(prompt) or fallback
     link = channel_page_url(ch["slug"])
-    message = f"{body}\n\n🔗 {link}\n\n{hashtags}"
+    platforms = platform_links(ch)
+    message = f"{body}\n\n🔗 {link}\n\n{platforms}\n\n{hashtags}"
     image_url = artwork_url(ch["slug"])
 
     ok_fb = post_facebook(message, link=link, dry_run=dry_run)
@@ -464,7 +476,8 @@ def post_rabbi(channels, state, dry_run=False):
 
     body = generate_text(prompt) or fallback
     link = channel_page_url(ch["slug"])
-    message = f"{body}\n\n🔗 {link}\n\n{hashtags}"
+    platforms = platform_links(ch)
+    message = f"{body}\n\n🔗 {link}\n\n{platforms}\n\n{hashtags}"
     image_url = artwork_url(ch["slug"])
 
     post_facebook(message, link=link, dry_run=dry_run)
