@@ -355,48 +355,31 @@ def post_new_rabbi(channels, state, dry_run=False):
     total = len(entries)
     lang = ch.get("podcast_language", "fr").lower()
 
-    if lang == "he":
-        prompt = (
-            f"אתה מנהל את חשבון האינסטגרם/פייסבוק של 'The Torah Podcast'.\n"
-            f"כתוב פוסט להכריז על הצטרפותו של רב חדש לפלטפורמה: {ch['podcast_author']}.\n"
-            f"תיאור: {info.get('description', '')[:300]}\n"
-            f"יש {total} שיעורים זמינים מההתחלה.\n"
-            f"הפוסט צריך:\n"
-            f"- להתחיל ב‘🆕’ ולהבליט שזה רב חדש\n"
-            f"- להציג אותו בקצרה ובחום\n"
-            f"- להזמין להאזין לשיעוריו בספוטיפיי, אפל פודקאסטס, דיזר\n"
-            f"- להיות בעברית\n"
-            f"- לכלול 3-4 אימוג'ים\n"
-            f"- 80-120 מילים מקסימום\n"
-            f"לא לכלול האשטגים או כתובת URL."
-        )
-        fallback = (
-            f"🆕 רב חדש ב-The Torah Podcast — {ch['podcast_author']}\n\n"
-            f"שמחים להוסיף את {ch['podcast_author']} לרשת! {total} שיעורים זמינים מההתחלה.\n"
-            f"להאזנה בספוטיפיי, אפל פודקאסטס ודיזר 🎧"
-        )
-        hashtags = HASHTAGS_HE
-    else:
-        prompt = (
-            f"Tu gères le compte Instagram/Facebook de 'The Torah Podcast'.\n"
-            f"Écris un post pour annoncer l'arrivée d'un nouveau rabbin sur la plateforme : {ch['podcast_author']}.\n"
-            f"Description : {info.get('description', '')[:300]}\n"
-            f"Il y a {total} cours disponibles dès le départ.\n"
-            f"Le post doit :\n"
-            f"- Commencer par '🆇' et mettre en avant que c'est un nouveau rabbin\n"
-            f"- Le présenter brièvement et chaleureusement\n"
-            f"- Inviter à écouter ses cours sur Spotify, Apple Podcasts, Deezer\n"
-            f"- Être en français\n"
-            f"- Inclure 3-4 emojis\n"
-            f"- Faire 80-120 mots maximum\n"
-            f"Ne pas inclure les hashtags ni l'URL."
-        )
-        fallback = (
-            f"🆕 Nouveau rabbin sur The Torah Podcast — {ch['podcast_author']}\n\n"
-            f"On est ravis d'accueillir {ch['podcast_author']} dans le réseau ! {total} cours disponibles dès maintenant.\n"
-            f"À écouter sur Spotify, Apple Podcasts et Deezer 🎧"
-        )
-        hashtags = HASHTAGS_FR
+    lang_note = " *(cours en hébreu)*" if lang == "he" else ""
+
+    prompt = (
+        f"Tu gères le compte Facebook de ‘The Torah Podcast’.\n"
+        f"Écris un post pour annoncer l’arrivée d’un nouveau rabbin sur la plateforme : {ch[‘podcast_author’]}{lang_note}.\n"
+        f"Description : {info.get(‘description’, ‘’)[:300]}\n"
+        f"Il y a {total} cours disponibles dès le départ.\n"
+        f"Le post doit :\n"
+        f"- Commencer par ‘🆕’ et mettre en avant que c’est un nouveau rabbin\n"
+        f"- Le présenter brièvement et chaleureusement\n"
+        f"- Inviter à écouter ses cours sur Spotify, Apple Podcasts, Deezer\n"
+        f"- Être entièrement en français\n"
+        + (f"- Préciser que les cours sont en hébreu\n" if lang == "he" else "")
+        + f"- Inclure 3-4 emojis\n"
+        f"- Faire 80-120 mots maximum\n"
+        f"Ne pas inclure les hashtags ni l’URL."
+    )
+    fallback = (
+        f"🆕 Nouveau rabbin sur The Torah Podcast — {ch[‘podcast_author’]}\n\n"
+        f"On est ravis d’accueillir {ch[‘podcast_author’]} dans le réseau !"
+        + (f" Ses cours sont en hébreu." if lang == "he" else "")
+        + f" {total} cours disponibles dès maintenant.\n"
+        f"À écouter sur Spotify, Apple Podcasts et Deezer 🎧"
+    )
+    hashtags = HASHTAGS_BOTH if lang == "he" else HASHTAGS_FR
 
     body = generate_text(prompt) or fallback
     link = channel_page_url(ch["slug"])
@@ -432,47 +415,29 @@ def post_rabbi(channels, state, dry_run=False):
     titles = "\n".join(f"  • {e['title']}" for e in recent[:3])
     total = len(entries)
     lang = ch.get("podcast_language", "fr").lower()
+    lang_note = " *(cours en hébreu)*" if lang == "he" else ""
 
-    if lang == "he":
-        prompt = (
-            f"אתה מנהל את חשבון האינסטגרם/פייסבוק של 'The Torah Podcast'.\n"
-            f"כתוב פוסט 'זום על הרב' להבליט את: {ch['podcast_author']}.\n"
-            f"תיאור הרב: {info.get('description', '')[:300]}\n"
-            f"יש לו {total} שיעורים בפודקאסט. שיעורים אחרונים:\n{titles}\n"
-            f"הפוסט צריך:\n"
-            f"- להציג את הרב בחום (מי הוא, סגנונו)\n"
-            f"- לעורר רצון להאזין לשיעוריו\n"
-            f"- להיות בעברית\n"
-            f"- לכלול 3-4 אימוג'ים\n"
-            f"- 80-120 מילים מקסימום\n"
-            f"לא לכלול האשטגים או כתובת URL."
-        )
-        fallback = (
-            f"🎙️ זום על הרב — {ch['podcast_author']}\n\n"
-            f"גלו או גלו מחדש את שיעוריו של {ch['podcast_author']}!\n"
-            f"{total} שיעורים זמינים בפודקאסט, להאזנה בכל מקום ובכל זמן 🎧"
-        )
-        hashtags = HASHTAGS_HE
-    else:
-        prompt = (
-            f"Tu gères le compte Instagram/Facebook de 'The Torah Podcast'.\n"
-            f"Écris un post 'Zoom Rabbi' pour mettre en avant : {ch['podcast_author']}.\n"
-            f"Description du rabbi : {info.get('description', '')[:300]}\n"
-            f"Il a {total} cours disponibles en podcast. Cours récents :\n{titles}\n"
-            f"Le post doit :\n"
-            f"- Présenter le rabbi chaleureusement (qui il est, son style)\n"
-            f"- Donner envie d'écouter ses cours\n"
-            f"- Être en français\n"
-            f"- Inclure 3-4 emojis\n"
-            f"- Faire 80-120 mots maximum\n"
-            f"Ne pas inclure les hashtags ni l'URL."
-        )
-        fallback = (
-            f"🎙️ Zoom Rabbi — {ch['podcast_author']}\n\n"
-            f"Découvrez ou redécouvrez les enseignements de {ch['podcast_author']} !\n"
-            f"{total} cours disponibles en podcast, à écouter partout et à tout moment 🎧"
-        )
-        hashtags = HASHTAGS_FR
+    prompt = (
+        f"Tu gères le compte Facebook de 'The Torah Podcast'.\n"
+        f"Écris un post 'Zoom Rabbi' pour mettre en avant : {ch['podcast_author']}{lang_note}.\n"
+        f"Description du rabbi : {info.get('description', '')[:300]}\n"
+        f"Il a {total} cours disponibles en podcast. Cours récents :\n{titles}\n"
+        f"Le post doit :\n"
+        f"- Présenter le rabbi chaleureusement (qui il est, son style)\n"
+        f"- Donner envie d'écouter ses cours\n"
+        f"- Être entièrement en français\n"
+        + (f"- Préciser que les cours sont en hébreu\n" if lang == "he" else "")
+        + f"- Inclure 3-4 emojis\n"
+        f"- Faire 80-120 mots maximum\n"
+        f"Ne pas inclure les hashtags ni l'URL."
+    )
+    fallback = (
+        f"🎙️ Zoom Rabbi — {ch['podcast_author']}\n\n"
+        f"Découvrez ou redécouvrez les enseignements de {ch['podcast_author']} !\n"
+        + (f"📚 Cours en hébreu — {total} épisodes disponibles en podcast 🎧\n" if lang == "he"
+           else f"{total} cours disponibles en podcast, à écouter partout et à tout moment 🎧\n")
+    )
+    hashtags = HASHTAGS_BOTH if lang == "he" else HASHTAGS_FR
 
     body = generate_text(prompt) or fallback
     link = channel_page_url(ch["slug"])
