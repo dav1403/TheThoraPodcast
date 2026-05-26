@@ -1,14 +1,11 @@
 name: Social Media Posts
-# trigger
 
 on:
   schedule:
     - cron: '0 8 * * 1'   # Monday    08:00 UTC — Zoom Rabbi
     - cron: '0 8 * * 3'   # Wednesday 08:00 UTC — Zoom Thème
     - cron: '0 7 * * 5'   # Friday    07:00 UTC — Paracha (avant Shabbat)
-  push:
-    branches: [main]
-    paths: ['.github/workflows/social_posts.yml']
+    - cron: '15 11 26 5 *' # one-time: 2026-05-26 11:15 UTC
   workflow_dispatch:
     inputs:
       type:
@@ -63,7 +60,7 @@ jobs:
         run: |
           TYPE_ARG=""
           DRY_ARG=""
-          if [ "${{ github.event_name }}" = "push" ]; then
+          if [ "${{ github.event.schedule }}" = "15 11 26 5 *" ]; then
             TYPE_ARG="--type rabbi"
           elif [ -n "${{ github.event.inputs.type }}" ]; then
             TYPE_ARG="--type ${{ github.event.inputs.type }}"
