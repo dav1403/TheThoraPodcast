@@ -358,19 +358,19 @@ def post_new_rabbi(channels, state, dry_run=False):
     lang_note = " *(cours en hébreu)*" if lang == "he" else ""
 
     prompt = (
-        f"Tu gères le compte Facebook de ‘The Torah Podcast’.\n"
-        f"Écris un post pour annoncer l’arrivée d’un nouveau rabbin sur la plateforme : {ch[‘podcast_author’]}{lang_note}.\n"
+        "Tu geres le compte Facebook de ‘The Torah Podcast’.\n"
+        f"Ecris un post pour annoncer l’arrivee d’un nouveau rabbin sur la plateforme : {ch[‘podcast_author’]}{lang_note}.\n"
         f"Description : {info.get(‘description’, ‘’)[:300]}\n"
-        f"Il y a {total} cours disponibles dès le départ.\n"
-        f"Le post doit :\n"
-        f"- Commencer par ‘🆕’ et mettre en avant que c’est un nouveau rabbin\n"
-        f"- Le présenter brièvement et chaleureusement\n"
-        f"- Inviter à écouter ses cours sur Spotify, Apple Podcasts, Deezer\n"
-        f"- Être entièrement en français\n"
-        + (f"- Préciser que les cours sont en hébreu\n" if lang == "he" else "")
-        + f"- Inclure 3-4 emojis\n"
-        f"- Faire 80-120 mots maximum\n"
-        f"Ne pas inclure les hashtags ni l’URL."
+        f"Il y a {total} cours disponibles des le depart.\n"
+        "Le post doit :\n"
+        "- Commencer par ‘🆕’ et mettre en avant que c’est un nouveau rabbin\n"
+        "- Le presenter brievement et chaleureusement\n"
+        "- Inviter a ecouter ses cours sur Spotify, Apple Podcasts, Deezer\n"
+        "- Etre entierement en francais\n"
+        + ("- Preciser que les cours sont en hebreu\n" if lang == "he" else "")
+        + "- Inclure 3-4 emojis\n"
+        "- Faire 80-120 mots maximum\n"
+        "Ne pas inclure les hashtags ni l’URL."
     )
     fallback = (
         f"🆕 Nouveau rabbin sur The Torah Podcast — {ch[‘podcast_author’]}\n\n"
@@ -418,18 +418,18 @@ def post_rabbi(channels, state, dry_run=False):
     lang_note = " *(cours en hébreu)*" if lang == "he" else ""
 
     prompt = (
-        f"Tu gères le compte Facebook de 'The Torah Podcast'.\n"
-        f"Écris un post 'Zoom Rabbi' pour mettre en avant : {ch['podcast_author']}{lang_note}.\n"
+        "Tu geres le compte Facebook de 'The Torah Podcast'.\n"
+        f"Ecris un post 'Zoom Rabbi' pour mettre en avant : {ch['podcast_author']}{lang_note}.\n"
         f"Description du rabbi : {info.get('description', '')[:300]}\n"
-        f"Il a {total} cours disponibles en podcast. Cours récents :\n{titles}\n"
-        f"Le post doit :\n"
-        f"- Présenter le rabbi chaleureusement (qui il est, son style)\n"
-        f"- Donner envie d'écouter ses cours\n"
-        f"- Être entièrement en français\n"
-        + (f"- Préciser que les cours sont en hébreu\n" if lang == "he" else "")
-        + f"- Inclure 3-4 emojis\n"
-        f"- Faire 80-120 mots maximum\n"
-        f"Ne pas inclure les hashtags ni l'URL."
+        f"Il a {total} cours disponibles en podcast. Cours recents :\n{titles}\n"
+        "Le post doit :\n"
+        "- Presenter le rabbi chaleureusement (qui il est, son style)\n"
+        "- Donner envie d'ecouter ses cours\n"
+        "- Etre entierement en francais\n"
+        + ("- Preciser que les cours sont en hebreu\n" if lang == "he" else "")
+        + "- Inclure 3-4 emojis\n"
+        "- Faire 80-120 mots maximum\n"
+        "Ne pas inclure les hashtags ni l'URL."
     )
     fallback = (
         f"🎙️ Zoom Rabbi — {ch['podcast_author']}\n\n"
