@@ -41,11 +41,12 @@ FEEDS_DIR      = Path("feeds")
 CHANNELS_FILE  = "channels.json"
 STATE_FILE     = Path("social_state.json")
 
-FB_PAGE_ID     = os.environ.get("FB_PAGE_ID", "")
-FB_TOKEN       = os.environ.get("FB_ACCESS_TOKEN", "")
-IG_USER_ID     = os.environ.get("IG_USER_ID", "")
-ANTHROPIC_KEY  = os.environ.get("ANTHROPIC_API_KEY", "")
-GRAPH_URL      = "https://graph.facebook.com/v19.0"
+FB_PAGE_ID       = os.environ.get("FB_PAGE_ID", "")
+FB_TOKEN         = os.environ.get("FB_ACCESS_TOKEN", "")
+IG_USER_ID       = os.environ.get("IG_USER_ID", "")
+ANTHROPIC_KEY    = os.environ.get("ANTHROPIC_API_KEY", "")
+MAKE_WEBHOOK_URL = os.environ.get("MAKE_WEBHOOK_URL", "")
+GRAPH_URL        = "https://graph.facebook.com/v19.0"
 
 THEMES = [
     "Chabbat", "Tefila", "Téchouva", "Emouna", "Etude de Torah", "Moussar",
@@ -243,6 +244,16 @@ def post_facebook(message, link=None, dry_run=False):
         if link:
             print(f"Link: {link}")
         return True
+    if MAKE_WEBHOOK_URL:
+        payload = {"message": message, "access_token": FB_TOKEN}
+        if link:
+            payload["link"] = link
+        r = requests.post(MAKE_WEBHOOK_URL, json=payload, timeout=15)
+        if r.ok:
+            print(f"  [facebook] Sent via Make.com webhook: {r.status_code}")
+            return True
+        print(f"  [facebook] Make.com webhook error {r.status_code}: {r.text[:200]}")
+        return False
     if not FB_PAGE_ID or not FB_TOKEN:
         print("  [facebook] Missing FB_PAGE_ID or FB_ACCESS_TOKEN — skipping")
         return False
