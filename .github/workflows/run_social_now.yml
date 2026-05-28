@@ -1,0 +1,35 @@
+name: Run Social Post Now (temp)
+on:
+  workflow_dispatch:
+env:
+  PYTHONIOENCODING: utf-8
+permissions:
+  contents: write
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run social post rabbi
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FB_PAGE_ID:        ${{ secrets.META_PAGE_ID }}
+          FB_ACCESS_TOKEN:   ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          IG_USER_ID:        ${{ secrets.META_IG_ACCOUNT_ID }}
+          MAKE_WEBHOOK_URL:  ${{ secrets.MAKE_WEBHOOK_URL }}
+        run: python scripts/social_post.py --type rabbi
+      - name: Commit updated social state
+        run: |
+          git config --global user.name  "Podcast Bot"
+          git config --global user.email "action@github.com"
+          git add social_state.json
+          git diff --staged --quiet || git commit -m "chore: update social post state [skip ci]"
+          git pull --rebase origin main
+          git push
