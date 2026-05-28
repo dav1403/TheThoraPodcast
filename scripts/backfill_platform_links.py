@@ -221,24 +221,33 @@ def fetch_deezer_episodes(show_id: str, cutoff: datetime) -> list[dict]:
     return episodes
 
 
-def _get_spotify_anon_token() -> Optional[str]:
-    """Fetch an anonymous access token from Spotify's web player endpoint."""
+def _get_spotify_client_token() -> Optional[str]:
+    """Get an access token via the Client Credentials OAuth flow (no user login needed).
+    Requires SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET env vars."""
+    import base64
+    import os
+    client_id = os.environ.get("SPOTIFY_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET", "").strip()
+    if not client_id or not client_secret:
+        log.warning("[spotify] SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET not set — skipping")
+        return None
+    creds_b64 = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
     try:
-        r = requests.get(
-            "https://open.spotify.com/get_access_token"
-            "?reason=transport&productType=web_player",
-            headers=BROWSER_HEADERS,
+        r = requests.post(
+            "https://accounts.spotify.com/api/token",
+            headers={"Authorization": f"Basic {creds_b64}"},
+            data={"grant_type": "client_credentials"},
             timeout=REQUEST_TIMEOUT,
         )
         r.raise_for_status()
-        return r.json().get("accessToken")
+        return r.json()["access_token"]
     except Exception as e:
-        log.debug("[spotify] anon token fetch failed: %s", e)
+        log.warning("[spotify] token fetch failed: %s", e)
         return None
 
 
 def _spotify_api_episodes(show_id: str, token: str, cutoff: datetime) -> list[dict]:
-    """Call the Spotify Web API with an anonymous token."""
+    """Call the Spotify Web API with a Client Credentials token."""
     url = f"https://api.spotify.com/v1/shows/{show_id}/episodes?limit=50&market=US"
     try:
         r = requests.get(
@@ -343,15 +352,13 @@ def fetch_spotify_episodes(
     show_id: str, show_url: str, cutoff: datetime
 ) -> list[dict]:
     """
-    Try Spotify anonymous API token first, then fall back to __NEXT_DATA__ scraping.
+    Fetch episodes via the Spotify Web API (Client Credentials flow).
+    Falls back to __NEXT_DATA__ page scraping if credentials are missing.
     Returns [] gracefully if both strategies fail.
     """
-    token = _get_spotify_anon_token()
+    token = _get_spotify_client_token()
     if token:
-        episodes = _spotify_api_episodes(show_id, token, cutoff)
-        if episodes:
-            return episodes
-        log.debug("[spotify] API returned 0 episodes for show %s, trying page scrape", show_id)
+        return _spotify_api_episodes(show_id, token, cutoff)
 
     return _spotify_next_data_episodes(show_url, show_id, cutoff)
 
