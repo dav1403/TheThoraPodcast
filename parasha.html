@@ -119,10 +119,21 @@
     }
     #current-banner:hover { background: #2d2d50; }
     #current-banner.loading { opacity: .6; cursor: default; }
+    #current-banner.has-split { cursor: default; flex-direction: column; align-items: flex-start; }
+    #current-banner.has-split:hover { background: #1a1a2e; }
     .banner-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #99a; margin-bottom: 4px; }
     .banner-name  { font-size: 1.4rem; font-weight: 700; }
     .banner-he    { font-size: 1.1rem; color: #aab; direction: rtl; }
     .banner-arrow { font-size: 1.4rem; color: #aab; flex-shrink: 0; }
+    .cycle-toggle { display: flex; gap: 8px; margin-top: 10px; width: 100%; }
+    .cycle-btn {
+      flex: 1; padding: 7px 14px; border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px; background: transparent; color: rgba(255,255,255,.7);
+      cursor: pointer; font-size: 0.82rem; text-align: center;
+      transition: all .15s; font-family: inherit;
+    }
+    .cycle-btn.active { background: #fff; color: #1a1a2e; border-color: #fff; font-weight: 600; color: #1a1a2e; }
+    .cycle-btn:not(.active):hover { background: rgba(255,255,255,.1); }
 
     /* Book sections */
     .book-section { margin-bottom: 24px; }
@@ -370,6 +381,9 @@ const I18N = {
     lang_toggle:'עברית',
     subtitle_parasha:'Cours par Paracha',
     banner_label:'Paracha de la semaine',
+    banner_label_split:'Décalage Israël / Diaspora',
+    cycle_il:'🇮🇱 Israël',
+    cycle_dia:'🌍 Diaspora',
     listen:'Écouter', playing:'En cours…',
     no_parasha:'Non disponible',
     no_ep_found:'Aucun épisode trouvé pour cette paracha.',
@@ -382,6 +396,9 @@ const I18N = {
     lang_toggle:'Français',
     subtitle_parasha:'שיעורים לפי פרשה',
     banner_label:'פרשת השבוע',
+    banner_label_split:'הפרש ישראל / חו"ל',
+    cycle_il:'🇮🇱 ישראל',
+    cycle_dia:'🌍 חו"ל',
     listen:'האזן', playing:'מתנגן…',
     no_parasha:'לא זמין',
     no_ep_found:'לא נמצאו פרקים לפרשה זו.',
@@ -669,17 +686,21 @@ function buildBooks(allData) {
 }
 
 // ─── Current parasha ─────────────────────────────────────────────────────────
-async function fetchCurrentParasha() {
+function extractSlugFromHebcal(data) {
+  const item = data.items && data.items.find(i => i.category === 'parashat');
+  if (!item) return null;
+  const name = item.title.replace(/^Parashat\s+/i, '').toLowerCase();
+  return HEBCAL_SLUG[name] || HEBCAL_SLUG[name.split('-')[0]] || null;
+}
+
+async function fetchCurrentParashot() {
   try {
-    const res = await fetch('https://www.hebcal.com/shabbat?cfg=json&M=on');
-    const data = await res.json();
-    const item = data.items && data.items.find(i => i.category === 'parashat');
-    if (!item) return null;
-    const name = item.title.replace(/^Parashat\s+/i, '').toLowerCase();
-    // Handle combined: "Vayakhel-Pekudei" → try full then first part
-    const slug = HEBCAL_SLUG[name] || HEBCAL_SLUG[name.split('-')[0]];
-    return slug || null;
-  } catch (_) { return null; }
+    const [dataIL, diaDia] = await Promise.all([
+      fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=293397&M=on').then(r => r.json()),
+      fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=2988507&M=on').then(r => r.json()),
+    ]);
+    return { il: extractSlugFromHebcal(dataIL), dia: extractSlugFromHebcal(diaDia) };
+  } catch (_) { return { il: null, dia: null }; }
 }
 
 let selectedSlug = null;
@@ -699,23 +720,61 @@ function selectParasha(slug) {
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 (async () => {
-  const [currentSlug, channels] = await Promise.all([
-    fetchCurrentParasha(),
+  const [{ il: slugIL, dia: slugDia }, channels] = await Promise.all([
+    fetchCurrentParashot(),
     fetch('channels.json').then(r => r.ok ? r.json() : []).catch(() => []),
   ]);
 
-  // Update banner
+  const hasSplit = slugIL && slugDia && slugIL !== slugDia;
   const banner = document.getElementById('current-banner');
   banner.classList.remove('loading');
-  if (currentSlug) {
-    const p = PARASHIOT[currentSlug];
-    document.getElementById('banner-name').textContent = lang === 'he' ? p.he : p.fr;
-    document.getElementById('banner-he').textContent   = p.he;
-    banner.onclick = () => selectParasha(currentSlug);
+
+  if (hasSplit) {
+    // Show cycle toggle — remember user's preference
+    const savedCycle = localStorage.getItem('paracha_cycle') || 'dia';
+    let activeCycle = savedCycle;
+    let currentSlug = activeCycle === 'il' ? slugIL : slugDia;
+
+    banner.classList.add('has-split');
+    const pIL  = PARASHIOT[slugIL];
+    const pDia = PARASHIOT[slugDia];
+
+    banner.innerHTML = `
+      <div>
+        <div class="banner-label">${t('banner_label_split')}</div>
+      </div>
+      <div class="cycle-toggle">
+        <button class="cycle-btn${activeCycle === 'il'  ? ' active' : ''}" data-cycle="il">
+          ${t('cycle_il')} — ${lang === 'he' ? pIL.he : pIL.fr}
+        </button>
+        <button class="cycle-btn${activeCycle === 'dia' ? ' active' : ''}" data-cycle="dia">
+          ${t('cycle_dia')} — ${lang === 'he' ? pDia.he : pDia.fr}
+        </button>
+      </div>`;
+
+    banner.querySelectorAll('.cycle-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cycle = btn.dataset.cycle;
+        localStorage.setItem('paracha_cycle', cycle);
+        banner.querySelectorAll('.cycle-btn').forEach(b => b.classList.toggle('active', b.dataset.cycle === cycle));
+        selectParasha(cycle === 'il' ? slugIL : slugDia);
+      });
+    });
+
+    selectParasha(currentSlug);
   } else {
-    document.getElementById('banner-name').textContent = t('no_parasha');
-    banner.style.cursor = 'default';
-    banner.onclick = null;
+    // Normal single-paracha display
+    const currentSlug = slugIL || slugDia;
+    if (currentSlug) {
+      const p = PARASHIOT[currentSlug];
+      document.getElementById('banner-name').textContent = lang === 'he' ? p.he : p.fr;
+      document.getElementById('banner-he').textContent   = p.he;
+      banner.onclick = () => selectParasha(currentSlug);
+    } else {
+      document.getElementById('banner-name').textContent = t('no_parasha');
+      banner.style.cursor = 'default';
+      banner.onclick = null;
+    }
   }
 
   // Load all episodes
@@ -749,10 +808,14 @@ function selectParasha(slug) {
   // Render book chips
   document.getElementById('books-container').innerHTML = buildBooks(globalAllData);
 
-  // Auto-select from hash or current parasha
+  // Auto-select from hash; if no hash, hasSplit already called selectParasha above
   const hash = location.hash.replace('#', '');
-  const autoSlug = (hash && PARASHIOT[hash]) ? hash : currentSlug;
-  if (autoSlug) selectParasha(autoSlug);
+  if (hash && PARASHIOT[hash]) {
+    selectParasha(hash);
+  } else if (!hasSplit) {
+    const fallback = slugIL || slugDia;
+    if (fallback) selectParasha(fallback);
+  }
 })();
 </script>
 
