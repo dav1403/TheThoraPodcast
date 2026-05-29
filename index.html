@@ -429,7 +429,7 @@
 <body>
 
 <header>
-  <h1>The Torah Podcast</h1>
+  <h1><a href="./" style="color:inherit;text-decoration:none">The Torah Podcast</a></h1>
   <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
   <div class="header-stats" id="header-stats"></div>
   <nav class="header-nav">
@@ -747,8 +747,8 @@
     section.innerHTML = `
       <div class="channel-header">
         <div class="channel-header-left">
-          <img class="channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt=""
-               onerror="this.style.display='none'">
+          <a href="${escapeHtml(ch.slug)}.html"><img class="channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.name)}"
+               onerror="this.style.display='none'"></a>
           <h2><a href="${escapeHtml(ch.slug)}.html" style="color:inherit;text-decoration:none">${escapeHtml(ch.name)}</a></h2>
         </div>
         <div class="channel-platforms">
