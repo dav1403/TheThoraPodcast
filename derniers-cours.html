@@ -459,12 +459,14 @@
   }
 
   function slugify(title, maxLen = 70) {
-    return title.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, maxLen);
+    return title.toLowerCase().normalize('NFD')
+      .replace(/\p{Mn}/gu, '').replace(/[^a-z0-9א-תװ-״]+/gu, '-')
+      .replace(/^-+|-+$/g, '').replace(/-+/g, '-').slice(0, maxLen).replace(/-+$/, '');
   }
   function epUrl(ep, chSlug) {
     var s = slugify(ep.title || '');
-    if (chSlug) s = s.replace(new RegExp('^' + slugify(chSlug) + '-?'), '') || s;
+    var prefix = chSlug + '-';
+    if (s.startsWith(prefix)) s = s.slice(prefix.length) || (ep.video_id || 'episode');
     return `${chSlug}/${s}-${(ep.published || '').slice(0, 10)}.html`;
   }
 
