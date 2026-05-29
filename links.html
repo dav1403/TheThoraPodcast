@@ -415,8 +415,8 @@
 
     return `
       <div class="card">
-        <img class="card-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.podcast_author)}"
-             onerror="this.style.background='#e0e0e0';this.removeAttribute('src')">
+        <a href="${escapeHtml(ch.slug)}.html"><img class="card-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.podcast_author)}"
+             onerror="this.style.background='#e0e0e0';this.removeAttribute('src')"></a>
         <div class="card-body">
           <div class="card-name-row">
             <a class="card-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.podcast_author)}</a>
