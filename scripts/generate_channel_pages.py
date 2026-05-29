@@ -239,7 +239,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
         audio_url = ep.get("audio_url", "")
 
         thumb_tag = (
-            f'<img class="ep-thumb" src="{esc(thumb)}" alt="{esc(ep["title"])}" loading="lazy">'
+            f'<a href="{esc(ep_path(slug, ep))}"><img class="ep-thumb" src="{esc(thumb)}" alt="{esc(ep["title"])}" loading="lazy"></a>'
             if thumb else '<div class="ep-thumb-ph"></div>'
         )
         desc_tag  = f'<p class="ep-desc">{esc(desc_raw)}</p>' if desc_raw else ""
@@ -633,7 +633,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         r_vid = r.get("video_id", "")
         r_thumb = r.get("thumbnail", "")
         r_thumb_tag = (
-            f'<img class="ep-thumb" src="{esc(r_thumb)}" alt="{esc(r["title"])}" loading="lazy">'
+            f'<a href="{esc(ep_filename(r, slug))}"><img class="ep-thumb" src="{esc(r_thumb)}" alt="{esc(r["title"])}" loading="lazy"></a>'
             if r_thumb else '<div class="ep-thumb-ph"></div>'
         )
         related_parts.append(
