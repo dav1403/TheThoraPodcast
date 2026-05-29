@@ -681,7 +681,7 @@
   }
   function renderEpisode(ep, slug, idx) {
     const thumb = ep.thumbnail
-      ? `<img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+      ? `<a href="${epUrl(ep, slug)}"><img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
       : `<div class="episode-thumb-ph"></div>`;
     const desc = ep.description
       ? `<p class="episode-desc">${escapeHtml(ep.description)}</p>`

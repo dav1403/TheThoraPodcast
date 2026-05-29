@@ -370,7 +370,7 @@
   function renderItem(item) {
     const { ep, ch } = item;
     const thumb = ep.thumbnail
-      ? `<img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+      ? `<a href="${epUrl(ep, ch.slug)}"><img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
       : `<div class="ep-thumb-ph"></div>`;
     const desc = ep.description ? `<p class="ep-desc">${escapeHtml(ep.description.slice(0,200))}</p>` : '';
     const playBtn = ep.audio_url

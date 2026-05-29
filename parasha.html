@@ -638,7 +638,7 @@ function renderResults(slug, allData) {
         ${episodes.map(ep => `
           <li class="episode">
             ${ep.thumbnail
-              ? `<img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+              ? `<a href="${epUrl(ep, ch.slug)}"><img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
               : `<div class="episode-thumb-ph"></div>`}
             <div class="episode-body">
               <a class="episode-title" href="${epUrl(ep, ch.slug)}" style="color:inherit;text-decoration:none;display:block">${escapeHtml(ep.title)}</a>

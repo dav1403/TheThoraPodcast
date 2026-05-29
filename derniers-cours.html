@@ -458,6 +458,16 @@
     return `<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>`;
   }
 
+  function slugify(title, maxLen = 70) {
+    return title.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, maxLen);
+  }
+  function epUrl(ep, chSlug) {
+    var s = slugify(ep.title || '');
+    if (chSlug) s = s.replace(new RegExp('^' + slugify(chSlug) + '-?'), '') || s;
+    return `${chSlug}/${s}-${(ep.published || '').slice(0, 10)}.html`;
+  }
+
   function loadInPlayer(ep, chName, slug) {
     playerTitle.textContent = ep.title;
     playerCh.textContent    = chName;
@@ -528,7 +538,7 @@
   function renderEpisodeItem(item) {
     const { ep, ch } = item;
     const thumb = ep.thumbnail
-      ? `<img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+      ? `<a href="${epUrl(ep, ch.slug)}"><img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
       : `<div class="ep-thumb-ph"></div>`;
     const desc = ep.description
       ? `<p class="ep-desc">${escapeHtml(ep.description.slice(0, 200))}</p>`
@@ -544,7 +554,7 @@
             <img class="ep-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" loading="lazy">
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
-          <a class="ep-title" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ep.title)}</a>
+          <a class="ep-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
           <div class="ep-date">${formatDate(ep.published)}</div>
           ${desc}${playBtn}
         </div>

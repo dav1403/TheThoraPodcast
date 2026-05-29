@@ -627,7 +627,7 @@
     }
     list.innerHTML = visible.map(({ ep, ch, gidx }) => {
       const thumb = ep.thumbnail
-        ? `<img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy">`
+        ? `<a href="${epUrl(ep, ch.slug)}"><img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
         : `<div class="ep-thumb-ph"></div>`;
       const otherTags = (ep.tags || []).filter(tag => tag !== theme);
       const tagPills  = otherTags.length
