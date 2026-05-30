@@ -1,0 +1,76 @@
+#!/bin/bash
+# Pre-commit hook: detect silently corrupted/empty files before commit.
+
+PYTHON=""
+for candidate in \
+    "/c/Users/David/AppData/Local/Programs/Python/Python311/python.exe" \
+    "/c/Users/David/AppData/Local/Programs/Python/Python314/python.exe" \
+    "$(which python3 2>/dev/null)" \
+    "$(which python 2>/dev/null)"; do
+  if [ -x "$candidate" ] 2>/dev/null; then
+    PYTHON="$candidate"
+    break
+  fi
+done
+
+if [ -z "$PYTHON" ]; then
+  echo "[pre-commit] WARNING: Python introuvable, vérification ignoree."
+  exit 0
+fi
+
+exec "$PYTHON" - <<'PYEOF'
+import subprocess, sys, json
+
+errors = []
+
+def run(cmd):
+    return subprocess.run(cmd, capture_output=True)
+
+def staged_files():
+    r = run(["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"])
+    return [f for f in r.stdout.decode(errors="replace").splitlines()
+            if f.endswith((".html", ".json", ".py"))]
+
+def head_bytes(path):
+    r = run(["git", "show", f"HEAD:{path}"])
+    return r.stdout if r.returncode == 0 else None
+
+def staged_bytes(path):
+    return run(["git", "show", f":{path}"]).stdout
+
+for path in staged_files():
+    content = staged_bytes(path)
+    size    = len(content)
+    lines   = content.count(b"\n")
+
+    if size == 0:
+        errors.append(f"{path}: FICHIER VIDE (0 octets) - probablement corrompu par sed/redirection")
+        continue
+
+    head = head_bytes(path)
+    if head is not None:
+        head_lines = head.count(b"\n")
+        if head_lines > 20 and lines < head_lines * 0.30:
+            pct = 100 * lines // head_lines
+            errors.append(f"{path}: TRONQUE - {lines} lignes vs {head_lines} dans HEAD ({pct}% restant)")
+
+    if path.endswith(".html"):
+        snippet = content[:2000].lower()
+        if b"<!doctype" not in snippet and b"<html" not in snippet:
+            errors.append(f"{path}: HTML sans DOCTYPE ni html")
+
+    if path.endswith(".json"):
+        try:
+            json.loads(content.decode("utf-8", errors="replace"))
+        except json.JSONDecodeError as e:
+            errors.append(f"{path}: JSON INVALIDE - {e}")
+
+if errors:
+    print("\n\033[31m[pre-commit] Commit bloque - fichiers suspects:\033[0m\n")
+    for e in errors:
+        print(f"  \033[31mX\033[0m {e}")
+    print("\nCorrigez, re-stagez et recommittez.\n")
+    sys.exit(1)
+
+sys.exit(0)
+PYEOF
