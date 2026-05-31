@@ -1000,6 +1000,7 @@ def render_speaker_page(
         "podcast_language": speaker.get("language", "fr"),
         "platforms": {},
         "enabled": True,
+        "thumbnail": episodes[0].get("thumbnail", "") if episodes else "",
     }
     # Inject extra speakers into all_channels list for nav
     nav_list = list(all_channels) + [
