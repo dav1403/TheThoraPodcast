@@ -459,10 +459,11 @@
   (async () => {
     const app = document.getElementById('app');
 
-    let channels = [];
+    let channels = [], speakers = [];
     try {
-      const res = await fetch('channels.json');
-      if (res.ok) channels = (await res.json()).filter(ch => ch.enabled);
+      const [chRes, spRes] = await Promise.all([fetch('channels.json'), fetch('speakers.json')]);
+      if (chRes.ok) channels = (await chRes.json()).filter(ch => ch.enabled);
+      if (spRes.ok) speakers = await spRes.json();
     } catch (_) {}
 
     if (!channels.length) {
@@ -481,18 +482,41 @@
       }
     }));
 
+    // Build speaker pseudo-entries by filtering source channel entries
+    const entriesCache = Object.fromEntries(allData.map(({ ch, entries }) => [ch.slug, entries]));
+    const speakerData = speakers.map(sp => {
+      const entries = sp.from_channels.flatMap(slug =>
+        (entriesCache[slug] || []).filter(ep =>
+          sp.title_patterns.some(p => ep.title && ep.title.toLowerCase().includes(p.toLowerCase()))
+        )
+      ).sort((a, b) => new Date(b.published) - new Date(a.published));
+      return {
+        ch: { slug: sp.slug, podcast_author: sp.name, platforms: {}, language: sp.language },
+        entries
+      };
+    });
+
     const totalEpisodes = allData.reduce((sum, { entries }) => sum + entries.length, 0);
     document.getElementById('header-stats').textContent =
       lang === 'he'
-        ? `${channels.length} ערוצים · ${totalEpisodes} שיעורים פורסמו`
-        : `Déjà ${channels.length} chaînes · ${totalEpisodes} cours publiés`;
+        ? `${channels.length + speakers.length} רבנים · ${totalEpisodes} שיעורים פורסמו`
+        : `${channels.length + speakers.length} rabbins · ${totalEpisodes} cours publiés`;
 
     setSort('latest');
 
+    // Append speaker cards after channel cards
+    speakerData.forEach(({ ch, entries }) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = renderCard(ch, entries);
+      app.appendChild(card);
+    });
+
     const sub = document.getElementById('nav-rabbis-submenu');
-    if (sub) sub.innerHTML = channels.map(ch =>
-      `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.podcast_author)}</a>`
-    ).join('') + `<a class="nav-submenu-all" href="links.html">Tous les rabbins →</a>`;
+    if (sub) sub.innerHTML = [
+      ...channels.map(ch => `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.podcast_author)}</a>`),
+      ...speakers.map(sp => `<a href="${escapeHtml(sp.slug)}.html">${escapeHtml(sp.name)}</a>`)
+    ].join('') + `<a class="nav-submenu-all" href="links.html">Tous les rabbins →</a>`;
 
   document.addEventListener('click', e => {
     if (e.target.closest('.nav-submenu')) return;
