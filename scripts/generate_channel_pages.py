@@ -247,7 +247,9 @@ def render_page(ch: dict, entries: list, all_channels: list,
     ep_parts = []
     for ep in sorted_entries:
         thumb     = ep.get("thumbnail", "")
-        desc_raw  = (ep.get("description") or "").strip()[:200]
+        _raw = (ep.get("description") or "").strip()
+        _raw = re.sub(r"^[Dd]escription\s*:\s*", "", _raw)
+        desc_raw = (_raw[:200].rstrip() + "…") if len(_raw) > 200 else _raw
         audio_url = ep.get("audio_url", "")
 
         thumb_tag = (

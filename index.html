@@ -690,7 +690,7 @@
              loading="lazy" onerror="this.src='artwork/${escapeHtml(ch.slug)}.png'">
         <div class="recent-card-body">
           <div class="recent-card-ch">${escapeHtml(ch.name)}</div>
-          <div class="recent-card-title">${escapeHtml(ep.title)}</div>
+          <a class="recent-card-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
           <div class="recent-card-date">${formatDate(ep.published)}</div>
         </div>
       </div>`).join('');
