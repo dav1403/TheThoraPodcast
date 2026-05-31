@@ -11,9 +11,10 @@ import unicodedata
 from datetime import datetime
 from pathlib import Path
 
-BASE_URL      = "https://thetorahpodcast.net"
-CHANNELS_FILE = Path("channels.json")
-FEEDS_DIR     = Path("feeds")
+BASE_URL       = "https://thetorahpodcast.net"
+CHANNELS_FILE  = Path("channels.json")
+SPEAKERS_FILE  = Path("speakers.json")
+FEEDS_DIR      = Path("feeds")
 
 MONTHS_FR = [
     "janvier", "février", "mars", "avril", "mai", "juin",
@@ -975,14 +976,46 @@ def update_sitemap(slug_entries: list[tuple]):
     )
     total_eps = sum(len(e) for _, e in slug_entries)
     Path("sitemap.xml").write_text(sitemap, encoding="utf-8")
-    print(f"  sitemap.xml → {len(slugs)} channel pages + {total_eps} episode pages added")
+    print(f"  sitemap.xml -> {len(slugs)} channel pages + {total_eps} episode pages added")
+
+
+def speaker_matches(title: str, patterns: list[str]) -> bool:
+    t = title.lower()
+    return any(p.lower() in t for p in patterns)
+
+
+def render_speaker_page(
+    speaker: dict,
+    episodes: list[dict],
+    all_channels: list[dict],
+    all_speakers: list[dict],
+    site_channels: int = 0,
+    site_episodes: int = 0,
+    site_hours: int = 0,
+) -> str:
+    """Generate a channel-style page for a guest speaker."""
+    fake_ch = {
+        "slug": speaker["slug"],
+        "podcast_author": speaker["name"],
+        "podcast_language": speaker.get("language", "fr"),
+        "platforms": {},
+        "enabled": True,
+    }
+    # Inject extra speakers into all_channels list for nav
+    nav_list = list(all_channels) + [
+        {"slug": s["slug"], "podcast_author": s["name"], "enabled": True}
+        for s in all_speakers
+    ]
+    return render_page(fake_ch, episodes, nav_list, site_channels, site_episodes, site_hours)
 
 
 def main():
     channels = json.loads(CHANNELS_FILE.read_text(encoding="utf-8"))
     enabled  = [ch for ch in channels if ch.get("enabled")]
 
-    # Pre-load all entries to compute site-wide stats for the header
+    speakers = json.loads(SPEAKERS_FILE.read_text(encoding="utf-8")) if SPEAKERS_FILE.exists() else []
+
+    # Pre-load all entries
     all_data = []
     for ch in enabled:
         entries_path = FEEDS_DIR / f"{ch['slug']}.entries.json"
@@ -991,10 +1024,11 @@ def main():
         entries = json.loads(entries_path.read_text(encoding="utf-8"))
         all_data.append((ch, entries))
 
-    site_channels = len(all_data)
+    site_channels = len(all_data) + len(speakers)
     site_episodes = sum(len(e) for _, e in all_data)
     site_hours    = round(site_episodes * 0.75)
 
+    # Channel pages
     generated = []
     for ch, entries in all_data:
         slug = ch["slug"]
@@ -1004,6 +1038,7 @@ def main():
         print(f"  {out}  ({len(entries)} episodes)")
         generated.append((slug, entries))
 
+    # Channel episode pages
     ep_count = 0
     for slug, entries in generated:
         ch = next(c for c in enabled if c["slug"] == slug)
@@ -1015,10 +1050,37 @@ def main():
             ep_page = render_episode_page(ep, ch, entries, enabled)
             (ch_dir / ep_filename(ep, slug)).write_text(ep_page, encoding="utf-8")
             ep_count += 1
-    print(f"  rabbi subdirs/  ({ep_count} episode pages generated)")
+    print(f"  rabbi subdirs/  ({ep_count} channel episode pages generated)")
+
+    # Speaker pages
+    entries_cache = {ch["slug"]: entries for ch, entries in all_data}
+    for speaker in speakers:
+        sp_episodes = []
+        for ch_slug in speaker.get("from_channels", []):
+            if ch_slug in entries_cache:
+                sp_episodes += [
+                    ep for ep in entries_cache[ch_slug]
+                    if speaker_matches(ep.get("title", ""), speaker["title_patterns"])
+                ]
+        sp_episodes.sort(key=lambda x: x.get("published", ""), reverse=True)
+        slug = speaker["slug"]
+        page = render_speaker_page(speaker, sp_episodes, enabled, speakers,
+                                   site_channels, site_episodes, site_hours)
+        Path(f"{slug}.html").write_text(page, encoding="utf-8")
+        print(f"  {slug}.html  ({len(sp_episodes)} episodes)")
+        sp_dir = Path(slug)
+        sp_dir.mkdir(exist_ok=True)
+        fake_ch = {"slug": slug, "podcast_author": speaker["name"],
+                   "podcast_language": speaker.get("language", "fr"), "platforms": {}}
+        for ep in sp_episodes:
+            if not ep.get("title") or not ep.get("published"):
+                continue
+            ep_page = render_episode_page(ep, fake_ch, sp_episodes, enabled)
+            (sp_dir / ep_filename(ep, slug)).write_text(ep_page, encoding="utf-8")
+            ep_count += 1
 
     update_sitemap(generated)
-    print(f"\nDone — {len(generated)} channel pages + {ep_count} episode pages generated.")
+    print(f"\nDone — {len(generated)} channel + {len(speakers)} speaker pages + {ep_count} episode pages.")
 
 
 if __name__ == "__main__":
