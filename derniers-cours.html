@@ -223,18 +223,14 @@
       text-transform: uppercase;
       letter-spacing: 0.04em;
       font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
     }
     .ep-channel-name:hover { color: #1a1a2e; }
     .ep-title {
       font-weight: 600;
       font-size: 0.88rem;
       margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
       color: #222;
       text-decoration: none;
     }
@@ -324,7 +320,7 @@
       flex-shrink: 0;
     }
     #player-info { min-width: 0; flex: 1; }
-    #player-title { font-size: 0.82rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #player-title { font-size: 0.82rem; font-weight: 600; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     #player-channel { font-size: 0.68rem; color: #99a; }
     #player-audio { flex: 2; min-width: 120px; height: 32px; accent-color: #e87722; }
     #player-close {

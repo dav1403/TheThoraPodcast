@@ -28,8 +28,9 @@ def check_js_in_html(path, content):
     if not os.path.isfile(NODE):
         return []
     text = content.decode("utf-8", errors="replace")
+    # Extract only JS script blocks (skip src=, json, module imports that aren't JS)
     blocks = re.findall(
-        r'<script(?!\s[^>]*\bsrc\b)[^>]*>([\s\S]*?)</script>',
+        r'<script(?!\s[^>]*\bsrc\b)(?!\s[^>]*type=["\']application/(?:ld\+)?json["\'])[^>]*>([\s\S]*?)</script>',
         text, re.IGNORECASE
     )
     js_errors = []
