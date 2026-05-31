@@ -364,15 +364,15 @@ def render_page(ch: dict, entries: list, all_channels: list,
   <nav class="header-nav">
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
-      <a class="nav-dd-link active" href="links.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
+      <a class="nav-dd-link active" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
       <div class="nav-submenu">
 {submenu_links}
-        <a class="nav-submenu-all" href="links.html">Tous les rabbins →</a>
+        <a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>
       </div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
-    <a href="parasha.html" data-i18n="nav_parasha">Paracha</a>
+    <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
@@ -425,14 +425,14 @@ def render_page(ch: dict, entries: list, all_channels: list,
 <script>
   const I18N = {{
     fr: {{
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_parasha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_paracha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${{n}} épisode${{n !== 1 ? 's' : ''}}`,
       listen:'Écouter', playing:'En cours…',
     }},
     he: {{
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_paracha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${{n}} פרקים`,
@@ -783,15 +783,15 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   <nav class="header-nav">
     <a href="../" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
-      <a class="nav-dd-link" href="../links.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
+      <a class="nav-dd-link" href="../rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
       <div class="nav-submenu">
 {submenu_links}
-        <a class="nav-submenu-all" href="../links.html">Tous les rabbins →</a>
+        <a class="nav-submenu-all" href="../rabbins.html">Tous les rabbins →</a>
       </div>
     </div>
     <a href="../derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <a href="../daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
-    <a href="../parasha.html" data-i18n="nav_parasha">Paracha</a>
+    <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
@@ -828,12 +828,12 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 <script>
   const I18N = {{
     fr: {{
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_parasha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_paracha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       related:'Épisodes récents', transcript_label:'Transcription',
     }},
     he: {{
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_parasha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_paracha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       related:'פרקים אחרונים', transcript_label:'תמליל',
     }},
@@ -941,13 +941,13 @@ def update_sitemap(slug_entries: list[tuple]):
         '    <priority>1.0</priority>\n'
         '  </url>\n'
         '  <url>\n'
-        f'    <loc>{BASE_URL}/links.html</loc>\n'
+        f'    <loc>{BASE_URL}/rabbins.html</loc>\n'
         f'    <lastmod>{today}</lastmod>\n'
         '    <changefreq>weekly</changefreq>\n'
         '    <priority>0.8</priority>\n'
         '  </url>\n'
         '  <url>\n'
-        f'    <loc>{BASE_URL}/parasha.html</loc>\n'
+        f'    <loc>{BASE_URL}/paracha.html</loc>\n'
         f'    <lastmod>{today}</lastmod>\n'
         '    <changefreq>weekly</changefreq>\n'
         '    <priority>0.7</priority>\n'

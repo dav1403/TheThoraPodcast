@@ -78,7 +78,8 @@ for path in staged_files():
     head = head_bytes(path)
     if head is not None:
         head_lines = head.count(b"\n")
-        if head_lines > 20 and lines < head_lines * 0.30:
+        is_redirect = b'http-equiv="refresh"' in content
+        if head_lines > 20 and lines < head_lines * 0.30 and not is_redirect:
             pct = 100 * lines // head_lines
             errors.append(
                 f"{path}: TRONQUE - {lines} lignes vs {head_lines} dans HEAD ({pct}% restant)"
