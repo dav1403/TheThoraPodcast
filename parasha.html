@@ -462,7 +462,7 @@ const PARASHIOT = {
   'tetzaveh':      { fr: 'Tetsavé',        he: 'תְּצַוֶּה',   hebcal: 'Tetzaveh',       kw: ['tetzaveh','tetsavé','tetsave','תצוה'] },
   'ki-tisa':       { fr: 'Ki Tissa',       he: 'כִּי תִשָּׂא', hebcal: 'Ki Tisa',       kw: ['ki tisa','ki tissa','ki-tissa','כי תשא'] },
   'vayakhel':      { fr: 'Vayakhel',       he: 'וַיַּקְהֵל',  hebcal: 'Vayakhel',       kw: ['vayakhel','vaïaqhel','ויקהל'] },
-  'pekudei':       { fr: 'Pekudei',        he: 'פְקוּדֵי',    hebcal: 'Pekudei',        kw: ['pekudei','pékoudéi','pekoudei','פקודי'] },
+  'pekudei':       { fr: 'Pekudei',        he: 'פְקוּדֵי',    hebcal: 'Pekudei',        kw: ['pekudei','pékoudéi','pekoudei','pékoudé','pékoude','pekoudé','פקודי'] },
   'vayikra':       { fr: 'Vayikra',        he: 'וַיִּקְרָא',  hebcal: 'Vayikra',        kw: ['vayikra','vayiqra','ויקרא'] },
   'tzav':          { fr: 'Tsav',           he: 'צַו',         hebcal: 'Tzav',           kw: ['tzav','tsav','צו'] },
   'shemini':       { fr: 'Chemini',        he: 'שְּׁמִינִי',   hebcal: 'Shemini',        kw: ['shemini','chemini','שמיני'] },
@@ -477,7 +477,7 @@ const PARASHIOT = {
   'nasso':         { fr: 'Nasso',          he: 'נָשֹׂא',      hebcal: 'Nasso',          kw: ['nasso','נשא'] },
   'behaalotcha':   { fr: "Beha'alotcha",   he: 'בְּהַעֲלֹתְךָ',hebcal: "Beha'alotcha",  kw: ["beha'alotcha",'behaalotcha','behaalotkha',"beha'alotkha",'béhaalotéha','behaloteha','בהעלתך'] },
   'shlach':        { fr: 'Chelah',         he: 'שְׁלַח',      hebcal: "Sh'lach",        kw: ['shlach','shelah','chelah','שלח'] },
-  'korah':         { fr: 'Koré',           he: 'קֹרַח',       hebcal: 'Korach',         kw: ['korah','koré','coré','קרח'] },
+  'korah':         { fr: 'Koré',           he: 'קֹרַח',       hebcal: 'Korach',         kw: ['korah',"kora'h",'koré','coré','קרח'] },
   'chukat':        { fr: 'Houkat',         he: 'חֻקַּת',      hebcal: 'Chukat',         kw: ['chukat','houkat','houqat','חקת'] },
   'balak':         { fr: 'Balak',          he: 'בָּלָק',      hebcal: 'Balak',          kw: ['balak','בלק'] },
   'pinchas':       { fr: 'Pinhas',         he: 'פִּינְחָס',   hebcal: 'Pinchas',        kw: ['pinchas','pinhas','pinéhas','פינחס'] },
@@ -509,8 +509,7 @@ function matchesParasha(title, keywords) {
     const k = kw.toLowerCase();
     if (/[֐-׿]/.test(k)) return t.includes(k);
     const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[-']/g, '.');
-    return new RegExp('(?:^|[\\s\\-_:,!?])' + escaped + '(?:[\\s\\-_:,!?]|$)', 'i').test(t);
-  });
+    return new RegExp('(?:^|[\s\-_:,!?()".])' + escaped + '(?:[\s\-_:,!?()".\u2018\u2019']|$)', 'i').test(t)
 }
 
 function findEpisodesForParasha(slug, allData) {
