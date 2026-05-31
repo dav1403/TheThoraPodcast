@@ -399,6 +399,7 @@
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       page_title:'Derniers cours',
       filter_all:'Tous les rabbins',
+      dur_all:'Tous', dur_short:'< 5 min', dur_medium:'5–20 min', dur_long:'> 20 min',
       search_ph:'Rechercher un épisode ou un rav…',
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       load_more:'Voir plus',
@@ -528,7 +529,7 @@
       ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>`
       : '';
     return `
-      <li class="episode-item" data-slug="${escapeHtml(ch.slug)}">
+      <li class="episode-item" data-slug="${escapeHtml(ch.slug)}" data-dur="${ep.duration_secs || 0}">
         ${thumb}
         <div class="ep-body">
           <div class="ep-channel">
@@ -536,7 +537,7 @@
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
           <a class="ep-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
-          <div class="ep-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
+          <div class="ep-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
           ${desc}${playBtn}
         </div>
       </li>`;
@@ -548,9 +549,26 @@
   let activeFilter = 'all';
   let searchQuery  = '';
 
+  let activeDurFilter = 'all';
+  function filterDurDC(btn) {
+    document.querySelectorAll('#dur-filter-row .filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeDurFilter = btn.dataset.dur;
+    visibleCount = PAGE_SIZE;
+    renderList();
+  }
   function filteredFlat() {
     let flat = window._flat || [];
     if (activeFilter !== 'all') flat = flat.filter(x => x.ch.slug === activeFilter);
+    if (activeDurFilter !== 'all') {
+      flat = flat.filter(x => {
+        const d = x.ep.duration_secs || 0;
+        if (activeDurFilter === 'short')  return d > 0 && d < 300;
+        if (activeDurFilter === 'medium') return d >= 300 && d <= 1200;
+        if (activeDurFilter === 'long')   return d > 1200;
+        return true;
+      });
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       flat = flat.filter(x =>
