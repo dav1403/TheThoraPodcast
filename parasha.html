@@ -675,7 +675,8 @@ function buildBooks(allData) {
 function extractSlugFromHebcal(data) {
   const item = data.items && data.items.find(i => i.category === 'parashat');
   if (!item) return null;
-  const name = item.title.replace(/^Parashat\s+/i, '').toLowerCase();
+  const name = item.title.replace(/^Parashat\s+/i, '').toLowerCase()
+    .replace(/[‘’ʼ]/g, "'");  // normalize fancy apostrophes from Hebcal API
   return HEBCAL_SLUG[name] || HEBCAL_SLUG[name.split('-')[0]] || null;
 }
 
