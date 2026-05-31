@@ -603,7 +603,7 @@
       }
       const slug = btn.dataset.slug;
       const idx  = +btn.dataset.idx;
-      const d    = allData.find(x => x.ch.slug === slug);
+      const d    = allData.find(x => x.ch.slug === slug) || speakerData.find(x => x.ch.slug === slug);
       if (!d) return;
       if (activeBtn && activeBtn !== btn) {
         activeBtn.classList.remove('playing');
