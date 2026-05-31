@@ -1,11 +1,19 @@
 # My Podcast
 https://dav1403.github.io/TheThoraPodcast/links.html
 
-# To add more Shows 
+## Setup (after cloning)
 
-> Edit channels.json 
+```bash
+git config core.hooksPath .githooks
+```
 
-  {                                                                                                                
+This activates the pre-commit hook that blocks accidental commits of empty or corrupted files.
+
+## To add more Shows
+
+> Edit channels.json
+
+  {
     "slug": "Rabbi-Name",
     "youtube_channel_id": "UCxxxxxxxxxxxxxxxxxxxxxxx",
     "podcast_author": "Rabbi Name",
