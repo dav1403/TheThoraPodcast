@@ -244,8 +244,11 @@ def render_page(ch: dict, entries: list, all_channels: list,
 
     # Static episode list
     sorted_entries = sorted(entries, key=lambda x: x["published"], reverse=True)
+    _date_title_re = re.compile(r"^\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}$|^\d{1,2}\s+\w+\s+\d{4}$")
     ep_parts = []
     for ep in sorted_entries:
+        if _date_title_re.match((ep.get("title") or "").strip()):
+            continue  # LOG-04: skip episodes whose title is just a date
         thumb     = ep.get("thumbnail", "")
         _raw = (ep.get("description") or "").strip()
         _raw = re.sub(r"^[Dd]escription\s*:\s*", "", _raw)
