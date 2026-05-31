@@ -29,6 +29,14 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function formatDuration(secs) {
+  if (!secs || secs <= 0) return '';
+  var h = Math.floor(secs / 3600);
+  var m = Math.floor((secs % 3600) / 60);
+  if (h > 0) return h + 'h' + (m > 0 ? String(m).padStart(2, '0') : '');
+  return m + ' min';
+}
+
 function playIcon() {
   return '<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>';
 }

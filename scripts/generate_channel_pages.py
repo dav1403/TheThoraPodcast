@@ -56,6 +56,17 @@ def fmt_date(iso, lang):
     except Exception:
         return iso[:10]
 
+
+def fmt_dur(secs):
+    if not secs or int(secs) <= 0:
+        return ""
+    h, remainder = divmod(int(secs), 3600)
+    m = remainder // 60
+    if h:
+        return f"{h}h{m:02d}" if m else f"{h}h"
+    return f"{m} min"
+
+
 PLATFORM_META = {
     "spotify": (
         '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>',
@@ -264,7 +275,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
             f'      {thumb_tag}\n'
             f'      <div class="ep-body">\n'
             f'        <a class="ep-title" href="{esc(ep_path(slug, ep))}" style="color:inherit;text-decoration:none;display:block">{esc(ep["title"])}</a>\n'
-            f'        <time class="ep-date" datetime="{ep["published"][:10]}">{fmt_date(ep["published"], lang)}</time>\n'
+            f'        <time class="ep-date" datetime="{ep["published"][:10]}">{fmt_date(ep["published"], lang)}{" - " + fmt_dur(ep.get("duration_secs",0)) if ep.get("duration_secs") else ""}</time>\n'
             f'        {desc_tag}\n'
             f'        <div class="ep-actions">{audio_tag}{share_tag}</div>\n'
             f'      </div>\n'
@@ -659,7 +670,8 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
             f'{r_thumb_tag}'
             f'<div class="ep-body">'
             f'<a class="ep-title" href="{esc(ep_filename(r, slug))}" style="color:inherit;text-decoration:none;display:block">{esc(r["title"])}</a>'
-            f'<time class="ep-date" datetime="{r["published"][:10]}">{fmt_date(r["published"], lang)}</time>'
+            f'<time class="ep-date" datetime="{r["published"][:10]}">{fmt_date(r["published"], lang)}'
+            + (f' · {fmt_dur(r.get("duration_secs", 0))}' if r.get('duration_secs') else '') + '</time>'
             f'<div class="ep-actions"><audio class="ep-audio" controls src="{esc(r["audio_url"])}" preload="none" data-ep-id="{esc(r_vid)}"></audio>'
             f'<button class="share-btn" data-vid="{esc(r_vid)}" data-slug="{esc(slug)}" data-title="{esc(r["title"])}">'
             f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">'
@@ -801,7 +813,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   <div class="ep-hero">
     {thumb_tag}
     <h1>{esc(title)}</h1>
-    <p class="ep-meta"><a href="../{slug}.html" style="color:#888;text-decoration:none">{esc(name)}</a> · <time datetime="{pub}">{fmt_date(ep["published"], lang)}</time></p>
+    <p class="ep-meta"><a href="../{slug}.html" style="color:#888;text-decoration:none">{esc(name)}</a> · <time datetime="{pub}">{fmt_date(ep["published"], lang)}{" · " + fmt_dur(ep.get("duration_secs",0)) if ep.get("duration_secs") else ""}</time></p>
     {f'<div style="margin-bottom:8px">{tags_html}</div>' if tags_html else ''}
     {audio_tag}
     <div class="speed-bar">

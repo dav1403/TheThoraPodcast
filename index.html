@@ -670,7 +670,7 @@
         ${thumb}
         <div class="episode-body">
           <a class="episode-title" href="${epUrl(ep, slug)}">${escapeHtml(ep.title)}</a>
-          <div class="episode-date">${formatDate(ep.published)}</div>
+          <div class="episode-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
           ${desc}
           <div class="ep-btn-row">${playBtn}${shareBtn}</div>
         </div>

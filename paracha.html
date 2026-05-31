@@ -626,7 +626,7 @@ function renderResults(slug, allData) {
               : `<div class="episode-thumb-ph"></div>`}
             <div class="episode-body">
               <a class="episode-title" href="${epUrl(ep, ch.slug)}" style="color:inherit;text-decoration:none;display:block">${escapeHtml(ep.title)}</a>
-              <div class="episode-date">${formatDate(ep.published)}</div>
+              <div class="episode-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
               ${ep.audio_url ? `
                 <button class="play-btn"
                   data-audio="${escapeHtml(ep.audio_url)}"

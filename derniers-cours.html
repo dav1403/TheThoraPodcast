@@ -536,7 +536,7 @@
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
           <a class="ep-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
-          <div class="ep-date">${formatDate(ep.published)}</div>
+          <div class="ep-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
           ${desc}${playBtn}
         </div>
       </li>`;
