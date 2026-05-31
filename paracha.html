@@ -793,11 +793,13 @@ function selectParacha(slug) {
   // Render book chips
   document.getElementById('books-container').innerHTML = buildBooks(globalAllData);
 
-  // Auto-select from hash; if no hash, hasSplit already called selectParacha above
+  // After data loads, always render the current selection
   const hash = location.hash.replace('#', '');
   if (hash && PARACHIOT[hash]) {
     selectParacha(hash);
-  } else if (!hasSplit) {
+  } else if (selectedSlug) {
+    selectParacha(selectedSlug);  // re-render now that globalAllData is ready
+  } else {
     const fallback = slugIL || slugDia;
     if (fallback) selectParacha(fallback);
   }
