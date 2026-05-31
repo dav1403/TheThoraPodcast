@@ -379,7 +379,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
 </header>
 <main>
   <div class="ch-card">
-    <img class="ch-art" src="artwork/{slug}.png" alt="{esc(name)}" onerror="this.style.display='none'">
+    <img class="ch-art" src="{esc(ch.get('thumbnail') or f'artwork/{slug}.png')}" alt="{esc(name)}" onerror="this.src='artwork/{slug}.png'">
     <div>
       <h1 class="ch-name">{esc(name)}</h1>
       <p class="ch-count" id="ep-count"></p>
