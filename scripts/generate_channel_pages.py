@@ -627,9 +627,11 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     ep_slug  = ep_filename(ep, slug)
 
     ep_platform_links = ep.get("platform_links", {})
+    ch_platforms = ch.get("platforms", {})
     ep_platform_btns = []
     for key, (icon, label, cls) in PLATFORM_META.items():
-        url = ep_platform_links.get(key, "").strip()
+        # Episode-specific URL first, fall back to show page
+        url = ep_platform_links.get(key, "").strip() or ch_platforms.get(key, "").strip()
         if url:
             ep_platform_btns.append(
                 f'<a class="platform-btn {cls}" href="{esc(url)}" target="_blank" rel="noopener">'
