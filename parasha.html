@@ -48,7 +48,8 @@
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
+  <script src="js/utils.js"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -544,8 +545,8 @@ speedCycleBtn.addEventListener('click', () => {
   updateSpeedBtn();
 });
 
-function playIcon()  { return `<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>`; }
-function pauseIcon() { return `<svg viewBox="0 0 10 10" fill="currentColor"><rect x="1.5" y="1" width="2.5" height="8"/><rect x="6" y="1" width="2.5" height="8"/></svg>`; }
+
+
 
 document.addEventListener('click', e => {
   const btn = e.target.closest('.play-btn[data-audio]');
@@ -588,25 +589,10 @@ playerAudio.addEventListener('ended', () => {
 });
 
 // ─── Render ──────────────────────────────────────────────────────────────────
-function escapeHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function slugify(title, maxLen = 70) {
-  var s = title.toLowerCase().normalize('NFD')
-    .replace(/\p{Mn}/gu, '').replace(/[^a-z0-9א-תװ-׻]+/gu, '-')
-    .replace(/^-+|-+$/g, '').replace(/-+/g, '-').slice(0, maxLen).replace(/-+$/, '');
-  return s;
-}
-function epUrl(ep, chSlug) {
-  var s = slugify(ep.title || '');
-  var prefix = chSlug + '-';
-  if (s.startsWith(prefix)) s = s.slice(prefix.length) || (ep.video_id || 'episode');
-  return `${chSlug}/${s}-${(ep.published || '').slice(0, 10)}.html`;
-}
-function formatDate(iso) {
-  const locale = lang === 'he' ? 'he-IL' : 'fr-FR';
-  return new Date(iso).toLocaleDateString(locale, { day:'numeric', month:'long', year:'numeric' });
-}
+
+
+
+
 
 function renderResults(slug, allData) {
   const p = PARASHIOT[slug];
