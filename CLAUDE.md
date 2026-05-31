@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this repository.
 
 ## Commands
 
@@ -17,6 +17,8 @@ export R2_ACCESS_KEY_ID="..."
 export R2_SECRET_ACCESS_KEY="..."
 export R2_BUCKET_NAME="thetorahpodcast"
 export R2_PUBLIC_URL="..."
+export SPOTIFY_CLIENT_ID="..."
+export SPOTIFY_CLIENT_SECRET="..."
 
 # Process new episodes for all enabled channels (budget = max downloads this run)
 python scripts/process_podcasts.py --budget 10
@@ -27,11 +29,12 @@ python scripts/backfill_podcasts.py --budget 5
 # Bootstrap a brand-new channel (backfill last N episodes)
 python scripts/bootstrap_channel.py --slug <channel-slug> --max 10
 
-# Repair local feeds (regenerate XML from entries.json without downloading)
-python scripts/repair_local.py
+# Backfill Apple / Deezer / Spotify platform episode links into entries JSON
+python scripts/backfill_platform_links.py --lookback-days 365
+python scripts/backfill_platform_links.py --channel <slug>  # single channel
 
-# Repair MP3s missing from R2 (re-upload from local tmp_audio or re-download)
-python scripts/repair_missing_r2.py
+# Regenerate all channel + episode HTML pages
+python scripts/generate_channel_pages.py
 ```
 
 No test suite or linter is configured. Scripts must be run from the repo root.
@@ -46,6 +49,8 @@ YouTube Data API v3
   Cloudflare R2  ←→  boto3 (S3-compatible)
        ↓
   feeds/<slug>.entries.json  +  feeds/<slug>.xml
+       ↓
+  generate_channel_pages.py
        ↓
   GitHub Pages (static hosting)
 ```
@@ -63,12 +68,27 @@ YouTube Data API v3
 - Round-robins one slot per channel per run, walking backwards through the uploads playlist
 - Tracks exhausted channels and pagination cursors in `backfill_state.json`
 
+**Platform links backfill (`backfill_platform_links.py`):**
+- Queries Apple iTunes API (public, no auth) and Deezer public API
+- Spotify: uses Client Credentials OAuth (requires SPOTIFY_CLIENT_ID + SPOTIFY_CLIENT_SECRET)
+- Fuzzy-matches episode titles (SequenceMatcher >= 0.70) against entries
+- Writes episode-specific URLs into `platform_links` key of each entry
+- Never overwrites existing URLs; logs all matches and misses
+- Run with `--lookback-days 365` for full historical backfill
+
 **Key data files:**
-- `channels.json` — channel definitions; add `"enabled": true` to onboard a new channel
+- `channels.json` — channel definitions; includes `platforms` (Spotify/Apple/Deezer show URLs)
 - `processed.json` — set of video IDs already downloaded, keyed by channel slug
 - `backfill_state.json` — per-channel backfill cursor (`page_token`, `exhausted` flag)
-- `feeds/<slug>.entries.json` — ordered episode list; all feed rebuilds read from this
+- `feeds/<slug>.entries.json` — ordered episode list; contains `platform_links` per episode
 - `feeds/<slug>.xml` — generated RSS, served via GitHub Pages
+
+**Static site generation (`generate_channel_pages.py`):**
+- Generates `<slug>.html` (channel page) and `<slug>/<ep-slug>.html` (episode pages)
+- Episode pages show Spotify / Apple Podcasts / Deezer links from `platform_links`
+- Falls back to show-level platform URL when no episode-specific link exists
+- All pages load shared utilities from `js/utils.js` (slugify, epUrl, escapeHtml, etc.)
+- Run manually or after updating entries; CI does NOT auto-run this script
 
 **GitHub Actions (`update_podcasts.yml`):**
 - Runs every 3 hours on cron
@@ -76,41 +96,64 @@ YouTube Data API v3
 - Bootstraps any channel whose entries file is missing or empty
 - Runs `process_podcasts.py --budget 10`, then `backfill_podcasts.py` with remaining budget
 - Commits `feeds/`, `processed.json`, `backfill_state.json`, `artwork/` with `[skip ci]`
+- Does NOT run `generate_channel_pages.py` or `backfill_platform_links.py` (manual)
 
-**YouTube cookies:** The workflow reads `YOUTUBE_COOKIES` secret and writes it to `/tmp/yt_cookies.txt`. A Raspberry Pi at `192.168.1.57` refreshes this secret every Monday at 08:00 by extracting cookies from its always-running Chromium session.
+**YouTube cookies:** The workflow reads `YOUTUBE_COOKIES` secret and writes it to `/tmp/yt_cookies.txt`.
+A Raspberry Pi at `192.168.1.57` refreshes this secret every Monday at 08:00.
 
 ## Adding a New Channel
 
-Add an entry to `channels.json` with `"enabled": true`. The next Actions run will detect the missing feed and auto-bootstrap it with the last 10 episodes.
+Add an entry to `channels.json` with `"enabled": true` and fill in the `platforms` object
+(Spotify show URL, Apple Podcasts show URL, Deezer show URL, RSS URL). The next Actions run
+will detect the missing feed and auto-bootstrap it with the last 10 episodes. Then run
+`backfill_platform_links.py` and `generate_channel_pages.py` manually.
+
+## Static Pages
+
+The site has two types of pages:
+- **Generated** by `generate_channel_pages.py`: `<slug>.html`, `<slug>/<ep>.html`, `sitemap.xml`
+- **Static/manual**: `index.html`, `links.html`, `derniers-cours.html`, `parasha.html`,
+  `themes.html`, `daf-hayomi.html`
+
+All pages (static and generated) load `js/utils.js` for shared JS utilities. When modifying
+shared functions (slugify, epUrl, etc.), edit `js/utils.js` only — never duplicate in pages.
 
 ## Local Dev Workflow (Windows)
 
-This repo is developed on Windows but CI runs on Linux. Rules to avoid breakage:
+This repo is developed on Windows but CI runs on Linux.
 
 **Python** — PowerShell only, full path:
-```powershell
+```
 C:\Users\David\AppData\Local\Programs\Python\Python311\python.exe script.py
 ```
 Never use `python` or `python3` in Bash (Microsoft Store alias, exit code 49).
 
-**Git / file editing** — the working copy lives at `C:\tmp\TTPclone` (PowerShell) = `/c/tmp/TTPclone` (Bash). Always edit files there, then commit and push from Bash:
+**Git / file editing** — working copy at `C:\tmp\TTPclone` (PowerShell) = `/c/tmp/TTPclone` (Bash):
 ```bash
 cd /c/tmp/TTPclone
-git add <files>
-git commit -m "..."
-git push origin main
+git add <files> && git commit -m "..." && git pull --rebase origin main && git push origin main
 ```
 
-**Never use Bash heredocs for Python code** — single quotes in Python dict keys break shell parsing. Write Python files via PowerShell `Set-Content`, or use the Edit/Write tools directly on `C:\tmp\TTPclone\...`.
+**Never use `sed` or Bash redirections (`>`) to edit files with non-ASCII content** (Hebrew,
+accented characters). Use Python `open().read().replace().write()` instead — `sed` silently
+corrupts such files on Windows.
 
-**UTF-8 BOM** — PowerShell `Set-Content -Encoding utf8` writes a UTF-8 BOM (`\xef\xbb\xbf`). On Linux CI, `json.loads()` crashes on it. Rules:
-- Write JSON files from Bash: `printf '{}' > file.json` (never PowerShell for JSON)
-- All Python JSON reads use `encoding="utf-8-sig"` (strips BOM silently, harmless without one)
-- All Python JSON writes use `encoding="utf-8"` (explicit, no BOM)
+**Pre-commit hook** — `.githooks/pre-commit` blocks commits with empty files, truncated files
+(>70% line loss vs HEAD), invalid HTML structure, or invalid JSON. Activate after cloning:
+```bash
+git config core.hooksPath .githooks
+```
 
-**yt-dlp options** — always `quiet=True, no_warnings=True` in production. Verbose mode generates thousands of lines per download.
+**UTF-8 BOM** — PowerShell `Set-Content -Encoding utf8` writes a BOM. Rules:
+- Write JSON files from Bash or Python `open(..., 'wb').write(...encode('utf-8'))`
+- All Python JSON reads use `encoding="utf-8-sig"` (strips BOM silently)
 
-**After pushing a fix to CI scripts** — always trigger a manual run and verify the result before closing the task:
+**GitHub Secrets required:**
+- `YOUTUBE_API_KEY`, `GITHUB_TOKEN`, `R2_*` — CI pipeline
+- `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` — platform links backfill
+- `YOUTUBE_COOKIES` — yt-dlp authentication
+
+**After pushing a fix to CI scripts:**
 ```bash
 gh workflow run update_podcasts.yml --repo dav1403/TheThoraPodcast
 gh run list --repo dav1403/TheThoraPodcast --limit 3
