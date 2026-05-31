@@ -505,9 +505,9 @@ function matchesParacha(title, keywords) {
   const t = title.toLowerCase();
   return keywords.some(kw => {
     const k = kw.toLowerCase();
-    if (/[֐-׿]/.test(k)) return t.includes(k);
-    const escaped = k.replace(/[\.*+?^${}()|[\]]/g, String.raw`\$&`).replace(/[-']/g, '.');
-    return new RegExp('(?:^|[\s\-_:,!?])' + escaped + '(?:[\s\-_:,!?]|$)', 'i').test(t);
+    if (/[\u0590-\u05ff]/.test(k)) return t.includes(k);
+    const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/[-']/g, '.');
+    return new RegExp('(?:^|[\\s\\-_:,!?])' + escaped + '(?:[\\s\\-_:,!?]|$)', 'i').test(t);
   });
 }
 
