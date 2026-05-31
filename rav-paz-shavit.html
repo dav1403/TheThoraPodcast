@@ -370,6 +370,10 @@
     .show-more-btn.visible { display: block; }
     .show-more-btn:hover { text-decoration: underline; }
     .section-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin-bottom: 12px; }
+    .dur-filter { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+    .dur-btn { background:#fff; border:1px solid #ddd; border-radius:16px; padding:4px 13px; font-size:.76rem; cursor:pointer; color:#555; transition:all .15s; font-family:inherit; }
+    .dur-btn:hover { border-color:#aaa; color:#333; }
+    .dur-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
     .ep-thumb { width: 80px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #ddd; }
@@ -485,7 +489,13 @@
   </div>
   <div class="ch-about" id="ch-about"><p>המכללה התורנית היא מוקד לימודי מוביל המעניק לתלמידים ידע עמוק בתורה שבעל פה וכתב, מן המקורות הקלסיים של חז&quot;ל וכל דורות ישראל. דרך שיעורים מובנים וברורים, אנחנו מאפשרים לכל יהודי, בכל רמה, להעמיק את קשרו לתורה ולהבין את עושר המסורת היהודית בעומק ובחיות. המכללה משלבת בין דיוק הלימוד הקלסי לבין הנגישות המודרנית, כך שהתורה הופכת לחיה ומעשית בחיי היומיום של כל אחד.</p><p>הפודקאסט שלנו מביא את הלימוד הזה לכל מקום שבו אתה נמצא. בדרך לעבודה, בהליכה ברחוב, בעת ביצוע עבודות בית או בכל רגע שנשאר לך — הטלפון שלך הופך למלמד אישי שנושא אתך את מלאכות התורה. אתה משתמש בזמנים שחרורים לצורך משמעותית, ומעשיר את חיך הרוחני בכל שלב של היום.</p><p>עם כל פרק שאתה משלים, אתה מעמיק את ידיעתך וחוקים על הישגך הרוחני. רשימת הפרקים שלך הופכת למפה של צמיחה, וכל שיעור הוא אבן דרך בדרכך לעבר הבנה רחבה יותר של תורתנו. יותר מכך, הפודקאסט שלנו הוא מרחב טהור וממוגן מתוכן בלתי הולם — בלא פרסומות מפריעות וללא התחשפ</p></div><button class="show-more-btn" id="show-more-btn"></button>
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
-  <div class="episode-list">
+  <div class="dur-filter">
+    <button class="dur-btn active" data-dur="all" onclick="filterDur(this)" data-i18n="dur_all">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="filterDur(this)" data-i18n="dur_short">&lt; 5 min</button>
+    <button class="dur-btn" data-dur="medium" onclick="filterDur(this)" data-i18n="dur_medium">5–20 min</button>
+    <button class="dur-btn" data-dur="long" onclick="filterDur(this)" data-i18n="dur_long">&gt; 20 min</button>
+  </div>
+  <div class="episode-list" id="ep-list">
     <article class="episode">
       <a href="rav-paz-shavit/גומש-טו-סיוון-2026-05-31.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/cXDuu0oWZ4w/maxresdefault.jpg" alt="גומש טו סיוון" loading="lazy"></a>
       <div class="ep-body">
