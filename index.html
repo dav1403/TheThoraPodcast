@@ -800,14 +800,15 @@
 
   (async () => {
     const app = document.getElementById('app');
-    let channels = [];
+    let channels = [], speakers = [];
     try {
-      const res = await fetch('channels.json');
-      if (res.ok) {
-        channels = (await res.json())
+      const [chRes, spRes] = await Promise.all([fetch('channels.json'), fetch('speakers.json')]);
+      if (chRes.ok) {
+        channels = (await chRes.json())
           .filter(ch => ch.enabled)
           .map(ch => ({ slug: ch.slug, name: ch.podcast_author, platforms: ch.platforms || {} }));
       }
+      if (spRes.ok) speakers = await spRes.json();
     } catch (_) {}
 
     if (!channels.length) {
@@ -824,13 +825,25 @@
       } catch (_) { return { ch, entries: [] }; }
     }));
 
+    // Build speaker sections from already-loaded channel entries
+    const entriesCache = Object.fromEntries(allData.map(({ ch, entries }) => [ch.slug, entries]));
+    const speakerData = speakers.map(sp => {
+      const entries = sp.from_channels.flatMap(slug =>
+        (entriesCache[slug] || []).filter(ep =>
+          sp.title_patterns.some(p => ep.title && ep.title.toLowerCase().includes(p.toLowerCase()))
+        )
+      ).sort((a, b) => new Date(b.published) - new Date(a.published));
+      return { ch: { slug: sp.slug, name: sp.name, platforms: {} }, entries };
+    });
+
     const totalEp = allData.reduce((s, {entries}) => s + entries.length, 0);
-    renderStats(allData.length, totalEp);
+    renderStats(allData.length + speakers.length, totalEp);
 
     const sub = document.getElementById('nav-rabbis-submenu');
-    if (sub) sub.innerHTML = channels.map(ch =>
-      `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
-    ).join('');
+    if (sub) sub.innerHTML = [
+      ...channels.map(ch => `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`),
+      ...speakers.map(sp => `<a href="${escapeHtml(sp.slug)}.html">${escapeHtml(sp.name)}</a>`)
+    ].join('');
 
     app.innerHTML = '';
     app.appendChild(buildRecents());
@@ -844,6 +857,9 @@
 
     for (const { ch, entries } of allData) {
       app.appendChild(buildChannel(ch, entries));
+    }
+    for (const { ch, entries } of speakerData) {
+      if (entries.length) app.appendChild(buildChannel(ch, entries));
     }
 
     setupSearch();
