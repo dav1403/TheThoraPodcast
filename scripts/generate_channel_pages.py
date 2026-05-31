@@ -420,6 +420,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
   <button id="speed-cycle-btn" title="Vitesse de lecture">1×</button>
   <button id="player-close" title="Fermer">✕</button>
 </div>
+<script src="js/utils.js"></script>
 <script>
   const I18N = {{
     fr: {{
@@ -625,6 +626,20 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     tags     = ep.get("tags") or []
     ep_slug  = ep_filename(ep, slug)
 
+    ep_platform_links = ep.get("platform_links", {})
+    ep_platform_btns = []
+    for key, (icon, label, cls) in PLATFORM_META.items():
+        url = ep_platform_links.get(key, "").strip()
+        if url:
+            ep_platform_btns.append(
+                f'<a class="platform-btn {cls}" href="{esc(url)}" target="_blank" rel="noopener">'
+                f'{icon}{label}</a>'
+            )
+    ep_platform_html = (
+        f'<div class="platform-links" style="margin-top:12px">{"".join(ep_platform_btns)}</div>'
+        if ep_platform_btns else ""
+    )
+
     others  = [e for e in all_entries if e.get("video_id") != video_id and e.get("audio_url")]
     related = sorted(others, key=lambda x: x.get("published", ""), reverse=True)[:5]
 
@@ -799,12 +814,14 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         <polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
       </svg> Partager cet épisode
     </button>
+    {ep_platform_html}
     {desc_tag}
     {f'<details class="transcript"><summary data-i18n="transcript_label">Transcription</summary><div class="transcript-body">{esc(transcript)}</div></details>' if transcript else ''}
   </div>
   {f'<p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list">{related_html}</div>' if related_html else ''}
   <div class="toast" id="toast"></div>
 </main>
+<script src="../js/utils.js"></script>
 <script>
   const I18N = {{
     fr: {{
