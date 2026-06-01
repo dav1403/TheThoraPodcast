@@ -279,8 +279,9 @@ def render_page(ch: dict, entries: list, all_channels: list,
             f' Partager</button>'
             if ep.get("title") and ep.get("published") else ""
         )
+        dur_secs = ep.get("duration_secs", 0) or 0
         ep_parts.append(
-            f'    <article class="episode">\n'
+            f'    <article class="episode" data-dur="{dur_secs}">\n'
             f'      {thumb_tag}\n'
             f'      <div class="ep-body">\n'
             f'        <a class="ep-title" href="{esc(ep_path(slug, ep))}" style="color:inherit;text-decoration:none;display:block">{esc(ep["title"])}</a>\n'
