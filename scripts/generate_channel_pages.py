@@ -480,6 +480,18 @@ def render_page(ch: dict, entries: list, all_channels: list,
       ? `{site_channels} ערוצים · {site_episodes} פרקים · ~{site_hours}ש`
       : `{site_channels} rabbins · {site_episodes} cours · ~{site_hours}h de Torah`;
   }}
+  function filterDur(btn) {{
+    document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const filter = btn.dataset.dur;
+    document.querySelectorAll('#ep-list .episode').forEach(ep => {{
+      const d = parseInt(ep.dataset.dur) || 0;
+      if (filter === 'all')    {{ ep.hidden = false; return; }}
+      if (filter === 'short')  {{ ep.hidden = !(d > 0 && d < 300); return; }}
+      if (filter === 'medium') {{ ep.hidden = !(d >= 300 && d <= 1200); return; }}
+      if (filter === 'long')   {{ ep.hidden = !(d > 1200); return; }}
+    }});
+  }}
   // Show more / less for channel description
   (function() {{
     const about = document.getElementById('ch-about');
