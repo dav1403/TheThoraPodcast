@@ -74,6 +74,10 @@
     .episode-list { list-style: none; }
     .episode-item { display:flex; gap:14px; padding:14px 0; border-bottom:1px solid #e8e8e3; align-items:flex-start; }
     .episode-item:last-child { border-bottom:none; }
+    .dur-filter { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px; }
+    .dur-btn { background:#fff; border:1px solid #ddd; border-radius:16px; padding:4px 13px; font-size:.76rem; cursor:pointer; color:#555; transition:all .15s; font-family:inherit; }
+    .dur-btn:hover { border-color:#aaa; color:#333; }
+    .dur-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
     .ep-thumb { width:100px; height:66px; object-fit:cover; border-radius:8px; flex-shrink:0; background:#ddd; }
     .ep-thumb-ph { width:100px; height:66px; border-radius:8px; flex-shrink:0; background:#e8e8e8; }
     .ep-body { flex:1; min-width:0; }
@@ -159,6 +163,12 @@
 </header>
 
 <main>
+  <div class="dur-filter" id="dur-filter">
+    <button class="dur-btn active" data-dur="all" onclick="filterDurAll(this)">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="filterDurAll(this)">&lt; 5 min</button>
+    <button class="dur-btn" data-dur="medium" onclick="filterDurAll(this)">5–20 min</button>
+    <button class="dur-btn" data-dur="long" onclick="filterDurAll(this)">&gt; 20 min</button>
+  </div>
   <div style="margin-bottom:16px;">
     <div class="page-title" data-i18n="page_title">Daf Hayomi</div>
     <div class="page-subtitle" id="page-subtitle"></div>
@@ -355,7 +365,7 @@
     const shareBtn = ep.title && ep.published
       ? `<button class="share-btn" data-epfile="${epUrl(ep, ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
     return `
-      <li class="episode-item" data-slug="${escapeHtml(ch.slug)}">
+      <li class="episode-item" data-ep-dur="${ep.duration_secs || 0}" data-slug="${escapeHtml(ch.slug)}">
         ${thumb}
         <div class="ep-body">
           <div class="ep-channel">
@@ -363,7 +373,7 @@
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
           <a class="ep-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
-          <div class="ep-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
+          <div class="ep-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
           ${desc}
           <div class="ep-actions">${playBtn}${shareBtn}</div>
         </div>
@@ -379,6 +389,23 @@
     return activeFilter === 'all' ? flat : flat.filter(x => x.ch.slug === activeFilter);
   }
 
+  // Duration filter
+  let _activeDur = 'all';
+  function filterDurAll(btn) {
+    document.querySelectorAll('#dur-filter .dur-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _activeDur = btn.dataset.dur;
+    _applyDurFilter();
+  }
+  function _applyDurFilter() {
+    document.querySelectorAll('[data-ep-dur]').forEach(el => {
+      const d = parseInt(el.dataset.epDur) || 0;
+      if (_activeDur === 'all')    { el.hidden = false; return; }
+      if (_activeDur === 'short')  { el.hidden = !(d > 0 && d < 300); return; }
+      if (_activeDur === 'medium') { el.hidden = !(d >= 300 && d <= 1200); return; }
+      if (_activeDur === 'long')   { el.hidden = !(d > 1200); return; }
+    });
+  }
   function renderList() {
     const app = document.getElementById('app');
     const items = filteredFlat();

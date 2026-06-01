@@ -529,7 +529,7 @@
       ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>`
       : '';
     return `
-      <li class="episode-item" data-slug="${escapeHtml(ch.slug)}" data-dur="${ep.duration_secs || 0}">
+      <li class="episode-item" data-slug="${escapeHtml(ch.slug)}" data-dur="${ep.duration_secs || 0}" data-ep-dur="${ep.duration_secs || 0}">
         ${thumb}
         <div class="ep-body">
           <div class="ep-channel">

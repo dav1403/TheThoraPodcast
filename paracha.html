@@ -232,6 +232,10 @@
       align-items: flex-start;
     }
     .episode:last-child { border-bottom: none; }
+    .dur-filter { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px; }
+    .dur-btn { background:#fff; border:1px solid #ddd; border-radius:16px; padding:4px 13px; font-size:.76rem; cursor:pointer; color:#555; transition:all .15s; font-family:inherit; }
+    .dur-btn:hover { border-color:#aaa; color:#333; }
+    .dur-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
     .episode-thumb {
       width: 72px; height: 48px;
       object-fit: cover;
@@ -351,7 +355,13 @@
     <div class="state loading" data-i18n="loading_eps">Chargement des épisodes…</div>
   </div>
 
-  <div id="results" hidden>
+    <div class="dur-filter" id="dur-filter">
+    <button class="dur-btn active" data-dur="all" onclick="filterDurAll(this)">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="filterDurAll(this)">&lt; 5 min</button>
+    <button class="dur-btn" data-dur="medium" onclick="filterDurAll(this)">5–20 min</button>
+    <button class="dur-btn" data-dur="long" onclick="filterDurAll(this)">&gt; 20 min</button>
+  </div>
+<div id="results" hidden>
     <div class="results-header">
       <div class="results-title" id="results-title"></div>
       <div class="results-he" id="results-he"></div>
@@ -620,7 +630,7 @@ function renderResults(slug, allData) {
       </div>
       <ul class="episode-list">
         ${episodes.map(ep => `
-          <li class="episode">
+          <li class="episode" data-ep-dur="${ep.duration_secs || 0}">
             ${ep.thumbnail
               ? `<a href="${epUrl(ep, ch.slug)}"><img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
               : `<div class="episode-thumb-ph"></div>`}

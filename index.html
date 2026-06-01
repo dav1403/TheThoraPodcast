@@ -261,6 +261,10 @@
     .ch-plat-apple   { background: #872EC4; color: #fff; }
     .ch-plat-deezer  { background: #EF5466; color: #fff; }
 
+    .dur-filter { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 14px; }
+    .dur-btn { background:#fff; border:1px solid #ddd; border-radius:16px; padding:4px 13px; font-size:.76rem; cursor:pointer; color:#555; transition:all .15s; font-family:inherit; }
+    .dur-btn:hover { border-color:#aaa; color:#333; }
+    .dur-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
     .episode-list { list-style: none; }
     .episode {
       display: flex;
@@ -441,6 +445,12 @@
   </nav>
 </header>
 
+  <div class="dur-filter" id="dur-filter">
+    <button class="dur-btn active" data-dur="all" onclick="filterDurAll(this)">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="filterDurAll(this)">&lt; 5 min</button>
+    <button class="dur-btn" data-dur="medium" onclick="filterDurAll(this)">5–20 min</button>
+    <button class="dur-btn" data-dur="long" onclick="filterDurAll(this)">&gt; 20 min</button>
+  </div>
 <div class="search-wrap">
   <div class="search-inner">
     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -670,7 +680,7 @@
         ${thumb}
         <div class="episode-body">
           <a class="episode-title" href="${epUrl(ep, slug)}">${escapeHtml(ep.title)}</a>
-          <div class="episode-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
+          <div class="episode-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
           ${desc}
           <div class="ep-btn-row">${playBtn}${shareBtn}</div>
         </div>
@@ -685,7 +695,7 @@
     flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
 
     const cards = flat.slice(0, RECENTS_COUNT).map(({ ep, ch, idx }) => `
-      <div class="recent-card" data-slug="${escapeHtml(ch.slug)}" data-idx="${idx}">
+      <div class="recent-card" data-ep-dur="${ep.duration_secs || 0}" data-slug="${escapeHtml(ch.slug)}" data-idx="${idx}">
         <img src="${escapeHtml(ep.thumbnail || `artwork/${ch.slug}.png`)}" alt=""
              loading="lazy" onerror="this.src='artwork/${escapeHtml(ch.slug)}.png'">
         <div class="recent-card-body">
