@@ -369,6 +369,12 @@
     <div class="filter-row" id="filter-row">
       <button class="filter-chip active" data-slug="all" data-i18n="filter_all">Tous les rabbins</button>
     </div>
+    <div class="filter-row" id="dur-filter-row" style="margin-top:4px">
+      <button class="filter-chip active" data-dur="all" onclick="filterDurDC(this)">Tous</button>
+      <button class="filter-chip" data-dur="short" onclick="filterDurDC(this)">&lt;&nbsp;5&nbsp;min</button>
+      <button class="filter-chip" data-dur="medium" onclick="filterDurDC(this)">5–20&nbsp;min</button>
+      <button class="filter-chip" data-dur="long" onclick="filterDurDC(this)">&gt;&nbsp;20&nbsp;min</button>
+    </div>
   </div>
 </div>
 
