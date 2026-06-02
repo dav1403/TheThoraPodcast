@@ -581,23 +581,6 @@
     if (hash) openTheme(decodeURIComponent(hash));
   }
 
-  // Duration filter
-  let _activeDur = 'all';
-  function filterDurAll(btn) {
-    document.querySelectorAll('#dur-filter .dur-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    _activeDur = btn.dataset.dur;
-    _applyDurFilter();
-  }
-  function _applyDurFilter() {
-    document.querySelectorAll('[data-ep-dur]').forEach(el => {
-      const d = parseInt(el.dataset.epDur) || 0;
-      if (_activeDur === 'all')    { el.hidden = false; return; }
-      if (_activeDur === 'short')  { el.hidden = !(d > 0 && d < 300); return; }
-      if (_activeDur === 'medium') { el.hidden = !(d >= 300 && d <= 1200); return; }
-      if (_activeDur === 'long')   { el.hidden = !(d > 1200); return; }
-    });
-  }
   function renderGrid() {
     const grid = document.getElementById('theme-grid');
     grid.innerHTML = THEMES.map(t => {
@@ -657,8 +640,6 @@
         </div>
       </li>`;
     }).join('');
-    // Re-apply duration filter after re-rendering
-    if (typeof _applyDurFilter === 'function') _applyDurFilter();
   }
 
   function renderRabbiFilter(items, theme) {
