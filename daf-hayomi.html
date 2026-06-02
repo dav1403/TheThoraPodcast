@@ -82,6 +82,15 @@
     .dur-btn { background:#fff; border:1px solid #ddd; border-radius:16px; padding:4px 13px; font-size:.76rem; cursor:pointer; color:#555; transition:all .15s; font-family:inherit; }
     .dur-btn:hover { border-color:#aaa; color:#333; }
     .dur-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
+
+    /* Sticky search bar */
+    .sticky-bar { position: sticky; top: 0; z-index: 100; background: #1a1a2e; padding: 10px 16px 12px; }
+    .sticky-inner { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
+    .search-wrap-global { position: relative; }
+    .search-icon-global { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,.4); pointer-events: none; }
+    .search-input-global { width: 100%; padding: 9px 16px 9px 40px; border: none; border-radius: 20px; font-size: .9rem; background: rgba(255,255,255,.12); color: #fff; outline: none; font-family: inherit; }
+    .search-input-global::placeholder { color: rgba(255,255,255,.4); }
+    .search-input-global:focus { background: rgba(255,255,255,.18); }
     .ep-thumb { width:100px; height:66px; object-fit:cover; border-radius:8px; flex-shrink:0; background:#ddd; }
     .ep-thumb-ph { width:100px; height:66px; border-radius:8px; flex-shrink:0; background:#e8e8e8; }
     .ep-body { flex:1; min-width:0; }
@@ -170,13 +179,16 @@
   </nav>
 </header>
 
-<main>
-  <div class="dur-filter" id="dur-filter">
-    <button class="dur-btn active" data-dur="all" onclick="filterDurAll(this)">Tous</button>
-    <button class="dur-btn" data-dur="short" onclick="filterDurAll(this)">&lt; 5 min</button>
-    <button class="dur-btn" data-dur="medium" onclick="filterDurAll(this)">5–20 min</button>
-    <button class="dur-btn" data-dur="long" onclick="filterDurAll(this)">&gt; 20 min</button>
+<div class="sticky-bar">
+  <div class="sticky-inner">
+    <div class="search-wrap-global">
+      <svg class="search-icon-global" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input-global" id="global-search" type="search" placeholder="Rechercher un cours…" autocomplete="off">
+    </div>
+    <div class="sticky-dur-row"><button class="sticky-dur-chip active" data-dur="all" onclick="filterDurAll(this)">Tous</button><button class="sticky-dur-chip" data-dur="short" onclick="filterDurAll(this)">&lt;&nbsp;5&nbsp;min</button><button class="sticky-dur-chip" data-dur="medium" onclick="filterDurAll(this)">5–20&nbsp;min</button><button class="sticky-dur-chip" data-dur="long" onclick="filterDurAll(this)">&gt;&nbsp;20&nbsp;min</button></div>
   </div>
+</div>
+<main>
   <div style="margin-bottom:16px;">
     <div class="page-title" data-i18n="page_title">Daf Hayomi</div>
     <div class="page-subtitle" id="page-subtitle"></div>
@@ -397,7 +409,17 @@
     return activeFilter === 'all' ? flat : flat.filter(x => x.ch.slug === activeFilter);
   }
 
+
+  // Global search
+  document.getElementById('global-search').addEventListener('input', function() {
+    var q = this.value.toLowerCase().trim();
+    window._globalSearch = q;
+    visibleCount = PAGE_SIZE;
+    renderList();
+  });
+  var _origFilter = window._flat ? window._flat.filter.bind(window._flat) : null;
   function renderList() {
+    var _q = (window._globalSearch || '').toLowerCase().trim();
     const app = document.getElementById('app');
     const items = filteredFlat();
     const slice = items.slice(0, visibleCount);

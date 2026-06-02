@@ -66,3 +66,23 @@ function filterDurAll(btn) {
   });
 }
 function setDur(btn) { filterDurAll(btn); }
+
+// Auto-load header stats if #header-stats exists and isn't already populated
+(function loadHeaderStats() {
+  var el = document.getElementById('header-stats');
+  if (!el || el.textContent.trim()) return;
+  fetch('channels.json').then(function(r) { return r.ok ? r.json() : []; }).then(function(channels) {
+    var enabled = channels.filter(function(c) { return c.enabled; });
+    return Promise.all(enabled.map(function(ch) {
+      return fetch('feeds/' + ch.slug + '.entries.json')
+        .then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; });
+    })).then(function(results) {
+      var totalEp = results.reduce(function(s, eps) { return s + eps.length; }, 0);
+      var totalH  = Math.round(totalEp * 0.75);
+      var lang = window.lang || 'fr';
+      el.textContent = lang === 'he'
+        ? enabled.length + ' ערוצים · ' + totalEp + ' שיעורים · ~' + totalH + 'ש'
+        : enabled.length + ' rabbins · ' + totalEp + ' cours · ~' + totalH + 'h de Torah';
+    });
+  }).catch(function() {});
+})();
