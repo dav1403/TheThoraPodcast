@@ -124,6 +124,7 @@
     .dur-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .episode[hidden] { display: none !important; }
     .ep-thumb { width: 80px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #ddd; }
     .ep-thumb-ph { width: 80px; height: 54px; border-radius: 6px; flex-shrink: 0; background: #e8e8e8; }
     .ep-body { flex: 1; min-width: 0; }
@@ -253,11 +254,11 @@
     <button class="dur-btn" data-dur="long" onclick="filterDur(this)">&gt; 20 min</button>
   </div>
   <div class="episode-list" id="ep-list">
-    <article class="episode" data-dur="0">
+    <article class="episode" data-dur="191">
       <a href="rav-eliaou-hassan/pourquoi-construire-est-interdit-pendant-shabbat-rav-eliaou-hassan-2026-05-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D7Or2O9MyoQ/maxresdefault.jpg" alt="Pourquoi construire est interdit pendant Shabbat ? | Rav Eliaou Hassan" loading="lazy"></a>
       <div class="ep-body">
         <a class="ep-title" href="rav-eliaou-hassan/pourquoi-construire-est-interdit-pendant-shabbat-rav-eliaou-hassan-2026-05-28.html" style="color:inherit;text-decoration:none;display:block">Pourquoi construire est interdit pendant Shabbat ? | Rav Eliaou Hassan</a>
-        <time class="ep-date" datetime="2026-05-28">28 mai 2026</time>
+        <time class="ep-date" datetime="2026-05-28">28 mai 2026 - 3 min</time>
         <p class="ep-desc">Pourquoi est-ce interdit de construire… et de détruire pendant Shabbat ? 🤔
 
 À travers les déplacements du Michkan dans le désert, Rav Hassan nous transmet un message magnifique.
@@ -334,8 +335,8 @@ Même quand tout bouge…</p>
     if (epCount) epCount.textContent = I18N[lang].ep_count(2);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `26 ערוצים · 7136 פרקים · ~5352ש`
-      : `26 rabbins · 7136 cours · ~5352h de Torah`;
+      ? `26 ערוצים · 7126 פרקים · ~5344ש`
+      : `26 rabbins · 7126 cours · ~5344h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));

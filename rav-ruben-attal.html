@@ -376,6 +376,7 @@
     .dur-btn.active { background:#1a1a2e; color:#fff; border-color:#1a1a2e; }
     .episode-list { display: flex; flex-direction: column; gap: 2px; }
     .episode { background: #fff; border-radius: 10px; display: flex; gap: 14px; padding: 13px 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .episode[hidden] { display: none !important; }
     .ep-thumb { width: 80px; height: 54px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #ddd; }
     .ep-thumb-ph { width: 80px; height: 54px; border-radius: 6px; flex-shrink: 0; background: #e8e8e8; }
     .ep-body { flex: 1; min-width: 0; }
@@ -1894,8 +1895,8 @@ Cours du Lu…</p>
     if (epCount) epCount.textContent = I18N[lang].ep_count(132);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `26 ערוצים · 7136 פרקים · ~5352ש`
-      : `26 rabbins · 7136 cours · ~5352h de Torah`;
+      ? `26 ערוצים · 7126 פרקים · ~5344ש`
+      : `26 rabbins · 7126 cours · ~5344h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
