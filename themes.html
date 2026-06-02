@@ -303,6 +303,10 @@
       #player-art { display: none; }
       #theme-grid { grid-template-columns: repeat(2, 1fr); }
     }
+  
+    .site-footer { background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }
+    .site-footer a { color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }
+    .site-footer a:hover { color: #fff; }
   </style>
 </head>
 <body>
@@ -713,5 +717,13 @@
   loadAll();
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
+
+<footer class="site-footer">
+  <a href="/contact.html">Contactez-nous</a>
+  &nbsp;·&nbsp;
+  <a href="/cgv.html">Mentions légales</a>
+  &nbsp;·&nbsp;
+  <span>© 2026 The Torah Podcast</span>
+</footer>
 </body>
 </html>
