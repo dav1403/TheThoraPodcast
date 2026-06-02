@@ -448,18 +448,18 @@
   </nav>
 </header>
 
-  <div class="dur-filter" id="dur-filter-idx">
-    <button class="dur-btn active" data-dur="all" onclick="setDur(this,'idx')">Tous</button>
-    <button class="dur-btn" data-dur="short" onclick="setDur(this,'idx')">&lt;&nbsp;5&nbsp;min</button>
-    <button class="dur-btn" data-dur="medium" onclick="setDur(this,'idx')">5–20&nbsp;min</button>
-    <button class="dur-btn" data-dur="long" onclick="setDur(this,'idx')">&gt;&nbsp;20&nbsp;min</button>
-  </div>
 <div class="search-wrap">
   <div class="search-inner">
     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
       <circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/>
     </svg>
     <input class="search-input" id="search" type="search" data-i18n="|search_ph" placeholder="Rechercher un épisode ou un rav…" autocomplete="off">
+  </div>
+  <div class="dur-filter" id="dur-filter-idx" style="max-width:860px;margin:8px auto 0">
+    <button class="dur-btn active" data-dur="all" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&lt;&nbsp;5&nbsp;min</button>
+    <button class="dur-btn" data-dur="medium" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">5–20&nbsp;min</button>
+    <button class="dur-btn" data-dur="long" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&gt;&nbsp;20&nbsp;min</button>
   </div>
 </div>
 

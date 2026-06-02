@@ -653,6 +653,8 @@
         </div>
       </li>`;
     }).join('');
+    // Re-apply duration filter after re-rendering
+    if (typeof _applyDurFilter === 'function') _applyDurFilter();
   }
 
   function renderRabbiFilter(items, theme) {
