@@ -242,9 +242,10 @@ def render_page(ch: dict, entries: list, all_channels: list,
                 f'<a class="platform-btn {cls}" href="{esc(url)}" target="_blank" rel="noopener">'
                 f'{icon}{label}</a>'
             )
-    rss_url = ch.get("rss_url") or f"{BASE_URL}/feeds/{slug}.xml"
-    btns.append(f'<a class="platform-btn btn-rss" href="{esc(rss_url)}" target="_blank" rel="noopener">RSS</a>')
-    btns.append(f'<button class="platform-btn btn-embed" onclick="openEmbedModal()">⊞ Intégrer</button>')
+    if not ch.get("speaker"):
+        rss_url = ch.get("rss_url") or f"{BASE_URL}/feeds/{slug}.xml"
+        btns.append(f'<a class="platform-btn btn-rss" href="{esc(rss_url)}" target="_blank" rel="noopener">RSS</a>')
+        btns.append(f'<button class="platform-btn btn-embed" onclick="openEmbedModal()">⊞ Intégrer</button>')
     platform_html = "\n        ".join(btns)
 
     # Static episode list
@@ -1042,6 +1043,7 @@ def render_speaker_page(
         "platforms": {},
         "enabled": True,
         "thumbnail": episodes[0].get("thumbnail", "") if episodes else "",
+        "speaker": True,
     }
     # Inject extra speakers into all_channels list for nav
     nav_list = list(all_channels) + [
