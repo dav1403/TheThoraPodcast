@@ -50,3 +50,19 @@ function shareIcon() {
     + '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>'
     + '<polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
 }
+
+// Duration filter — shared by all static pages
+var _activeDur = 'all';
+function filterDurAll(btn) {
+  document.querySelectorAll('.dur-filter .dur-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  _activeDur = btn.dataset.dur;
+  document.querySelectorAll('[data-ep-dur]').forEach(function(el) {
+    var d = parseInt(el.dataset.epDur) || 0;
+    if (_activeDur === 'all')    { el.hidden = false; return; }
+    if (_activeDur === 'short')  { el.hidden = !(d > 0 && d < 300); return; }
+    if (_activeDur === 'medium') { el.hidden = !(d >= 300 && d <= 1200); return; }
+    if (_activeDur === 'long')   { el.hidden = !(d > 1200); return; }
+  });
+}
+function setDur(btn) { filterDurAll(btn); }

@@ -639,7 +639,7 @@
       const playBtn = ep.audio_url
         ? `<button class="play-btn" data-gidx="${gidx}">${playIcon()} ${t('listen')}</button>`
         : '';
-      return `<li class="ep-card">
+      return `<li class="ep-card" data-ep-dur="${ep.duration_secs || 0}">
         ${thumb}
         <div class="ep-body">
           <a class="ep-ch" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
