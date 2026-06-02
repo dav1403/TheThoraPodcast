@@ -46,6 +46,15 @@
   "episode": [
     {
       "@type": "PodcastEpisode",
+      "name": "Rav Itshak Cohen :  \"LE STRESS, CETTE MALADIE￼ QUI RISQUE DE NOUS TUER\"",
+      "datePublished": "2026-06-02",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8fgQjuzDJVY_Rav_Itshak_Cohen_____LE_STRESS__CETTE_MALADIE__QUI_RISQUE_DE_NOUS_TUER.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "JAMAIS SATISFAIT ? POSE TOI LES VRAIES QUESTIONS",
       "datePublished": "2026-06-01",
       "associatedMedia": {
@@ -304,15 +313,6 @@
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/T3FSK0EWDcI_Rav.Itshak.Cohen._._.LA.RE_SILIENCE.OU.LE.BONHEUR.DE.NOTRE.VIE._.mp3"
       }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "J’AI ÉVALUÉ MA VIE, C’EST PAS MAL DU TOUT",
-      "datePublished": "2026-03-25",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3Yh_1MR2zzo__quot_.J_AI.EVALUE.MA.VIE_.C_EST.PAS.MAL.DU.TOUT._quot_.mp3"
-      }
     }
   ]
 }
@@ -497,6 +497,15 @@
     <button class="dur-btn" data-dur="long" onclick="filterDur(this)">&gt; 20 min</button>
   </div>
   <div class="episode-list" id="ep-list">
+    <article class="episode" data-dur="2350">
+      <a href="rav-itshak-cohen/le-stress-cette-maladie-qui-risque-de-nous-tuer-2026-06-02.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/8fgQjuzDJVY/hqdefault.jpg" alt="Rav Itshak Cohen :  &quot;LE STRESS, CETTE MALADIE￼ QUI RISQUE DE NOUS TUER&quot;" loading="lazy"></a>
+      <div class="ep-body">
+        <a class="ep-title" href="rav-itshak-cohen/le-stress-cette-maladie-qui-risque-de-nous-tuer-2026-06-02.html" style="color:inherit;text-decoration:none;display:block">Rav Itshak Cohen :  &quot;LE STRESS, CETTE MALADIE￼ QUI RISQUE DE NOUS TUER&quot;</a>
+        <time class="ep-date" datetime="2026-06-02">2 juin 2026 - 39 min</time>
+        
+        <div class="ep-actions"><button class="play-btn" data-ep-id="8fgQjuzDJVY" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8fgQjuzDJVY_Rav_Itshak_Cohen_____LE_STRESS__CETTE_MALADIE__QUI_RISQUE_DE_NOUS_TUER.mp3" data-title="Rav Itshak Cohen :  &quot;LE STRESS, CETTE MALADIE￼ QUI RISQUE DE NOUS TUER&quot;" data-thumb="https://i.ytimg.com/vi/8fgQjuzDJVY/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-itshak-cohen/le-stress-cette-maladie-qui-risque-de-nous-tuer-2026-06-02.html" data-title="Rav Itshak Cohen :  &quot;LE STRESS, CETTE MALADIE￼ QUI RISQUE DE NOUS TUER&quot;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
     <article class="episode" data-dur="0">
       <a href="rav-itshak-cohen/jamais-satisfait-pose-toi-les-vraies-questions-2026-06-01.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/dogyhfE-edI/hqdefault.jpg" alt="JAMAIS SATISFAIT ? POSE TOI LES VRAIES QUESTIONS" loading="lazy"></a>
       <div class="ep-body">
@@ -11184,11 +11193,11 @@ Retrouvez l&#x27;intégralité de nos vidéos sur facebook : https://www.faceboo
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(1180);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(1181);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `26 ערוצים · 7130 פרקים · ~5348ש`
-      : `26 rabbins · 7130 cours · ~5348h de Torah`;
+      ? `26 ערוצים · 7133 פרקים · ~5350ש`
+      : `26 rabbins · 7133 cours · ~5350h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
