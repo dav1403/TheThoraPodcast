@@ -39,6 +39,40 @@ python scripts/generate_channel_pages.py
 
 No test suite or linter is configured. Scripts must be run from the repo root.
 
+
+## Règles JavaScript — OBLIGATOIRES avant tout commit
+
+### 1. utils.js est la source unique
+Ces fonctions sont dans `js/utils.js` et ne doivent JAMAIS être redéclarées dans les pages HTML :
+`escapeHtml`, `slugify`, `epUrl`, `formatDate`, `formatDuration`, `playIcon`, `pauseIcon`, `shareIcon`, `filterDurAll`, `setDur`
+
+**Avant toute modif JS dans un fichier HTML :**
+```bash
+grep -n "function filterDurAll\|function escapeHtml\|function slugify" <fichier.html>
+```
+Si une de ces fonctions apparaît → la supprimer.
+
+### 2. Vérification obligatoire après toute suppression de code JS
+Après avoir supprimé un bloc de fonctions, vérifier qu'il ne reste pas de code orphelin :
+```bash
+node --check <fichier.html>  # ne marche pas directement, utiliser le hook
+git add <fichier.html> && git commit  # le hook pre-commit vérifie automatiquement
+```
+
+### 3. Checklist avant commit de fichiers HTML avec JS
+- [ ] `filterDurAll` pas redéclaré localement (sauf si c'est utils.js)
+- [ ] `_activeDur` déclaré si utilisé
+- [ ] Syntaxe JS valide (hook bloquera sinon)
+- [ ] Fonctions requises présentes (voir REQUIRED_FUNCTIONS dans pre-commit-check.py)
+- [ ] Tester dans un vrai navigateur après déploiement
+
+### 4. Le hook pre-commit détecte automatiquement
+- Fichiers vides / tronqués
+- Erreurs de syntaxe JS
+- Fonctions de utils.js redéclarées en doublon
+- Fonctions requises manquantes
+- Code orphelin (`_activeDur` non déclaré)
+
 ## Architecture
 
 ```
