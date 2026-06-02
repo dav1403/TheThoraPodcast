@@ -562,9 +562,10 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
     cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
     if cookies_file and Path(cookies_file).exists():
         ydl_opts["cookiefile"] = cookies_file
+    info = None
     try:
         with YoutubeDL(ydl_opts) as ydl:
-            ydl.extract_info(video_url, download=True)
+            info = ydl.extract_info(video_url, download=True)
     except Exception as e:
         _flag_auth_error_if_needed(e)
         raise
@@ -572,7 +573,8 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
     mp3_files = list(out_dir.glob("*.mp3"))
     if not mp3_files:
         raise FileNotFoundError(f"No MP3 found in {out_dir} after downloading {video_url}")
-    return mp3_files[0]
+    duration_secs = int((info or {}).get("duration") or 0)
+    return mp3_files[0], duration_secs
 
 
 _AUTH_PATTERNS = ("sign in", "bot", "403", "cookies", "login", "authentication", "private")
@@ -751,12 +753,13 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
             print(f"  Already uploaded - skipping download.")
             audio_url = existing_url
             file_size = 0
+            yt_duration = int(video.get("duration") or 0)
         else:
             for f in AUDIO_DIR.iterdir():
                 if f.is_file():
                     f.unlink()
             try:
-                mp3_path   = download_audio(video["url"], AUDIO_DIR)
+                mp3_path, yt_duration = download_audio(video["url"], AUDIO_DIR)
                 file_size  = mp3_path.stat().st_size
                 final_path = AUDIO_DIR / mp3_filename
                 mp3_path.rename(final_path)
@@ -777,7 +780,7 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
             "published":     pub_dt.isoformat(),
             "audio_url":     audio_url,
             "file_size":     file_size,
-            "duration_secs": int(video.get("duration") or 0),
+            "duration_secs": yt_duration or int(video.get("duration") or 0),
             "thumbnail":     video.get("thumbnail", ""),
             "tags":          tags,
         })
