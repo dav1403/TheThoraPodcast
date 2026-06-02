@@ -292,6 +292,7 @@
 
 <main id="app"></main>
 
+<script src="js/utils.js"></script>
 <script>
   // ─── i18n ─────────────────────────────────────────────────────────────────
   const I18N = {
@@ -366,18 +367,6 @@
     });
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function formatDate(iso) {
-    const locale = lang === 'he' ? 'he-IL' : 'fr-FR';
-    return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
-  }
 
   function latestEpisode(entries) {
     if (!entries.length) return null;

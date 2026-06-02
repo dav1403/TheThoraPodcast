@@ -12,6 +12,7 @@
 </head>
 <body>
 <p>Redirection en cours… <a href="./">Accueil</a></p>
+<script src="js/utils.js"></script>
 <script>
   (function() {
     var params = new URLSearchParams(location.search);
@@ -19,20 +20,7 @@
     var ch  = params.get('ch');
     if (!vid) { location.replace('./'); return; }
 
-    function slugify(title, maxLen) {
-      maxLen = maxLen || 70;
-      return title.toLowerCase().normalize('NFD')
-        .replace(/\p{Mn}/gu, '')
-        .replace(/[^a-z0-9א-תװ-״]+/gu, '-')
-        .replace(/^-+|-+$/g, '').replace(/-+/g, '-')
-        .slice(0, maxLen).replace(/-+$/, '');
-    }
-    function epUrl(ep, slug) {
-      var s = slugify(ep.title || '');
-      var prefix = slug + '-';
-      if (s.startsWith(prefix)) s = s.slice(prefix.length) || (ep.video_id || 'episode');
-      return slug + '/' + s + '-' + (ep.published || '').slice(0, 10) + '.html';
-    }
+
     function tryFeed(slug, callback) {
       fetch('feeds/' + slug + '.entries.json')
         .then(function(r) { return r.ok ? r.json() : []; })
