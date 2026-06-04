@@ -181,8 +181,10 @@ def fetch_apple_episodes(show_id: str, cutoff: datetime) -> list[dict]:
         title = item.get("trackName", "").strip()
         ep_url = item.get("trackViewUrl", "").strip()
         if title and ep_url:
-            # Strip affiliate/at params
-            ep_url = re.sub(r"\?.*", "", ep_url)
+            # Keep ?i=EPISODE_ID (required for Apple episode links)
+            # Only strip marketing/affiliate params like ?at=, &uo= etc.
+            ep_url = re.sub(r"[&?](?:at|uo|ct|ls|app|country)=[^&]*", "", ep_url)
+            ep_url = ep_url.rstrip("?&")
             episodes.append({"title": title, "url": ep_url, "date": dt})
 
     return episodes
