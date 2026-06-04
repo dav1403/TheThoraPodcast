@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.4.0
         with:
           python-version: '3.11'
 
@@ -127,7 +127,7 @@ jobs:
             > /tmp/dur-stats/${{ matrix.slug }}.json
 
       - name: Upload stats
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: dur-stats-${{ matrix.slug }}
           path: /tmp/dur-stats/${{ matrix.slug }}.json
@@ -156,12 +156,12 @@ jobs:
     if: always()
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
         with:
           ref: main
 
       - name: Download all stats artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.3.0
         with:
           pattern: dur-stats-*
           path: /tmp/dur-stats
