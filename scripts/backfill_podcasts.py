@@ -151,7 +151,7 @@ def backfill_channel(channel_cfg, processed, state):
             if f.is_file():
                 f.unlink()
         try:
-            mp3_path = download_audio(video["url"], AUDIO_DIR)
+            mp3_path, _dur = download_audio(video["url"], AUDIO_DIR)
             file_size = mp3_path.stat().st_size
             final_path = AUDIO_DIR / mp3_filename
             mp3_path.rename(final_path)

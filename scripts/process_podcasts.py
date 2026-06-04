@@ -215,6 +215,11 @@ def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
     for item in data["items"]:
         snippet = item["snippet"]
         vid_id  = snippet["resourceId"]["videoId"]
+        # Skip live streams and upcoming premieres — they can't be downloaded
+        live_status = snippet.get("liveBroadcastContent", "none")
+        if live_status in ("live", "upcoming"):
+            print(f"  Skipping live/upcoming video: {vid_id} ({html.unescape(snippet['title'])[:50]})")
+            continue
         if vid_id not in already_processed:
             thumbs = snippet.get("thumbnails", {})
             new_videos.append({
