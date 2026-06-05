@@ -46,6 +46,15 @@
   "episode": [
     {
       "@type": "PodcastEpisode",
+      "name": "5 ביוני 2026",
+      "datePublished": "2026-06-05",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/1iwHAPGEjhQ_5_ביוני_2026.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "למרגלים היה רצון חיובי, אבל זו לא התכלית #הרבימילובאוויטש",
       "datePublished": "2026-06-04",
       "associatedMedia": {
@@ -303,15 +312,6 @@
       "associatedMedia": {
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/vMRskqQXREs_איך_צריך_להפסיק_בין_דגים_לבשר___שו_ע_ומנהג_הרבי.mp3"
-      }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "עצם הנשמה מתעוררת דווקא בגלות",
-      "datePublished": "2026-05-25",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/BRi_E6zAYqU_עצם_הנשמה_מתעוררת_דווקא_בגלות.mp3"
       }
     }
   ]
@@ -3408,11 +3408,11 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(275);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(276);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `26 ערוצים · 7241 פרקים · ~5431ש`
-      : `26 rabbins · 7241 cours · ~5431h de Torah`;
+      ? `26 ערוצים · 7255 פרקים · ~5441ש`
+      : `26 rabbins · 7255 cours · ~5441h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
