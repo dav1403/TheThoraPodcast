@@ -46,6 +46,15 @@
   "episode": [
     {
       "@type": "PodcastEpisode",
+      "name": "Deuxième étoile - Béaaloté'ha",
+      "datePublished": "2026-06-05",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7XF_t-_Zre8_Deuxième_étoile_-_Béaaloté_ha.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "C'est parfois en étant fidèle qu'on se trompe le plus - Nasso",
       "datePublished": "2026-05-29",
       "associatedMedia": {
@@ -304,15 +313,6 @@
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/UV7JX4EMvEo_Le_hold-up_de_la_nouvelle_année_-_Roch_Hachana.mp3"
       }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Sarita Mendelson, le rêve arraché - Ki -Tavo",
-      "datePublished": "2025-09-12",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GsBMPiABd9s_Sarita_Mendelson__le_rêve_arraché_-_Ki_-Tavo.mp3"
-      }
     }
   ]
 }
@@ -500,6 +500,15 @@
     <button class="dur-btn" data-dur="long" onclick="filterDur(this)">&gt; 20 min</button>
   </div>
   <div class="episode-list" id="ep-list">
+    <article class="episode" data-dur="396">
+      <a href="rabbin-jonas/deuxieme-etoile-beaalote-ha-2026-06-05.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/7XF_t-_Zre8/maxresdefault.jpg" alt="Deuxième étoile - Béaaloté&#x27;ha" loading="lazy"></a>
+      <div class="ep-body">
+        <a class="ep-title" href="rabbin-jonas/deuxieme-etoile-beaalote-ha-2026-06-05.html" style="color:inherit;text-decoration:none;display:block">Deuxième étoile - Béaaloté&#x27;ha</a>
+        <time class="ep-date" datetime="2026-06-05">5 juin 2026 - 6 min</time>
+        
+        <div class="ep-actions"><button class="play-btn" data-ep-id="7XF_t-_Zre8" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7XF_t-_Zre8_Deuxième_étoile_-_Béaaloté_ha.mp3" data-title="Deuxième étoile - Béaaloté&#x27;ha" data-thumb="https://i.ytimg.com/vi/7XF_t-_Zre8/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/deuxieme-etoile-beaalote-ha-2026-06-05.html" data-title="Deuxième étoile - Béaaloté&#x27;ha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
     <article class="episode" data-dur="413">
       <a href="rabbin-jonas/c-est-parfois-en-etant-fidele-qu-on-se-trompe-le-plus-nasso-2026-05-29.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/0IfIoJszsmw/maxresdefault.jpg" alt="C&#x27;est parfois en étant fidèle qu&#x27;on se trompe le plus - Nasso" loading="lazy"></a>
       <div class="ep-body">
@@ -5726,11 +5735,11 @@ C&#x27;est l&#x27;idée sur la paracha de la semaine, Emor exposée par le Rabbi
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(488);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(489);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `26 ערוצים · 7268 פרקים · ~5451ש`
-      : `26 rabbins · 7268 cours · ~5451h de Torah`;
+      ? `26 ערוצים · 7281 פרקים · ~5461ש`
+      : `26 rabbins · 7281 cours · ~5461h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
