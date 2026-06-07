@@ -153,6 +153,149 @@ def asset_exists_in_r2(filename: str, video_id: str = None) -> str | None:
 # YouTube API helpers
 # ---------------------------------------------------------------------------
 
+def _best_thumbnail_url(thumbnails: dict) -> str:
+    return (
+        thumbnails.get("maxres") or
+        thumbnails.get("high")   or
+        thumbnails.get("medium") or
+        thumbnails.get("default") or
+        {}
+    ).get("url", "")
+
+
+def _parse_iso8601_duration(value: str) -> int:
+    if not value:
+        return 0
+    match = re.fullmatch(r"P(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)", value)
+    if not match:
+        return 0
+    hours = int(match.group(1) or 0)
+    minutes = int(match.group(2) or 0)
+    seconds = int(match.group(3) or 0)
+    return hours * 3600 + minutes * 60 + seconds
+
+
+def _chunks(items: list[str], size: int):
+    for i in range(0, len(items), size):
+        yield items[i:i + size]
+
+
+def get_upload_playlist_video_ids(channel_id: str, limit: int = 100) -> list[str]:
+    """Fetch recent video IDs from the channel uploads playlist, newest first."""
+    playlist_id = "UU" + channel_id[2:]
+    page_token = None
+    ids = []
+
+    while len(ids) < limit:
+        batch = min(50, limit - len(ids))
+        url = (
+            f"https://www.googleapis.com/youtube/v3/playlistItems"
+            f"?key={API_KEY}&playlistId={playlist_id}"
+            f"&part=snippet&maxResults={batch}"
+        )
+        if page_token:
+            url += f"&pageToken={page_token}"
+
+        r = requests.get(url, timeout=20)
+        data = r.json()
+
+        if "error" in data:
+            raise Exception(f"YouTube API error: {data['error']['message']}")
+        items = data.get("items", [])
+        if not items:
+            break
+
+        for item in items:
+            vid_id = ((item.get("snippet") or {}).get("resourceId") or {}).get("videoId")
+            if vid_id:
+                ids.append(vid_id)
+
+        page_token = data.get("nextPageToken")
+        if not page_token:
+            break
+
+    return ids
+
+
+def discover_channel_tab_ids(channel_id: str, tabs: tuple[str, ...] = ("/videos", "/streams", "/shorts"), limit_per_tab: int | None = None) -> list[str]:
+    """Discover IDs from channel tabs via yt-dlp, preserving newest-first order across tabs."""
+    base_url = f"https://www.youtube.com/channel/{channel_id}"
+    ydl_opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "extract_flat": "in_playlist",
+        "ignoreerrors": True,
+    }
+    if limit_per_tab:
+        ydl_opts["playlistend"] = limit_per_tab
+
+    cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
+    if cookies_file and Path(cookies_file).exists():
+        ydl_opts["cookiefile"] = cookies_file
+
+    seen = {}
+    for tab in tabs:
+        try:
+            with YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(base_url + tab, download=False)
+            for entry in (info or {}).get("entries") or []:
+                vid_id = (entry or {}).get("id")
+                if vid_id:
+                    seen.setdefault(vid_id, True)
+        except Exception as e:
+            print(f"  [yt-dlp] Could not scan {tab} for {channel_id}: {e}")
+    return list(seen.keys())
+
+
+def fetch_video_metadata(video_ids: list[str]) -> list[dict]:
+    """Hydrate video IDs into full metadata via youtube/v3/videos, preserving input order."""
+    if not video_ids:
+        return []
+
+    by_id = {}
+    for chunk in _chunks(video_ids, 50):
+        r = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={
+                "key": API_KEY,
+                "id": ",".join(chunk),
+                "part": "snippet,contentDetails",
+                "maxResults": 50,
+            },
+            timeout=20,
+        )
+        data = r.json()
+        if "error" in data:
+            raise Exception(f"YouTube API error: {data['error']['message']}")
+
+        for item in data.get("items", []):
+            snippet = item.get("snippet", {})
+            thumbs = snippet.get("thumbnails", {})
+            vid_id = item.get("id")
+            if not vid_id:
+                continue
+            by_id[vid_id] = {
+                "id":          vid_id,
+                "title":       html.unescape(snippet.get("title", "")),
+                "description": html.unescape(snippet.get("description", "")),
+                "published":   snippet.get("publishedAt", ""),
+                "thumbnail":   _best_thumbnail_url(thumbs),
+                "url":         f"https://www.youtube.com/watch?v={vid_id}",
+                "duration":    _parse_iso8601_duration((item.get("contentDetails") or {}).get("duration", "")),
+                "live_status": snippet.get("liveBroadcastContent", "none"),
+            }
+
+    ordered = []
+    for vid_id in video_ids:
+        video = by_id.get(vid_id)
+        if not video:
+            continue
+        if video["live_status"] in ("live", "upcoming"):
+            print(f"  Skipping live/upcoming video: {vid_id} ({video['title'][:50]})")
+            continue
+        ordered.append(video)
+    return ordered
+
 def get_channel_info(channel_id: str) -> dict:
     """
     Fetch the YouTube channel's name, description, and best available thumbnail.
@@ -174,13 +317,7 @@ def get_channel_info(channel_id: str) -> dict:
 
     snippet    = items[0]["snippet"]
     thumbnails = snippet.get("thumbnails", {})
-    thumb_url  = (
-        thumbnails.get("maxres") or
-        thumbnails.get("high")   or
-        thumbnails.get("medium") or
-        thumbnails.get("default") or
-        {}
-    ).get("url", "")
+    thumb_url  = _best_thumbnail_url(thumbnails)
 
     return {
         "title":       html.unescape(snippet["title"]),
@@ -191,46 +328,25 @@ def get_channel_info(channel_id: str) -> dict:
 
 def get_new_videos(channel_id: str, already_processed: set) -> list[dict]:
     """
-    Fetch the latest 10 videos from the channel's uploads playlist.
-    Uses playlistItems (1 quota unit) instead of search (100 quota units).
-    Return only those whose IDs are not in already_processed.
+    Fetch recent uploads plus explicit /shorts and /streams tab discoveries.
+    This avoids missing Shorts that were omitted by older bootstrap/backfill logic
+    or that don't surface reliably via the uploads playlist alone.
     """
-    # Uploads playlist: replace leading "UC" with "UU"
-    playlist_id = "UU" + channel_id[2:]
-    url = (
-        f"https://www.googleapis.com/youtube/v3/playlistItems"
-        f"?key={API_KEY}&playlistId={playlist_id}"
-        f"&part=snippet&maxResults=50"
-    )
-    r = requests.get(url)
-    data = r.json()
+    merged_ids = []
+    seen = set()
+    for vid_id in get_upload_playlist_video_ids(channel_id, limit=100):
+        if vid_id not in seen:
+            merged_ids.append(vid_id)
+            seen.add(vid_id)
+    for vid_id in discover_channel_tab_ids(channel_id, tabs=("/shorts", "/streams"), limit_per_tab=30):
+        if vid_id not in seen:
+            merged_ids.append(vid_id)
+            seen.add(vid_id)
 
-    if "error" in data:
-        raise Exception(f"YouTube API error: {data['error']['message']}")
-    if "items" not in data:
-        print(f"  No items returned for channel {channel_id}. Response: {data}")
-        return []
-
-    new_videos = []
-    for item in data["items"]:
-        snippet = item["snippet"]
-        vid_id  = snippet["resourceId"]["videoId"]
-        # Skip live streams and upcoming premieres — they can't be downloaded
-        live_status = snippet.get("liveBroadcastContent", "none")
-        if live_status in ("live", "upcoming"):
-            print(f"  Skipping live/upcoming video: {vid_id} ({html.unescape(snippet['title'])[:50]})")
-            continue
-        if vid_id not in already_processed:
-            thumbs = snippet.get("thumbnails", {})
-            new_videos.append({
-                "id":          vid_id,
-                "title":       html.unescape(snippet["title"]),
-                "description": html.unescape(snippet.get("description", "")),
-                "published":   snippet["publishedAt"],
-                "thumbnail":   (thumbs.get("maxres") or thumbs.get("high") or {}).get("url", ""),
-                "url":         f"https://www.youtube.com/watch?v={vid_id}",
-            })
-    return new_videos
+    candidate_ids = [vid_id for vid_id in merged_ids if vid_id not in already_processed]
+    videos = fetch_video_metadata(candidate_ids)
+    videos.sort(key=lambda v: v.get("published", ""), reverse=True)
+    return videos
 
 
 # ---------------------------------------------------------------------------

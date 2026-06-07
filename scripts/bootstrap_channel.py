@@ -42,6 +42,8 @@ from process_podcasts import (
     upload_audio_to_r2,
     asset_exists_in_r2,
     download_audio,
+    discover_channel_tab_ids,
+    fetch_video_metadata,
     build_rss_feed,
     load_feed_entries,
     save_feed_entries,
@@ -55,42 +57,11 @@ from process_podcasts import (
 
 
 def get_videos_for_channel(channel_id: str, max_results: int = 20) -> list[dict]:
-    """Fetch up to max_results videos from a channel (most recent first)."""
-    all_videos = []
-    page_token = None
-
-    while len(all_videos) < max_results:
-        batch = min(50, max_results - len(all_videos))
-        url = (
-            f"https://www.googleapis.com/youtube/v3/search"
-            f"?key={API_KEY}&channelId={channel_id}"
-            f"&part=snippet,id&order=date&maxResults={batch}&type=video"
-        )
-        if page_token:
-            url += f"&pageToken={page_token}"
-
-        r = requests.get(url)
-        data = r.json()
-
-        if "error" in data:
-            raise Exception(f"YouTube API error: {data['error']['message']}")
-
-        for item in data.get("items", []):
-            thumbs = item["snippet"]["thumbnails"]
-            all_videos.append({
-                "id":          item["id"]["videoId"],
-                "title":       item["snippet"]["title"],
-                "description": item["snippet"].get("description", ""),
-                "published":   item["snippet"]["publishedAt"],
-                "thumbnail":   (thumbs.get("maxres") or thumbs.get("high") or {}).get("url", ""),
-                "url":         f"https://www.youtube.com/watch?v={item['id']['videoId']}",
-            })
-
-        page_token = data.get("nextPageToken")
-        if not page_token:
-            break
-
-    return all_videos
+    """Fetch up to max_results recent channel items across videos, streams and shorts."""
+    ids = discover_channel_tab_ids(channel_id, tabs=("/videos", "/streams", "/shorts"), limit_per_tab=max_results)
+    videos = fetch_video_metadata(ids[:max_results])
+    videos.sort(key=lambda v: v.get("published", ""), reverse=True)
+    return videos[:max_results]
 
 
 def main():
@@ -142,7 +113,7 @@ def main():
                 if f.is_file():
                     f.unlink()
             try:
-                mp3_path   = download_audio(video["url"], AUDIO_DIR)
+                mp3_path, yt_duration = download_audio(video["url"], AUDIO_DIR)
                 file_size  = mp3_path.stat().st_size
                 final_path = AUDIO_DIR / mp3_filename
                 mp3_path.rename(final_path)
@@ -161,7 +132,7 @@ def main():
             "published":     pub_dt.isoformat(),
             "audio_url":     audio_url,
             "file_size":     file_size,
-            "duration_secs": 0,
+            "duration_secs": int(video.get("duration") or yt_duration or 0),
             "thumbnail":     video.get("thumbnail", ""),
         })
 

@@ -9,6 +9,7 @@ from process_podcasts import (
     get_channel_info, upload_audio_to_r2, asset_exists_in_r2,
     download_audio, build_rss_feed, load_feed_entries, save_feed_entries,
     load_processed, save_processed, FEEDS_DIR, AUDIO_DIR, API_KEY, GITHUB_REPO,
+    discover_channel_tab_ids, fetch_video_metadata,
 )
 
 BACKFILL_STATE_FILE = Path("backfill_state.json")
@@ -26,51 +27,17 @@ def save_backfill_state(state):
     tmp.replace(BACKFILL_STATE_FILE)
 
 def discover_missing_videos(channel_id, already_done):
-    base_url = "https://www.youtube.com/channel/" + channel_id
-    ydl_opts = {"quiet": True, "no_warnings": True, "extract_flat": "in_playlist", "ignoreerrors": True}
-    cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
-    if cookies_file and Path(cookies_file).exists():
-        ydl_opts["cookiefile"] = cookies_file
-
-    # Scan both /videos and /streams tabs — streams are often absent from /videos
-    seen = {}  # vid_id -> True, insertion order = newest-first per tab
-    for tab in ("/videos", "/streams"):
-        url = base_url + tab
-        print("    Scanning " + tab + " tab via yt-dlp...")
-        try:
-            with YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-            tab_ids = [e["id"] for e in (info.get("entries") or []) if e.get("id")]
-            print("      " + str(len(tab_ids)) + " videos found.")
-            for vid_id in tab_ids:
-                seen.setdefault(vid_id, True)
-        except Exception as e:
-            print("      yt-dlp error: " + str(e))
-
-    all_ids = list(seen.keys())
+    print("    Scanning /videos, /streams and /shorts via yt-dlp...")
+    all_ids = discover_channel_tab_ids(channel_id, tabs=("/videos", "/streams", "/shorts"))
     missing = [v for v in all_ids if v not in already_done]
     missing.reverse()  # process oldest-first
     print("    " + str(len(all_ids)) + " total on channel, " + str(len(missing)) + " not yet in feed.")
     return missing, len(all_ids)
 
 def get_video_info(video_id):
-    if not API_KEY:
-        return None
     try:
-        r = requests.get("https://www.googleapis.com/youtube/v3/videos",
-            params={"key": API_KEY, "id": video_id, "part": "snippet"}, timeout=10)
-        items = r.json().get("items", [])
-        if not items:
-            return None
-        snippet = items[0]["snippet"]
-        thumbs = snippet.get("thumbnails", {})
-        return {
-            "id": video_id, "title": snippet["title"],
-            "description": snippet.get("description", ""),
-            "published": snippet["publishedAt"],
-            "thumbnail": (thumbs.get("maxres") or thumbs.get("high") or {}).get("url", ""),
-            "url": "https://www.youtube.com/watch?v=" + video_id,
-        }
+        videos = fetch_video_metadata([video_id])
+        return videos[0] if videos else None
     except Exception:
         return None
 
@@ -151,7 +118,7 @@ def backfill_channel(channel_cfg, processed, state):
             if f.is_file():
                 f.unlink()
         try:
-            mp3_path, _dur = download_audio(video["url"], AUDIO_DIR)
+            mp3_path, yt_duration = download_audio(video["url"], AUDIO_DIR)
             file_size = mp3_path.stat().st_size
             final_path = AUDIO_DIR / mp3_filename
             mp3_path.rename(final_path)
@@ -166,7 +133,7 @@ def backfill_channel(channel_cfg, processed, state):
         "video_id": video["id"], "title": video["title"],
         "description": video.get("description", ""),
         "published": pub_dt.isoformat(), "audio_url": audio_url,
-        "file_size": file_size, "duration_secs": 0,
+        "file_size": file_size, "duration_secs": int(video.get("duration") or yt_duration or 0),
         "thumbnail": video.get("thumbnail", ""),
     })
     processed.setdefault(slug, []).append(video["id"])
