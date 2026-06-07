@@ -7,6 +7,14 @@ on:
         description: 'Reason for manual run'
         required: false
         default: 'manual'
+      process_budget:
+        description: 'Budget for new-episode processing (manual runs only)'
+        required: false
+        default: '15'
+      backfill_budget_override:
+        description: 'Override historical backfill budget; blank = use remaining budget from process step'
+        required: false
+        default: ''
   schedule:
     - cron: '0 * * * *'
 
@@ -97,7 +105,7 @@ jobs:
           touch processed.json
           python scripts/ci_bootstrap_all.py
 
-      - name: Run podcast update (new episodes, budget 15)
+      - name: Run podcast update (new episodes)
         env:
           YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
           GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
@@ -107,7 +115,13 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
           R2_PUBLIC_URL:        ${{ secrets.R2_PUBLIC_URL }}
-        run: python scripts/process_podcasts.py --budget 15
+        run: |
+          PROCESS_BUDGET='${{ github.event.inputs.process_budget }}'
+          if [ -z "$PROCESS_BUDGET" ]; then
+            PROCESS_BUDGET=15
+          fi
+          echo "Process budget: $PROCESS_BUDGET"
+          python scripts/process_podcasts.py --budget "$PROCESS_BUDGET"
 
       - name: Run backfill (historical episodes with remaining budget)
         env:
@@ -120,7 +134,10 @@ jobs:
           R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
           R2_PUBLIC_URL:        ${{ secrets.R2_PUBLIC_URL }}
         run: |
-          BUDGET=$(cat /tmp/backfill_budget 2>/dev/null || echo 0)
+          BUDGET='${{ github.event.inputs.backfill_budget_override }}'
+          if [ -z "$BUDGET" ]; then
+            BUDGET=$(cat /tmp/backfill_budget 2>/dev/null || echo 0)
+          fi
           echo "Backfill budget: $BUDGET"
           python scripts/backfill_podcasts.py --budget "$BUDGET"
 
