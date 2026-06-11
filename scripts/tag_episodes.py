@@ -92,8 +92,7 @@ def main():
 
     for entries_file in sorted(FEEDS_DIR.glob("*.entries.json")):
         entries = json.loads(entries_file.read_text(encoding="utf-8"))
-        # tags==[] means a prior run returned nothing — retag those too
-        untagged_idx = [i for i, e in enumerate(entries) if not e.get("tags")]
+        untagged_idx = [i for i, e in enumerate(entries) if "tags" not in e]
 
         if not untagged_idx:
             print(f"{entries_file.stem}: already fully tagged ({len(entries)} episodes)")
