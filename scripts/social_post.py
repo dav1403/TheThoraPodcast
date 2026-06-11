@@ -528,6 +528,12 @@ def main():
     channels = load_channels()
     state = load_state()
 
+    if not args.type and not args.dry_run:
+        today = datetime.now(timezone.utc).date().isoformat()
+        if state.get("last_posted", {}).get(post_type) == today:
+            print(f"Already posted '{post_type}' today ({today}) — skipping.")
+            return
+
     # Priority: announce any newly-added rabbi first (one per run max)
     if post_type != "new_rabbi":
         # Auto-trigger when there are unannounced channels, regardless of scheduled type

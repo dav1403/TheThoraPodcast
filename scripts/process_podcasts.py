@@ -893,8 +893,7 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
                 continue
 
         pub_dt = datetime.fromisoformat(video["published"].replace("Z", "+00:00"))
-        tags = tag_episode_title(video["title"])
-        entries.append({
+        entry = {
             "video_id":      video["id"],
             "title":         video["title"],
             "description":   video.get("description", ""),
@@ -903,8 +902,10 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
             "file_size":     file_size,
             "duration_secs": yt_duration or int(video.get("duration") or 0),
             "thumbnail":     video.get("thumbnail", ""),
-            "tags":          tags,
-        })
+        }
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            entry["tags"] = tag_episode_title(video["title"])
+        entries.append(entry)
 
         processed.setdefault(slug, []).append(video["id"])
         save_processed(processed)
