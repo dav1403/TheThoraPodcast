@@ -29,10 +29,6 @@ from urllib.parse import quote, urlsplit, urlunsplit
 from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
 import boto3
-try:
-    import anthropic as _anthropic
-except ImportError:
-    _anthropic = None
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
@@ -706,44 +702,6 @@ def _flag_auth_error_if_needed(exc: Exception) -> None:
         Path("/tmp/auth_error").write_text(str(exc))
 
 
-# ---------------------------------------------------------------------------
-# AI tagging
-# ---------------------------------------------------------------------------
-_THEMES = [
-    "Chabbat","Tefila","Téchouva","Emouna","Etude de Torah","Moussar",
-    "Halakha","Kabbala & Spiritualité","Mariage & Famille",
-    "Daf Hayomi","Likoutei Moharan",
-    "Roch Hachana & Yom Kippour","Souccot & Sim'hat Torah","Hanoucca",
-    "Pourim","Pessa'h","Chavouot","Paracha","Histoire juive",
-    "Am Israël & Actualité","Santé & Réfoua","Parnassa",
-]
-_THEMES_STR = ", ".join(_THEMES)
-
-def tag_episode_title(title: str) -> list[str]:
-    """Return a list of theme tags for the episode title, or [] on any failure."""
-    if not _anthropic:
-        return []
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return []
-    try:
-        import re
-        client = _anthropic.Anthropic(api_key=api_key)
-        resp = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=256,
-            system=f"Tag Torah podcast episode titles. Available themes: {_THEMES_STR}. Return ONLY a JSON array of 1-3 theme strings from the list, no explanation.",
-            messages=[{"role": "user", "content": f"Tag: {title}"}],
-        )
-        text = resp.content[0].text.strip()
-        match = re.search(r"\[.*?\]", text, re.DOTALL)
-        if match:
-            tags = json.loads(match.group())
-            return [t for t in tags if t in _THEMES]
-    except Exception:
-        pass
-    return []
-
 
 # ---------------------------------------------------------------------------
 # RSS feed helpers
@@ -903,8 +861,6 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
             "duration_secs": yt_duration or int(video.get("duration") or 0),
             "thumbnail":     video.get("thumbnail", ""),
         }
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            entry["tags"] = tag_episode_title(video["title"])
         entries.append(entry)
 
         processed.setdefault(slug, []).append(video["id"])
