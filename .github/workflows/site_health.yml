@@ -1,0 +1,163 @@
+name: Site Health Check
+
+# Lightweight uptime + data-integrity watch for thetorahpodcast.net.
+# Pure GitHub Actions — zero external services, ~20s per run.
+# On failure it opens (or comments on) a single GitHub issue, which emails the repo owner.
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # every 30 minutes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: site-health
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe live site
+        id: probe
+        run: |
+          python3 - <<'PY'
+          import json, os, re, time, urllib.request, urllib.error
+          import xml.etree.ElementTree as ET
+          from urllib.parse import quote
+
+          BASE = "https://thetorahpodcast.net"
+          UA = {"User-Agent": "ttp-health-check"}
+          fails = []
+
+          def head_ok(url):
+              # Range GET (R2/S3 always supports it; some CDNs reject bare HEAD).
+              req = urllib.request.Request(url, headers={**UA, "Range": "bytes=0-0"})
+              return urllib.request.urlopen(req, timeout=20).status in (200, 206)
+
+          def fetch(path):
+              # percent-encode non-ASCII (Hebrew slugs); cache-bust to hit fresh CDN content
+              url = f"{BASE}{quote(path, safe='/-._~')}?_={int(time.time()*1000)}"
+              req = urllib.request.Request(url, headers=UA)
+              return urllib.request.urlopen(req, timeout=20)
+
+          # 1. Homepage reachable
+          try:
+              if fetch("/").status != 200:
+                  fails.append("Homepage did not return 200")
+          except Exception as e:
+              fails.append(f"Homepage unreachable: {e}")
+
+          # 2. channels.json reachable + valid non-empty JSON
+          chans = []
+          try:
+              raw = fetch("/channels.json").read().decode("utf-8-sig")
+              chans = json.loads(raw)
+              assert isinstance(chans, list) and len(chans) > 0
+              print(f"channels.json OK: {len(chans)} channels")
+          except Exception as e:
+              fails.append(f"channels.json invalid/unreachable: {e}")
+
+          # 3. Per channel: channel page loads + its newest episode page is not 404.
+          #    This catches the case-sensitive staging bug (episode dirs never committed).
+          for c in chans:
+              slug = c.get("slug", "")
+              if not slug:
+                  continue
+              try:
+                  html = fetch(f"/{slug}.html").read().decode("utf-8", "replace")
+              except urllib.error.HTTPError as e:
+                  fails.append(f"{slug}: channel page HTTP {e.code}")
+                  continue
+              except Exception as e:
+                  fails.append(f"{slug}: channel page error: {e}")
+                  continue
+              m = re.search(r'href="(' + re.escape(slug) + r'/[^"]+\.html)"', html)
+              if not m:
+                  continue  # no episode pages linked yet — nothing to verify
+              ep = "/" + m.group(1)
+              try:
+                  if fetch(ep).status != 200:
+                      fails.append(f"{slug}: newest episode page not 200: {ep}")
+              except urllib.error.HTTPError as e:
+                  fails.append(f"{slug}: newest episode page HTTP {e.code}: {ep}")
+              except Exception as e:
+                  fails.append(f"{slug}: episode probe error: {e}")
+
+              # 4. RSS feed users actually subscribe to: external rss_url if the channel is
+              #    sourced from one (site links it directly), else the locally generated feed.
+              #    Validate XML, has items, and newest audio enclosure is reachable.
+              feed_url = c.get("rss_url")
+              try:
+                  if feed_url:
+                      xml_raw = urllib.request.urlopen(
+                          urllib.request.Request(feed_url, headers=UA), timeout=20).read()
+                  else:
+                      xml_raw = fetch(f"/feeds/{slug}.xml").read()
+                  root = ET.fromstring(xml_raw)
+                  items = root.findall(".//item")
+                  if not items:
+                      fails.append(f"{slug}: feed has no <item>")
+                  else:
+                      enc = items[0].find("enclosure")
+                      audio = enc.get("url") if enc is not None else None
+                      if not audio:
+                          fails.append(f"{slug}: newest feed item has no enclosure URL")
+                      else:
+                          try:
+                              if not head_ok(audio):
+                                  fails.append(f"{slug}: audio enclosure not reachable: {audio}")
+                          except urllib.error.HTTPError as e:
+                              fails.append(f"{slug}: audio enclosure HTTP {e.code}: {audio}")
+                          except Exception as e:
+                              fails.append(f"{slug}: audio enclosure error: {e}")
+              except ET.ParseError as e:
+                  fails.append(f"{slug}: feed XML invalid: {e}")
+              except urllib.error.HTTPError as e:
+                  fails.append(f"{slug}: feed HTTP {e.code}")
+              except Exception as e:
+                  fails.append(f"{slug}: feed probe error: {e}")
+
+          out = os.environ["GITHUB_OUTPUT"]
+          with open(out, "a", encoding="utf-8") as f:
+              if fails:
+                  details = "\n".join(f"- {x}" for x in fails)
+                  print("SITE HEALTH FAILED:\n" + details)
+                  f.write("details<<EOF\n" + details + "\nEOF\n")
+                  f.write("ok=false\n")
+              else:
+                  print("All checks passed.")
+                  f.write("ok=true\n")
+          PY
+
+      - name: Open / update alert issue on failure
+        if: steps.probe.outputs.ok == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="🔴 thetorahpodcast.net health check failing"
+          BODY=$(printf 'Automated health check failed at %s.\n\n%b\nRun: %s/%s/actions/runs/%s' "$(date -u)" "${{ steps.probe.outputs.details }}" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label bug
+          fi
+
+      - name: Auto-close alert issue on recovery
+        if: steps.probe.outputs.ok == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="🔴 thetorahpodcast.net health check failing"
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "✅ Recovered — site healthy as of $(date -u). Auto-closing."
+            gh issue close "$EXISTING"
+          fi
