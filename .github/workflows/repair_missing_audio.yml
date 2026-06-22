@@ -43,6 +43,26 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Validate channels.json (fail fast on broken JSON)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if err=$(python -c "import json; json.load(open('channels.json', encoding='utf-8-sig'))" 2>&1); then
+            echo "channels.json is valid JSON"
+          else
+            echo "::error::channels.json is invalid JSON — halting pipeline before deploy"
+            echo "$err"
+            TITLE="🔴 channels.json invalid — pipeline halted"
+            BODY=$(printf 'channels.json failed JSON validation. Pipeline stopped before touching feeds/site.\n\n```\n%s\n```\n\nFix the JSON, push, next run recovers.\nRun: %s/%s/actions/runs/%s' "$err" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+            EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null)
+            if [ -n "$EXISTING" ]; then
+              gh issue comment "$EXISTING" --body "$BODY" 2>/dev/null || true
+            else
+              gh issue create --title "$TITLE" --body "$BODY" --label bug 2>/dev/null || true
+            fi
+            exit 1
+          fi
+
       - name: Cache pip dependencies
         uses: actions/cache@v4
         with:
@@ -160,7 +180,14 @@ jobs:
         run: |
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"
-          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html rav-*/ rabbin-*/ beth-*/
+          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html
+          # Stage every channel's episode-page directory, derived from channels.json slugs.
+          # Robust against slug casing/prefix (was hardcoded to rav-*/ rabbin-*/ beth-*/,
+          # which silently skipped dirs like Rav-Itshak-Sitruk/, Nahal-Haim/, lev/, torah_fr/).
+          python -c "import json;[print(c['slug']) for c in json.load(open('channels.json', encoding='utf-8-sig'))]" \
+            | while IFS= read -r s; do
+                [ -n "$s" ] && [ -d "$s" ] && git add -- "$s/"
+              done
           if git diff --staged --quiet; then
             echo "committed=false" >> $GITHUB_OUTPUT
           else
