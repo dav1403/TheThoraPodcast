@@ -659,6 +659,14 @@ function renderResults(slug, allData) {
       </ul>
     </div>`).join('');
 
+  // Recent-episodes carousel for this paracha (newest first), prepended above the grouped list
+  const _flat = [];
+  groups.forEach(g => g.episodes.forEach(ep => _flat.push({ ep, ch: g.ch })));
+  _flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
+  const _carLabel = (lang === 'he' ? 'שיעורים אחרונים · ' : 'Derniers cours · ') + (lang === 'he' ? p.he : p.fr);
+  const _car = buildCarousel(_carLabel, _flat.slice(0, 20));
+  if (_car) body.insertBefore(_car, body.firstChild);
+
   document.getElementById('results').hidden = false;
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
