@@ -67,6 +67,60 @@ function filterDurAll(btn) {
 }
 function setDur(btn) { filterDurAll(btn); }
 
+// ─── Reusable horizontal carousel ────────────────────────────────────────────
+// Drop-in carousel matching the homepage "recents" row. Injects its CSS once so
+// it works on any page (static or generated) without per-page styling.
+function _injectCarouselCSS() {
+  if (document.getElementById('carousel-css')) return;
+  var s = document.createElement('style');
+  s.id = 'carousel-css';
+  s.textContent =
+    '.carousel-section{margin:0 0 28px}' +
+    '.carousel-section .carousel-label{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:#999;font-weight:600;margin-bottom:10px}' +
+    '.carousel-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scroll-snap-type:x proximity}' +
+    '.carousel-row::-webkit-scrollbar{height:4px}' +
+    '.carousel-row::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px}' +
+    '.carousel-card{flex-shrink:0;width:150px;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;transition:transform .15s,box-shadow .15s;scroll-snap-align:start}' +
+    '.carousel-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}' +
+    '.carousel-card>a{display:block}' +
+    '.carousel-card img{width:100%;height:84px;object-fit:cover;display:block}' +
+    '.carousel-card-body{padding:8px 9px 10px}' +
+    '.carousel-card-ch{font-size:.66rem;color:#e87722;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.carousel-card-title{font-size:.8rem;line-height:1.25;color:#1a1a2e;text-decoration:none;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}' +
+    '.carousel-card-date{font-size:.68rem;color:#aaa;margin-top:5px}' +
+    '.carousel-card.is-channel{width:128px;text-align:center}' +
+    '.carousel-card.is-channel img{height:128px}' +
+    '.carousel-card.is-channel .carousel-card-title{-webkit-line-clamp:2;font-weight:600}';
+  document.head.appendChild(s);
+}
+
+// buildCarousel(label, items) -> HTMLElement | null
+//   items: array of { ep, ch } for episode cards, or { ch } for channel ("discover") cards.
+//   ch = { slug, name }. Returns null when there are no items.
+function buildCarousel(label, items) {
+  if (!items || !items.length) return null;
+  _injectCarouselCSS();
+  var cards = items.map(function(it) {
+    var ch = it.ch, ep = it.ep;
+    var isChannel = !ep;
+    var href = isChannel ? (escapeHtml(ch.slug) + '.html') : epUrl(ep, ch.slug);
+    var img  = (ep && ep.thumbnail) ? escapeHtml(ep.thumbnail) : ('artwork/' + escapeHtml(ch.slug) + '.png');
+    var title = escapeHtml(isChannel ? (ch.name || ch.slug) : ep.title);
+    return '<div class="carousel-card' + (isChannel ? ' is-channel' : '') + '" data-slug="' + escapeHtml(ch.slug) + '">' +
+        '<a href="' + href + '"><img src="' + img + '" alt="" loading="lazy" onerror="this.src=\'artwork/' + escapeHtml(ch.slug) + '.png\'"></a>' +
+        '<div class="carousel-card-body">' +
+          (isChannel ? '' : '<div class="carousel-card-ch">' + escapeHtml(ch.name || '') + '</div>') +
+          '<a class="carousel-card-title" href="' + href + '">' + title + '</a>' +
+          (ep && ep.published ? '<div class="carousel-card-date">' + formatDate(ep.published) + '</div>' : '') +
+        '</div>' +
+      '</div>';
+  }).join('');
+  var section = document.createElement('div');
+  section.className = 'carousel-section';
+  section.innerHTML = '<div class="carousel-label">' + escapeHtml(label) + '</div><div class="carousel-row">' + cards + '</div>';
+  return section;
+}
+
 // Auto-load header stats if #header-stats exists and isn't already populated
 (function loadHeaderStats() {
   var el = document.getElementById('header-stats');
