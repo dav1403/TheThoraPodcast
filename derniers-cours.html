@@ -573,7 +573,7 @@
   }
   function filteredFlat() {
     let flat = window._flat || [];
-    if (activeFilter !== 'all') flat = flat.filter(x => x.ch.slug === activeFilter);
+    if (activeFilter !== 'all') flat = flat.filter(x => x.ch.slug === activeFilter || (x.speakers && x.speakers.includes(activeFilter)));
     if (activeDurFilter !== 'all') {
       flat = flat.filter(x => {
         const d = x.ep.duration_secs || 0;
@@ -633,6 +633,13 @@
       }
     } catch (_) {}
 
+    // Manually-added rabbis (extracted from aggregator channels like lev / rav-shimshone-attali)
+    let speakers = [];
+    try {
+      const sres = await fetch('speakers.json');
+      if (sres.ok) speakers = await sres.json();
+    } catch (_) {}
+
     if (!channels.length) {
       app.innerHTML = `<div class="state">${t('no_episodes')}</div>`;
       return;
@@ -661,6 +668,16 @@
       for (const ep of entries) flat.push({ ep, ch });
     }
     flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
+
+    // Tag each episode with the manually-added rabbi(s) it matches, within its source channel
+    const speakerMatch = (title, patterns) =>
+      (patterns || []).some(p => (title || '').toLowerCase().includes(p.toLowerCase()));
+    for (const x of flat) {
+      x.speakers = speakers
+        .filter(sp => (sp.from_channels || []).includes(x.ch.slug) && speakerMatch(x.ep.title, sp.title_patterns))
+        .map(sp => sp.slug);
+    }
+
     window._flat = flat;
 
     const totalEp = flat.length;
@@ -676,6 +693,20 @@
       btn.className = 'filter-chip';
       btn.dataset.slug = ch.slug;
       btn.innerHTML = `<img src="artwork/${escapeHtml(ch.slug)}.png" alt=""> ${escapeHtml(ch.name)}`;
+      filterRow.appendChild(btn);
+    }
+
+    // Speaker chips (manually-added rabbis) — only those with matching episodes.
+    // Uses the source channel's artwork (speakers have no own artwork).
+    const speakerCounts = {};
+    for (const x of flat) for (const s of (x.speakers || [])) speakerCounts[s] = (speakerCounts[s] || 0) + 1;
+    for (const sp of speakers) {
+      if (!speakerCounts[sp.slug]) continue;
+      const btn = document.createElement('button');
+      btn.className = 'filter-chip';
+      btn.dataset.slug = sp.slug;
+      const art = `artwork/${escapeHtml((sp.from_channels || [])[0] || sp.slug)}.png`;
+      btn.innerHTML = `<img src="${art}" alt="" onerror="this.style.display='none'"> ${escapeHtml(sp.name)}`;
       filterRow.appendChild(btn);
     }
 
