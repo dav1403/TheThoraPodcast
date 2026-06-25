@@ -249,7 +249,13 @@ Merci de vous abonner à ">
       </div>
     </div>
     <a href="../derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
-    <a href="../daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+    <div class="nav-dropdown">
+      <a class="nav-dd-link" href="../daf-hayomi.html" data-i18n="nav_limud">Limud Yomi</a><button class="nav-dd-caret" aria-label="Limud Yomi">▾</button>
+      <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
+        <a href="../daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+        <a href="../hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+      </div>
+    </div>
     <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -298,12 +304,12 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
 <script>
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_paracha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       related:'Épisodes récents', transcript_label:'Transcription',
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       related:'פרקים אחרונים', transcript_label:'תמליל',
     },

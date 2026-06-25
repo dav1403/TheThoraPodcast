@@ -472,7 +472,13 @@
       </div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
-    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+    <div class="nav-dropdown">
+      <a class="nav-dd-link" href="daf-hayomi.html" data-i18n="nav_limud">Limud Yomi</a><button class="nav-dd-caret" aria-label="Limud Yomi">▾</button>
+      <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
+        <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+        <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+      </div>
+    </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -8763,14 +8769,14 @@ Sans oublier notre groupe Facebook, pour suivre nos événemen…</p>
 <script>
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_paracha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${n} épisode${n !== 1 ? 's' : ''}`,
       listen:'Écouter', playing:'En cours…',
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${n} פרקים`,
@@ -8789,8 +8795,8 @@ Sans oublier notre groupe Facebook, pour suivre nos événemen…</p>
     if (epCount) epCount.textContent = I18N[lang].ep_count(900);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `28 ערוצים · 9839 פרקים · ~7379ש`
-      : `28 rabbins · 9839 cours · ~7379h de Torah`;
+      ? `28 ערוצים · 9853 שיעורים · ~7390 שעות`
+      : `28 rabbins · 9853 cours · ~7390h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
