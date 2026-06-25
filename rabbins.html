@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -53,6 +53,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body { overflow-x: hidden; }
     body {
       font-family: system-ui, -apple-system, sans-serif;
       background: #f5f5f0;
@@ -110,11 +111,12 @@
     .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
 
     .sort-bar {
-      max-width: 700px;
-      margin: 20px auto 0;
+      max-width: 1100px;
+      margin: 18px auto 0;
       padding: 0 16px;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       font-size: 0.82rem;
       color: #777;
@@ -127,88 +129,78 @@
       font-size: 0.78rem;
       cursor: pointer;
       color: #666;
+      font-family: inherit;
       transition: all .15s;
     }
     .sort-btn.active          { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
     .sort-btn:not(.active):hover { border-color: #aaa; color: #333; }
 
-
-    /* Sticky search bar */
-    .sticky-bar { position: sticky; top: 0; z-index: 100; background: #1a1a2e; padding: 10px 16px 12px; }
-    .sticky-inner { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
-    .search-wrap-global { position: relative; }
-    .search-icon-global { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,.4); pointer-events: none; }
-    .search-input-global { width: 100%; padding: 9px 16px 9px 40px; border: none; border-radius: 20px; font-size: .9rem; background: rgba(255,255,255,.12); color: #fff; outline: none; font-family: inherit; }
-    .search-input-global::placeholder { color: rgba(255,255,255,.4); }
-    .search-input-global:focus { background: rgba(255,255,255,.18); }
-
-    .sticky-dur-row { display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
-    .sticky-dur-row::-webkit-scrollbar { display: none; }
-    .sticky-dur-chip { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 4px 12px; font-size: .76rem; color: rgba(255,255,255,.65); cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0; transition: background .12s, color .12s; }
-    .sticky-dur-chip:hover { background: rgba(255,255,255,.18); color: #fff; }
-    .sticky-dur-chip.active { background: #fff; border-color: #fff; color: #1a1a2e; font-weight: 600; }
+    /* ─── Bubble grid ─────────────────────────────────────────── */
     main {
-      max-width: 700px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 16px 16px 60px;
+      padding: 22px 16px 70px;
       display: grid;
-      gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
+      gap: 26px 12px;
+      justify-items: center;
     }
-
-    .card {
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    .bubble {
       display: flex;
-      align-items: flex-start;
-      gap: 18px;
-      padding: 18px 20px;
-    }
-
-    .card-art {
-      width: 72px;
-      height: 72px;
-      border-radius: 10px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: #e0e0e0;
-    }
-
-    .card-body { flex: 1; min-width: 0; }
-
-    .card-name-row {
-      display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 9px;
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
     }
-    .card-name {
-      font-size: 1rem;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      min-width: 0;
-      text-decoration: none;
-      color: inherit;
+    .bubble-img-wrap { position: relative; width: clamp(64px, 17vw, 104px); aspect-ratio: 1 / 1; }
+    .bubble-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e0e0e0;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 9px rgba(0,0,0,.14);
+      transition: transform .15s ease, box-shadow .15s ease;
+      display: block;
     }
-    .episodes-link {
-      font-size: 0.72rem;
+    .bubble:hover .bubble-img,
+    .bubble:focus-visible .bubble-img {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(0,0,0,.22);
+    }
+    .bubble:focus-visible { outline: none; }
+    .bubble:focus-visible .bubble-img { outline: 3px solid #1a1a2e; outline-offset: 2px; }
+    .bubble-dot {
+      position: absolute;
+      bottom: 5%;
+      right: 5%;
+      width: 30%;
+      max-width: 18px;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background: #2ecc71;
+      border: 2.5px solid #f5f5f0;
+    }
+    .bubble-name {
+      font-size: .77rem;
       font-weight: 600;
-      color: #1a1a2e;
-      text-decoration: none;
-      border: 1px solid #1a1a2e;
-      border-radius: 4px;
-      padding: 3px 8px;
-      white-space: nowrap;
-      flex-shrink: 0;
-      transition: all .15s;
+      color: #333;
+      text-align: center;
+      line-height: 1.2;
+      max-width: 13ch;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
-    .episodes-link:hover { background: #1a1a2e; color: #fff; }
 
     .platform-links { display: flex; flex-wrap: wrap; gap: 8px; }
-
     .platform-btn {
       display: inline-flex;
       align-items: center;
@@ -223,12 +215,10 @@
     }
     .platform-btn:hover { opacity: 0.82; }
     .platform-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-
     .btn-spotify { background: #1DB954; color: #fff; }
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
     .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
-
     .copy-rss {
       display: inline-flex;
       align-items: center;
@@ -242,40 +232,87 @@
       border: 1px solid #ddd;
       cursor: pointer;
       white-space: nowrap;
+      font-family: inherit;
       transition: all .15s;
     }
     .copy-rss:hover { border-color: #aaa; color: #333; }
     .copy-rss.copied { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
-
     .no-platforms { font-size: 0.78rem; color: #aaa; font-style: italic; }
 
-    .card-stats {
-      margin-top: 9px;
-      font-size: 0.72rem;
-      color: #999;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: 0 4px;
+    /* ─── Detail modal ────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,20,35,.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 500;
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
     }
-    .card-stats strong { color: #555; font-weight: 600; }
-    .latest-title {
-      color: #666;
-      font-style: italic;
-      max-width: 240px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      display: inline-block;
-      vertical-align: bottom;
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 18px;
+      width: 100%;
+      max-width: min(420px, calc(100vw - 32px));
+      padding: 22px;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modal-in .16s ease;
     }
+    @keyframes modal-in { from { transform: translateY(10px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #555;
+      line-height: 1;
+      font-family: inherit;
+    }
+    .modal-close:hover { background: #e2e2e2; }
+    .modal-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding-right: 30px; }
+    .modal-art {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e0e0e0;
+      flex-shrink: 0;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,.14);
+    }
+    .modal-name { font-size: 1.15rem; font-weight: 700; line-height: 1.2; }
+    .modal-sub  { font-size: .76rem; color: #999; margin-top: 3px; }
+    .modal-latest { font-size: .8rem; color: #666; font-style: italic; margin-top: 12px; }
+    .modal-all {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      padding: 10px;
+      background: #1a1a2e;
+      color: #fff;
+      border-radius: 22px;
+      text-decoration: none;
+      font-size: .85rem;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .modal-all:hover { background: #2d2d50; }
+    [dir="rtl"] .bubble-dot { right: auto; left: 5%; }
+    [dir="rtl"] .modal-head { padding-right: 0; padding-left: 30px; }
+    [dir="rtl"] .modal-close { right: auto; left: 12px; }
 
-    @media (max-width: 480px) {
-      .card { flex-direction: column; align-items: flex-start; }
-      .card-art { width: 60px; height: 60px; }
-      .latest-title { max-width: 160px; }
-    }
-  
     .site-footer { background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }
     .site-footer a { color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }
     .site-footer a:hover { color: #fff; }
@@ -308,6 +345,8 @@
 
 <main id="app"></main>
 
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal()"></div>
+
 <script src="js/utils.js"></script>
 <script>
   // ─── i18n ─────────────────────────────────────────────────────────────────
@@ -318,7 +357,7 @@
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       loading:'Chargement…',
       sort_latest:'Dernier cours', sort_alpha:'Alphabétique',
-      episodes_link:'Épisodes →',
+      all_courses:'Voir tous les cours →',
       copy_rss:'Copier RSS', copied:'✓ Copié !',
       ep_singular:'épisode', ep_plural:'épisodes',
       last:'Dernier :', no_channels:'Aucune chaîne disponible.',
@@ -329,7 +368,7 @@
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       loading:'טוען…',
       sort_latest:'לפי תאריך', sort_alpha:'א–ב',
-      episodes_link:'פרקים →',
+      all_courses:'לכל השיעורים →',
       copy_rss:'העתק RSS', copied:'✓ הועתק !',
       ep_singular:'פרק', ep_plural:'פרקים',
       last:'אחרון :', no_channels:'אין ערוצים זמינים.',
@@ -383,7 +422,6 @@
     });
   }
 
-
   function latestEpisode(entries) {
     if (!entries.length) return null;
     return entries.reduce((best, ep) =>
@@ -391,54 +429,24 @@
     );
   }
 
-  function renderCard(ch, entries) {
-    const platforms   = ch.platforms || {};
-    const activeLinks = Object.entries(platforms).filter(([, url]) => url && url.trim());
-
-    const rssUrl = `https://thetorahpodcast.net/feeds/${ch.slug}.xml`;
-    const copyBtn = `<button class="copy-rss" onclick="copyRss(this,'${escapeHtml(rssUrl)}')">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-      ${t('copy_rss')}</button>`;
-
-    const badges = activeLinks.map(([key, url]) => {
-      const meta = PLATFORM_META[key];
-      if (!meta) return '';
-      return `<a class="platform-btn ${meta.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener">${meta.icon}${meta.label}</a>`;
-    }).join('');
-
-    const linksHtml = activeLinks.length
-      ? `<div class="platform-links">${badges}${copyBtn}</div>`
-      : `<div class="platform-links">${copyBtn}</div>`;
-
-    const count  = entries.length;
-    const latest = latestEpisode(entries);
-    const epWord = count > 1 ? t('ep_plural') : t('ep_singular');
-    const statsHtml = count > 0
-      ? `<div class="card-stats">
-           <strong>${count}</strong>&nbsp;${epWord}
-           ${latest
-             ? `&nbsp;·&nbsp;${t('last')}&nbsp;<span class="latest-title" title="${escapeHtml(latest.title)}">${escapeHtml(latest.title)}</span>&nbsp;—&nbsp;${formatDate(latest.published)}`
-             : ''}
-         </div>`
-      : '';
-
-    return `
-      <div class="card">
-        <a href="${escapeHtml(ch.slug)}.html"><img class="card-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.podcast_author)}"
-             onerror="this.style.background='#e0e0e0';this.removeAttribute('src')"></a>
-        <div class="card-body">
-          <div class="card-name-row">
-            <a class="card-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.podcast_author)}</a>
-            <a class="episodes-link" href="${escapeHtml(ch.slug)}.html">${t('episodes_link')}</a>
-          </div>
-          ${linksHtml}
-          ${statsHtml}
-        </div>
-      </div>`;
-  }
-
+  // ─── Bubble grid ───────────────────────────────────────────────────────────
   let allData     = [];
+  let dataBySlug  = {};
   let currentSort = 'latest';
+
+  function bubbleHtml({ ch, entries }) {
+    const latest = latestEpisode(entries);
+    const recent = latest && (Date.now() - new Date(latest.published).getTime()) <= 30 * 86400000;
+    return `
+      <button class="bubble" onclick="openRabbi('${escapeHtml(ch.slug)}')" title="${escapeHtml(ch.podcast_author)}">
+        <span class="bubble-img-wrap">
+          <img class="bubble-img" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.podcast_author)}"
+               loading="lazy" onerror="this.style.background='#cfcfd6';this.removeAttribute('src')">
+          ${recent ? '<span class="bubble-dot"></span>' : ''}
+        </span>
+        <span class="bubble-name">${escapeHtml(ch.podcast_author)}</span>
+      </button>`;
+  }
 
   function getSorted(sort) {
     const data = [...allData];
@@ -461,9 +469,66 @@
     currentSort = sort;
     document.getElementById('sort-latest').classList.toggle('active', sort === 'latest');
     document.getElementById('sort-alpha').classList.toggle('active', sort === 'alpha');
-    document.getElementById('app').innerHTML =
-      getSorted(sort).map(({ ch, entries }) => renderCard(ch, entries)).join('');
+    document.getElementById('app').innerHTML = getSorted(sort).map(bubbleHtml).join('');
   }
+
+  // ─── Detail modal ──────────────────────────────────────────────────────────
+  function modalInner({ ch, entries }) {
+    const platforms   = ch.platforms || {};
+    const activeLinks = Object.entries(platforms).filter(([, url]) => url && url.trim());
+
+    const rssUrl = `https://thetorahpodcast.net/feeds/${ch.slug}.xml`;
+    const copyBtn = `<button class="copy-rss" onclick="copyRss(this,'${escapeHtml(rssUrl)}')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      ${t('copy_rss')}</button>`;
+
+    const badges = activeLinks.map(([key, url]) => {
+      const meta = PLATFORM_META[key];
+      if (!meta) return '';
+      return `<a class="platform-btn ${meta.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener">${meta.icon}${meta.label}</a>`;
+    }).join('');
+
+    const count  = entries.length;
+    const latest = latestEpisode(entries);
+    const epWord = count > 1 ? t('ep_plural') : t('ep_singular');
+    const sub = count
+      ? `${count} ${epWord}${latest ? `&nbsp;·&nbsp;${formatDate(latest.published)}` : ''}`
+      : '';
+
+    return `
+      <div class="modal" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="${escapeHtml(ch.podcast_author)}">
+        <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
+        <div class="modal-head">
+          <img class="modal-art" src="artwork/${escapeHtml(ch.slug)}.png" alt=""
+               onerror="this.style.background='#cfcfd6';this.removeAttribute('src')">
+          <div>
+            <div class="modal-name">${escapeHtml(ch.podcast_author)}</div>
+            ${sub ? `<div class="modal-sub">${sub}</div>` : ''}
+          </div>
+        </div>
+        <div class="platform-links">${badges}${copyBtn}</div>
+        ${latest ? `<div class="modal-latest">${t('last')} ${escapeHtml(latest.title)}</div>` : ''}
+        <a class="modal-all" href="${escapeHtml(ch.slug)}.html">${t('all_courses')}</a>
+      </div>`;
+  }
+
+  function openRabbi(slug) {
+    const d = dataBySlug[slug];
+    if (!d) return;
+    const ov = document.getElementById('modal-overlay');
+    ov.innerHTML = modalInner(d);
+    ov.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    const ov = document.getElementById('modal-overlay');
+    ov.classList.remove('open');
+    ov.innerHTML = '';
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
   (async () => {
     const app = document.getElementById('app');
@@ -476,12 +541,12 @@
     } catch (_) {}
 
     if (!channels.length) {
-      app.innerHTML = `<p style="text-align:center;color:#aaa;padding:40px">${t('no_channels')}</p>`;
+      app.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#aaa;padding:40px">${t('no_channels')}</p>`;
       document.getElementById('header-stats').textContent = '';
       return;
     }
 
-    allData = await Promise.all(channels.map(async ch => {
+    const channelData = await Promise.all(channels.map(async ch => {
       try {
         const r = await fetch(`feeds/${ch.slug}.entries.json`);
         const entries = r.ok ? await r.json() : [];
@@ -491,8 +556,8 @@
       }
     }));
 
-    // Build speaker pseudo-entries by filtering source channel entries
-    const entriesCache = Object.fromEntries(allData.map(({ ch, entries }) => [ch.slug, entries]));
+    // Build speaker pseudo-channels by filtering source channel entries
+    const entriesCache = Object.fromEntries(channelData.map(({ ch, entries }) => [ch.slug, entries]));
     const speakerData = speakers.map(sp => {
       const entries = sp.from_channels.flatMap(slug =>
         (entriesCache[slug] || []).filter(ep =>
@@ -505,21 +570,16 @@
       };
     });
 
-    const totalEpisodes = allData.reduce((sum, { entries }) => sum + entries.length, 0);
+    allData    = [...channelData, ...speakerData];
+    dataBySlug = Object.fromEntries(allData.map(d => [d.ch.slug, d]));
+
+    const totalEpisodes = channelData.reduce((sum, { entries }) => sum + entries.length, 0);
     document.getElementById('header-stats').textContent =
       lang === 'he'
         ? `${channels.length + speakers.length} רבנים · ${totalEpisodes} שיעורים פורסמו`
         : `${channels.length + speakers.length} rabbins · ${totalEpisodes} cours publiés`;
 
-    setSort('latest');
-
-    // Append speaker cards after channel cards
-    speakerData.forEach(({ ch, entries }) => {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = renderCard(ch, entries);
-      app.appendChild(card);
-    });
+    setSort(currentSort);
 
     const sub = document.getElementById('nav-rabbis-submenu');
     if (sub) sub.innerHTML = [
@@ -527,14 +587,14 @@
       ...speakers.map(sp => `<a href="${escapeHtml(sp.slug)}.html">${escapeHtml(sp.name)}</a>`)
     ].join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
 
-  document.addEventListener('click', e => {
-    if (e.target.closest('.nav-submenu')) return;
-    const caret = e.target.closest('.nav-dd-caret');
-    document.querySelectorAll('.nav-dropdown.open').forEach(el => {
-      if (!caret || el !== caret.closest('.nav-dropdown')) el.classList.remove('open');
+    document.addEventListener('click', e => {
+      if (e.target.closest('.nav-submenu')) return;
+      const caret = e.target.closest('.nav-dd-caret');
+      document.querySelectorAll('.nav-dropdown.open').forEach(el => {
+        if (!caret || el !== caret.closest('.nav-dropdown')) el.classList.remove('open');
+      });
+      if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
     });
-    if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
-  });
   })();
 </script>
 
