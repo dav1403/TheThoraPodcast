@@ -140,6 +140,15 @@
     /* Book sections */
     .book-section { margin-bottom: 24px; }
     .book-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
       font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -147,6 +156,11 @@
       color: #999;
       margin-bottom: 10px;
     }
+    .book-title:hover { color: #1a1a2e; }
+    .book-caret { transition: transform .15s; font-size: 0.85rem; }
+    .book-section.collapsed .book-caret { transform: rotate(-90deg); }
+    .book-section.collapsed .chips { display: none; }
+    .book-section.collapsed .book-title { margin-bottom: 0; }
     .chips { display: flex; flex-wrap: wrap; gap: 7px; }
     .chip {
       display: inline-flex;
@@ -278,6 +292,26 @@
     .play-btn:hover { background: #2d2d50; }
     .play-btn.playing { background: #e87722; }
     .play-btn svg { width: 9px; height: 9px; }
+
+    /* Show-more per rabbi — cap applies only when no duration filter is active */
+    #results-body.cap-on .result-channel:not(.expanded) .episode.ep-extra { display: none; }
+    #results-body:not(.cap-on) .show-more-btn { display: none; }
+    .show-more-btn {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      border-top: 1px solid #f0f0f0;
+      padding: 11px 18px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+      transition: background .15s;
+    }
+    .show-more-btn:hover { background: #f7f7f9; }
 
     /* Persistent player */
     #player {
@@ -414,6 +448,7 @@ const I18N = {
     no_ep_hint:'Les cours sont peut-être titrés différemment.',
     ep_singular:'épisode', ep_plural:'épisodes',
     loading_eps:'Chargement des épisodes…',
+    show_more:'Voir plus', show_less:'Voir moins',
   },
   he: {
     nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -429,6 +464,7 @@ const I18N = {
     no_ep_hint:'ייתכן שהשיעורים כותרתם שונה.',
     ep_singular:'פרק', ep_plural:'פרקים',
     loading_eps:'טוען פרקים…',
+    show_more:'הצג עוד', show_less:'הצג פחות',
   },
 };
 const BOOK_HE = { 'Bereshit':'בראשית', 'Shemot':'שמות', 'Vayikra':'ויקרא', 'Bamidbar':'במדבר', 'Devarim':'דברים' };
@@ -546,7 +582,14 @@ function findEpisodesForParacha(slug, allData) {
     const matching = entries.filter(ep => !/HITAT DU JOUR/i.test(ep.title || '') && matchesParacha(ep.title, p.kw));
     if (matching.length) results.push({ ch, episodes: matching });
   }
+  // Order rabbis by whoever has the most recent course for this paracha
+  results.sort((a, b) => latestDate(b.episodes) - latestDate(a.episodes));
   return results;
+}
+
+// Most recent publication date (ms) among a list of episodes
+function latestDate(episodes) {
+  return episodes.reduce((max, ep) => Math.max(max, new Date(ep.published).getTime()), 0);
 }
 
 // ─── Player ──────────────────────────────────────────────────────────────────
@@ -646,8 +689,8 @@ function renderResults(slug, allData) {
         <div class="result-channel-count">${episodes.length} ${episodes.length > 1 ? t('ep_plural') : t('ep_singular')}</div>
       </div>
       <ul class="episode-list">
-        ${episodes.map(ep => `
-          <li class="episode" data-ep-dur="${ep.duration_secs || 0}">
+        ${episodes.map((ep, i) => `
+          <li class="episode${i >= 3 ? ' ep-extra' : ''}" data-ep-dur="${ep.duration_secs || 0}">
             ${ep.thumbnail
               ? `<a href="${epUrl(ep, ch.slug)}"><img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
               : `<div class="episode-thumb-ph"></div>`}
@@ -665,6 +708,7 @@ function renderResults(slug, allData) {
             </div>
           </li>`).join('')}
       </ul>
+      ${episodes.length > 3 ? `<button class="show-more-btn" data-hidden="${episodes.length - 3}" onclick="toggleMore(this)">${t('show_more')} (${episodes.length - 3})</button>` : ''}
     </div>`).join('');
 
   // Recent-episodes carousel for this paracha (newest first), prepended above the grouped list
@@ -674,6 +718,12 @@ function renderResults(slug, allData) {
   const _carLabel = (lang === 'he' ? 'שיעורים אחרונים · ' : 'Derniers cours · ') + (lang === 'he' ? p.he : p.fr);
   const _car = buildCarousel(_carLabel, _flat.slice(0, 20));
   if (_car) body.insertBefore(_car, body.firstChild);
+
+  // Re-apply the active duration filter to the freshly rendered episodes
+  // (defaults to the "Tous" button → cap-on, everything visible)
+  const activeDurBtn = document.querySelector('#dur-filter .dur-btn.active')
+    || document.querySelector('#dur-filter .dur-btn[data-dur="all"]');
+  if (activeDurBtn) filterDurAll(activeDurBtn);
 
   document.getElementById('results').hidden = false;
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -687,9 +737,16 @@ function buildBooks(allData) {
       .reduce((s, g) => s + g.episodes.length, 0);
   }
 
-  return BOOKS.map(book => `
-    <div class="book-section">
-      <div class="book-title">${lang === 'he' ? (BOOK_HE[book.name] || book.name) : book.name}</div>
+  const openBook = bookOfSlug(selectedSlug);
+
+  return BOOKS.map(book => {
+    const isOpen = book.name === openBook;
+    return `
+    <div class="book-section${isOpen ? '' : ' collapsed'}" data-book="${book.name}">
+      <button class="book-title" onclick="toggleBook(this)" aria-expanded="${isOpen}">
+        <span>${lang === 'he' ? (BOOK_HE[book.name] || book.name) : book.name}</span>
+        <span class="book-caret">▾</span>
+      </button>
       <div class="chips">
         ${book.parashiot.map(slug => {
           const p = PARACHIOT[slug];
@@ -701,7 +758,57 @@ function buildBooks(allData) {
           </button>`;
         }).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+// Which book (humash) contains a given paracha slug
+function bookOfSlug(slug) {
+  if (!slug) return BOOKS[0].name;
+  const b = BOOKS.find(bk => bk.parashiot.includes(slug));
+  return b ? b.name : BOOKS[0].name;
+}
+
+// Collapse / expand a humash section
+function toggleBook(btn) {
+  const section = btn.closest('.book-section');
+  const collapsed = section.classList.toggle('collapsed');
+  btn.setAttribute('aria-expanded', String(!collapsed));
+}
+
+// Show / hide a rabbi's extra courses (beyond the first 3)
+function toggleMore(btn) {
+  const card = btn.closest('.result-channel');
+  const expanded = card.classList.toggle('expanded');
+  btn.textContent = expanded ? t('show_less') : `${t('show_more')} (${btn.dataset.hidden})`;
+}
+
+// Wrap the shared duration filter (utils.js) with paracha-specific reconciliation:
+// when a duration is active we drop the 3-per-rabbi cap and show every match,
+// hide rabbis with no match, and refresh the episode count.
+const _baseFilterDur = filterDurAll;
+filterDurAll = function (btn) {
+  _baseFilterDur(btn);            // toggles .episode[hidden] by duration bucket
+  reconcileDurUI(btn.dataset.dur);
+};
+
+function reconcileDurUI(dur) {
+  const body = document.getElementById('results-body');
+  body.classList.toggle('cap-on', dur === 'all');
+
+  let total = 0;
+  body.querySelectorAll('.result-channel').forEach(card => {
+    let visible = 0;
+    card.querySelectorAll('.episode').forEach(li => { if (!li.hidden) visible++; });
+    card.hidden = visible === 0;   // drop rabbis with no matching course
+    total += visible;
+  });
+
+  const countEl = document.getElementById('results-count');
+  if (countEl) {
+    const epWord = total > 1 ? t('ep_plural') : t('ep_singular');
+    countEl.textContent = total ? `${total} ${epWord}` : '';
+  }
 }
 
 // ─── Current parasha ─────────────────────────────────────────────────────────
@@ -734,6 +841,14 @@ function selectParacha(slug) {
   document.querySelectorAll('.chip').forEach(c => {
     c.classList.toggle('active', c.dataset.slug === slug);
   });
+
+  // Make sure the humash holding this paracha is expanded
+  const sec = document.querySelector(`.book-section[data-book="${bookOfSlug(slug)}"]`);
+  if (sec) {
+    sec.classList.remove('collapsed');
+    const bt = sec.querySelector('.book-title');
+    if (bt) bt.setAttribute('aria-expanded', 'true');
+  }
 
   if (globalAllData) renderResults(slug, globalAllData);
 }
