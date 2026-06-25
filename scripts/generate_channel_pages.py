@@ -397,8 +397,13 @@ def render_page(ch: dict, entries: list, all_channels: list,
       </div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
-    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
-    <a href="hitat.html" data-i18n="nav_hitat">Hitat</a>
+    <div class="nav-dropdown">
+      <a class="nav-dd-link" href="daf-hayomi.html" data-i18n="nav_limud">Limud Yomi</a><button class="nav-dd-caret" aria-label="Limud Yomi">▾</button>
+      <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
+        <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+        <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+      </div>
+    </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -458,14 +463,14 @@ def render_page(ch: dict, entries: list, all_channels: list,
 <script>
   const I18N = {{
     fr: {{
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_hitat:'Hitat', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_paracha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${{n}} épisode${{n !== 1 ? 's' : ''}}`,
       listen:'Écouter', playing:'En cours…',
     }},
     he: {{
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${{n}} פרקים`,
@@ -836,8 +841,13 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
       </div>
     </div>
     <a href="../derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
-    <a href="../daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
-    <a href="../hitat.html" data-i18n="nav_hitat">Hitat</a>
+    <div class="nav-dropdown">
+      <a class="nav-dd-link" href="../daf-hayomi.html" data-i18n="nav_limud">Limud Yomi</a><button class="nav-dd-caret" aria-label="Limud Yomi">▾</button>
+      <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
+        <a href="../daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+        <a href="../hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+      </div>
+    </div>
     <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -875,12 +885,12 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 <script>
   const I18N = {{
     fr: {{
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_hitat:'Hitat', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_paracha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       related:'Épisodes récents', transcript_label:'Transcription',
     }},
     he: {{
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       related:'פרקים אחרונים', transcript_label:'תמליל',
     }},
