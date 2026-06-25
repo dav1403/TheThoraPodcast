@@ -536,7 +536,9 @@ function findEpisodesForParacha(slug, allData) {
   if (!p) return [];
   const results = [];
   for (const { ch, entries } of allData) {
-    const matching = entries.filter(ep => matchesParacha(ep.title, p.kw));
+    // Exclude the daily "HITAT DU JOUR" shiurim — they have their own page (hitat.html)
+    // and would otherwise flood every parasha (their titles contain the parasha name).
+    const matching = entries.filter(ep => !/HITAT DU JOUR/i.test(ep.title || '') && matchesParacha(ep.title, p.kw));
     if (matching.length) results.push({ ch, episodes: matching });
   }
   return results;
