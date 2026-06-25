@@ -483,9 +483,10 @@ function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'
 function renderStats(nCh, nEp) {
   const el = document.getElementById('header-stats');
   if (!el) return;
+  const approxH = Math.round(nEp * 0.75);
   el.textContent = lang === 'he'
-    ? `${nCh} ערוצים · ${nEp} שיעורים פורסמו`
-    : `Déjà ${nCh} chaînes · ${nEp} cours publiés`;
+    ? `${nCh} ערוצים · ${nEp} שיעורים · ~${approxH} שעות`
+    : `${nCh} rabbins · ${nEp} cours · ~${approxH}h de Torah`;
 }
 applyLang();
 
@@ -855,9 +856,10 @@ function selectParacha(slug) {
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 (async () => {
-  const [{ il: slugIL, dia: slugDia }, channels] = await Promise.all([
+  const [{ il: slugIL, dia: slugDia }, channels, speakers] = await Promise.all([
     fetchCurrentParashot(),
     fetch('channels.json').then(r => r.ok ? r.json() : []).catch(() => []),
+    fetch('speakers.json').then(r => r.ok ? r.json() : []).catch(() => []),
   ]);
 
   const hasSplit = slugIL && slugDia && slugIL !== slugDia;
@@ -924,7 +926,7 @@ function selectParacha(slug) {
   }));
 
   const totalEp = globalAllData.reduce((s, {entries}) => s + entries.length, 0);
-  renderStats(globalAllData.length, totalEp);
+  renderStats(globalAllData.length + speakers.length, totalEp);
 
   const sub = document.getElementById('nav-rabbis-submenu');
   if (sub) sub.innerHTML = enabled.map(ch =>

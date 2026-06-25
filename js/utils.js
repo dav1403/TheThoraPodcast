@@ -135,7 +135,7 @@ function buildCarousel(label, items) {
       var totalH  = Math.round(totalEp * 0.75);
       var lang = window.lang || 'fr';
       el.textContent = lang === 'he'
-        ? enabled.length + ' ערוצים · ' + totalEp + ' שיעורים · ~' + totalH + 'ש'
+        ? enabled.length + ' ערוצים · ' + totalEp + ' שיעורים · ~' + totalH + ' שעות'
         : enabled.length + ' rabbins · ' + totalEp + ' cours · ~' + totalH + 'h de Torah';
     });
   }).catch(function() {});

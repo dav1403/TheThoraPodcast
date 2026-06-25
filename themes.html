@@ -434,9 +434,10 @@
   function renderStats(nCh, nEp) {
     const el = document.getElementById('header-stats');
     if (!el) return;
+    const approxH = Math.round(nEp * 0.75);
     el.textContent = lang === 'he'
-      ? `${nCh} ערוצים · ${nEp} שיעורים פורסמו`
-      : `Déjà ${nCh} chaînes · ${nEp} cours publiés`;
+      ? `${nCh} ערוצים · ${nEp} שיעורים · ~${approxH} שעות`
+      : `${nCh} rabbins · ${nEp} cours · ~${approxH}h de Torah`;
   }
   applyLang();
 
@@ -554,6 +555,12 @@
       if (res.ok) CHANNELS = (await res.json()).filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
     } catch(_) {}
 
+    let speakerCount = 0;
+    try {
+      const sres = await fetch('speakers.json');
+      if (sres.ok) speakerCount = (await sres.json()).length;
+    } catch(_) {}
+
     const results = await Promise.allSettled(
       CHANNELS.map(ch =>
         fetch(`feeds/${ch.slug}.entries.json`)
@@ -583,7 +590,7 @@
     );
 
     const totalEp = allEpisodes.length;
-    renderStats(allData.length, totalEp);
+    renderStats(allData.length + speakerCount, totalEp);
 
     renderGrid();
 

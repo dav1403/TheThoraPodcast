@@ -489,7 +489,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
     if (epCount) epCount.textContent = I18N[lang].ep_count({ep_count});
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `{site_channels} ערוצים · {site_episodes} פרקים · ~{site_hours}ש`
+      ? `{site_channels} ערוצים · {site_episodes} שיעורים · ~{site_hours} שעות`
       : `{site_channels} rabbins · {site_episodes} cours · ~{site_hours}h de Torah`;
   }}
   function filterDur(btn) {{
