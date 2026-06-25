@@ -699,7 +699,8 @@
   function buildRecents() {
     const flat = [];
     for (const { ch, entries } of allData) {
-      entries.forEach((ep, idx) => flat.push({ ep, ch, idx }));
+      // Exclude the daily "HITAT DU JOUR" shiurim from the homepage "Derniers épisodes" feed (they live on hitat.html).
+      entries.forEach((ep, idx) => { if (!/HITAT DU JOUR/i.test(ep.title || '')) flat.push({ ep, ch, idx }); });
     }
     flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
 

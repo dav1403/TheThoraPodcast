@@ -666,7 +666,8 @@
     // Flatten and sort by date desc
     const flat = [];
     for (const { ch, entries } of allData) {
-      for (const ep of entries) flat.push({ ep, ch });
+      // Exclude the daily "HITAT DU JOUR" shiurim — they live on hitat.html, not the chronological feed.
+      for (const ep of entries) if (!/HITAT DU JOUR/i.test(ep.title || '')) flat.push({ ep, ch });
     }
     flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
 
