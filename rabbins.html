@@ -135,6 +135,27 @@
     .sort-btn.active          { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
     .sort-btn:not(.active):hover { border-color: #aaa; color: #333; }
 
+    /* Search */
+    .search-wrap { max-width: 560px; margin: 20px auto 0; padding: 0 16px; }
+    .search-inner { position: relative; }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #aaa; pointer-events: none; }
+    .search-input {
+      width: 100%;
+      padding: 11px 16px 11px 42px;
+      border: 1px solid #ddd;
+      border-radius: 24px;
+      font-size: 0.92rem;
+      background: #fff;
+      color: #222;
+      outline: none;
+      font-family: inherit;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+      transition: border-color .15s;
+    }
+    .search-input::placeholder { color: #aaa; }
+    .search-input:focus { border-color: #1a1a2e; }
+    .no-results { text-align: center; color: #aaa; padding: 48px 16px; font-size: 0.95rem; }
+
     /* ─── Bubble grid ─────────────────────────────────────────── */
     main {
       max-width: 1100px;
@@ -344,12 +365,22 @@
   </nav>
 </header>
 
+<div class="search-wrap">
+  <div class="search-inner">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input class="search-input" id="rabbi-search" type="search" data-i18n="|search_ph" placeholder="Rechercher un rav ou un cours…" autocomplete="off">
+  </div>
+</div>
+
 <div class="sort-bar">
   <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')" data-i18n="sort_latest">Dernier cours</button>
   <button class="sort-btn"        id="sort-alpha"  onclick="setSort('alpha')"  data-i18n="sort_alpha">Alphabétique</button>
 </div>
 
 <main id="app"></main>
+<div id="no-results" class="no-results" hidden data-i18n="no_results">Aucun rav trouvé.</div>
 
 <div id="modal-overlay" class="modal-overlay" onclick="closeModal()"></div>
 
@@ -363,6 +394,8 @@
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       loading:'Chargement…',
       sort_latest:'Dernier cours', sort_alpha:'Alphabétique',
+      search_ph:'Rechercher un rav ou un cours…',
+      no_results:'Aucun rav trouvé.',
       all_courses:'Voir tous les cours →',
       copy_rss:'Copier RSS', copied:'✓ Copié !',
       ep_singular:'épisode', ep_plural:'épisodes',
@@ -374,6 +407,8 @@
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       loading:'טוען…',
       sort_latest:'לפי תאריך', sort_alpha:'א–ב',
+      search_ph:'חיפוש רב או שיעור…',
+      no_results:'לא נמצא רב.',
       all_courses:'לכל השיעורים →',
       copy_rss:'העתק RSS', copied:'✓ הועתק !',
       ep_singular:'פרק', ep_plural:'פרקים',
@@ -471,11 +506,35 @@
     return data;
   }
 
+  let searchQuery = '';
+
+  // Keyword rule: match the rabbi NAME first (rank 0), then a course TITLE (rank 1).
+  function matchRank(d, q) {
+    const name = (d.ch.podcast_author || '').toLowerCase();
+    if (name.includes(q)) return 0;
+    if (d.entries.some(ep => ep.title && ep.title.toLowerCase().includes(q))) return 1;
+    return -1;
+  }
+
+  function render() {
+    let list = getSorted(currentSort);
+    if (searchQuery) {
+      list = list
+        .map(d => ({ d, r: matchRank(d, searchQuery) }))
+        .filter(x => x.r >= 0)
+        .sort((a, b) => a.r - b.r)   // stable: name matches before title-only matches
+        .map(x => x.d);
+    }
+    document.getElementById('app').innerHTML = list.map(bubbleHtml).join('');
+    const noRes = document.getElementById('no-results');
+    if (noRes) noRes.hidden = list.length > 0;
+  }
+
   function setSort(sort) {
     currentSort = sort;
     document.getElementById('sort-latest').classList.toggle('active', sort === 'latest');
     document.getElementById('sort-alpha').classList.toggle('active', sort === 'alpha');
-    document.getElementById('app').innerHTML = getSorted(sort).map(bubbleHtml).join('');
+    render();
   }
 
   // ─── Detail modal ──────────────────────────────────────────────────────────
@@ -586,6 +645,12 @@
         : `${channels.length + speakers.length} rabbins · ${totalEpisodes} cours publiés`;
 
     setSort(currentSort);
+
+    const searchInput = document.getElementById('rabbi-search');
+    if (searchInput) searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value.toLowerCase().trim();
+      render();
+    });
 
     const sub = document.getElementById('nav-rabbis-submenu');
     if (sub) sub.innerHTML = [
