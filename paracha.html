@@ -377,7 +377,13 @@
       <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
-    <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+    <div class="nav-dropdown">
+      <a class="nav-dd-link" href="daf-hayomi.html" data-i18n="nav_limud">Limud Yomi</a><button class="nav-dd-caret" aria-label="Limud Yomi">▾</button>
+      <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
+        <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+        <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+      </div>
+    </div>
     <a href="paracha.html" class="active" data-i18n="nav_paracha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -429,7 +435,7 @@
 // ─── i18n ─────────────────────────────────────────────────────────────────────
 const I18N = {
   fr: {
-    nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_paracha:'Paracha', nav_themes:'Thème',
+    nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_paracha:'Paracha', nav_themes:'Thème',
     lang_toggle:'עברית',
     subtitle_parasha:'Cours par Paracha',
     banner_label:'Paracha de la semaine',
@@ -445,7 +451,7 @@ const I18N = {
     show_more:'Voir plus', show_less:'Voir moins',
   },
   he: {
-    nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_paracha:'פרשה', nav_themes:'נושא',
+    nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
     lang_toggle:'Français',
     subtitle_parasha:'שיעורים לפי פרשה',
     banner_label:'פרשת השבוע',
@@ -571,7 +577,9 @@ function findEpisodesForParacha(slug, allData) {
   if (!p) return [];
   const results = [];
   for (const { ch, entries } of allData) {
-    const matching = entries.filter(ep => matchesParacha(ep.title, p.kw));
+    // Exclude the daily "HITAT DU JOUR" shiurim — they have their own page (hitat.html)
+    // and would otherwise flood every parasha (their titles contain the parasha name).
+    const matching = entries.filter(ep => !/HITAT DU JOUR/i.test(ep.title || '') && matchesParacha(ep.title, p.kw));
     if (matching.length) results.push({ ch, episodes: matching });
   }
   // Order rabbis by whoever has the most recent course for this paracha
