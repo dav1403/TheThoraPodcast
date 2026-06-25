@@ -293,6 +293,25 @@
     .play-btn.playing { background: #e87722; }
     .play-btn svg { width: 9px; height: 9px; }
 
+    /* Show-more per rabbi */
+    .result-channel:not(.expanded) .episode.ep-extra { display: none; }
+    .show-more-btn {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      border-top: 1px solid #f0f0f0;
+      padding: 11px 18px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #1a1a2e;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: center;
+      transition: background .15s;
+    }
+    .show-more-btn:hover { background: #f7f7f9; }
+
     /* Persistent player */
     #player {
       position: fixed;
@@ -422,6 +441,7 @@ const I18N = {
     no_ep_hint:'Les cours sont peut-être titrés différemment.',
     ep_singular:'épisode', ep_plural:'épisodes',
     loading_eps:'Chargement des épisodes…',
+    show_more:'Voir plus', show_less:'Voir moins',
   },
   he: {
     nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -437,6 +457,7 @@ const I18N = {
     no_ep_hint:'ייתכן שהשיעורים כותרתם שונה.',
     ep_singular:'פרק', ep_plural:'פרקים',
     loading_eps:'טוען פרקים…',
+    show_more:'הצג עוד', show_less:'הצג פחות',
   },
 };
 const BOOK_HE = { 'Bereshit':'בראשית', 'Shemot':'שמות', 'Vayikra':'ויקרא', 'Bamidbar':'במדבר', 'Devarim':'דברים' };
@@ -659,8 +680,8 @@ function renderResults(slug, allData) {
         <div class="result-channel-count">${episodes.length} ${episodes.length > 1 ? t('ep_plural') : t('ep_singular')}</div>
       </div>
       <ul class="episode-list">
-        ${episodes.map(ep => `
-          <li class="episode" data-ep-dur="${ep.duration_secs || 0}">
+        ${episodes.map((ep, i) => `
+          <li class="episode${i >= 3 ? ' ep-extra' : ''}" data-ep-dur="${ep.duration_secs || 0}">
             ${ep.thumbnail
               ? `<a href="${epUrl(ep, ch.slug)}"><img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
               : `<div class="episode-thumb-ph"></div>`}
@@ -678,6 +699,7 @@ function renderResults(slug, allData) {
             </div>
           </li>`).join('')}
       </ul>
+      ${episodes.length > 3 ? `<button class="show-more-btn" data-hidden="${episodes.length - 3}" onclick="toggleMore(this)">${t('show_more')} (${episodes.length - 3})</button>` : ''}
     </div>`).join('');
 
   // Recent-episodes carousel for this paracha (newest first), prepended above the grouped list
@@ -737,6 +759,13 @@ function toggleBook(btn) {
   const section = btn.closest('.book-section');
   const collapsed = section.classList.toggle('collapsed');
   btn.setAttribute('aria-expanded', String(!collapsed));
+}
+
+// Show / hide a rabbi's extra courses (beyond the first 3)
+function toggleMore(btn) {
+  const card = btn.closest('.result-channel');
+  const expanded = card.classList.toggle('expanded');
+  btn.textContent = expanded ? t('show_less') : `${t('show_more')} (${btn.dataset.hidden})`;
 }
 
 // ─── Current parasha ─────────────────────────────────────────────────────────
