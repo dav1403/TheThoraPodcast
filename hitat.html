@@ -326,6 +326,7 @@
       day_label:'Jour',
       hitat_day_head:'Le Hitat du jour en cours',
       no_hitat_ep:'Aucun cours Hitat trouvé pour cette date.',
+      hitat_not_published:"Le cours de cette date n'est pas encore publié — voici le dernier disponible :",
       listen:'Écouter', playing:'En cours…',
       ep_singular:'cours', ep_plural:'cours',
       copied:'Lien copié !',
@@ -353,6 +354,7 @@
       day_label:'יום',
       hitat_day_head:'שיעור החת"ת של היום',
       no_hitat_ep:'לא נמצא שיעור חת"ת לתאריך זה.',
+      hitat_not_published:'השיעור לתאריך זה טרם פורסם — להלן האחרון הזמין:',
       listen:'האזן', playing:'מתנגן…',
       ep_singular:'שיעור', ep_plural:'שיעורים',
       copied:'הקישור הועתק!',
@@ -735,32 +737,43 @@
 
     const Y = dateObj.getFullYear(), M = dateObj.getMonth() + 1, D = dateObj.getDate();
 
-    const matches = []; // { ep, ch }
+    const selKey = Y * 10000 + M * 100 + D;
+    const all = []; // { ep, ch, key }
     for (const { ch, entries } of hitatAllData) {
       for (const ep of entries) {
         if (!ep.title || !/HITAT DU JOUR/i.test(ep.title)) continue;
         const pd = parseHitatDate(ep.title);
-        if (pd && pd.y === Y && pd.m === M && pd.d === D) matches.push({ ep, ch });
+        if (!pd) continue;
+        all.push({ ep, ch, key: pd.y * 10000 + pd.m * 100 + pd.d });
       }
     }
-    matches.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
 
     if (sub) sub.textContent = formatDate(ymdLocal(dateObj));
 
-    if (!matches.length) {
-      results.innerHTML = `<div class="no-results" style="text-align:center;color:#aaa;padding:32px 20px;background:#fff;border-radius:12px;font-size:.9rem;">${t('no_hitat_ep')}</div>`;
-      return;
+    // Exact match for the selected day; otherwise fall back to the latest Hitat on or before it.
+    let toShow = all.filter(x => x.key === selKey);
+    let noticeHtml = '';
+    if (!toShow.length) {
+      const earlier = all.filter(x => x.key <= selKey).sort((a, b) => b.key - a.key);
+      if (!earlier.length) {
+        results.innerHTML = `<div class="no-results" style="text-align:center;color:#aaa;padding:32px 20px;background:#fff;border-radius:12px;font-size:.9rem;">${t('no_hitat_ep')}</div>`;
+        return;
+      }
+      const latestKey = earlier[0].key;
+      toShow = earlier.filter(x => x.key === latestKey);
+      noticeHtml = `<div style="background:#fff;border-left:4px solid #e87722;border-radius:0 8px 8px 0;padding:12px 16px;margin-bottom:14px;font-size:.85rem;color:#555;${lang === 'he' ? 'border-left:none;border-right:4px solid #e87722;border-radius:8px 0 0 8px;text-align:right;' : ''}">${t('hitat_not_published')}</div>`;
     }
+    toShow.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
 
     // Group by channel, preserving the newest-first ordering of channels' first appearance.
     const order = [];
     const byCh = new Map();
-    for (const it of matches) {
+    for (const it of toShow) {
       if (!byCh.has(it.ch.slug)) { byCh.set(it.ch.slug, { ch: it.ch, episodes: [] }); order.push(it.ch.slug); }
       byCh.get(it.ch.slug).episodes.push(it.ep);
     }
 
-    results.innerHTML = order.map(slug => {
+    results.innerHTML = noticeHtml + order.map(slug => {
       const { ch, episodes } = byCh.get(slug);
       return `
       <div class="result-channel">
