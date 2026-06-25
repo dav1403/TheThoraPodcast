@@ -140,6 +140,15 @@
     /* Book sections */
     .book-section { margin-bottom: 24px; }
     .book-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
       font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -147,6 +156,11 @@
       color: #999;
       margin-bottom: 10px;
     }
+    .book-title:hover { color: #1a1a2e; }
+    .book-caret { transition: transform .15s; font-size: 0.85rem; }
+    .book-section.collapsed .book-caret { transform: rotate(-90deg); }
+    .book-section.collapsed .chips { display: none; }
+    .book-section.collapsed .book-title { margin-bottom: 0; }
     .chips { display: flex; flex-wrap: wrap; gap: 7px; }
     .chip {
       display: inline-flex;
@@ -679,9 +693,16 @@ function buildBooks(allData) {
       .reduce((s, g) => s + g.episodes.length, 0);
   }
 
-  return BOOKS.map(book => `
-    <div class="book-section">
-      <div class="book-title">${lang === 'he' ? (BOOK_HE[book.name] || book.name) : book.name}</div>
+  const openBook = bookOfSlug(selectedSlug);
+
+  return BOOKS.map(book => {
+    const isOpen = book.name === openBook;
+    return `
+    <div class="book-section${isOpen ? '' : ' collapsed'}" data-book="${book.name}">
+      <button class="book-title" onclick="toggleBook(this)" aria-expanded="${isOpen}">
+        <span>${lang === 'he' ? (BOOK_HE[book.name] || book.name) : book.name}</span>
+        <span class="book-caret">▾</span>
+      </button>
       <div class="chips">
         ${book.parashiot.map(slug => {
           const p = PARACHIOT[slug];
@@ -693,7 +714,22 @@ function buildBooks(allData) {
           </button>`;
         }).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+
+// Which book (humash) contains a given paracha slug
+function bookOfSlug(slug) {
+  if (!slug) return BOOKS[0].name;
+  const b = BOOKS.find(bk => bk.parashiot.includes(slug));
+  return b ? b.name : BOOKS[0].name;
+}
+
+// Collapse / expand a humash section
+function toggleBook(btn) {
+  const section = btn.closest('.book-section');
+  const collapsed = section.classList.toggle('collapsed');
+  btn.setAttribute('aria-expanded', String(!collapsed));
 }
 
 // ─── Current parasha ─────────────────────────────────────────────────────────
@@ -726,6 +762,14 @@ function selectParacha(slug) {
   document.querySelectorAll('.chip').forEach(c => {
     c.classList.toggle('active', c.dataset.slug === slug);
   });
+
+  // Make sure the humash holding this paracha is expanded
+  const sec = document.querySelector(`.book-section[data-book="${bookOfSlug(slug)}"]`);
+  if (sec) {
+    sec.classList.remove('collapsed');
+    const bt = sec.querySelector('.book-title');
+    if (bt) bt.setAttribute('aria-expanded', 'true');
+  }
 
   if (globalAllData) renderResults(slug, globalAllData);
 }
