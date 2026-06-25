@@ -552,7 +552,14 @@ function findEpisodesForParacha(slug, allData) {
     const matching = entries.filter(ep => matchesParacha(ep.title, p.kw));
     if (matching.length) results.push({ ch, episodes: matching });
   }
+  // Order rabbis by whoever has the most recent course for this paracha
+  results.sort((a, b) => latestDate(b.episodes) - latestDate(a.episodes));
   return results;
+}
+
+// Most recent publication date (ms) among a list of episodes
+function latestDate(episodes) {
+  return episodes.reduce((max, ep) => Math.max(max, new Date(ep.published).getTime()), 0);
 }
 
 // ─── Player ──────────────────────────────────────────────────────────────────
