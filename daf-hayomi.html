@@ -112,9 +112,17 @@
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
     .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
     .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
-    .load-more-wrap { padding:24px 0; text-align:center; }
-    .load-more-btn { background:#fff; border:1px solid #ccc; border-radius:8px; padding:9px 28px; font-size:.85rem; color:#444; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s; }
-    .load-more-btn:hover { background:#f0f0ea; border-color:#aaa; }
+    /* Per-rabbi groups (mirrors paracha.html) */
+    .result-channel { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.07); margin-bottom:16px; overflow:hidden; }
+    .result-channel-header { display:flex; align-items:center; gap:10px; padding:13px 18px; border-bottom:1px solid #f0f0f0; }
+    .result-channel-art { width:34px; height:34px; border-radius:6px; object-fit:cover; background:#e0e0e0; }
+    .result-channel-name { font-size:.95rem; font-weight:600; text-decoration:none; color:#1a1a2e; }
+    .result-channel-name:hover { color:#e87722; }
+    .result-channel-count { margin-left:auto; font-size:.75rem; color:#aaa; }
+    .result-channel .episode-item { padding:14px 18px; }
+    .result-channel:not(.expanded) .episode-item.ep-extra { display:none; }
+    .show-more-btn { width:100%; background:#fff; border:none; border-top:1px solid #f0f0f0; padding:11px; font-size:.8rem; color:#1a1a2e; cursor:pointer; font-family:inherit; transition:background .12s; }
+    .show-more-btn:hover { background:#f5f5f0; }
     .state { padding:48px 20px; text-align:center; color:#888; font-size:.9rem; }
     .state.loading::before { content:''; display:inline-block; width:16px; height:16px; border:2px solid #ccc; border-top-color:#555; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:8px; }
     @keyframes spin { to { transform:rotate(360deg); } }
@@ -194,7 +202,6 @@
       <svg class="search-icon-global" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
       <input class="search-input-global" id="global-search" type="search" placeholder="Rechercher un cours…" autocomplete="off">
     </div>
-    <div class="sticky-dur-row"><button class="sticky-dur-chip active" data-dur="all" onclick="filterDurAll(this)">Tous</button><button class="sticky-dur-chip" data-dur="short" onclick="filterDurAll(this)">&lt;&nbsp;5&nbsp;min</button><button class="sticky-dur-chip" data-dur="medium" onclick="filterDurAll(this)">5–20&nbsp;min</button><button class="sticky-dur-chip" data-dur="long" onclick="filterDurAll(this)">&gt;&nbsp;20&nbsp;min</button></div>
   </div>
 </div>
 <main>
@@ -252,6 +259,8 @@
       filter_all:'Tous les rabbins',
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       load_more:'Voir plus',
+      show_more:'Voir plus', show_less:'Voir moins',
+      ep_singular:'cours', ep_plural:'cours',
       no_episodes:'Aucun épisode Daf Hayomi trouvé.',
       copied:'Lien copié !',
     },
@@ -264,6 +273,8 @@
       filter_all:'כל הרבנים',
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       load_more:'טען עוד',
+      show_more:'הצג עוד', show_less:'הצג פחות',
+      ep_singular:'שיעור', ep_plural:'שיעורים',
       no_episodes:'לא נמצאו שיעורי דף יומי.',
       copied:'הקישור הועתק!',
     },
@@ -383,7 +394,7 @@
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
-  function renderItem(item) {
+  function renderItem(item, isExtra) {
     const { ep, ch } = item;
     const thumb = ep.thumbnail
       ? `<a href="${epUrl(ep, ch.slug)}"><img class="ep-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
@@ -394,7 +405,7 @@
     const shareBtn = ep.title && ep.published
       ? `<button class="share-btn" data-epfile="${epUrl(ep, ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
     return `
-      <li class="episode-item" data-ep-dur="${ep.duration_secs || 0}" data-slug="${escapeHtml(ch.slug)}">
+      <li class="episode-item${isExtra ? ' ep-extra' : ''}" data-ep-dur="${ep.duration_secs || 0}" data-slug="${escapeHtml(ch.slug)}">
         ${thumb}
         <div class="ep-body">
           <div class="ep-channel">
@@ -410,35 +421,64 @@
   }
 
   // ─── Main ─────────────────────────────────────────────────────────────────
-  const PAGE_SIZE = 30;
-  let visibleCount = PAGE_SIZE, activeFilter = 'all';
+  let activeFilter = 'all';
 
-  function filteredFlat() {
-    const flat = window._flat || [];
-    return activeFilter === 'all' ? flat : flat.filter(x => x.ch.slug === activeFilter);
+  // Per-group expand/collapse toggle (mirrors paracha.html)
+  function toggleMore(btn) {
+    const card = btn.closest('.result-channel');
+    const expanded = card.classList.toggle('expanded');
+    btn.textContent = expanded ? t('show_less') : `${t('show_more')} (${btn.dataset.hidden})`;
   }
 
+  // Working set: respect the active channel filter AND the global search query.
+  function workingItems() {
+    const flat = window._flat || [];
+    const q = (window._globalSearch || '').toLowerCase().trim();
+    return flat.filter(x => {
+      if (activeFilter !== 'all' && x.ch.slug !== activeFilter) return false;
+      if (q && !(x.ep.title || '').toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
 
   // Global search
   document.getElementById('global-search').addEventListener('input', function() {
-    var q = this.value.toLowerCase().trim();
-    window._globalSearch = q;
-    visibleCount = PAGE_SIZE;
+    window._globalSearch = this.value.toLowerCase().trim();
     renderList();
   });
-  var _origFilter = window._flat ? window._flat.filter.bind(window._flat) : null;
+
   function renderList() {
-    var _q = (window._globalSearch || '').toLowerCase().trim();
     const app = document.getElementById('app');
-    const items = filteredFlat();
-    const slice = items.slice(0, visibleCount);
-    if (!slice.length) { app.innerHTML = `<div class="state">${t('no_episodes')}</div>`; return; }
-    const hasMore = items.length > visibleCount;
-    const moreHtml = hasMore
-      ? `<div class="load-more-wrap"><button class="load-more-btn" id="load-more-btn">${t('load_more')} (${items.length - visibleCount})</button></div>` : '';
-    app.innerHTML = `<ul class="episode-list">${slice.map(renderItem).join('')}</ul>${moreHtml}`;
-    const lb = document.getElementById('load-more-btn');
-    if (lb) lb.addEventListener('click', () => { visibleCount += PAGE_SIZE; renderList(); });
+    const items = workingItems();
+    if (!items.length) { app.innerHTML = `<div class="state">${t('no_episodes')}</div>`; return; }
+
+    // Group by channel slug
+    const groups = new Map();
+    for (const item of items) {
+      if (!groups.has(item.ch.slug)) groups.set(item.ch.slug, { ch: item.ch, episodes: [] });
+      groups.get(item.ch.slug).episodes.push(item);
+    }
+    // Sort each group's episodes newest-first, then sort groups by most-recent episode (desc)
+    const arr = [...groups.values()];
+    arr.forEach(g => g.episodes.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published)));
+    arr.sort((a, b) => new Date(b.episodes[0].ep.published) - new Date(a.episodes[0].ep.published));
+
+    app.innerHTML = arr.map(({ ch, episodes }) => {
+      const n = episodes.length;
+      const lis = episodes.map((item, i) => renderItem(item, i >= 3)).join('');
+      const moreBtn = n > 3
+        ? `<button class="show-more-btn" data-hidden="${n - 3}" onclick="toggleMore(this)">${t('show_more')} (${n - 3})</button>` : '';
+      return `
+      <div class="result-channel">
+        <div class="result-channel-header">
+          <img class="result-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">
+          <a class="result-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
+          <div class="result-channel-count">${n} ${n > 1 ? t('ep_plural') : t('ep_singular')}</div>
+        </div>
+        <ul class="episode-list">${lis}</ul>
+        ${moreBtn}
+      </div>`;
+    }).join('');
   }
 
   (async () => {
@@ -494,7 +534,6 @@
       const chip = e.target.closest('.filter-chip');
       if (!chip) return;
       activeFilter = chip.dataset.slug;
-      visibleCount = PAGE_SIZE;
       filterRow.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c === chip));
       renderList();
     });
