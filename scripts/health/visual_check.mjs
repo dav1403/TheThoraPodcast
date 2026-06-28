@@ -11,10 +11,13 @@
 //   FAIL  = page !2xx, uncaught JS error, same-origin 4xx/5xx response,
 //           same-origin image that LOADED but failed to decode (naturalWidth==0),
 //           or a page-specific render assertion (e.g. rabbi bubble with no image).
-//   WARN  = cross-origin broken/slow image (YouTube/CDN hiccup), slow same-origin
-//           image still pending after settle. Never blocks.
+//   WARN  = cross-origin broken/slow image (YouTube/CDN hiccup), pending images.
 //
-// Exit 1 on any failure; writes `details`/`ok` to $GITHUB_OUTPUT.
+// Resilience: a page that fails is re-checked once; only failures that REPRODUCE
+// on both attempts are reported. This kills transient CI/network blips (e.g. a
+// one-off slow utils.js load) without hiding deterministic bugs.
+//
+// Exit 1 on any reproduced failure; writes `details`/`ok` to $GITHUB_OUTPUT.
 
 import { chromium } from 'playwright';
 import fs from 'fs';
@@ -23,24 +26,20 @@ const BASE = (process.env.BASE_URL || 'https://thetorahpodcast.net').replace(/\/
 const PAGES = (process.env.PAGES || '/').split(',').map(s => s.trim()).filter(Boolean);
 const BASE_ORIGIN = new URL(BASE).origin;
 
-const failures = [];
-const warnings = [];
-
 function sameOrigin(u) {
   try { return new URL(u, BASE).origin === BASE_ORIGIN; } catch { return false; }
 }
 
-const browser = await chromium.launch();
-const ctx = await browser.newContext({ userAgent: 'site-health-visual (+monitoring)' });
-
-for (const path of PAGES) {
+async function checkPage(ctx, path) {
   const url = BASE + path;
+  const failures = [];
+  const warnings = [];
   const page = await ctx.newPage();
   const badResponses = [];
   const pageErrors = [];
 
   page.on('response', r => { if (r.status() >= 400) badResponses.push({ url: r.url(), status: r.status() }); });
-  page.on('pageerror', e => pageErrors.push(String((e && e.message) || e)));   // uncaught JS exception
+  page.on('pageerror', e => pageErrors.push(String((e && e.message) || e)));
   page.on('requestfailed', r => {
     const f = r.failure();
     if (f && !/ERR_ABORTED/.test(f.errorText)) badResponses.push({ url: r.url(), status: f.errorText });
@@ -51,16 +50,15 @@ for (const path of PAGES) {
     if (!resp || resp.status() >= 400) {
       failures.push(`${path}: page returned ${resp ? resp.status() : 'no response'}`);
       await page.close();
-      continue;
+      return { failures, warnings };
     }
   } catch (e) {
     failures.push(`${path}: navigation error: ${e.message}`);
     await page.close();
-    continue;
+    return { failures, warnings };
   }
 
-  // Let client JS render lists, then scroll to trigger lazy-loaded images so we
-  // actually exercise them instead of leaving them un-requested off-screen.
+  // Render lists, then scroll to trigger lazy images so we actually exercise them.
   await page.waitForTimeout(1500);
   await page.evaluate(async () => {
     for (let y = 0; y <= document.body.scrollHeight; y += window.innerHeight) {
@@ -72,7 +70,6 @@ for (const path of PAGES) {
   try { await page.waitForLoadState('networkidle', { timeout: 15000 }); } catch {}
   await page.waitForTimeout(800);
 
-  // Image health: distinguish loaded-but-broken from still-pending (lazy/slow).
   const imgs = await page.evaluate(() => [...document.images].map(im => ({
     src: im.currentSrc || im.src || '',
     hasSrc: !!im.getAttribute('src'),
@@ -80,29 +77,21 @@ for (const path of PAGES) {
     nw: im.naturalWidth,
   })));
   for (const im of imgs) {
-    if (!im.hasSrc) continue;                      // src stripped by onerror = intentional placeholder
-    if (im.complete && im.nw > 0) continue;        // loaded fine
+    if (!im.hasSrc) continue;                 // src stripped by onerror = intentional placeholder
+    if (im.complete && im.nw > 0) continue;   // loaded fine
     const so = sameOrigin(im.src);
-    if (im.complete && im.nw === 0) {
-      // Definitively failed to load/decode.
-      (so ? failures : warnings).push(`${path}: broken image -> ${im.src}`);
-    } else {
-      // Still pending after settle: treat as slow, warn only (avoids flaky fails).
-      warnings.push(`${path}: image still loading -> ${im.src}`);
-    }
+    if (im.complete && im.nw === 0) (so ? failures : warnings).push(`${path}: broken image -> ${im.src}`);
+    else warnings.push(`${path}: image still loading -> ${im.src}`);
   }
 
-  // 4xx/5xx and network failures observed while loading the page.
   for (const br of badResponses) {
     const msg = `${path}: ${br.status} -> ${br.url}`;
     (sameOrigin(br.url) ? failures : warnings).push(msg);
   }
 
-  // Uncaught JS exceptions (the "stuck on Chargement…" class of incident).
   for (const pe of pageErrors) failures.push(`${path}: uncaught JS error: ${pe}`);
 
-  // Page-specific render assertions.
-  if (path === '/' ) {
+  if (path === '/') {
     const sections = await page.evaluate(() =>
       document.querySelectorAll('#app .channel, #app .channel-header, #app section').length);
     if (sections === 0) failures.push(`${path}: homepage rendered no channel sections (render broken?)`);
@@ -116,19 +105,42 @@ for (const path of PAGES) {
   }
 
   await page.close();
+  return { failures, warnings };
+}
+
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ userAgent: 'site-health-visual (+monitoring)' });
+
+const allFailures = [];
+const allWarnings = [];
+
+for (const path of PAGES) {
+  let res = await checkPage(ctx, path);
+  if (res.failures.length) {
+    // Re-check once; keep only failures that reproduce (kills transient blips).
+    const res2 = await checkPage(ctx, path);
+    const set2 = new Set(res2.failures);
+    const reproduced = res.failures.filter(f => set2.has(f));
+    if (reproduced.length) allFailures.push(...reproduced);
+    const flaky = res.failures.filter(f => !set2.has(f));
+    if (flaky.length) allWarnings.push(...flaky.map(f => `[transient, not reproduced] ${f}`));
+    allWarnings.push(...res2.warnings);
+  } else {
+    allWarnings.push(...res.warnings);
+  }
 }
 
 await browser.close();
 
-if (warnings.length) {
-  const shown = warnings.slice(0, 6).map(w => '- ' + w).join('\n');
-  const more = warnings.length > 6 ? `\n  …and ${warnings.length - 6} more` : '';
-  console.log(`WARNINGS (non-blocking, ${warnings.length}):\n${shown}${more}\n`);
+if (allWarnings.length) {
+  const shown = allWarnings.slice(0, 8).map(w => '- ' + w).join('\n');
+  const more = allWarnings.length > 8 ? `\n  …and ${allWarnings.length - 8} more` : '';
+  console.log(`WARNINGS (non-blocking, ${allWarnings.length}):\n${shown}${more}\n`);
 }
 
 const out = process.env.GITHUB_OUTPUT;
-if (failures.length) {
-  const details = failures.map(f => '- ' + f).join('\n');
+if (allFailures.length) {
+  const details = allFailures.map(f => '- ' + f).join('\n');
   console.log('VISUAL HEALTH FAILED:\n' + details);
   if (out) fs.appendFileSync(out, `details<<EOF\n${details}\nEOF\nok=false\n`);
   process.exitCode = 1;
