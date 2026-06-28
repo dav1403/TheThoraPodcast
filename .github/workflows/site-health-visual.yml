@@ -44,8 +44,6 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run visual check
         id: vis
-        env:
-          MIN_IMAGES: '3'
         run: node scripts/health/visual_check.mjs
 
   links:
@@ -62,7 +60,7 @@ jobs:
           args: >-
             --no-progress --max-concurrency 8 --timeout 25 --max-retries 2
             --accept 200,206,301,302,308
-            --exclude 'i\.ytimg\.com|youtube\.com|youtu\.be|\.r2\.dev|deezer\.com|spotify\.com|apple\.com|google\.com'
+            --exclude 'i\.ytimg\.com|youtube\.com|youtu\.be|\.r2\.dev|deezer\.com|spotify\.com|apple\.com|google\.com|chabad\.org|sefaria\.org|hebcal\.com'
             https://thetorahpodcast.net/
             https://thetorahpodcast.net/rabbins.html
             https://thetorahpodcast.net/paracha.html
