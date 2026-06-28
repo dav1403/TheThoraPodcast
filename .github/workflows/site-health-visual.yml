@@ -1,0 +1,123 @@
+name: Site Health (visual + links)
+
+# Catches what the 30-min HTTP probe (site_health.yml) cannot: client-rendered
+# visual regressions — broken images (e.g. a rabbi with no artwork), uncaught JS
+# errors, same-origin 404s — plus a link-checker sweep for dead links/assets.
+# On failure it opens/updates a single GitHub issue (emails the repo owner).
+
+on:
+  schedule:
+    - cron: '17 5 * * *'      # daily, 05:17 UTC
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["pages-build-deployment"]   # re-check right after each Pages deploy
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: site-health-visual
+  cancel-in-progress: true
+
+env:
+  BASE_URL: https://thetorahpodcast.net
+  # Key pages to render. Add new pages here as the site grows.
+  PAGES: "/,/rabbins.html,/paracha.html,/hitat.html,/daf-hayomi.html,/themes.html,/derniers-cours.html,/links.html,/rav-itshak-cohen.html,/rav-elie-lemmel.html"
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    outputs:
+      ok: ${{ steps.vis.outputs.ok }}
+      details: ${{ steps.vis.outputs.details }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright (chromium)
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm i -D playwright@1.48.2 >/dev/null
+          npx playwright install --with-deps chromium
+      - name: Run visual check
+        id: vis
+        env:
+          MIN_IMAGES: '3'
+        run: node scripts/health/visual_check.mjs
+
+  links:
+    runs-on: ubuntu-latest
+    outputs:
+      ok: ${{ steps.lc.conclusion == 'success' && 'true' || 'false' }}
+    steps:
+      - name: Link check key pages (lychee)
+        id: lc
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # Check links/assets found on the live key pages. External media is
+          # excluded to avoid YouTube/CDN rate-limit flakiness.
+          args: >-
+            --no-progress --max-concurrency 8 --timeout 25 --max-retries 2
+            --accept 200,206,301,302,308
+            --exclude 'i\.ytimg\.com|youtube\.com|youtu\.be|\.r2\.dev|deezer\.com|spotify\.com|apple\.com|google\.com'
+            https://thetorahpodcast.net/
+            https://thetorahpodcast.net/rabbins.html
+            https://thetorahpodcast.net/paracha.html
+            https://thetorahpodcast.net/hitat.html
+            https://thetorahpodcast.net/daf-hayomi.html
+            https://thetorahpodcast.net/themes.html
+            https://thetorahpodcast.net/derniers-cours.html
+            https://thetorahpodcast.net/links.html
+          fail: true
+          jobSummary: true
+
+  alert:
+    needs: [visual, links]
+    if: always() && (needs.visual.outputs.ok == 'false' || needs.links.result == 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open / update alert issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          VISUAL_DETAILS: ${{ needs.visual.outputs.details }}
+          LINKS_RESULT: ${{ needs.links.result }}
+        run: |
+          TITLE="🟠 thetorahpodcast.net visual/links health failing"
+          BODY=$(printf 'Automated visual + link health check failed at %s.\n\n**Visual:** %s\n%b\n\n**Link check (lychee):** %s\n\nRun: %s/%s/actions/runs/%s' \
+            "$(date -u)" \
+            "${{ needs.visual.outputs.ok == 'false' && 'FAIL' || 'ok' }}" \
+            "${VISUAL_DETAILS:-_(no visual details)_}" \
+            "$LINKS_RESULT" \
+            "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label bug
+          fi
+
+  recover:
+    needs: [visual, links]
+    if: always() && needs.visual.outputs.ok == 'true' && needs.links.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Auto-close alert issue on recovery
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="🟠 thetorahpodcast.net visual/links health failing"
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "✅ Recovered — visual + links healthy as of $(date -u). Auto-closing."
+            gh issue close "$EXISTING"
+          fi
