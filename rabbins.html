@@ -479,7 +479,7 @@
     return `
       <button class="bubble" onclick="openRabbi('${escapeHtml(ch.slug)}')" title="${escapeHtml(ch.podcast_author)}">
         <span class="bubble-img-wrap">
-          <img class="bubble-img" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.podcast_author)}"
+          <img class="bubble-img" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt="${escapeHtml(ch.podcast_author)}"
                loading="lazy" onerror="this.style.background='#cfcfd6';this.removeAttribute('src')">
           ${recent ? '<span class="bubble-dot"></span>' : ''}
         </span>
@@ -562,7 +562,7 @@
       <div class="modal" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="${escapeHtml(ch.podcast_author)}">
         <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
         <div class="modal-head">
-          <img class="modal-art" src="artwork/${escapeHtml(ch.slug)}.png" alt=""
+          <img class="modal-art" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt=""
                onerror="this.style.background='#cfcfd6';this.removeAttribute('src')">
           <div>
             <div class="modal-name">${escapeHtml(ch.podcast_author)}</div>
@@ -627,8 +627,12 @@
           sp.title_patterns.some(p => ep.title && ep.title.toLowerCase().includes(p.toLowerCase()))
         )
       ).sort((a, b) => new Date(b.published) - new Date(a.published));
+      // Speakers have no dedicated artwork/<slug>.png — represent them with the
+      // thumbnail of their most recent episode (entries are sorted newest-first),
+      // matching the header image used on their dedicated page (generate_channel_pages.py).
+      const repImg = (entries.find(e => e.thumbnail) || {}).thumbnail || '';
       return {
-        ch: { slug: sp.slug, podcast_author: sp.name, platforms: {}, language: sp.language },
+        ch: { slug: sp.slug, podcast_author: sp.name, platforms: {}, language: sp.language, img: repImg },
         entries
       };
     });

@@ -745,7 +745,7 @@
     section.innerHTML = `
       <div class="channel-header">
         <div class="channel-header-left">
-          <a href="${escapeHtml(ch.slug)}.html"><img class="channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.name)}"
+          <a href="${escapeHtml(ch.slug)}.html"><img class="channel-art" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt="${escapeHtml(ch.name)}"
                onerror="this.style.display='none'"></a>
           <h2><a href="${escapeHtml(ch.slug)}.html" style="color:inherit;text-decoration:none">${escapeHtml(ch.name)}</a></h2>
         </div>
@@ -852,7 +852,9 @@
           sp.title_patterns.some(p => ep.title && ep.title.toLowerCase().includes(p.toLowerCase()))
         )
       ).sort((a, b) => new Date(b.published) - new Date(a.published));
-      return { ch: { slug: sp.slug, name: sp.name, platforms: {} }, entries };
+      // Speakers have no artwork/<slug>.png — use their most recent episode thumbnail.
+      const repImg = (entries.find(e => e.thumbnail) || {}).thumbnail || '';
+      return { ch: { slug: sp.slug, name: sp.name, platforms: {}, img: repImg }, entries };
     });
 
     const totalEp = allData.reduce((s, {entries}) => s + entries.length, 0);
