@@ -37,6 +37,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Explicit branch ref (not the default github.sha) so a run delayed in the
+          # concurrency queue (e.g. behind a manual workflow_dispatch) checks out main
+          # as it stands at execution time, not at trigger time. Without this, a
+          # long-queued scheduled run bases its commit on a stale HEAD and its later
+          # `git pull --rebase` conflicts with whatever was pushed in the meantime.
+          ref: main
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
