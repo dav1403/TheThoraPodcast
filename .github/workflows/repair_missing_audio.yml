@@ -24,6 +24,7 @@ concurrency:
 
 permissions:
   contents: write
+  issues: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -216,17 +217,39 @@ jobs:
 
       - name: Alert if YouTube auth error detected
         if: always()
-        run: |
-          if [ -f /tmp/auth_error ]; then
-            ERROR=$(cat /tmp/auth_error)
-            gh issue create \
-              --title "YouTube auth error - cookies may be expired" \
-              --body "$(printf 'CI detected a YouTube auth error. Cookies may need refreshing.\n\nError:\n%s\n\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}' "$ERROR")" \
-              --label "bug" 2>/dev/null || true
-            echo "::warning::YouTube auth error detected - cookies may be expired"
-          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f /tmp/auth_error ]; then
+            echo "No YouTube auth error detected."
+            exit 0
+          fi
+
+          ERROR=$(cat /tmp/auth_error)
+          echo "::warning::YouTube auth error detected - cookies may be expired"
+
+          # Idempotence: don't open a new issue on every hourly run if one is already open.
+          # (`// empty` so a missing match yields an empty string, not the literal "null".)
+          EXISTING=$(gh issue list --state open --search 'YouTube auth error in:title' \
+            --json number --jq '.[0].number // empty') || EXISTING=""
+          if [ -n "$EXISTING" ]; then
+            echo "Auth-error issue already open (#$EXISTING) — not creating a duplicate."
+            exit 0
+          fi
+
+          BODY=$(printf 'CI detected a YouTube auth error. Cookies may need refreshing.\n\nError:\n%s\n\nRun: %s/%s/actions/runs/%s' \
+            "$ERROR" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+
+          # Fail loudly: no `2>/dev/null`, no `|| true`. A silent failure here means
+          # expired cookies with nobody notified (the exact bug we are fixing).
+          if ! gh issue create \
+                --title "YouTube auth error - cookies may be expired" \
+                --body "$BODY" \
+                --label "bug"; then
+            echo "::error::YouTube cookies are expired AND the alert issue could not be created (see gh output above — check the job's issues:write permission and the 'bug' label)."
+            exit 1
+          fi
+          echo "Opened a new GitHub issue for the YouTube auth error."
 
       - name: Generate run summary
         if: always()

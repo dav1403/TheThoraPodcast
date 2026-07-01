@@ -239,6 +239,10 @@ def discover_channel_tab_ids(channel_id: str, tabs: tuple[str, ...] = ("/videos"
                 if vid_id:
                     seen.setdefault(vid_id, True)
         except Exception as e:
+            # A 403/auth failure here (expired cookies) would otherwise be silent:
+            # discovery returns an empty list, no download is attempted, and the
+            # download-path flag is never reached — so no CI alert ever fires.
+            _flag_auth_error_if_needed(e)
             print(f"  [yt-dlp] Could not scan {tab} for {channel_id}: {e}")
     return list(seen.keys())
 
@@ -696,9 +700,25 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
 
 _AUTH_PATTERNS = ("sign in", "bot", "403", "cookies", "login", "authentication", "private")
 
-def _flag_auth_error_if_needed(exc: Exception) -> None:
+# Set to True as soon as a YouTube auth/403 error is hit during this run. Once
+# set we stop attempting further downloads (they would all fail the same way,
+# it only hammers YouTube) and preserve the remaining budget for the backfill
+# step instead of burning slots on doomed retries.
+AUTH_FAILED = False
+
+
+def _is_auth_error(exc: Exception) -> bool:
+    """True if the exception looks like a YouTube auth / 403 failure."""
     msg = str(exc).lower()
-    if any(p in msg for p in _AUTH_PATTERNS):
+    return any(p in msg for p in _AUTH_PATTERNS)
+
+
+def _flag_auth_error_if_needed(exc: Exception) -> None:
+    """Write /tmp/auth_error (read by the CI 'auth error' alert step) when the
+    exception is an auth/403 failure. Must be called on EVERY yt-dlp path that
+    can 403 — discovery as well as download — otherwise expired cookies fail
+    silently (empty video list, no download attempted, no alert)."""
+    if _is_auth_error(exc):
         Path("/tmp/auth_error").write_text(str(exc))
 
 
@@ -799,6 +819,7 @@ def save_processed(data: dict):
 # ---------------------------------------------------------------------------
 
 def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
+    global AUTH_FAILED
     slug       = channel_cfg["slug"]
     channel_id = channel_cfg["youtube_channel_id"]
     print(f"\n{'='*60}")
@@ -857,6 +878,16 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
                 audio_url = upload_audio_to_r2(final_path, mp3_filename)
                 print(f"  Uploaded -> {audio_url}")
             except Exception as e:
+                if _is_auth_error(e):
+                    # Auth/403 failure (expired YouTube cookies). Do NOT consume a
+                    # budget slot: this episode is retried on the next run once the
+                    # cookies are refreshed. Stop attempting further downloads this
+                    # run and hand the untouched budget to the backfill step.
+                    _flag_auth_error_if_needed(e)  # ensure /tmp/auth_error exists for the CI alert
+                    AUTH_FAILED = True
+                    print(f"  AUTH ERROR: {e}")
+                    print("  AUTH ERROR — skipping remaining downloads this run, budget preserved for backfill")
+                    break
                 print(f"  ERROR downloading/uploading: {e}")
                 slots_used += 1  # consume the slot — download was attempted, don't re-attempt this run
                 continue
@@ -921,11 +952,15 @@ def main():
                 processed.setdefault(slug, []).extend(new_ids)
     save_processed(processed)
 
+    global AUTH_FAILED
     budget_remaining = args.budget
     errors = []
     for ch in channels:
         if budget_remaining <= 0:
             print(f"\nBudget exhausted — skipping remaining channels.")
+            break
+        if AUTH_FAILED:
+            print("\nAUTH ERROR earlier this run — skipping remaining channels, budget preserved for backfill.")
             break
         if not ch.get("enabled", True) or ch.get("source") == "rss":
             continue
@@ -933,6 +968,13 @@ def main():
             used = process_channel(ch, processed, budget_remaining)
             budget_remaining -= used
         except Exception as e:
+            if _is_auth_error(e):
+                # Auth/403 escaped channel-level (e.g. metadata fetch). Stop the run
+                # and keep the budget for backfill instead of hammering YouTube.
+                _flag_auth_error_if_needed(e)
+                AUTH_FAILED = True
+                print(f"\nAUTH ERROR on channel {ch['slug']}: {e} — stopping, budget preserved for backfill.")
+                break
             print(f"\nERROR on channel {ch['slug']}: {e}")
             errors.append((ch["slug"], str(e)))
 
