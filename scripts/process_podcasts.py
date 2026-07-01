@@ -739,12 +739,23 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
     fg.podcast.itunes_owner(name=channel_cfg["podcast_author"], email=channel_cfg["podcast_email"])
     fg.podcast.itunes_explicit("no")
 
-    if channel_info.get("thumbnail"):
-        fg.image(channel_info["thumbnail"])
-    # Apple Podcasts requires 1400-3000px artwork on a HEAD-friendly server.
-    # Use the pre-generated artwork hosted on GitHub Pages; fall back to YouTube thumbnail.
-    artwork_url = BASE_URL + f"artwork/{channel_cfg['slug']}.png"
-    fg.podcast.itunes_image(artwork_url)
+    # Channel artwork. Spotify/Apple want a square 1400-3000px image on a HEAD-friendly
+    # host. Default: the pre-generated PNG on GitHub Pages, with the standard RSS <image>
+    # falling back to the YouTube channel thumbnail. A channel may override both via
+    # channels.json "artwork_file" (e.g. a JPG Spotify reliably accepts) — the override is
+    # used for the standard RSS <image> AND itunes:image, so ingestion never picks up the
+    # low-res (~800px) cross-origin YouTube avatar.
+    artwork_override = channel_cfg.get("artwork_file")
+    if artwork_override:
+        artwork_url = BASE_URL + f"artwork/{artwork_override}"
+        fg.image(artwork_url)
+        fg.podcast.itunes_image(artwork_url)
+    else:
+        if channel_info.get("thumbnail"):
+            fg.image(channel_info["thumbnail"])
+        # Apple Podcasts requires 1400-3000px artwork on a HEAD-friendly server.
+        artwork_url = BASE_URL + f"artwork/{channel_cfg['slug']}.png"
+        fg.podcast.itunes_image(artwork_url)
 
     for entry in sorted(entries, key=lambda e: e["published"], reverse=True):
         fe = fg.add_entry()
