@@ -118,6 +118,16 @@
     .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
 
     /* Search */
+    /* Seasonal Bein Hametsarim banner (shown only during the Three Weeks) */
+    .season-banner { display: none; background: linear-gradient(90deg, #2d2542 0%, #1a1a2e 100%); color: #fff; border-bottom: 1px solid rgba(232,184,119,.35); }
+    .season-banner.show { display: block; }
+    .season-banner-inner { max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+    .season-banner-icon { font-size: 1.2rem; line-height: 1; flex-shrink: 0; }
+    .season-banner-text { flex: 1; font-size: .86rem; line-height: 1.4; color: #ede8f0; }
+    .season-banner-text a { color: #e8b877; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    .season-banner-text a:hover { text-decoration: underline; }
+    .season-banner-close { flex-shrink: 0; background: none; border: none; color: rgba(255,255,255,.6); font-size: 1.05rem; line-height: 1; cursor: pointer; padding: 4px 6px; font-family: inherit; }
+    .season-banner-close:hover { color: #fff; }
     .search-wrap {
       position: sticky;
       top: 0;
@@ -459,6 +469,15 @@
   </nav>
 </header>
 
+<!-- Seasonal campaign banner: revealed by JS only during Bein Hametsarim (see below). -->
+<div class="season-banner" id="season-banner" hidden>
+  <div class="season-banner-inner">
+    <span class="season-banner-icon">🎧</span>
+    <span class="season-banner-text" data-i18n-html="banner_text">Pas de musique pendant les Trois Semaines ? Écoutez de la Torah à la place — <a href="bein-hametsarim.html">sur vos plateformes habituelles →</a></span>
+    <button class="season-banner-close" id="season-banner-close" aria-label="Fermer" title="Fermer">✕</button>
+  </div>
+</div>
+
 <div class="search-wrap">
   <div class="search-inner">
     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -502,6 +521,7 @@
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       no_results:'Aucun épisode trouvé.', no_episodes:'Aucun épisode disponible.', no_channels:'Aucune chaîne disponible.',
       copied:'Lien copié !',
+      banner_text:'Pas de musique pendant les Trois Semaines&nbsp;? Écoutez de la Torah à la place — <a href="bein-hametsarim.html">sur vos plateformes habituelles →</a>',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא', nav_all_rabbis:'כל הרבנים →',
@@ -512,6 +532,7 @@
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       no_results:'לא נמצאו פרקים.', no_episodes:'אין פרקים זמינים.', no_channels:'אין ערוצים זמינים.',
       copied:'הקישור הועתק!',
+      banner_text:'אין מוזיקה בשלושת השבועות? תשמעו תורה במקום — <a href="bein-hametsarim.html">באותן פלטפורמות שאתם רגילים אליהן →</a>',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -524,6 +545,8 @@
       if (k.startsWith('|')) el.placeholder = t(k.slice(1));
       else el.textContent = t(k);
     });
+    // Keys whose value contains intentional inline HTML (e.g. a link).
+    document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   }
   function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
   function renderStats(nCh, nEp) {
@@ -535,6 +558,37 @@
       : `${nCh} rabbins · ${nEp} cours · ~${approxH}h de Torah`;
   }
   applyLang();
+
+  // ─── Bein Hametsarim seasonal banner ───────────────────────────────────────
+  // Shown ONLY during the Three Weeks (17 Tamouz → 9 Av / Ticha BeAv), when the
+  // custom is to abstain from music. Gregorian ranges are hard-coded per year
+  // (17 Tamouz → 9 Av inclusive), derived from the Hebrew calendar — no network
+  // call, so the banner appears instantly with no flash. To extend past the last
+  // year listed, add  YYYY: ['MM-DD','MM-DD']  (start = 17 Tamouz, end = 9 Av).
+  (function beinHametsarimBanner() {
+    const RANGES = {
+      2026: ['07-02', '07-23'], 2027: ['07-22', '08-12'], 2028: ['07-11', '08-01'],
+      2029: ['06-30', '07-21'], 2030: ['07-18', '08-08'], 2031: ['07-08', '07-29'],
+      2032: ['06-26', '07-17'], 2033: ['07-14', '08-04'], 2034: ['07-04', '07-25'],
+      2035: ['07-24', '08-14'],
+    };
+    const now = new Date();
+    const y = now.getFullYear();
+    const md = String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    const r = RANGES[y];
+    if (!r || md < r[0] || md > r[1]) return;                       // out of season
+    if (localStorage.getItem('beinHametsarimDismissed') === String(y)) return; // dismissed this year
+    const banner = document.getElementById('season-banner');
+    if (!banner) return;
+    banner.hidden = false;
+    banner.classList.add('show');
+    const closeBtn = document.getElementById('season-banner-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => {
+      banner.classList.remove('show');
+      banner.hidden = true;
+      localStorage.setItem('beinHametsarimDismissed', String(y)); // re-shows next year
+    });
+  })();
 
   document.addEventListener('click', e => {
     if (e.target.closest('.nav-submenu')) return;
