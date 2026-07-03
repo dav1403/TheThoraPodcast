@@ -2,9 +2,12 @@ name: Social Media Posts
 
 on:
   schedule:
-    - cron: '0 8 * * 1'   # Monday    08:00 UTC — Zoom Rabbi
-    - cron: '0 8 * * 3'   # Wednesday 08:00 UTC — Zoom Thème
-    - cron: '0 7 * * 5'   # Friday    07:00 UTC — Paracha (avant Shabbat)
+    # TEMPORARY (Bein Hametsarim campaign): daily until 2026-07-23 (Tisha B'Av) — revert to Mon/Wed/Fri after
+    - cron: '0 8 * * *'   # daily 08:00 UTC
+    # Original Mon/Wed/Fri cadence (restore after the campaign):
+    # - cron: '0 8 * * 1'   # Monday    08:00 UTC — Zoom Rabbi
+    # - cron: '0 8 * * 3'   # Wednesday 08:00 UTC — Zoom Thème
+    # - cron: '0 7 * * 5'   # Friday    07:00 UTC — Paracha (avant Shabbat)
   workflow_dispatch:
     inputs:
       type:
