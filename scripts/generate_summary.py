@@ -15,7 +15,15 @@ from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-import requests
+# `requests` is a declared dependency (requirements.txt), but this script runs in a
+# step guarded by `if: always()` — it executes even when the "Install dependencies"
+# step failed or was skipped. In that case the import would raise ModuleNotFoundError
+# and fail the whole run just to print a summary. Degrade gracefully instead: without
+# `requests` we simply skip the YouTube "Remaining on YT" lookup.
+try:
+    import requests
+except ImportError:
+    requests = None
 
 API_KEY   = os.environ.get("YOUTUBE_API_KEY", "")
 FEEDS_DIR = Path("feeds")
@@ -29,7 +37,7 @@ def load_pre_run_counts() -> dict:
 
 
 def get_channel_video_count(channel_id: str) -> int | None:
-    if not API_KEY:
+    if not API_KEY or requests is None:
         return None
     try:
         r = requests.get(
