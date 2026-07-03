@@ -9,9 +9,8 @@ on:
   schedule:
     - cron: '17 5 * * *'      # daily, 05:17 UTC
   workflow_dispatch:
-  workflow_run:
-    workflows: ["pages-build-deployment"]   # re-check right after each Pages deploy
-    types: [completed]
+  # Note: the post-deploy workflow_run trigger was removed — deploys are hourly,
+  # so it ran the Chromium visual check ~24×/day. The daily scheduled check is enough.
 
 permissions:
   contents: read
