@@ -46,6 +46,15 @@
   "episode": [
     {
       "@type": "PodcastEpisode",
+      "name": "Paracha Matot Maasei 5786",
+      "datePublished": "2026-07-07",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://anchor.fm/s/78ffb860/podcast/play/122520322/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-6-7%2F427536268-44100-2-5c72a2596c94b.m4a"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "Sih’a Matot 5786",
       "datePublished": "2026-07-07",
       "associatedMedia": {
@@ -304,15 +313,6 @@
         "@type": "MediaObject",
         "contentUrl": "https://anchor.fm/s/78ffb860/podcast/play/120891884/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-5-2%2F425356521-44100-2-9c3174e216324.m4a"
       }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "15 Sivan -Hayom Yom (les différents types de Dvar Torah ) & Halakha:Cheheh’iyanou sur les vêtements)",
-      "datePublished": "2026-05-31",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://anchor.fm/s/78ffb860/podcast/play/120784954/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-4-31%2Fe4293b1f-2fdf-0dea-1578-3d2998fae8bb.mp3"
-      }
     }
   ]
 }
@@ -359,7 +359,7 @@
     .btn-spotify { background: #1DB954; color: #fff; }
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
-    .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
+    .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; display: none; }
     .header-stats { font-size: .88rem; color: #9ab; margin-bottom: 12px; min-height: 1.3em; }
     .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 4px; font-size: .9rem; color: #444; line-height: 1.7; position: relative; }
     .ch-about p { margin-bottom: .9em; }
@@ -478,6 +478,7 @@
       <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+        <a href="hiloula.html" data-i18n="nav_hiloula">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
@@ -509,6 +510,15 @@
     <button class="dur-btn" data-dur="long" onclick="filterDur(this)">&gt; 20 min</button>
   </div>
   <div class="episode-list" id="ep-list">
+    <article class="episode" data-dur="4719">
+      <a href="beth-habad-tlv-nord/paracha-matot-maasei-5786-2026-07-07.html"><img class="ep-thumb" src="https://d3t3ozftmdmh3i.cloudfront.net/production/podcast_uploaded/20200248/20200248-1639396129930-e7cf040dd92a3.jpg" alt="Paracha Matot Maasei 5786" loading="lazy"></a>
+      <div class="ep-body">
+        <a class="ep-title" href="beth-habad-tlv-nord/paracha-matot-maasei-5786-2026-07-07.html" style="color:inherit;text-decoration:none;display:block">Paracha Matot Maasei 5786</a>
+        <time class="ep-date" datetime="2026-07-07">7 juillet 2026 - 1h18</time>
+        <p class="ep-desc">Cours du mardi soir 07/07/2026</p>
+        <div class="ep-actions"><button class="play-btn" data-ep-id="9020db81-1501-45f0-9c75-a3d1d38052a8" data-audio="https://anchor.fm/s/78ffb860/podcast/play/122520322/https%3A%2F%2Fd3ctxlq1ktw2nl.cloudfront.net%2Fstaging%2F2026-6-7%2F427536268-44100-2-5c72a2596c94b.m4a" data-title="Paracha Matot Maasei 5786" data-thumb="https://d3t3ozftmdmh3i.cloudfront.net/production/podcast_uploaded/20200248/20200248-1639396129930-e7cf040dd92a3.jpg"><svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="beth-habad-tlv-nord/paracha-matot-maasei-5786-2026-07-07.html" data-title="Paracha Matot Maasei 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div>
+      </div>
+    </article>
     <article class="episode" data-dur="3934">
       <a href="beth-habad-tlv-nord/sih-a-matot-5786-2026-07-07.html"><img class="ep-thumb" src="https://d3t3ozftmdmh3i.cloudfront.net/production/podcast_uploaded/20200248/20200248-1639396129930-e7cf040dd92a3.jpg" alt="Sih’a Matot 5786" loading="lazy"></a>
       <div class="ep-body">
@@ -7796,14 +7806,14 @@
 <script>
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${n} épisode${n !== 1 ? 's' : ''}`,
       listen:'Écouter', playing:'En cours…',
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${n} פרקים`,
@@ -7819,11 +7829,11 @@
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(806);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(807);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `29 ערוצים · 11141 שיעורים · ~8356 שעות`
-      : `29 rabbins · 11141 cours · ~8356h de Torah`;
+      ? `29 ערוצים · 11157 שיעורים · ~8368 שעות`
+      : `29 rabbins · 11157 cours · ~8368h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
