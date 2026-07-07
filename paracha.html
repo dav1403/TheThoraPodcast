@@ -362,6 +362,14 @@
     .site-footer { background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }
     .site-footer a { color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }
     .site-footer a:hover { color: #fff; }
+    /* Recently-taught parachiot quick row (sorted by most recent course, desc). */
+    .recent-parachiot { margin: 6px 0 20px; }
+    .rp-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin: 4px 0 8px; }
+    .recent-parachiot-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+    .recent-parachiot-row::-webkit-scrollbar { height: 4px; }
+    .recent-parachiot-row::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+    .rp-chip { flex-shrink: 0; background: #fff; border: 1px solid #e2ddd0; border-radius: 18px; padding: 6px 14px; font-size: .82rem; color: #4a3f2a; cursor: pointer; font-family: inherit; white-space: nowrap; transition: all .15s; }
+    .rp-chip:hover { border-color: #e87722; color: #e87722; }
   </style>
 </head>
 <body>
@@ -382,6 +390,7 @@
       <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+        <a href="hiloula.html">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" class="active" data-i18n="nav_paracha">Paracha</a>
@@ -399,6 +408,8 @@
     <div class="banner-he" id="banner-he"></div>
     <div class="banner-arrow">→</div>
   </div>
+
+  <div id="recent-parachiot" class="recent-parachiot"></div>
 
   <div id="books-container">
     <div class="state loading" data-i18n="loading_eps">Chargement des épisodes…</div>
@@ -730,6 +741,30 @@ function renderResults(slug, allData) {
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// Quick-access row of parachiot sorted by their most recent course date (desc).
+function renderRecentParachiot(allData) {
+  const mount = document.getElementById('recent-parachiot');
+  if (!mount) return;
+  const scored = [];
+  for (const slug of Object.keys(PARACHIOT)) {
+    const groups = findEpisodesForParacha(slug, allData);
+    if (!groups.length) continue;
+    let latest = 0;
+    groups.forEach(g => { const d = latestDate(g.episodes); if (d > latest) latest = d; });
+    scored.push({ slug, latest });
+  }
+  if (!scored.length) { mount.innerHTML = ''; return; }
+  scored.sort((a, b) => b.latest - a.latest);
+  const label = lang === 'he' ? 'פרשות שנלמדו לאחרונה' : 'Parachiot récemment enseignées';
+  mount.innerHTML =
+    `<div class="rp-label">${label}</div><div class="recent-parachiot-row">` +
+    scored.slice(0, 12).map(({ slug }) => {
+      const p = PARACHIOT[slug];
+      return `<button class="rp-chip" onclick="selectParacha('${slug}')">${escapeHtml(lang === 'he' ? p.he : p.fr)}</button>`;
+    }).join('') +
+    `</div>`;
+}
+
 function buildBooks(allData) {
   // Pre-compute counts
   const counts = {};
@@ -944,6 +979,9 @@ function selectParacha(slug) {
 
   // Render book chips
   document.getElementById('books-container').innerHTML = buildBooks(globalAllData);
+
+  // Quick row: parachiot ordered by their most recent course (desc).
+  renderRecentParachiot(globalAllData);
 
   // After data loads, always render the current selection
   const hash = location.hash.replace('#', '');

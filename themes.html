@@ -337,6 +337,7 @@
       <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+        <a href="hiloula.html">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
@@ -367,6 +368,7 @@
       <div class="panel-title" id="panel-title"></div>
       <button class="panel-close" id="panel-close" data-i18n="close">Fermer ✕</button>
     </div>
+    <div id="theme-carousel"></div>
     <div class="filter-row" id="rabbi-filter-row"></div>
     <ul class="episode-list" id="episode-list"></ul>
   </div>
@@ -717,6 +719,16 @@
 
     renderRabbiFilter(items, theme);
     renderEpisodeList(items, theme);
+
+    // Reusable homepage-style carousel: most recent courses for this theme.
+    const _mount = document.getElementById('theme-carousel');
+    if (_mount) {
+      _mount.innerHTML = '';
+      const _flat = [...items].sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
+      const _label = (lang === 'he' ? 'שיעורים אחרונים · ' : 'Derniers cours · ') + themeName(theme);
+      const _car = buildCarousel(_label, _flat.slice(0, 20).map(x => ({ ep: x.ep, ch: x.ch })));
+      if (_car) _mount.appendChild(_car);
+    }
 
     panel.classList.add('visible');
     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });

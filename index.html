@@ -222,6 +222,14 @@
     }
     .recent-card-date { font-size: 0.62rem; color: #bbb; }
 
+    /* Rabbi bubbles (discovery grid, consistent with rabbins.html) */
+    .rabbi-bubbles-section { margin: 0 0 30px; }
+    .rabbi-bubbles { display: grid; grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); gap: 16px 8px; }
+    .rabbi-bubble { display: flex; flex-direction: column; align-items: center; gap: 6px; text-decoration: none; }
+    .rabbi-bubble img { width: 66px; height: 66px; border-radius: 50%; object-fit: cover; background: #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,.12); transition: transform .15s; }
+    .rabbi-bubble:hover img { transform: translateY(-2px); }
+    .rabbi-bubble-name { font-size: .72rem; color: #333; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
     /* Channel sections */
     .channel {
       background: #fff;
@@ -248,7 +256,9 @@
       flex-shrink: 0;
     }
     .channel-header h2 { font-size: 1.05rem; }
+    /* RSS button hidden from public UI (feeds still served). */
     .rss-link {
+      display: none;
       font-size: 0.72rem;
       color: #e87722;
       text-decoration: none;
@@ -461,6 +471,7 @@
       <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+        <a href="hiloula.html">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
@@ -755,6 +766,24 @@
       </li>`;
   }
 
+  // Clickable rabbi bubbles (discovery), consistent with rabbins.html.
+  function buildRabbiBubbles(list) {
+    if (!list || !list.length) return null;
+    const bubbles = list.map(r => {
+      const img = r.img ? escapeHtml(r.img) : ('artwork/' + escapeHtml(r.slug) + '.png');
+      return `
+        <a class="rabbi-bubble" href="${escapeHtml(r.slug)}.html" title="${escapeHtml(r.name)}">
+          <img src="${img}" alt="${escapeHtml(r.name)}" loading="lazy"
+               onerror="this.onerror=null;this.src='artwork/${escapeHtml(r.slug)}.png'">
+          <span class="rabbi-bubble-name">${escapeHtml(r.name)}</span>
+        </a>`;
+    }).join('');
+    const wrap = document.createElement('div');
+    wrap.className = 'rabbi-bubbles-section';
+    wrap.innerHTML = `<div class="section-label">${lang === 'he' ? 'הרבנים' : 'Les rabbanim'}</div><div class="rabbi-bubbles">${bubbles}</div>`;
+    return wrap;
+  }
+
   function buildRecents() {
     const flat = [];
     for (const { ch, entries } of allData) {
@@ -921,6 +950,12 @@
     ].join('');
 
     app.innerHTML = '';
+    const bubbleList = [
+      ...channels.map(ch => ({ slug: ch.slug, name: ch.name })),
+      ...speakerData.filter(d => d.entries.length).map(d => ({ slug: d.ch.slug, name: d.ch.name, img: d.ch.img })),
+    ];
+    const bubblesSection = buildRabbiBubbles(bubbleList);
+    if (bubblesSection) app.appendChild(bubblesSection);
     app.appendChild(buildRecents());
 
     const noRes = document.createElement('div');
