@@ -335,6 +335,8 @@
     .site-footer { background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }
     .site-footer a { color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }
     .site-footer a:hover { color: #fff; }
+    /* RSS controls hidden from public UI (feeds still served). */
+    .btn-rss, .copy-rss { display: none !important; }
   </style>
 </head>
 <body>
@@ -355,6 +357,7 @@
       <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+        <a href="hiloula.html">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
@@ -377,6 +380,7 @@
   <button class="sort-btn"        id="sort-alpha"  onclick="setSort('alpha')"  data-i18n="sort_alpha">Alphabétique</button>
 </div>
 
+<div id="rabbi-carousel" style="max-width:860px;margin:16px auto 0;padding:0 16px"></div>
 <main id="app"></main>
 <div id="no-results" class="no-results" hidden data-i18n="no_results">Aucun rav trouvé.</div>
 
@@ -649,6 +653,19 @@
         : `${nRabbis} rabbins · ${totalEpisodes} cours · ~${approxH}h de Torah`;
 
     setSort(currentSort);
+
+    // Reusable homepage-style carousel: latest courses across all rabbanim.
+    (function buildRabbiCarousel() {
+      const flat = [];
+      allData.forEach(({ ch, entries }) => (entries || []).forEach(ep => {
+        if (!/HITAT DU JOUR/i.test(ep.title || ''))
+          flat.push({ ep, ch: { slug: ch.slug, name: ch.podcast_author } });
+      }));
+      flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
+      const car = buildCarousel(lang === 'he' ? 'שיעורים אחרונים' : 'Derniers cours', flat.slice(0, 15));
+      const mount = document.getElementById('rabbi-carousel');
+      if (car && mount) mount.appendChild(car);
+    })();
 
     const searchInput = document.getElementById('rabbi-search');
     if (searchInput) searchInput.addEventListener('input', () => {
