@@ -1,4 +1,16 @@
-name: Update Podcast Feeds
+name: Update Podcast Feeds (self-hosted)
+
+# Second ingestion lane, running on David's own PC (residential IP) to
+# complement the GitHub-hosted lane (repair_missing_audio.yml). Staggered by
+# 30 min (this cron is :30, the hosted cron is :00) and uses a DIFFERENT cookie
+# from the pool (COOKIE_ROTATION_OFFSET=1) so the two lanes never hit YouTube
+# with the same account at the same time. Higher budget (60) because a
+# residential IP is far less likely to be throttled than GitHub's datacenter IPs.
+#
+# INERT until a self-hosted runner labelled `ttp` is registered on David's PC —
+# see docs/SCALING-INGESTION.md for the runner install steps. Prerequisites on
+# that machine: git, Python 3.11+, ffmpeg, and Deno (yt-dlp n-challenge solver).
+# yt-dlp and the other Python deps are installed by this workflow into a venv.
 
 on:
   workflow_dispatch:
@@ -8,18 +20,21 @@ on:
         required: false
         default: 'manual'
       process_budget:
-        description: 'Budget for new-episode processing (manual runs only)'
+        description: 'Budget for new-episode processing (manual/burst runs). Dispatch this lane at 100-150 to drain a new-channel backlog.'
         required: false
-        default: '30'
+        default: '60'
       backfill_budget_override:
         description: 'Override historical backfill budget; blank = use remaining budget from process step'
         required: false
         default: ''
   schedule:
-    - cron: '0 * * * *'
+    # Offset 30 min from the hosted lane's ':00' cron to avoid overlap.
+    - cron: '30 * * * *'
 
 concurrency:
-  group: podcast-pipeline
+  # Distinct from the hosted lane's `podcast-pipeline` group so the two lanes are
+  # not serialized against each other; the 30-min stagger keeps them from racing.
+  group: podcast-pipeline-selfhosted
   cancel-in-progress: false
 
 permissions:
@@ -28,39 +43,48 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # Per-run download budget (new episodes first, remainder handed to backfill).
-  # Raised 15 -> 30 on 2026-07-08 to drain the missing-audio backlog faster after
-  # new channels were added. Sizing rationale: a run is ~6 min fixed overhead +
-  # ~0.8-1.9 min/downloaded item, so budget 30 lands a typical run around 40-45 min
-  # and a worst case around ~65 min. That keeps the usual run under the 60-min cron
-  # interval, which matters because the `podcast-pipeline` concurrency group queues
-  # (does not cancel) an overrun behind the next hourly cron and GitHub then drops
-  # scheduled runs — so bloating the budget past ~50-min runs would cost us runs/day
-  # and partly cancel out the gain. Bump higher only after confirming runs stay well
-  # under ~50 min. Single source of truth; override per-run via the
-  # workflow_dispatch "process_budget" input.
-  PROCESS_BUDGET_DEFAULT: '30'
+  # Higher than the hosted lane's 30: a residential IP tolerates a heavier run,
+  # and the 30-min stagger gives this lane more headroom before the next cron.
+  # Override per-run via the workflow_dispatch "process_budget" input (use
+  # 100-150 for a backlog-draining burst).
+  PROCESS_BUDGET_DEFAULT: '60'
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    # Requires a runner registered with BOTH labels. Inert until David registers one.
+    runs-on: [self-hosted, ttp]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          # Explicit branch ref (not the default github.sha) so a run delayed in the
-          # concurrency queue (e.g. behind a manual workflow_dispatch) checks out main
-          # as it stands at execution time, not at trigger time. Without this, a
-          # long-queued scheduled run bases its commit on a stale HEAD and its later
-          # `git pull --rebase` conflicts with whatever was pushed in the meantime.
+          # Check out main as it stands at execution time (see hosted workflow).
           ref: main
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.11'
+      - name: Verify system prerequisites (Python, ffmpeg, Deno)
+        # This lane relies on tools pre-installed on David's PC rather than
+        # setup-python/setup-deno/apt (which target GitHub's Ubuntu images).
+        run: |
+          missing=0
+          if command -v python3 >/dev/null 2>&1; then python3 --version; else echo "::error::python3 not found"; missing=1; fi
+          if command -v ffmpeg  >/dev/null 2>&1; then ffmpeg -version | head -1; else echo "::error::ffmpeg not found"; missing=1; fi
+          if command -v deno    >/dev/null 2>&1; then deno --version | head -1; else echo "::warning::deno not found — yt-dlp n-challenge solving may fail on some videos"; fi
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::Install the missing prerequisites (see docs/SCALING-INGESTION.md), then re-run."
+            exit 1
+          fi
+
+      - name: Install Python dependencies (persistent venv)
+        # Reuse a venv under $HOME so we don't repeatedly touch the system Python
+        # and so installs are fast after the first run. Export its bin dir on PATH
+        # for all later steps, so `python` resolves to the venv interpreter.
+        run: |
+          python3 -m venv "$HOME/.ttp-venv"
+          . "$HOME/.ttp-venv/bin/activate"
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "$HOME/.ttp-venv/bin" >> $GITHUB_PATH
 
       - name: Validate channels.json (fail fast on broken JSON)
         env:
@@ -82,29 +106,6 @@ jobs:
             exit 1
           fi
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Set up Deno (for yt-dlp EJS n-challenge solver)
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-
-      - name: Install ffmpeg
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y ffmpeg
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
       - name: Ensure feeds/ directory exists
         run: mkdir -p feeds
 
@@ -112,18 +113,14 @@ jobs:
         run: python scripts/ci_pre_run_counts.py
 
       - name: Write YouTube cookies (rotating pool, single-cookie fallback)
-        # Picks one cookie from YOUTUBE_COOKIES_POOL (many accounts concatenated,
-        # separated by a line "-----COOKIE-----"), rotating by run number so each
-        # account is used only occasionally. Falls back to the single
-        # YOUTUBE_COOKIES secret when the pool is absent/empty/malformed. See
+        # Same pool logic as the hosted lane but OFFSET=1, so at any given time
+        # slot this lane uses a different cookie than the hosted lane. See
         # docs/SCALING-INGESTION.md for the pool format.
         env:
           YOUTUBE_COOKIES_POOL: ${{ secrets.YOUTUBE_COOKIES_POOL }}
           YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
           COOKIE_ROTATION_INDEX: ${{ github.run_number }}
-          # Hosted lane uses offset 0; the self-hosted lane uses offset 1 so the
-          # two lanes pick different cookies at the same time slot.
-          COOKIE_ROTATION_OFFSET: '0'
+          COOKIE_ROTATION_OFFSET: '1'
         run: |
           python scripts/select_cookie_from_pool.py --output /tmp/yt_cookies.txt
           if [ -s /tmp/yt_cookies.txt ]; then
@@ -211,8 +208,6 @@ jobs:
           git config --global user.email "action@github.com"
           git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html
           # Stage every channel's episode-page directory, derived from channels.json slugs.
-          # Robust against slug casing/prefix (was hardcoded to rav-*/ rabbin-*/ beth-*/,
-          # which silently skipped dirs like Rav-Itshak-Sitruk/, Nahal-Haim/, lev/, torah_fr/).
           python -c "import json;[print(c['slug']) for c in json.load(open('channels.json', encoding='utf-8-sig'))]" \
             | while IFS= read -r s; do
                 [ -n "$s" ] && [ -d "$s" ] && git add -- "$s/"
@@ -220,12 +215,11 @@ jobs:
           if git diff --staged --quiet; then
             echo "committed=false" >> $GITHUB_OUTPUT
           else
-            git commit -m "chore: update podcast feeds [skip ci]"
+            git commit -m "chore: update podcast feeds (self-hosted) [skip ci]"
             echo "committed=true" >> $GITHUB_OUTPUT
           fi
-          # Rebase-then-push with retry: the self-hosted lane also pushes to feeds/
-          # (staggered by 30 min, but a long run can overlap), so race on the
-          # remote is possible. Retry rebase+push a few times instead of failing.
+          # Rebase-then-push with retry: the hosted lane also pushes to feeds/.
+          # Staggered by 30 min, but a long run can overlap — retry rather than fail.
           for attempt in 1 2 3 4 5; do
             git pull --rebase --autostash origin main || true
             if git push; then
@@ -236,7 +230,7 @@ jobs:
               echo "::error::git push failed after 5 rebase attempts."
               exit 1
             fi
-            echo "Push rejected (attempt $attempt) — someone pushed first; rebasing and retrying."
+            echo "Push rejected (attempt $attempt) — the other lane pushed first; rebasing and retrying."
             sleep $((attempt * 5))
           done
 
@@ -264,15 +258,10 @@ jobs:
         run: |
           if [ ! -f /tmp/auth_error ]; then
             echo "No YouTube auth error detected."
-            # Auto-resolve: if a previous run opened a cookies-expired issue and the
-            # cookies are working again, close it so stale "auth error" issues don't
-            # linger (real case: #10 stayed open 5 days after recovery).
-            # Same search string as the idempotence check below. Idempotent (no open
-            # issue -> no-op) and best-effort (never fail the run on a GitHub API hiccup).
             OPEN=$(gh issue list --state open --search 'YouTube auth error in:title' \
               --json number --jq '.[0].number // empty' 2>/dev/null) || OPEN=""
             if [ -n "$OPEN" ]; then
-              COMMENT=$(printf 'Auto-résolu : cookies YouTube de nouveau OK au run %s\n\n%s/%s/actions/runs/%s' \
+              COMMENT=$(printf 'Auto-résolu : cookies YouTube de nouveau OK au run %s (self-hosted)\n\n%s/%s/actions/runs/%s' \
                 "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
               if gh issue close "$OPEN" --comment "$COMMENT" 2>/dev/null; then
                 echo "Closed stale auth-error issue #$OPEN (cookies recovered)."
@@ -286,8 +275,6 @@ jobs:
           ERROR=$(cat /tmp/auth_error)
           echo "::warning::YouTube auth error detected - cookies may be expired"
 
-          # Idempotence: don't open a new issue on every hourly run if one is already open.
-          # (`// empty` so a missing match yields an empty string, not the literal "null".)
           EXISTING=$(gh issue list --state open --search 'YouTube auth error in:title' \
             --json number --jq '.[0].number // empty') || EXISTING=""
           if [ -n "$EXISTING" ]; then
@@ -295,16 +282,14 @@ jobs:
             exit 0
           fi
 
-          BODY=$(printf 'CI detected a YouTube auth error. Cookies may need refreshing.\n\nError:\n%s\n\nRun: %s/%s/actions/runs/%s' \
+          BODY=$(printf 'CI (self-hosted lane) detected a YouTube auth error. A cookie in the pool may need refreshing.\n\nError:\n%s\n\nRun: %s/%s/actions/runs/%s' \
             "$ERROR" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
 
-          # Fail loudly: no `2>/dev/null`, no `|| true`. A silent failure here means
-          # expired cookies with nobody notified (the exact bug we are fixing).
           if ! gh issue create \
                 --title "YouTube auth error - cookies may be expired" \
                 --body "$BODY" \
                 --label "bug"; then
-            echo "::error::YouTube cookies are expired AND the alert issue could not be created (see gh output above — check the job's issues:write permission and the 'bug' label)."
+            echo "::error::YouTube cookies are expired AND the alert issue could not be created (check issues:write permission and the 'bug' label)."
             exit 1
           fi
           echo "Opened a new GitHub issue for the YouTube auth error."
@@ -322,7 +307,6 @@ jobs:
           ERROR=$(cat /tmp/anthropic_credit_error)
           echo "::warning::Anthropic API credits/quota exhausted - theme tagging skipped"
 
-          # Idempotence: don't open a new issue on every hourly run if one is already open.
           EXISTING=$(gh issue list --state open --search 'Anthropic credits exhausted in:title' \
             --json number --jq '.[0].number // empty') || EXISTING=""
           if [ -n "$EXISTING" ]; then
@@ -330,16 +314,14 @@ jobs:
             exit 0
           fi
 
-          BODY=$(printf 'CI could not tag episodes with AI themes: the Anthropic API rejected the request for billing reasons (credits/quota exhausted). Top up at https://console.anthropic.com/settings/billing\n\nError:\n%s\n\nRun: %s/%s/actions/runs/%s' \
+          BODY=$(printf 'CI (self-hosted lane) could not tag episodes with AI themes: the Anthropic API rejected the request for billing reasons (credits/quota exhausted). Top up at https://console.anthropic.com/settings/billing\n\nError:\n%s\n\nRun: %s/%s/actions/runs/%s' \
             "$ERROR" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
 
-          # Fail loudly (no `2>/dev/null`, no `|| true`): a silent failure here
-          # means exhausted credits with nobody notified — the bug we are fixing.
           if ! gh issue create \
                 --title "Anthropic credits exhausted - theme tagging skipped" \
                 --body "$BODY" \
                 --label "bug"; then
-            echo "::error::Anthropic credits exhausted AND the alert issue could not be created (check the job's issues:write permission and the 'bug' label)."
+            echo "::error::Anthropic credits exhausted AND the alert issue could not be created (check issues:write permission and the 'bug' label)."
             exit 1
           fi
           echo "Opened a new GitHub issue for the Anthropic credit error."
