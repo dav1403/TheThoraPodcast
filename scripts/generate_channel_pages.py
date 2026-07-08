@@ -1077,7 +1077,12 @@ def render_speaker_page(
         "podcast_language": speaker.get("language", "fr"),
         "platforms": {},
         "enabled": True,
-        "thumbnail": episodes[0].get("thumbnail", "") if episodes else "",
+        # Speakers have no dedicated artwork/<slug>.png — represent them with the
+        # thumbnail of their most recent episode that actually has one (episodes are
+        # sorted newest-first). Using episodes[0] blindly broke the header image when
+        # the newest episode lacked a thumbnail (fell back to a non-existent PNG →
+        # missing face). Mirrors the front-end logic in rabbins.html / index.html.
+        "thumbnail": next((e.get("thumbnail") for e in episodes if e.get("thumbnail")), ""),
         "speaker": True,
     }
     # Inject extra speakers into all_channels list for nav
