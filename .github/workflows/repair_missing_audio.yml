@@ -257,6 +257,41 @@ jobs:
           fi
           echo "Opened a new GitHub issue for the YouTube auth error."
 
+      - name: Alert if Anthropic credits exhausted (theme tagging)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f /tmp/anthropic_credit_error ]; then
+            echo "No Anthropic credit/quota error detected."
+            exit 0
+          fi
+
+          ERROR=$(cat /tmp/anthropic_credit_error)
+          echo "::warning::Anthropic API credits/quota exhausted - theme tagging skipped"
+
+          # Idempotence: don't open a new issue on every hourly run if one is already open.
+          EXISTING=$(gh issue list --state open --search 'Anthropic credits exhausted in:title' \
+            --json number --jq '.[0].number // empty') || EXISTING=""
+          if [ -n "$EXISTING" ]; then
+            echo "Credit-error issue already open (#$EXISTING) — not creating a duplicate."
+            exit 0
+          fi
+
+          BODY=$(printf 'CI could not tag episodes with AI themes: the Anthropic API rejected the request for billing reasons (credits/quota exhausted). Top up at https://console.anthropic.com/settings/billing\n\nError:\n%s\n\nRun: %s/%s/actions/runs/%s' \
+            "$ERROR" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+
+          # Fail loudly (no `2>/dev/null`, no `|| true`): a silent failure here
+          # means exhausted credits with nobody notified — the bug we are fixing.
+          if ! gh issue create \
+                --title "Anthropic credits exhausted - theme tagging skipped" \
+                --body "$BODY" \
+                --label "bug"; then
+            echo "::error::Anthropic credits exhausted AND the alert issue could not be created (check the job's issues:write permission and the 'bug' label)."
+            exit 1
+          fi
+          echo "Opened a new GitHub issue for the Anthropic credit error."
+
       - name: Generate run summary
         if: always()
         env:

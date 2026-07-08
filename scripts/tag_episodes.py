@@ -46,6 +46,39 @@ THEMES_STR = ", ".join(THEMES)
 BATCH_SIZE  = 25
 FEEDS_DIR   = Path("feeds")
 
+# Flag file read by the CI "Alert if Anthropic credits exhausted" step. Same
+# pattern as process_podcasts.py's /tmp/auth_error: the Python script only drops
+# a flag, the workflow turns it into a GitHub issue -> owner email. Kept so a
+# credit/quota exhaustion no longer fails silently (was swallowed by the
+# `|| echo "WARNING..."` on the tagging step).
+CREDIT_ERROR_FLAG = Path("/tmp/anthropic_credit_error")
+
+_CREDIT_KEYWORDS = ("credit", "quota", "insufficient", "billing", "payment", "balance")
+
+
+def _is_credit_error(exc: Exception) -> bool:
+    """True when the Anthropic API rejects the call for billing reasons
+    (exhausted credits / insufficient quota) rather than a transient issue.
+
+    Anthropic returns HTTP 400 ("Your credit balance is too low..."), and other
+    providers/paths surface 402 or 429 insufficient_quota — we match those
+    statuses only when the message mentions a billing keyword, so plain
+    transient rate-limits (429 without a credit message) are not misreported."""
+    msg = str(getattr(exc, "message", "") or exc).lower()
+    if "insufficient_quota" in msg:
+        return True
+    status = getattr(exc, "status_code", None)
+    return status in (400, 402, 429) and any(k in msg for k in _CREDIT_KEYWORDS)
+
+
+def _flag_credit_error(exc: Exception) -> None:
+    """Best-effort: drop the flag file the CI alert step turns into an email.
+    Never raises — an alerting failure must not crash the tagging run."""
+    try:
+        CREDIT_ERROR_FLAG.write_text(str(exc))
+    except Exception as flag_err:  # noqa: BLE001 - best effort, never fatal
+        print(f"WARNING: could not write credit-error flag: {flag_err}")
+
 SYSTEM_PROMPT = f"""You tag Torah podcast episode titles with themes.
 Available themes (use ONLY these exact strings): {THEMES_STR}
 
@@ -103,7 +136,26 @@ def main():
         for batch_start in range(0, len(untagged_idx), BATCH_SIZE):
             batch = untagged_idx[batch_start : batch_start + BATCH_SIZE]
             titles = [entries[i]["title"] for i in batch]
-            tags   = tag_batch(client, titles)
+            try:
+                tags = tag_batch(client, titles)
+            except anthropic.APIStatusError as e:
+                if _is_credit_error(e):
+                    # Credits/quota exhausted: every further call will fail too.
+                    # Flag it for the CI email alert, persist what we already
+                    # tagged, and stop cleanly (exit 0) instead of failing
+                    # silently under the workflow's `|| echo "WARNING..."`.
+                    _flag_credit_error(e)
+                    print(
+                        "ERROR: Anthropic credits/quota exhausted — stopping "
+                        f"tagging (alert flag written for CI). {e}"
+                    )
+                    entries_file.write_text(
+                        json.dumps(entries, indent=2, ensure_ascii=False),
+                        encoding="utf-8",
+                    )
+                    print(f"\nStopped early. Total tagged before stop: {total_tagged} episodes.")
+                    return
+                raise
             for j, idx in enumerate(batch):
                 entries[idx]["tags"] = tags[j] if j < len(tags) else []
             print(f"  [{batch_start + len(batch)}/{len(untagged_idx)}] done")
