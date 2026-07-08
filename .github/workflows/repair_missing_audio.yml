@@ -10,7 +10,7 @@ on:
       process_budget:
         description: 'Budget for new-episode processing (manual runs only)'
         required: false
-        default: '15'
+        default: '30'
       backfill_budget_override:
         description: 'Override historical backfill budget; blank = use remaining budget from process step'
         required: false
@@ -28,6 +28,18 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Per-run download budget (new episodes first, remainder handed to backfill).
+  # Raised 15 -> 30 on 2026-07-08 to drain the missing-audio backlog faster after
+  # new channels were added. Sizing rationale: a run is ~6 min fixed overhead +
+  # ~0.8-1.9 min/downloaded item, so budget 30 lands a typical run around 40-45 min
+  # and a worst case around ~65 min. That keeps the usual run under the 60-min cron
+  # interval, which matters because the `podcast-pipeline` concurrency group queues
+  # (does not cancel) an overrun behind the next hourly cron and GitHub then drops
+  # scheduled runs — so bloating the budget past ~50-min runs would cost us runs/day
+  # and partly cancel out the gain. Bump higher only after confirming runs stay well
+  # under ~50 min. Single source of truth; override per-run via the
+  # workflow_dispatch "process_budget" input.
+  PROCESS_BUDGET_DEFAULT: '30'
 
 jobs:
   update:
@@ -145,7 +157,7 @@ jobs:
         run: |
           PROCESS_BUDGET='${{ github.event.inputs.process_budget }}'
           if [ -z "$PROCESS_BUDGET" ]; then
-            PROCESS_BUDGET=15
+            PROCESS_BUDGET="${PROCESS_BUDGET_DEFAULT:-15}"
           fi
           echo "Process budget: $PROCESS_BUDGET"
           python scripts/process_podcasts.py --budget "$PROCESS_BUDGET"
@@ -228,6 +240,22 @@ jobs:
         run: |
           if [ ! -f /tmp/auth_error ]; then
             echo "No YouTube auth error detected."
+            # Auto-resolve: if a previous run opened a cookies-expired issue and the
+            # cookies are working again, close it so stale "auth error" issues don't
+            # linger (real case: #10 stayed open 5 days after recovery).
+            # Same search string as the idempotence check below. Idempotent (no open
+            # issue -> no-op) and best-effort (never fail the run on a GitHub API hiccup).
+            OPEN=$(gh issue list --state open --search 'YouTube auth error in:title' \
+              --json number --jq '.[0].number // empty' 2>/dev/null) || OPEN=""
+            if [ -n "$OPEN" ]; then
+              COMMENT=$(printf 'Auto-résolu : cookies YouTube de nouveau OK au run %s\n\n%s/%s/actions/runs/%s' \
+                "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+              if gh issue close "$OPEN" --comment "$COMMENT" 2>/dev/null; then
+                echo "Closed stale auth-error issue #$OPEN (cookies recovered)."
+              else
+                echo "Could not auto-close issue #$OPEN (best-effort) — leaving it open."
+              fi
+            fi
             exit 0
           fi
 
