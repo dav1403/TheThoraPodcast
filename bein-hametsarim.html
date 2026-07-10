@@ -88,6 +88,9 @@
     .hero-plat-chip { display: inline-flex; align-items: center; gap: 7px; font-size: .82rem; font-weight: 600; color: #fff; padding: 6px 14px; border-radius: 20px; }
     .hero-plat-chip svg { width: 15px; height: 15px; }
     .hero-cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .hero-note { font-size: .9rem; color: #cfd0e0; margin-top: 18px; }
+    .hero-note a { color: #e8b877; font-weight: 700; text-decoration: none; }
+    .hero-note a:hover { text-decoration: underline; }
     .hero-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: 26px; font-size: .95rem; font-weight: 700; text-decoration: none; cursor: pointer; border: none; font-family: inherit; transition: transform .12s, opacity .15s; }
     .hero-btn:hover { transform: translateY(-2px); }
     .hero-btn-primary { background: #e8b877; color: #1a1a2e; }
@@ -205,6 +208,7 @@
       <a class="hero-btn hero-btn-primary" href="#rabbanim" data-i18n="hero_cta">Choisir un rav →</a>
       <a class="hero-btn hero-btn-ghost" href="#commencer" data-i18n="hero_cta2">Par où commencer</a>
     </div>
+    <p class="hero-note" data-i18n="hero_note">Pas d'abonnement sur les plateformes ? Aucun problème : vous pouvez <a href="./">écouter directement sur le site de The Torah Podcast →</a></p>
   </div>
 </section>
 
@@ -269,6 +273,7 @@
       hero_title:'Pas de musique pendant les Trois Semaines ? <strong>Écoutez de la Torah</strong> — sur vos plateformes habituelles.',
       hero_lead:"Gardez vos habitudes d'écoute. Ouvrez Spotify, Apple Podcasts ou Deezer comme d'ordinaire — et remplacez simplement la musique par un cours de Torah. Des dizaines de rabbanim, des milliers de shiourim, à portée d'oreille.",
       hero_cta:'Choisir un rav →', hero_cta2:'Par où commencer',
+      hero_note:'Pas d\'abonnement sur les plateformes ? Aucun problème : vous pouvez <a href="./">écouter directement sur le site de The Torah Podcast →</a>',
       rabbis_head:'Écoutez vos rabbanim',
       rabbis_sub:'Cliquez sur un rav pour vous abonner sur Spotify, Apple Podcasts ou Deezer — ou copier son flux RSS.',
       start_head:'Par où commencer', start_sub:"Trois façons simples de remplir vos temps d'écoute.",
@@ -289,6 +294,7 @@
       hero_title:'אין מוזיקה בשלושת השבועות? <strong>תשמעו תורה</strong> — באותן פלטפורמות שאתם רגילים אליהן.',
       hero_lead:'שמרו על הרגלי ההאזנה שלכם. פתחו את Spotify, Apple Podcasts או Deezer כרגיל — ופשוט החליפו את המוזיקה בשיעור תורה. עשרות רבנים, אלפי שיעורים, במרחק האזנה.',
       hero_cta:'בחרו רב →', hero_cta2:'איך מתחילים',
+      hero_note:'לא נרשמתם לפלטפורמות? אין בעיה — אפשר <a href="./">להאזין ישירות באתר של The Torah Podcast →</a>',
       rabbis_head:'האזינו לרבנים שלכם',
       rabbis_sub:'לחצו על רב כדי להירשם ב-Spotify, ב-Apple Podcasts או ב-Deezer — או להעתיק את קישור ה-RSS.',
       start_head:'איך מתחילים', start_sub:'שלוש דרכים פשוטות למלא את זמן ההאזנה.',
@@ -305,7 +311,7 @@
   window.lang = lang;
   function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
   // Keys whose values contain intentional inline HTML (<strong>).
-  const HTML_KEYS = new Set(['hero_title']);
+  const HTML_KEYS = new Set(['hero_title', 'hero_note']);
   function applyLang() {
     document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
