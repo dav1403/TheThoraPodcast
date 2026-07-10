@@ -82,6 +82,16 @@
     .date-today-btn[hidden] { display:none; }
     .hebrew-date { font-size:.82rem; color:#9a7a3a; margin-left:2px; }
 
+    /* Gregorian / Hebrew mode toggle */
+    .cal-toggle { display:inline-flex; border:1px solid #ddd; border-radius:20px; overflow:hidden; background:#fff; }
+    .cal-toggle button { background:none; border:none; padding:6px 14px; font-size:.78rem; color:#888; cursor:pointer; font-family:inherit; transition:background .15s,color .15s; }
+    .cal-toggle button.active { background:#1a1a2e; color:#fff; font-weight:600; }
+    .heb-select { padding:7px 10px; border:1px solid #ddd; border-radius:20px; font-size:.86rem; color:#1a1a2e; font-family:inherit; background:#fff; cursor:pointer; outline:none; }
+    .heb-select:focus { border-color:#e87722; }
+    .greg-picker { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .heb-picker { display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .heb-picker[hidden], .greg-picker[hidden] { display:none; }
+
     /* Intro — same look as daf-intro */
     .daf-intro { background:#fff; border-left:4px solid #e87722; border-radius:0 8px 8px 0; padding:14px 18px; margin-bottom:20px; font-size:0.88rem; color:#444; line-height:1.7; }
     .daf-intro p + p { margin-top:8px; }
@@ -187,9 +197,25 @@
   </div>
 
   <div class="date-bar">
-    <button class="date-step" id="date-prev" aria-label="Jour précédent">◀</button>
-    <input type="date" class="date-input" id="date-input">
-    <button class="date-step" id="date-next" aria-label="Jour suivant">▶</button>
+    <div class="cal-toggle" role="tablist" aria-label="Type de calendrier">
+      <button id="cal-greg" class="active" data-i18n="cal_greg">Grégorien</button>
+      <button id="cal-heb" data-i18n="cal_heb">Hébraïque</button>
+    </div>
+
+    <!-- Gregorian picker (existing, unchanged behaviour) -->
+    <span class="greg-picker">
+      <button class="date-step" id="date-prev" aria-label="Jour précédent">◀</button>
+      <input type="date" class="date-input" id="date-input">
+      <button class="date-step" id="date-next" aria-label="Jour suivant">▶</button>
+    </span>
+
+    <!-- Hebrew picker (day / month / year) -->
+    <span class="heb-picker" hidden>
+      <select class="heb-select" id="heb-day" aria-label="Jour hébraïque"></select>
+      <select class="heb-select" id="heb-month" aria-label="Mois hébraïque"></select>
+      <select class="heb-select" id="heb-year" aria-label="Année hébraïque"></select>
+    </span>
+
     <button class="date-today-btn" id="date-today" data-i18n="today_btn" hidden>Aujourd'hui</button>
     <span class="hebrew-date" id="hebrew-date"></span>
   </div>
@@ -247,6 +273,8 @@
       hayomyom_note:"Le texte du Hayom Yom n'est pas disponible en libre accès (droits Kehot). Lisez la pensée du jour directement sur Chabad.org.",
       hayomyom_btn:'Lire le Hayom Yom du jour sur Chabad.org ↗',
       today_btn:"Aujourd'hui",
+      cal_greg:'Grégorien', cal_heb:'Hébraïque',
+      heb_months:['Nissan','Iyar','Sivan','Tamouz','Av','Eloul','Tichri','Hechvan','Kislev','Tévet','Chevat','Adar','Adar I','Adar II'],
       hy_day_head:'Le cours du jour',
       no_hy_ep:'Aucun cours Hayom Yom trouvé pour cette date.',
       hy_not_published:"Le cours de cette date n'est pas encore publié — voici le dernier disponible :",
@@ -268,6 +296,8 @@
       hayomyom_note:'טקסט ה"היום יום" אינו זמין לעיון חופשי (זכויות קה"ת). ניתן ללמוד את מחשבת היום ישירות באתר Chabad.org.',
       hayomyom_btn:'למד את היום יום באתר Chabad.org ↗',
       today_btn:'היום',
+      cal_greg:'לועזי', cal_heb:'עברי',
+      heb_months:['ניסן','אייר','סיון','תמוז','אב','אלול','תשרי','חשון','כסלו','טבת','שבט','אדר','אדר א׳','אדר ב׳'],
       hy_day_head:'שיעור היום',
       no_hy_ep:'לא נמצא שיעור "היום יום" לתאריך זה.',
       hy_not_published:'השיעור לתאריך זה טרם פורסם — להלן האחרון הזמין:',
@@ -485,11 +515,11 @@
 
   async function loadForDate(dateObj) {
     const myToken = ++renderToken;
-    const M = dateObj.getMonth() + 1, D = dateObj.getDate(), Y = dateObj.getFullYear();
-
-    // Hayom Yom external link for the selected Gregorian date (US M/D/YYYY).
+    // Hayom Yom external link → generic Chabad.org daily page (always shows the
+    // current day's Hayom Yom). Chabad's ?tdate=M/D/YYYY parameter 404s on this
+    // page, so we keep the stable generic URL rather than build a broken one.
     const ext = document.getElementById('hy-ext-link');
-    if (ext) ext.href = `https://www.chabad.org/dailystudy/hayomyom.htm?tdate=${M}/${D}/${Y}`;
+    if (ext) ext.href = 'https://www.chabad.org/dailystudy/hayomyom.htm';
 
     const results = document.getElementById('hy-day-results');
     results.innerHTML = loadingHtml();
@@ -527,6 +557,7 @@
     selectedDate = dt;
     dateInput.value = ymdLocal(dt);
     updateTodayBtn();
+    syncHebrewSelectors(dt);   // keep the Hebrew picker in sync with the Gregorian date
     loadForDate(dt);
   }
 
@@ -541,6 +572,104 @@
     const dt = new Date(selectedDate); dt.setDate(dt.getDate() + 1); applyDate(dt);
   });
   todayBtn.addEventListener('click', () => applyDate(new Date()));
+
+  // ─── Hebrew date selector ───────────────────────────────────────────────────
+  // hebcal month keys for the reverse conversion (h2g). Index matches the
+  // `heb_months` i18n arrays. Non-leap years collapse Adar/Adar I/Adar II to Adar,
+  // which hebcal resolves automatically — and the episode matcher already treats
+  // them as the same slot.
+  const HEB_MONTH_KEYS = ['Nisan','Iyyar','Sivan','Tamuz','Av','Elul','Tishrei','Cheshvan','Kislev','Tevet','Shvat','Adar','Adar1','Adar2'];
+  const hebDaySel   = document.getElementById('heb-day');
+  const hebMonthSel = document.getElementById('heb-month');
+  const hebYearSel  = document.getElementById('heb-year');
+  const gregPicker  = document.querySelector('.greg-picker');
+  const hebPicker   = document.querySelector('.heb-picker');
+  const calGregBtn  = document.getElementById('cal-greg');
+  const calHebBtn   = document.getElementById('cal-heb');
+  let syncingHeb = false; // guard so programmatic select updates don't re-trigger conversion
+
+  // Populate day (1–30) and month selects once. Years are (re)built around "today".
+  function populateHebSelectors() {
+    const months = t('heb_months');
+    hebDaySel.innerHTML   = Array.from({ length: 30 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
+    hebMonthSel.innerHTML = months.map((name, i) => `<option value="${i}">${name}</option>`).join('');
+  }
+
+  // Convert a Hebrew (day, monthIndex, year) selection to a Gregorian Date via hebcal.
+  async function gregorianFromHebrew(hd, monthIdx, hy) {
+    const hm = HEB_MONTH_KEYS[monthIdx] || 'Nisan';
+    const url = `https://www.hebcal.com/converter?cfg=json&h2g=1&hy=${hy}&hm=${encodeURIComponent(hm)}&hd=${hd}&strict=1`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('hebcal h2g');
+    const data = await res.json();
+    return new Date(data.gy, data.gm - 1, data.gd);
+  }
+
+  // Reflect a Gregorian date into the Hebrew selects (year list built around it).
+  async function syncHebrewSelectors(dt) {
+    try {
+      const info = await hebrewDateInfo(dt); // { day, monthCanon, monthName, hebrewStr }
+      const hy   = await gregorianYearToHebrewYear(dt);
+      // Build a small year range around the selected Hebrew year.
+      hebYearSel.innerHTML = Array.from({ length: 11 }, (_, i) => {
+        const y = hy - 5 + i;
+        return `<option value="${y}">${y}</option>`;
+      }).join('');
+      syncingHeb = true;
+      hebYearSel.value  = String(hy);
+      hebDaySel.value   = String(info.day);
+      // Map hebcal's returned month name to our index via the canonical slot.
+      const canon = info.monthCanon;
+      const idx = canonToMonthIndex(canon);
+      if (idx >= 0) hebMonthSel.value = String(idx);
+      syncingHeb = false;
+    } catch (_) { syncingHeb = false; }
+  }
+
+  // Hebrew year for a Gregorian date (from hebcal g2h).
+  async function gregorianYearToHebrewYear(dt) {
+    const y = dt.getFullYear(), m = dt.getMonth() + 1, d = dt.getDate();
+    const url = `https://www.hebcal.com/converter?cfg=json&g2h=1&gy=${y}&gm=${m}&gd=${d}&strict=1`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('hebcal g2h');
+    const data = await res.json();
+    return data.hy;
+  }
+
+  // Canonical month slot (1=Tishrei..13=Elul, per HMONTH_CANON) → select index.
+  // Adar (canon 6) → "Adar" option (index 11); Adar II (canon 7) → index 13.
+  function canonToMonthIndex(canon) {
+    const map = { 1:6, 2:7, 3:8, 4:9, 5:10, 6:11, 7:13, 8:0, 9:1, 10:2, 11:3, 12:4, 13:5 };
+    return map[canon] !== undefined ? map[canon] : -1;
+  }
+
+  async function onHebrewChange() {
+    if (syncingHeb) return;
+    const hd  = parseInt(hebDaySel.value, 10);
+    const idx = parseInt(hebMonthSel.value, 10);
+    const hy  = parseInt(hebYearSel.value, 10);
+    if (!hd || Number.isNaN(idx) || !hy) return;
+    try {
+      const dt = await gregorianFromHebrew(hd, idx, hy);
+      applyDate(dt);
+    } catch (_) { /* keep current date on conversion failure */ }
+  }
+  hebDaySel.addEventListener('change', onHebrewChange);
+  hebMonthSel.addEventListener('change', onHebrewChange);
+  hebYearSel.addEventListener('change', onHebrewChange);
+
+  function setCalMode(mode) {
+    const heb = mode === 'heb';
+    calHebBtn.classList.toggle('active', heb);
+    calGregBtn.classList.toggle('active', !heb);
+    hebPicker.hidden  = !heb;
+    gregPicker.hidden = heb;
+    if (heb) syncHebrewSelectors(selectedDate);
+  }
+  calGregBtn.addEventListener('click', () => setCalMode('greg'));
+  calHebBtn.addEventListener('click', () => setCalMode('heb'));
+
+  populateHebSelectors();
 
   // Load channels + feeds once, populate the nav submenu, then render for today.
   (async () => {
