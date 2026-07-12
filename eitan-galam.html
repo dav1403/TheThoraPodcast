@@ -512,7 +512,7 @@
   <div class="ch-card">
     <img class="ch-art" src="https://i.ytimg.com/vi/SmApnJ6rgZM/maxresdefault.jpg" alt="Rav Eitan Galam" onerror="this.src='artwork/eitan-galam.png'">
     <div>
-      <h1 class="ch-name">Rav Eitan Galam</h1>
+      <h1 class="ch-name">Rav Eitan Galam<span id="ch-fav-slot" data-slug="eitan-galam"></span></h1>
       <p class="ch-count" id="ep-count"></p>
       <div class="platform-links">
         
@@ -1986,8 +1986,8 @@ Pourquoi est-ce si grave au fond, et pourquoi est-ce…</p>
     if (epCount) epCount.textContent = I18N[lang].ep_count(141);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `32 ערוצים · 12568 שיעורים · ~9426 שעות`
-      : `32 rabbins · 12568 cours · ~9426h de Torah`;
+      ? `32 ערוצים · 12598 שיעורים · ~9448 שעות`
+      : `32 rabbins · 12598 cours · ~9448h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
@@ -2023,6 +2023,12 @@ Pourquoi est-ce si grave au fond, et pourquoi est-ce…</p>
     location.reload();
   }
   applyLang();
+  // Favorite star (localStorage only — no backend). Populated at load so it
+  // reflects the current localStorage state; toggle logic lives in utils.js.
+  (function() {
+    const slot = document.getElementById('ch-fav-slot');
+    if (slot && typeof favStarHtml === 'function') slot.innerHTML = favStarHtml(slot.dataset.slug, 'on-channel');
+  })();
   // Floating player
   const playerEl    = document.getElementById('player');
   const playerAudio = document.getElementById('player-audio');

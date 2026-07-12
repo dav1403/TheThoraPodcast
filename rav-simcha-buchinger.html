@@ -458,7 +458,7 @@
   <div class="ch-card">
     <img class="ch-art" src="https://i.ytimg.com/vi/RJiTL_M9_kM/maxresdefault.jpg" alt="Rav Simcha Buchinger" onerror="this.src='artwork/rav-simcha-buchinger.png'">
     <div>
-      <h1 class="ch-name">Rav Simcha Buchinger</h1>
+      <h1 class="ch-name">Rav Simcha Buchinger<span id="ch-fav-slot" data-slug="rav-simcha-buchinger"></span></h1>
       <p class="ch-count" id="ep-count"></p>
       <div class="platform-links">
         
@@ -773,8 +773,8 @@
     if (epCount) epCount.textContent = I18N[lang].ep_count(24);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `32 ערוצים · 12568 שיעורים · ~9426 שעות`
-      : `32 rabbins · 12568 cours · ~9426h de Torah`;
+      ? `32 ערוצים · 12598 שיעורים · ~9448 שעות`
+      : `32 rabbins · 12598 cours · ~9448h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
@@ -810,6 +810,12 @@
     location.reload();
   }
   applyLang();
+  // Favorite star (localStorage only — no backend). Populated at load so it
+  // reflects the current localStorage state; toggle logic lives in utils.js.
+  (function() {
+    const slot = document.getElementById('ch-fav-slot');
+    if (slot && typeof favStarHtml === 'function') slot.innerHTML = favStarHtml(slot.dataset.slug, 'on-channel');
+  })();
   // Floating player
   const playerEl    = document.getElementById('player');
   const playerAudio = document.getElementById('player-audio');

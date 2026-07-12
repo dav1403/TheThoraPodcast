@@ -440,6 +440,12 @@
     .embed-preview-label { font-size:.72rem; color:#999; margin:14px 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
     .embed-iframe-wrap { border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; height:200px; }
     .embed-iframe-wrap iframe { width:100%; height:100%; border:none; transform:scale(.6); transform-origin:top left; width:167%; height:167%; pointer-events:none; }
+    /* Mobile: keep dropdown submenus centered under the nav and within the viewport (fixes off-screen/unclickable items on phones) */
+    @media (max-width: 600px) {
+      .header-nav { position: relative; }
+      .nav-dropdown { position: static; }
+      .nav-submenu { left: 50%; right: auto; transform: translateX(-50%); min-width: 0; max-width: calc(100vw - 24px); width: max-content; }
+    }
   </style>
 </head>
 <body>
@@ -506,7 +512,7 @@
   <div class="ch-card">
     <img class="ch-art" src="https://i.ytimg.com/vi/pYfqfID7LZ0/maxresdefault.jpg" alt="רב אליהו עטייה" onerror="this.src='artwork/rav-eliahou-attia.png'">
     <div>
-      <h1 class="ch-name">רב אליהו עטייה</h1>
+      <h1 class="ch-name">רב אליהו עטייה<span id="ch-fav-slot" data-slug="rav-eliahou-attia"></span></h1>
       <p class="ch-count" id="ep-count"></p>
       <div class="platform-links">
         
@@ -2122,8 +2128,8 @@
     if (epCount) epCount.textContent = I18N[lang].ep_count(133);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `32 ערוצים · 12568 שיעורים · ~9426 שעות`
-      : `32 rabbins · 12568 cours · ~9426h de Torah`;
+      ? `32 ערוצים · 12598 שיעורים · ~9448 שעות`
+      : `32 rabbins · 12598 cours · ~9448h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
@@ -2159,6 +2165,12 @@
     location.reload();
   }
   applyLang();
+  // Favorite star (localStorage only — no backend). Populated at load so it
+  // reflects the current localStorage state; toggle logic lives in utils.js.
+  (function() {
+    const slot = document.getElementById('ch-fav-slot');
+    if (slot && typeof favStarHtml === 'function') slot.innerHTML = favStarHtml(slot.dataset.slug, 'on-channel');
+  })();
   // Floating player
   const playerEl    = document.getElementById('player');
   const playerAudio = document.getElementById('player-audio');
