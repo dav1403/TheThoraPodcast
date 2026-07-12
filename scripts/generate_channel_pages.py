@@ -1072,6 +1072,44 @@ def build_home_json(
     print(f"  home.json  ({len(recents_out)} recents, {len(channels_out)} channels, {len(speakers_out)} speakers)")
 
 
+def build_search_index(all_data: list[tuple]) -> None:
+    """Pre-compute a minimal full-text search index over the WHOLE catalog.
+
+    index.html lazy-loads this file (search-index.json) the first time the user
+    focuses/types in the search box, so the homepage itself stays ~15 KB
+    (home.json only) at load. Each entry carries ONLY what the search UI needs —
+    no descriptions or other heavy fields — to keep the payload small:
+      t = episode title, c = channel/rav display name, u = episode page URL
+      (identical to ep_path(slug, ep)), d = published date (YYYY-MM-DD).
+
+    Unlike home.json (which drops HITAT DU JOUR from the recents row), the search
+    index intentionally covers the ENTIRE catalog, HITAT included — every episode
+    of every channel is searchable. The (title, published) guard mirrors the
+    episode-page generation in main() so every URL here points to a page that
+    actually exists.
+    """
+    index = []
+    for ch, entries in all_data:
+        ch_name = ch["podcast_author"]
+        slug = ch["slug"]
+        for ep in entries:
+            title = ep.get("title") or ""
+            published = ep.get("published") or ""
+            if not title or not published:
+                continue
+            index.append({
+                "t": title,
+                "c": ch_name,
+                "u": ep_path(slug, ep),
+                "d": published[:10],
+            })
+    Path("search-index.json").write_text(
+        json.dumps(index, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8", newline="\n",
+    )
+    print(f"  search-index.json  ({len(index)} episodes across {len(all_data)} channels)")
+
+
 def update_sitemap(slug_entries: list[tuple]):
     today = datetime.utcnow().strftime("%Y-%m-%d")
     slugs = [s for s, _ in slug_entries]
@@ -1300,6 +1338,10 @@ def main():
 
     # Pre-computed homepage data (replaces the client-side ~11 MB entries.json fan-out).
     build_home_json(all_data, speakers, entries_cache, site_channels, site_episodes)
+
+    # Minimal full-text search index over the whole catalog (lazy-loaded by index.html
+    # only on first search focus/keystroke — keeps the homepage at ~15 KB at load).
+    build_search_index(all_data)
 
     update_sitemap(generated)
     print(f"\nDone — {len(generated)} channel + {len(speakers)} speaker pages + {ep_count} episode pages.")

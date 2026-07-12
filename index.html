@@ -399,6 +399,20 @@
       font-size: 0.9rem;
     }
 
+    /* Full-text search results */
+    .search-results-list { display: flex; flex-direction: column; gap: 8px; }
+    .search-result {
+      display: flex; flex-direction: column; gap: 3px;
+      padding: 10px 12px;
+      border: 1px solid #eee; border-radius: 10px;
+      background: #fff; text-decoration: none; color: inherit;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .search-result:hover { border-color: #e87722; box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+    .search-result-title { font-size: .92rem; font-weight: 600; color: #1a1a2e; line-height: 1.3; }
+    .search-result-meta { font-size: .78rem; color: #888; }
+    .search-more { text-align: center; color: #aaa; font-size: .8rem; padding: 14px 20px 4px; }
+
     /* Persistent player */
     #player {
       position: fixed;
@@ -797,30 +811,99 @@
     return wrap;
   }
 
-  // Home search is now a lightweight NAME filter over the channel grid + rabbi
-  // bubbles (full-text episode search across every channel required all
-  // entries.json — that deep search lives on the dedicated <slug>.html pages).
+  // Full-text search over the WHOLE catalog. The index (search-index.json, one
+  // {t,c,u,d} row per episode of every channel — HITAT included) is fetched
+  // LAZILY the first time the user focuses/types in the box, so the homepage
+  // itself stays ~15 KB (home.json only) at load. Results link to episode pages.
+  const SEARCH_MAX_RESULTS = 100;
+  let searchIndex = null;        // null = not loaded; [] = loaded
+  let searchLoading = null;      // in-flight fetch promise (dedupe)
+
+  function loadSearchIndex() {
+    if (searchIndex) return Promise.resolve(searchIndex);
+    if (searchLoading) return searchLoading;
+    searchLoading = fetch('search-index.json')
+      .then(r => (r.ok ? r.json() : []))
+      .then(data => { searchIndex = Array.isArray(data) ? data : []; return searchIndex; })
+      .catch(() => { searchIndex = []; return searchIndex; });
+    return searchLoading;
+  }
+
   function setupSearch() {
-    const input   = document.getElementById('search');
-    const recents = document.getElementById('recents-section');
-    const noRes   = document.getElementById('no-results');
+    const input    = document.getElementById('search');
+    const recents  = document.getElementById('recents-section');
+    const channels = document.getElementById('channels-section');
+    const bubbles  = document.querySelector('.rabbi-bubbles-section');
+    const results  = document.getElementById('search-results');
+    const noRes    = document.getElementById('no-results');
 
-    input.addEventListener('input', () => {
+    const homeSections = [bubbles, recents, channels].filter(Boolean);
+    const showHome = (on) => { homeSections.forEach(s => { s.hidden = !on; }); };
+
+    function renderResults(q) {
+      const rows = (searchIndex || []).filter(ep => {
+        const t = (ep.t || '').toLowerCase();
+        const c = (ep.c || '').toLowerCase();
+        return t.includes(q) || c.includes(q);
+      });
+      // Index is built channel-by-channel; sort matches newest-first for display.
+      rows.sort((a, b) => (b.d || '').localeCompare(a.d || ''));
+
+      const total = rows.length;
+      const shown = rows.slice(0, SEARCH_MAX_RESULTS);
+      const cards = shown.map(ep => `
+        <a class="search-result" href="${escapeHtml(ep.u)}">
+          <span class="search-result-title">${escapeHtml(ep.t)}</span>
+          <span class="search-result-meta">${escapeHtml(ep.c)}${ep.d ? ' · ' + formatDate(ep.d) : ''}</span>
+        </a>`).join('');
+
+      const moreNote = total > shown.length
+        ? `<div class="search-more">${lang === 'he'
+            ? `מוצגות ${shown.length} תוצאות מתוך ${total}. דייקו את החיפוש.`
+            : `${shown.length} résultats affichés sur ${total}. Affinez votre recherche.`}</div>`
+        : '';
+
+      results.innerHTML = `<div class="section-label">${lang === 'he' ? 'תוצאות' : 'Résultats'}</div>`
+        + `<div class="search-results-list">${cards}</div>${moreNote}`;
+      results.hidden = false;
+      if (noRes) noRes.hidden = total > 0;
+    }
+
+    let pending = false;
+    async function runSearch() {
       const q = input.value.toLowerCase().trim();
-      if (recents) recents.hidden = q.length > 0;
+      if (!q) {
+        results.hidden = true;
+        results.innerHTML = '';
+        if (noRes) noRes.hidden = true;
+        showHome(true);
+        return;
+      }
+      showHome(false);
+      if (!searchIndex) {
+        // First query before the index arrived: show a brief loading note.
+        results.hidden = false;
+        if (noRes) noRes.hidden = true;
+        results.innerHTML = `<div class="state">${t('loading')}</div>`;
+        if (pending) return;
+        pending = true;
+        await loadSearchIndex();
+        pending = false;
+        // The input may have changed while loading — re-read it.
+        if (input.value.toLowerCase().trim() !== q && input.value.trim()) return runSearch();
+        if (!input.value.trim()) { results.hidden = true; showHome(true); return; }
+      }
+      renderResults(input.value.toLowerCase().trim());
+    }
 
-      let anyVisible = false;
-      document.querySelectorAll('.channel-grid-card').forEach(card => {
-        const match = !q || (card.dataset.name && card.dataset.name.includes(q));
-        card.hidden = !match;
-        if (match) anyVisible = true;
-      });
-      document.querySelectorAll('.rabbi-bubble').forEach(b => {
-        const name = (b.getAttribute('title') || '').toLowerCase();
-        b.hidden = q ? !name.includes(q) : false;
-      });
+    // Kick off the lazy load as soon as the user shows intent (focus), so the
+    // index is usually ready by the time they finish typing — never at page load.
+    input.addEventListener('focus', loadSearchIndex, { once: true });
 
-      if (noRes) noRes.hidden = !q || anyVisible;
+    let debounce;
+    input.addEventListener('input', () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(runSearch, 120);
     });
   }
 
@@ -857,6 +940,12 @@
     if (bubblesSection) app.appendChild(bubblesSection);
     app.appendChild(buildRecents());
     app.appendChild(buildChannelGrid());
+
+    // Full-text search results land here (populated lazily by setupSearch).
+    const searchResults = document.createElement('div');
+    searchResults.id = 'search-results';
+    searchResults.hidden = true;
+    app.appendChild(searchResults);
 
     const noRes = document.createElement('div');
     noRes.id = 'no-results';
