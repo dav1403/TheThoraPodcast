@@ -121,6 +121,86 @@ function buildCarousel(label, items) {
   return section;
 }
 
+// ─── Favorite ravs (localStorage only — no backend, no account) ──────────────
+// Persisted as a JSON array of channel/speaker slugs under a single key.
+var FAV_RAVS_KEY = 'ttp_favorite_ravs';
+
+function getFavoriteRavs() {
+  try {
+    var v = JSON.parse(localStorage.getItem(FAV_RAVS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (_) { return []; }
+}
+
+function isFavoriteRav(slug) {
+  return getFavoriteRavs().indexOf(slug) !== -1;
+}
+
+// Toggle a slug's favorite state. Returns true if it is now favorited.
+function toggleFavoriteRav(slug) {
+  var favs = getFavoriteRavs();
+  var i = favs.indexOf(slug);
+  if (i === -1) favs.push(slug); else favs.splice(i, 1);
+  try { localStorage.setItem(FAV_RAVS_KEY, JSON.stringify(favs)); } catch (_) {}
+  return i === -1;
+}
+
+function starSvg(filled) {
+  var pts = '12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26';
+  return filled
+    ? '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><polygon points="' + pts + '"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><polygon points="' + pts + '"/></svg>';
+}
+
+// Inject the shared favorite-star CSS once, so any page (static or generated)
+// renders stars consistently without duplicating styles.
+function _injectFavCSS() {
+  if (document.getElementById('fav-css')) return;
+  var s = document.createElement('style');
+  s.id = 'fav-css';
+  s.textContent =
+    '.fav-star{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#c4c4cc;width:1.5em;height:1.5em;transition:transform .12s ease,color .12s ease;-webkit-tap-highlight-color:transparent}' +
+    '.fav-star svg{width:100%;height:100%;display:block}' +
+    '.fav-star:hover{transform:scale(1.15);color:#f5b301}' +
+    '.fav-star.is-fav{color:#f5b301}' +
+    '.fav-star:focus-visible{outline:2px solid #f5b301;outline-offset:2px;border-radius:4px}' +
+    '.fav-star.on-bubble{position:absolute;top:-3px;right:-3px;width:26px;height:26px;padding:4px;background:rgba(255,255,255,.94);border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.22)}' +
+    '.fav-star.on-channel{vertical-align:middle;margin-inline-start:8px;width:1.5em;height:1.5em}';
+  document.head.appendChild(s);
+}
+
+// Build the markup for a favorite-star toggle bound to a given slug.
+// `variant` is an optional extra class (e.g. 'on-bubble', 'on-channel').
+function favStarHtml(slug, variant) {
+  _injectFavCSS();
+  var fav = isFavoriteRav(slug);
+  var label = fav ? 'Retirer des favoris' : 'Ajouter aux favoris';
+  return '<span class="fav-star' + (variant ? ' ' + variant : '') + (fav ? ' is-fav' : '') +
+    '" role="button" tabindex="0" aria-pressed="' + fav + '" aria-label="' + label +
+    '" title="' + label + '" data-fav-slug="' + escapeHtml(slug) +
+    '" onclick="favStarToggle(event,this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){favStarToggle(event,this)}">' +
+    starSvg(fav) + '</span>';
+}
+
+// Click/keyboard handler for a favorite star. Toggles the slug, updates every
+// star for that slug on the page, and fires a `favchange` event so views
+// (e.g. the "Mes favoris" filter) can react.
+function favStarToggle(evt, el) {
+  if (evt) { evt.preventDefault(); evt.stopPropagation(); }
+  var slug = el.getAttribute('data-fav-slug');
+  var nowFav = toggleFavoriteRav(slug);
+  var label = nowFav ? 'Retirer des favoris' : 'Ajouter aux favoris';
+  document.querySelectorAll('.fav-star').forEach(function(s) {
+    if (s.getAttribute('data-fav-slug') !== slug) return;
+    s.classList.toggle('is-fav', nowFav);
+    s.setAttribute('aria-pressed', nowFav);
+    s.setAttribute('aria-label', label);
+    s.setAttribute('title', label);
+    s.innerHTML = starSvg(nowFav);
+  });
+  document.dispatchEvent(new CustomEvent('favchange', { detail: { slug: slug, fav: nowFav } }));
+}
+
 // Auto-load header stats if #header-stats exists and isn't already populated
 (function loadHeaderStats() {
   var el = document.getElementById('header-stats');

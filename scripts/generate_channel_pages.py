@@ -413,7 +413,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
   <div class="ch-card">
     <img class="ch-art" src="{esc(ch.get('thumbnail') or f'artwork/{slug}.png')}" alt="{esc(name)}" onerror="this.src='artwork/{slug}.png'">
     <div>
-      <h1 class="ch-name">{esc(name)}</h1>
+      <h1 class="ch-name">{esc(name)}<span id="ch-fav-slot" data-slug="{slug}"></span></h1>
       <p class="ch-count" id="ep-count"></p>
       <div class="platform-links">
         {platform_html}
@@ -526,6 +526,12 @@ def render_page(ch: dict, entries: list, all_channels: list,
     location.reload();
   }}
   applyLang();
+  // Favorite star (localStorage only — no backend). Populated at load so it
+  // reflects the current localStorage state; toggle logic lives in utils.js.
+  (function() {{
+    const slot = document.getElementById('ch-fav-slot');
+    if (slot && typeof favStarHtml === 'function') slot.innerHTML = favStarHtml(slot.dataset.slug, 'on-channel');
+  }})();
   // Floating player
   const playerEl    = document.getElementById('player');
   const playerAudio = document.getElementById('player-audio');

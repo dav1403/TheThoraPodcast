@@ -375,6 +375,7 @@
 <div class="sort-bar">
   <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')" data-i18n="sort_latest">Dernier cours</button>
   <button class="sort-btn"        id="sort-alpha"  onclick="setSort('alpha')"  data-i18n="sort_alpha">Alphabétique</button>
+  <button class="sort-btn fav-toggle" id="fav-toggle" aria-pressed="false" onclick="toggleFavView(this)" data-i18n="fav_only">★ Mes favoris</button>
 </div>
 
 <main id="app"></main>
@@ -392,8 +393,10 @@
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       loading:'Chargement…',
       sort_latest:'Dernier cours', sort_alpha:'Alphabétique',
+      fav_only:'★ Mes favoris',
       search_ph:'Rechercher un rav ou un cours…',
       no_results:'Aucun rav trouvé.',
+      no_favs:'Aucun favori pour le moment. Touchez l’étoile d’un rav pour le retrouver ici.',
       all_courses:'Voir tous les cours →',
       copy_rss:'Copier RSS', copied:'✓ Copié !',
       ep_singular:'épisode', ep_plural:'épisodes',
@@ -405,8 +408,10 @@
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       loading:'טוען…',
       sort_latest:'לפי תאריך', sort_alpha:'א–ב',
+      fav_only:'★ המועדפים שלי',
       search_ph:'חיפוש רב או שיעור…',
       no_results:'לא נמצא רב.',
+      no_favs:'אין עדיין מועדפים. הקישו על הכוכב של רב כדי למצוא אותו כאן.',
       all_courses:'לכל השיעורים →',
       copy_rss:'העתק RSS', copied:'✓ הועתק !',
       ep_singular:'פרק', ep_plural:'פרקים',
@@ -482,6 +487,7 @@
           <img class="bubble-img" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt="${escapeHtml(ch.podcast_author)}"
                loading="lazy" onerror="this.style.background='#cfcfd6';this.removeAttribute('src')">
           ${recent ? '<span class="bubble-dot"></span>' : ''}
+          ${favStarHtml(ch.slug, 'on-bubble')}
         </span>
         <span class="bubble-name">${escapeHtml(ch.podcast_author)}</span>
       </button>`;
@@ -505,6 +511,16 @@
   }
 
   let searchQuery = '';
+  let favOnly = false;
+
+  function toggleFavView(btn) {
+    favOnly = !favOnly;
+    btn.classList.toggle('active', favOnly);
+    btn.setAttribute('aria-pressed', favOnly);
+    render();
+  }
+  // When a star is toggled while the favorites filter is active, keep the grid in sync.
+  document.addEventListener('favchange', () => { if (favOnly) render(); });
 
   // Keyword rule: match the rabbi NAME first (rank 0), then a course TITLE (rank 1).
   function matchRank(d, q) {
@@ -516,6 +532,10 @@
 
   function render() {
     let list = getSorted(currentSort);
+    if (favOnly) {
+      const favs = getFavoriteRavs();
+      list = list.filter(d => favs.indexOf(d.ch.slug) !== -1);
+    }
     if (searchQuery) {
       list = list
         .map(d => ({ d, r: matchRank(d, searchQuery) }))
@@ -525,7 +545,10 @@
     }
     document.getElementById('app').innerHTML = list.map(bubbleHtml).join('');
     const noRes = document.getElementById('no-results');
-    if (noRes) noRes.hidden = list.length > 0;
+    if (noRes) {
+      noRes.hidden = list.length > 0;
+      noRes.textContent = (favOnly && !searchQuery) ? t('no_favs') : t('no_results');
+    }
   }
 
   function setSort(sort) {
@@ -565,7 +588,7 @@
           <img class="modal-art" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt=""
                onerror="this.style.background='#cfcfd6';this.removeAttribute('src')">
           <div>
-            <div class="modal-name">${escapeHtml(ch.podcast_author)}</div>
+            <div class="modal-name">${escapeHtml(ch.podcast_author)}${favStarHtml(ch.slug, 'on-channel')}</div>
             ${sub ? `<div class="modal-sub">${sub}</div>` : ''}
           </div>
         </div>
