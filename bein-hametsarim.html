@@ -161,6 +161,12 @@
     .site-footer a:hover { color: #fff; }
     /* RSS controls hidden from public UI (feeds still served). */
     .btn-rss, .copy-rss { display: none !important; }
+    /* Mobile: keep dropdown submenus centered under the nav and within the viewport (fixes off-screen/unclickable items on phones) */
+    @media (max-width: 600px) {
+      .header-nav { position: relative; }
+      .nav-dropdown { position: static; }
+      .nav-submenu { left: 50%; right: auto; transform: translateX(-50%); min-width: 0; max-width: calc(100vw - 24px); width: max-content; }
+    }
   </style>
 </head>
 <body>

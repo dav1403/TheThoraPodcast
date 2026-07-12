@@ -370,6 +370,12 @@
     .recent-parachiot-row::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
     .rp-chip { flex-shrink: 0; background: #fff; border: 1px solid #e2ddd0; border-radius: 18px; padding: 6px 14px; font-size: .82rem; color: #4a3f2a; cursor: pointer; font-family: inherit; white-space: nowrap; transition: all .15s; }
     .rp-chip:hover { border-color: #e87722; color: #e87722; }
+    /* Mobile: keep dropdown submenus centered under the nav and within the viewport (fixes off-screen/unclickable items on phones) */
+    @media (max-width: 600px) {
+      .header-nav { position: relative; }
+      .nav-dropdown { position: static; }
+      .nav-submenu { left: 50%; right: auto; transform: translateX(-50%); min-width: 0; max-width: calc(100vw - 24px); width: max-content; }
+    }
   </style>
 </head>
 <body>
