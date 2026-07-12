@@ -237,8 +237,8 @@ function _injectMobileNavCSS() {
     '@media(max-width:768px){' +
       'header{position:relative}' +
       '.header-nav{display:none!important}' +
-      '.mnav-toggle{display:flex;flex-direction:column;justify-content:center;gap:5px;position:absolute;top:16px;right:14px;width:42px;height:42px;padding:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;z-index:120}' +
-      '[dir=rtl] .mnav-toggle{right:auto;left:14px}' +
+      '.mnav-toggle{display:flex;flex-direction:column;justify-content:center;gap:5px;position:absolute;top:16px;left:14px;width:42px;height:42px;padding:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;z-index:120}' +
+      '[dir=rtl] .mnav-toggle{left:auto;right:14px}' +
       '.mnav-toggle span{display:block;height:2px;width:100%;background:#fff;border-radius:2px}' +
       '.mnav-overlay{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .25s ease;z-index:998}' +
       '.mnav-overlay.open{opacity:1;visibility:visible}' +
