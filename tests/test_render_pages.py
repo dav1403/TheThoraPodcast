@@ -95,3 +95,31 @@ def test_speaker_name_appears_in_page(gen, channels, speakers, entries_cache):
     eps = _speaker_episodes(gen, speaker, entries_cache)
     html = gen.render_speaker_page(speaker, eps, enabled, speakers, 4, 28, 21)
     assert speaker["name"] in html
+
+
+def test_capitalised_slug_page_url_is_lowercase(gen, channels, entries_un):
+    """A capitalised channel slug (e.g. Nahal-Haim) must expose a lowercase
+    canonical page URL, while the feed/artwork keep the original slug so the
+    already-ingested podcast feeds never move."""
+    enabled = [c for c in channels if c.get("enabled")]
+    cap = dict(enabled[0])
+    cap["slug"] = "Nahal-Haim"
+    html = gen.render_page(cap, entries_un, enabled + [cap], 4, 28, 21)
+    assert f'rel="canonical" href="{gen.BASE_URL}/nahal-haim.html"' in html
+    assert f'{gen.BASE_URL}/Nahal-Haim.html' not in html
+    # Feed and artwork stay on the original (capitalised) slug.
+    assert f'{gen.BASE_URL}/feeds/Nahal-Haim.xml' in html
+    assert f'{gen.BASE_URL}/artwork/Nahal-Haim.png' in html
+
+
+def test_url_slug_and_redirect_stub(gen, tmp_path, monkeypatch):
+    assert gen.url_slug("Nahal-Haim") == "nahal-haim"
+    assert gen.url_slug("already-low") == "already-low"
+    monkeypatch.chdir(tmp_path)
+    gen.write_redirect_stub("Nahal-Haim", "nahal-haim")
+    stub = (tmp_path / "Nahal-Haim.html").read_text(encoding="utf-8")
+    assert 'url=https://thetorahpodcast.net/nahal-haim.html' in stub
+    assert 'noindex' in stub
+    # No stub when the slug is already lowercase.
+    gen.write_redirect_stub("already-low", "already-low")
+    assert not (tmp_path / "already-low.html").exists()

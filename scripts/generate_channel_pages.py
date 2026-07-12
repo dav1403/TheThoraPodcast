@@ -28,6 +28,44 @@ MONTHS_FR = [
 NAV_ITEMS: list[dict] = []
 
 
+def url_slug(slug: str) -> str:
+    """Canonical, lowercase URL form of a channel/speaker slug.
+
+    The on-disk feed files, episode directories and artwork keep their original
+    (sometimes capitalised) slug — e.g. feeds/Nahal-Haim.xml, which Spotify/Apple
+    already ingest and must never move. Only the *HTML page* URL is normalised to
+    lowercase so the site exposes a single canonical, lowercase URL per rav. The
+    capitalised page is emitted as a redirect stub (see write_redirect_stub)."""
+    return slug.lower()
+
+
+REDIRECT_STUB = """<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Redirection — The Torah Podcast</title>
+<link rel="canonical" href="{base}/{target}.html">
+<meta http-equiv="refresh" content="0; url={base}/{target}.html">
+<meta name="robots" content="noindex, follow">
+</head>
+<body>
+<p>Cette page a été déplacée. <a href="{base}/{target}.html">Cliquez ici si vous n'êtes pas redirigé automatiquement</a>.</p>
+<script>location.replace("{base}/{target}.html");</script>
+</body>
+</html>
+"""
+
+
+def write_redirect_stub(from_slug: str, to_slug: str) -> None:
+    """Write a canonical redirect stub at <from_slug>.html pointing to the
+    lowercase canonical <to_slug>.html. No-op when they are already equal."""
+    if from_slug == to_slug:
+        return
+    Path(f"{from_slug}.html").write_text(
+        REDIRECT_STUB.format(base=BASE_URL, target=to_slug), encoding="utf-8"
+    )
+
+
 def render_nav_submenu(href_prefix: str = "") -> str:
     """Render the Rabbins dropdown links from NAV_ITEMS, showing '(N)' episode counts.
     href_prefix is "" for top-level pages and "../" for episode subpages."""
@@ -36,7 +74,7 @@ def render_nav_submenu(href_prefix: str = "") -> str:
         count_tag = " ({})".format(it["count"]) if it["count"] else ""
         parts.append(
             '      <a href="{}{}.html">{}{}</a>'.format(
-                href_prefix, esc(it["slug"]), esc(it["name"]), count_tag
+                href_prefix, esc(url_slug(it["slug"])), esc(it["name"]), count_tag
             )
         )
     return "\n".join(parts)
@@ -245,6 +283,7 @@ def load_channel_info(slug: str) -> dict:
 def render_page(ch: dict, entries: list, all_channels: list,
                 site_channels: int = 0, site_episodes: int = 0, site_hours: int = 0) -> str:
     slug      = ch["slug"]
+    pslug     = url_slug(slug)  # lowercase canonical URL slug (feeds/dirs keep `slug`)
     name      = ch["podcast_author"]
     lang      = ch.get("podcast_language", "fr")
     platforms = ch.get("platforms", {})
@@ -344,7 +383,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
         "@type": "PodcastSeries",
         "name": name,
         "description": description,
-        "url": f"{BASE_URL}/{slug}.html",
+        "url": f"{BASE_URL}/{pslug}.html",
         "webFeed": f"{BASE_URL}/feeds/{slug}.xml",
         "image": f"{BASE_URL}/artwork/{slug}.png",
         "inLanguage": ["fr", "he"],
@@ -376,12 +415,12 @@ def render_page(ch: dict, entries: list, all_channels: list,
   <title>{esc(name)} — Cours de Torah en podcast — The Torah Podcast</title>
   <meta name="description" content="{esc(description)}">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="{BASE_URL}/{slug}.html">
-  <link rel="alternate" hreflang="fr" href="{BASE_URL}/{slug}.html">
-  <link rel="alternate" hreflang="he" href="{BASE_URL}/{slug}.html">
-  <link rel="alternate" hreflang="x-default" href="{BASE_URL}/{slug}.html">
+  <link rel="canonical" href="{BASE_URL}/{pslug}.html">
+  <link rel="alternate" hreflang="fr" href="{BASE_URL}/{pslug}.html">
+  <link rel="alternate" hreflang="he" href="{BASE_URL}/{pslug}.html">
+  <link rel="alternate" hreflang="x-default" href="{BASE_URL}/{pslug}.html">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="{BASE_URL}/{slug}.html">
+  <meta property="og:url" content="{BASE_URL}/{pslug}.html">
   <meta property="og:title" content="{esc(name)} — The Torah Podcast">
   <meta property="og:description" content="{esc(description)}">
   <meta property="og:image" content="{BASE_URL}/artwork/{slug}.png">
@@ -696,6 +735,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
 
 def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: list) -> str:
     slug     = ch["slug"]
+    pslug    = url_slug(slug)  # lowercase canonical URL slug for links to the show page
     name     = ch["podcast_author"]
     lang     = ch.get("podcast_language", "fr")
     video_id = ep.get("video_id", "")
@@ -762,7 +802,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         "partOfSeries": {
             "@type": "PodcastSeries",
             "name": name,
-            "url": f"{BASE_URL}/{slug}.html",
+            "url": f"{BASE_URL}/{pslug}.html",
         },
         "author": {"@type": "Person", "name": name},
         "description": desc[:500] if desc else f"Épisode de {name}",
@@ -778,7 +818,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         "@type": "BreadcrumbList",
         "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "Accueil", "item": f"{BASE_URL}/"},
-            {"@type": "ListItem", "position": 2, "name": name, "item": f"{BASE_URL}/{slug}.html"},
+            {"@type": "ListItem", "position": 2, "name": name, "item": f"{BASE_URL}/{pslug}.html"},
             {"@type": "ListItem", "position": 3, "name": title, "item": f"{BASE_URL}/{ep_path(slug, ep)}"},
         ],
     }
@@ -882,11 +922,11 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   </nav>
 </header>
 <main>
-  <p class="breadcrumb"><a href="../">Accueil</a> › <a href="../{slug}.html">{esc(name)}</a> › {esc(breadcrumb_title)}</p>
+  <p class="breadcrumb"><a href="../">Accueil</a> › <a href="../{pslug}.html">{esc(name)}</a> › {esc(breadcrumb_title)}</p>
   <div class="ep-hero">
     {thumb_tag}
     <h1>{esc(title)}</h1>
-    <p class="ep-meta"><a href="../{slug}.html" style="color:#888;text-decoration:none">{esc(name)}</a> · <time datetime="{pub}">{fmt_date(ep["published"], lang)}{" · " + fmt_dur(ep.get("duration_secs",0)) if ep.get("duration_secs") else ""}</time></p>
+    <p class="ep-meta"><a href="../{pslug}.html" style="color:#888;text-decoration:none">{esc(name)}</a> · <time datetime="{pub}">{fmt_date(ep["published"], lang)}{" · " + fmt_dur(ep.get("duration_secs",0)) if ep.get("duration_secs") else ""}</time></p>
     {f'<div style="margin-bottom:8px">{tags_html}</div>' if tags_html else ''}
     {audio_tag}
     <div class="speed-bar">
@@ -1115,7 +1155,7 @@ def update_sitemap(slug_entries: list[tuple]):
     slugs = [s for s, _ in slug_entries]
     channel_entries = "\n".join(
         f"  <url>\n"
-        f"    <loc>{BASE_URL}/{slug}.html</loc>\n"
+        f"    <loc>{BASE_URL}/{url_slug(slug)}.html</loc>\n"
         f"    <lastmod>{today}</lastmod>\n"
         f"    <changefreq>daily</changefreq>\n"
         f"    <priority>0.9</priority>\n"
@@ -1289,10 +1329,14 @@ def main():
     # Channel pages
     generated = []
     for ch, entries in all_data:
-        slug = ch["slug"]
-        page = render_page(ch, entries, enabled, site_channels, site_episodes, site_hours)
-        out  = Path(f"{slug}.html")
+        slug  = ch["slug"]
+        pslug = url_slug(slug)
+        page  = render_page(ch, entries, enabled, site_channels, site_episodes, site_hours)
+        out   = Path(f"{pslug}.html")
         out.write_text(page, encoding="utf-8")
+        # Capitalised slugs (Nahal-Haim, Rav-Itshak-Sitruk) keep a redirect stub at
+        # the old URL so existing links/bookmarks don't 404. Feeds stay capitalised.
+        write_redirect_stub(slug, pslug)
         print(f"  {out}  ({len(entries)} episodes)")
         generated.append((slug, entries))
 
@@ -1320,11 +1364,13 @@ def main():
                     if speaker_matches(ep.get("title", ""), speaker["title_patterns"])
                 ]
         sp_episodes.sort(key=lambda x: x.get("published", ""), reverse=True)
-        slug = speaker["slug"]
-        page = render_speaker_page(speaker, sp_episodes, enabled, speakers,
-                                   site_channels, site_episodes, site_hours)
-        Path(f"{slug}.html").write_text(page, encoding="utf-8")
-        print(f"  {slug}.html  ({len(sp_episodes)} episodes)")
+        slug  = speaker["slug"]
+        pslug = url_slug(slug)
+        page  = render_speaker_page(speaker, sp_episodes, enabled, speakers,
+                                    site_channels, site_episodes, site_hours)
+        Path(f"{pslug}.html").write_text(page, encoding="utf-8")
+        write_redirect_stub(slug, pslug)
+        print(f"  {pslug}.html  ({len(sp_episodes)} episodes)")
         sp_dir = Path(slug)
         sp_dir.mkdir(exist_ok=True)
         fake_ch = {"slug": slug, "podcast_author": speaker["name"],
