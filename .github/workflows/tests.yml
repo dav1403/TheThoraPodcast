@@ -1,0 +1,38 @@
+name: tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install test deps
+        # The generator suite is stdlib-only, so pytest is all it needs.
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Run generator tests
+        # Scoped to the generator test-suite (the feedback loop this workflow
+        # guards). The pre-existing tests/test_youtube_discovery.py is left out
+        # on purpose: it imports the full YouTube-ingest runtime (requests,
+        # yt-dlp, ...) and was never wired into CI — pulling those heavyweight
+        # deps in would slow every run and couple this loop to ingest code it
+        # isn't meant to cover.
+        run: |
+          python -m pytest \
+            tests/test_build_home_json.py \
+            tests/test_build_search_index.py \
+            tests/test_render_pages.py \
+            tests/test_artifacts_integrity.py \
+            tests/test_generate_end_to_end.py \
+            -q

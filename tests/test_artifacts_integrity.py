@@ -1,0 +1,57 @@
+"""Integrity checks on the committed artifacts (home.json / search-index.json).
+
+These run against the real repo root (not the fixtures): they catch a corrupt
+or drifted commit — invalid JSON, missing fields, or URLs that point to pages
+that were never generated / got deleted.
+"""
+import json
+import random
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+HOME = ROOT / "home.json"
+SEARCH = ROOT / "search-index.json"
+
+
+@pytest.fixture(scope="module")
+def home():
+    if not HOME.exists():
+        pytest.skip("home.json not present")
+    return json.loads(HOME.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="module")
+def search_index():
+    if not SEARCH.exists():
+        pytest.skip("search-index.json not present")
+    return json.loads(SEARCH.read_text(encoding="utf-8"))
+
+
+def test_home_json_valid_shape(home):
+    assert set(home) >= {"stats", "channels", "speakers", "recents"}
+    assert isinstance(home["recents"], list) and home["recents"]
+    for r in home["recents"]:
+        assert r["url"].endswith(".html")
+
+
+def test_search_index_valid_shape(search_index):
+    assert isinstance(search_index, list) and search_index
+    for e in search_index[:200]:
+        assert set(e) == {"t", "c", "u", "d"}
+        assert e["t"] and e["u"]
+
+
+def test_home_recent_urls_exist(home):
+    for r in home["recents"]:
+        assert (ROOT / r["url"]).exists(), f"home recent points to missing page: {r['url']}"
+
+
+def test_search_index_url_sample_exists(search_index):
+    # Deterministic sample so failures are reproducible; a broken URL here means
+    # the search box would 404 on that result.
+    rng = random.Random(1403)
+    sample = rng.sample(search_index, min(50, len(search_index)))
+    missing = [e["u"] for e in sample if not (ROOT / e["u"]).exists()]
+    assert not missing, f"search-index URLs point to missing pages: {missing[:5]}"
