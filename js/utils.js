@@ -201,6 +201,187 @@ function favStarToggle(evt, el) {
   document.dispatchEvent(new CustomEvent('favchange', { detail: { slug: slug, fav: nowFav } }));
 }
 
+// ─── Mobile slide-in navigation (hamburger) ─────────────────────────────────
+// A real off-canvas menu for phones/tablets. Instead of hard-coding a nav into
+// every page, this clones the page's existing `.header-nav` into a slide-in
+// panel, so any page (static or CI-generated) gets a coherent mobile menu from
+// the single shared file — no per-page markup and no regeneration drift.
+function _injectMobileNavCSS() {
+  if (document.getElementById('mnav-css')) return;
+  var s = document.createElement('style');
+  s.id = 'mnav-css';
+  s.textContent =
+    '.mnav-toggle{display:none}.mnav-overlay{display:none}.mnav-panel{display:none}' +
+    // Panel interior (rendered only on mobile, where the panel is shown)
+    '.mnav-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 12px;border-bottom:1px solid rgba(255,255,255,.12)}' +
+    '.mnav-title{font-size:1.05rem;font-weight:600}' +
+    '.mnav-close{background:none;border:none;color:rgba(255,255,255,.72);font-size:1.5rem;line-height:1;cursor:pointer;padding:4px 8px;font-family:inherit}' +
+    '.mnav-close:hover{color:#fff}' +
+    '.mnav-list{padding:8px 0 40px}' +
+    '.mnav-item{display:block;color:rgba(255,255,255,.82);text-decoration:none;font-size:1rem;padding:13px 20px;border:none;background:none;width:100%;text-align:left;font-family:inherit;cursor:pointer;box-sizing:border-box}' +
+    '[dir=rtl] .mnav-item{text-align:right}' +
+    '.mnav-item:hover{background:rgba(255,255,255,.06);color:#fff}' +
+    '.mnav-item.active{color:#fff;font-weight:600;box-shadow:inset 3px 0 0 #e87722}' +
+    '[dir=rtl] .mnav-item.active{box-shadow:inset -3px 0 0 #e87722}' +
+    '.mnav-group{border-bottom:1px solid rgba(255,255,255,.05)}' +
+    '.mnav-grouphead{display:flex;align-items:center}' +
+    '.mnav-grouplink{flex:1}' +
+    '.mnav-acc{background:none;border:none;color:rgba(255,255,255,.6);font-size:1rem;padding:13px 20px;cursor:pointer;transition:transform .2s;font-family:inherit}' +
+    '.mnav-group.open .mnav-acc{transform:rotate(180deg);color:#fff}' +
+    '.mnav-sub{max-height:0;overflow:hidden;transition:max-height .28s ease;background:rgba(0,0,0,.22)}' +
+    '.mnav-group.open .mnav-sub{max-height:1400px}' +
+    '.mnav-subitem{display:block;color:rgba(255,255,255,.66);text-decoration:none;font-size:.9rem;padding:11px 20px 11px 34px}' +
+    '[dir=rtl] .mnav-subitem{padding:11px 34px 11px 20px}' +
+    '.mnav-subitem:hover{background:rgba(255,255,255,.06);color:#fff}' +
+    // Show the mobile menu, hide the desktop nav, at tablet width and below
+    '@media(max-width:768px){' +
+      'header{position:relative}' +
+      '.header-nav{display:none!important}' +
+      '.mnav-toggle{display:flex;flex-direction:column;justify-content:center;gap:5px;position:absolute;top:16px;right:14px;width:42px;height:42px;padding:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;z-index:120}' +
+      '[dir=rtl] .mnav-toggle{right:auto;left:14px}' +
+      '.mnav-toggle span{display:block;height:2px;width:100%;background:#fff;border-radius:2px}' +
+      '.mnav-overlay{display:block;position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .25s ease;z-index:998}' +
+      '.mnav-overlay.open{opacity:1;visibility:visible}' +
+      '.mnav-panel{display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100%;width:min(84vw,320px);background:#14142a;color:#fff;transform:translateX(100%);transition:transform .25s ease;z-index:999;box-shadow:-6px 0 24px rgba(0,0,0,.4);overflow-y:auto;-webkit-overflow-scrolling:touch}' +
+      '[dir=rtl] .mnav-panel{right:auto;left:0;transform:translateX(-100%);box-shadow:6px 0 24px rgba(0,0,0,.4)}' +
+      '.mnav-panel.open{transform:translateX(0)}' +
+    '}' +
+    'body.mnav-lock{overflow:hidden}';
+  document.head.appendChild(s);
+}
+
+function _buildMobileNav() {
+  var header = document.querySelector('header');
+  var nav = header && header.querySelector('.header-nav');
+  if (!header || !nav) return;
+  if (header.querySelector('.mnav-toggle')) return; // idempotent
+
+  _injectMobileNavCSS();
+  var isHe = document.documentElement.lang === 'he';
+
+  var toggle = document.createElement('button');
+  toggle.className = 'mnav-toggle';
+  toggle.setAttribute('aria-label', isHe ? 'תפריט' : 'Menu');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-controls', 'mnav-panel');
+  toggle.innerHTML = '<span></span><span></span><span></span>';
+  header.appendChild(toggle);
+
+  var overlay = document.createElement('div');
+  overlay.className = 'mnav-overlay';
+
+  var panel = document.createElement('nav');
+  panel.className = 'mnav-panel';
+  panel.id = 'mnav-panel';
+  panel.setAttribute('aria-label', isHe ? 'ניווט' : 'Navigation');
+
+  var head = document.createElement('div');
+  head.className = 'mnav-head';
+  var title = document.createElement('span');
+  title.className = 'mnav-title';
+  title.textContent = isHe ? 'תפריט' : 'Menu';
+  var close = document.createElement('button');
+  close.className = 'mnav-close';
+  close.setAttribute('aria-label', isHe ? 'סגור' : 'Fermer');
+  close.innerHTML = '&#10005;';
+  head.appendChild(title);
+  head.appendChild(close);
+  panel.appendChild(head);
+
+  var list = document.createElement('div');
+  list.className = 'mnav-list';
+  panel.appendChild(list);
+
+  Array.prototype.forEach.call(nav.children, function(node) {
+    if (node.classList && node.classList.contains('nav-dropdown')) {
+      var ddLink = node.querySelector('.nav-dd-link');
+      var submenu = node.querySelector('.nav-submenu');
+      var group = document.createElement('div');
+      group.className = 'mnav-group';
+      var row = document.createElement('div');
+      row.className = 'mnav-grouphead';
+      var a = document.createElement('a');
+      a.className = 'mnav-item mnav-grouplink';
+      a.href = ddLink ? ddLink.getAttribute('href') : '#';
+      a.textContent = ddLink ? ddLink.textContent.replace(/\s*[▾▼]\s*$/, '').trim() : '';
+      var acc = document.createElement('button');
+      acc.className = 'mnav-acc';
+      acc.setAttribute('aria-label', a.textContent);
+      acc.setAttribute('aria-expanded', 'false');
+      acc.innerHTML = '&#9662;';
+      row.appendChild(a);
+      row.appendChild(acc);
+      group.appendChild(row);
+      var sub = document.createElement('div');
+      sub.className = 'mnav-sub';
+      if (submenu) {
+        Array.prototype.forEach.call(submenu.querySelectorAll('a'), function(sa) {
+          var sc = document.createElement('a');
+          sc.className = 'mnav-subitem';
+          sc.href = sa.getAttribute('href');
+          sc.textContent = sa.textContent.trim();
+          sub.appendChild(sc);
+        });
+      }
+      group.appendChild(sub);
+      acc.addEventListener('click', function() {
+        var open = group.classList.toggle('open');
+        acc.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      list.appendChild(group);
+    } else if (node.tagName === 'A') {
+      var c = document.createElement('a');
+      c.className = 'mnav-item';
+      c.href = node.getAttribute('href');
+      c.textContent = node.textContent.trim();
+      if (node.classList.contains('active')) c.classList.add('active');
+      list.appendChild(c);
+    } else if (node.classList && node.classList.contains('lang-btn')) {
+      var lb = document.createElement('button');
+      lb.className = 'mnav-item mnav-lang';
+      lb.textContent = node.textContent.trim();
+      lb.addEventListener('click', function() {
+        if (typeof window.toggleLang === 'function') window.toggleLang();
+      });
+      list.appendChild(lb);
+    }
+  });
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(panel);
+
+  function openMenu() {
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    document.body.classList.add('mnav-lock');
+    toggle.setAttribute('aria-expanded', 'true');
+    close.focus();
+  }
+  function closeMenu() {
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.classList.remove('mnav-lock');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+  toggle.addEventListener('click', openMenu);
+  close.addEventListener('click', closeMenu);
+  overlay.addEventListener('click', closeMenu);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && panel.classList.contains('open')) closeMenu();
+  });
+  list.addEventListener('click', function(e) {
+    if (e.target.closest('a.mnav-item, a.mnav-subitem')) closeMenu();
+  });
+}
+
+(function initMobileNav() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _buildMobileNav);
+  } else {
+    _buildMobileNav();
+  }
+})();
+
 // Auto-load header stats if #header-stats exists and isn't already populated
 (function loadHeaderStats() {
   var el = document.getElementById('header-stats');
