@@ -105,11 +105,11 @@ Merci de vous abonner à nos vidéos sur ">
     .header-nav a.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
     .nav-dropdown { position: relative; display: inline-flex; }
     .nav-dd-link { color: rgba(255,255,255,.65); text-decoration: none; font-size: .8rem; padding: 5px 4px 5px 14px; border-radius: 20px 0 0 20px; border: 1px solid rgba(255,255,255,.2); border-right: none; transition: background .15s, color .15s; }
-    .nav-dd-link:hover {{ color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }}
-    .nav-dd-caret {{ color: rgba(255,255,255,.65); font-size: .8rem; padding: 5px 10px 5px 6px; border-radius: 0 20px 20px 0; border: 1px solid rgba(255,255,255,.2); border-left: none; background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }}
-    .nav-dd-caret:hover, .nav-dropdown.open .nav-dd-caret {{ color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }}
-    .nav-dd-link.active {{ color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }}
-    .nav-dd-link.active + .nav-dd-caret {{ color: #1a1a2e; background: #fff; border-color: #fff; }}
+    .nav-dd-link:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+    .nav-dd-caret { color: rgba(255,255,255,.65); font-size: .8rem; padding: 5px 10px 5px 6px; border-radius: 0 20px 20px 0; border: 1px solid rgba(255,255,255,.2); border-left: none; background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
+    .nav-dd-caret:hover, .nav-dropdown.open .nav-dd-caret { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+    .nav-dd-link.active { color: #1a1a2e; background: #fff; border-color: #fff; font-weight: 600; }
+    .nav-dd-link.active + .nav-dd-caret { color: #1a1a2e; background: #fff; border-color: #fff; }
     .nav-submenu { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #252545; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 10px; z-index: 300; box-shadow: 0 8px 28px rgba(0,0,0,.5); flex-wrap: wrap; gap: 4px; min-width: 340px; max-width: 92vw; }
     .nav-dropdown.open .nav-submenu { display: flex; }
     .nav-submenu a { color: rgba(255,255,255,.78); text-decoration: none; padding: 6px 12px; border-radius: 20px; font-size: .78rem; white-space: nowrap; border: 1px solid rgba(255,255,255,.15); transition: background .12s, color .12s; }
@@ -129,7 +129,7 @@ Merci de vous abonner à nos vidéos sur ">
     .btn-spotify { background: #1DB954; color: #fff; }
     .btn-apple   { background: #872EC4; color: #fff; }
     .btn-deezer  { background: #EF5466; color: #fff; }
-    .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; }
+    .btn-rss     { background: #f5f5f0; color: #555; border: 1px solid #ddd; display: none; }
     .header-stats { font-size: .88rem; color: #9ab; margin-bottom: 12px; min-height: 1.3em; }
     .ch-about { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 20px 24px; margin-bottom: 4px; font-size: .9rem; color: #444; line-height: 1.7; position: relative; }
     .ch-about p { margin-bottom: .9em; }
@@ -165,9 +165,9 @@ Merci de vous abonner à nos vidéos sur ">
     .ep-actions .ep-audio { flex:1; min-width:200px; }
     .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
     .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
-    .site-footer {{ background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }}
-    .site-footer a {{ color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }}
-    .site-footer a:hover {{ color: #fff; }}
+    .site-footer { background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }
+    .site-footer a { color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }
+    .site-footer a:hover { color: #fff; }
     .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
     .toast.show { opacity:1; }
     details.transcript { margin-top:20px; border:1px solid #e8e8e8; border-radius:10px; overflow:hidden; }
@@ -188,28 +188,34 @@ Merci de vous abonner à nos vidéos sur ">
     #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #player-channel { font-size:.68rem; color:#99a; }
     #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn {{ background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }}
-    #speed-cycle-btn:hover {{ background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }}
-    #speed-cycle-btn.active {{ color:#e87722; border-color:#e87722; }}
-    #player-close {{ background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }}
-    #player-close:hover {{ color:#fff; }}
-    @media (max-width:500px) {{ #player-art {{ display:none; }} }}
-    .btn-embed {{ background:#f5f5f0; color:#555; border:1px solid #ddd; }}
-    .btn-embed:hover {{ background:#eee; border-color:#bbb; }}
-    .embed-modal {{ display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }}
-    .embed-modal.open {{ display:flex; }}
-    .embed-box {{ background:#fff; border-radius:16px; padding:24px; max-width:460px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,.3); }}
-    .embed-box-header {{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }}
-    .embed-box-header h3 {{ font-size:.95rem; font-weight:700; }}
-    .embed-close {{ background:none; border:none; color:#aaa; font-size:1.3rem; cursor:pointer; line-height:1; padding:0; }}
-    .embed-close:hover {{ color:#333; }}
-    .embed-code {{ background:#f5f5f0; border-radius:8px; padding:12px; font-family:monospace; font-size:.72rem; color:#333; white-space:pre-wrap; word-break:break-all; margin-bottom:12px; border:1px solid #e0e0e0; user-select:all; cursor:text; }}
-    .embed-actions {{ display:flex; gap:8px; align-items:center; }}
-    .embed-copy-btn {{ background:#1a1a2e; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:.82rem; cursor:pointer; font-family:inherit; transition:background .15s; }}
-    .embed-copy-btn:hover {{ background:#2d2d50; }}
-    .embed-preview-label {{ font-size:.72rem; color:#999; margin:14px 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }}
-    .embed-iframe-wrap {{ border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; height:200px; }}
-    .embed-iframe-wrap iframe {{ width:100%; height:100%; border:none; transform:scale(.6); transform-origin:top left; width:167%; height:167%; pointer-events:none; }}
+    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
+    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
+    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
+    #player-close:hover { color:#fff; }
+    @media (max-width:500px) { #player-art { display:none; } }
+    .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
+    .btn-embed:hover { background:#eee; border-color:#bbb; }
+    .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
+    .embed-modal.open { display:flex; }
+    .embed-box { background:#fff; border-radius:16px; padding:24px; max-width:460px; width:100%; box-shadow:0 12px 48px rgba(0,0,0,.3); }
+    .embed-box-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .embed-box-header h3 { font-size:.95rem; font-weight:700; }
+    .embed-close { background:none; border:none; color:#aaa; font-size:1.3rem; cursor:pointer; line-height:1; padding:0; }
+    .embed-close:hover { color:#333; }
+    .embed-code { background:#f5f5f0; border-radius:8px; padding:12px; font-family:monospace; font-size:.72rem; color:#333; white-space:pre-wrap; word-break:break-all; margin-bottom:12px; border:1px solid #e0e0e0; user-select:all; cursor:text; }
+    .embed-actions { display:flex; gap:8px; align-items:center; }
+    .embed-copy-btn { background:#1a1a2e; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:.82rem; cursor:pointer; font-family:inherit; transition:background .15s; }
+    .embed-copy-btn:hover { background:#2d2d50; }
+    .embed-preview-label { font-size:.72rem; color:#999; margin:14px 0 6px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+    .embed-iframe-wrap { border:1px solid #e0e0e0; border-radius:10px; overflow:hidden; height:200px; }
+    .embed-iframe-wrap iframe { width:100%; height:100%; border:none; transform:scale(.6); transform-origin:top left; width:167%; height:167%; pointer-events:none; }
+    /* Mobile: keep dropdown submenus centered under the nav and within the viewport (fixes off-screen/unclickable items on phones) */
+    @media (max-width: 600px) {
+      .header-nav { position: relative; }
+      .nav-dropdown { position: static; }
+      .nav-submenu { left: 50%; right: auto; transform: translateX(-50%); min-width: 0; max-width: calc(100vw - 24px); width: max-content; }
+    }
   .ep-hero { background:#fff; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,.08); padding:24px; margin-bottom:24px; }
   .ep-hero h1 { font-size:1.3rem; font-weight:700; margin-bottom:8px; line-height:1.4; }
   .ep-meta { font-size:.82rem; color:#888; margin-bottom:12px; }
@@ -229,25 +235,51 @@ Merci de vous abonner à nos vidéos sur ">
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link" href="../rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
       <div class="nav-submenu">
-      <a href="../rav-itshak-cohen.html">Rav Itshak Cohen</a>
-      <a href="../rav-yonathan-mergui.html">Rav Yonathan Mergui</a>
-      <a href="../rav-yaakov-sitruk.html">Rav Yaakov Sitruk</a>
-      <a href="../rav-liran-ishai.html">Rav Liran Ishai</a>
-      <a href="../rav-barak-ben-nissan.html">Rav Barack Ben Nissan</a>
-      <a href="../rav-menahem-sakhoun.html">Rav Menahem Sakhoun</a>
-      <a href="../rabbin-jonas.html">Rabbin Jonas</a>
-      <a href="../rav-meir-david-shmueli.html">הרב מאיר דוד שמואלי</a>
-      <a href="../lev.html">Lev</a>
-      <a href="../rav-paz-shavit.html">המכללה התורנית</a>
-      <a href="../beth-habad-tlv-nord.html">Beth Habad TLV Nord</a>
-      <a href="../torah_fr.html">torah.fr</a>
-      <a href="../rav-ruben-attal.html">Rav Ruben Attal</a>
-      <a href="../rav-shimshone-attali.html">Rav Shimshone Attali</a>
+      <a href="../avi-assouline.html">Avi Assouline (21)</a>
+      <a href="../avraham-lemmel.html">Avraham Lemmel (26)</a>
+      <a href="../beth-habad-tlv-nord.html">Beth Habad TLV Nord (808)</a>
+      <a href="../rav-avraham-ifrah.html">Breslev - Avraham Ifrah (449)</a>
+      <a href="../joy-galam.html">Joy Galam (71)</a>
+      <a href="../lev.html">Lev (1711)</a>
+      <a href="../Nahal-Haim.html">Nahal Haim - נחל חיים (361)</a>
+      <a href="../raphael-ostrowiak.html">Raphael Ostrowiak (11)</a>
+      <a href="../rav-avraham-drai.html">Rav Avraham Drai (34)</a>
+      <a href="../rav-barak-ben-nissan.html">Rav Barack Ben Nissan (342)</a>
+      <a href="../rav-brand.html">Rav Brand (95)</a>
+      <a href="../rav-dagani-cohen.html">Rav Dagani Cohen (118)</a>
+      <a href="../eitan-galam.html">Rav Eitan Galam (141)</a>
+      <a href="../rav-eliaou-hassan.html">Rav Eliaou Hassan (11)</a>
+      <a href="../rav-elie-lemmel.html">Rav Elie Lemmel (507)</a>
+      <a href="../rav-itshak-cohen.html">Rav Itshak Cohen (1212)</a>
+      <a href="../Rav-Itshak-Sitruk.html">Rav Itshak Sitruk (46)</a>
+      <a href="../rabbin-jonas.html">Rav Jonas (493)</a>
+      <a href="../rav-liran-ishai.html">Rav Liran Ishai (29)</a>
+      <a href="../rav-menahem-sakhoun.html">Rav Menahem Sakhoun (1750)</a>
+      <a href="../rav-mimoun.html">Rav Mimoun (3)</a>
+      <a href="../rav-ruben-attal.html">Rav Ruben Attal (148)</a>
+      <a href="../rav-shimshone-attali.html">Rav Shimshone Attali (1470)</a>
+      <a href="../rav-shmouel-timestit.html">Rav Shmouel Timestit (14)</a>
+      <a href="../rav-simcha-buchinger.html">Rav Simcha Buchinger (24)</a>
+      <a href="../rav-yaakov-sitruk.html">Rav Yaakov Sitruk (901)</a>
+      <a href="../rav-yonathan-mergui.html">Rav Yonathan Mergui (123)</a>
+      <a href="../torah_fr.html">torah.fr (145)</a>
+      <a href="../rav-paz-shavit.html">המכללה התורנית (405)</a>
+      <a href="../rav-meir-david-shmueli.html">הרב מאיר דוד שמואלי (2205)</a>
+      <a href="../rav-eliahou-attia.html">רב אליהו עטייה (133)</a>
+      <a href="../rav-yoel-machi-zahav.html">רב יואל משי זהב (2)</a>
         <a class="nav-submenu-all" href="../rabbins.html">Tous les rabbins →</a>
       </div>
     </div>
     <a href="../derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
-    <a href="../daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+    <div class="nav-dropdown">
+      <a class="nav-dd-link" href="../daf-hayomi.html" data-i18n="nav_limud">Limud Yomi</a><button class="nav-dd-caret" aria-label="Limud Yomi">▾</button>
+      <div class="nav-submenu" style="min-width:170px;flex-direction:column;">
+        <a href="../daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
+        <a href="../hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
+        <a href="../hayom-yom.html" data-i18n="nav_hayomyom">Hayom Yom</a>
+        <a href="../hiloula.html" data-i18n="nav_hiloula">Hiloula</a>
+      </div>
+    </div>
     <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
@@ -285,23 +317,23 @@ IMPORTANT
 Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-vous à nos Mitsvot ! Vous pouvez donner votre Maasser... Et sachez que nous réussirons toujours avec l’aide énorme d’Hachem grâce à vous ! Lien pour Donner http://www.israeltorah.com/dons-et-bilan/</p>
     <details class="transcript"><summary data-i18n="transcript_label">Transcription</summary><div class="transcript-body">Kind: captions Language: fr [Musique] [Applaudissements] où bonjour à tous nouvelle histoire dans un village en russie il ya 300 ans de cela il y avait un village juif il y avait un homme simple un menuisier qui vivaient très modestement et il se trouve que il ya eu un décès dans le village et la maman a laissé un petit bébé un garçon il y avait personne pour s&#x27;en occuper alors le musée qui lui n&#x27;avait pas eu d&#x27;enfant a décidé d&#x27;adopter d&#x27;adopter cet enfant ce bébé il a grandi il a élevé comme son fils et puis peu de temps après il y avait un autre bébé à qui on aime qu&#x27;on lui a amené on le dit aussi que ses parents étaient membres s&#x27;étaient unis c&#x27;était une fille et le menuisier s&#x27;est dit eh bien si c&#x27;est comme ça qu&#x27;un cheveu si c&#x27;est comme ça je veut l&#x27;élever elle aussi et ses deux enfants là ont grandi ensemble jusqu&#x27;à ce qu&#x27;ils arrivent à l&#x27;âge à l&#x27;âge mûr et il était tellement bien ensemble il s&#x27;entendait tellement bien les ont grandi ça allait de source a coulé de source que ce jeune homme est cette jeune fille n&#x27;avait plus qu&#x27;à se marier l&#x27;un avec l&#x27;autre et donc le menuisier décide de leur organiser un très très très modeste mariage car il n&#x27;avait pas les moyens et donc il a organisé une petite fête et les amis du village sont venus et l&#x27;orphelin et l&#x27;orpheline qu&#x27;on l&#x27;avait mariée était assis à la table de la table durant la fête pendant la fête il ya un carrosse une calèche qui arrivait et a55 hommes qui sont descendus c&#x27;était le bal shem tov lui-même suivi de quatre autres de ses élèves et il est déjà l&#x27;homme à l&#x27;air m j&#x27;ai entendu qu&#x27;il y avait un mariage mariage deuil et aux mines d&#x27;orphelins c&#x27;est une très très grande mise bas permettez moi d&#x27;avoir le mérite de m&#x27;associer à cette sim aura bien entendu ne savais pas que c&#x27;était le bal shem tov et donc la coutume voulait qu enfin deux enfin de mariage chaque invité venait et offrait un cadeau à voix haute disais voilà le cadeau que j&#x27;offre aux nouveaux mariés alors le menuisier a dit - j&#x27;offre une table que j&#x27;ai conçu exprès pour les marier une petite table modeste et moi dit l&#x27;autre du village j&#x27;ai offert quelques assiettes pour qu&#x27;ils aient de quoi manger et chacun offrira un mode est présent pour leurs attaques et la callas quand est arrivé le tour du bal chernoff le washington se met devant les orphelins et 10 mois joffre la colline qui se trouve derrière le village l élève à côté dit et moi j&#x27;offre la source la source qui se trouve à côté de la forêt et tout le monde rigole tout le monde rigole et moi j&#x27;offre dit le troisième élève j&#x27;offre le champ de le champ de pommes qui se trouve derrière la forêt est comme ça chaque élève donne des choses énormes des morceaux paysage or à tana laquelle adam le rire général puisque c&#x27;est tellement fou et tout le monde pensé à une plaisanterie bien entendu et le mariage se terminent leur attané laquelle s&#x27;installe dans dans une petite maisonnette très très très modeste juste à l&#x27;entrée de la forêt là bas ils s&#x27;installent ils vivent leur vie tranquillement quelques mois après le seigneur de la région c&#x27;était en hiver un hiver très rude le seigneur de la région a un fils le prince nous allons l&#x27;appeler le prince il décide de faire une chasse ni chasse en forêt et il part avec son serviteur et son cheval et ses chiens pour une chasse à courre en pleine forêt et dans la neige le prince rentrer dans la forêt avec son cheval et malheureusement son cheval heurte un rocher le cheval se retourne avec le prince en dessous il tourne dans la neige écrasé par le cheval et le de serviteurs voit le prince moitié mort il hurle à l&#x27;aide à l&#x27;aide il courait de voix la petite maisonnette ils tapent à la porte et le rates and vous la perdez qu&#x27;est-ce qui se passe le prince le fit le fils du seigneur est bloqué dans la neige sous le cheval il a fait un accident je vous en supplie venait l&#x27;aider et donc le rates and brand un cordage qui la côte est lui dans la maison il court dans la forêt sous la neige ils attachent le cheval qui est blessé il tire il tire y dégage le prince il le ramène avec lui il était dans un état tellement grave que le le jeu johnatan le faire mener est installé dans sa propre mais honnête à côté du feu il était quasiment congelé dans un état fiévreux entre la vie et la mort durant plusieurs jours la tempête battait son plein en dehors et le prince est resté dans cette maison à côté de la cheminée à se réchauffer doucement doucement ou de quelques jours il a réussi à le ramener à il s&#x27;est senti mieux et quand il s&#x27;est senti suffisamment lui mieux il est rentré aussi nos au palais fait son père lorsque le seigneur et voit son son fils arrivée fou d&#x27;inquiétude mais qu&#x27;est ce qui s&#x27;est passé le prince raconte toute l&#x27;histoire l édifice lui il a sauvé la vie et bien j&#x27;organise c&#x27;est mon anniversaire la semaine prochaine il appelle de ses serviteurs vous allez aller dans cette rejoindre cet homme qui habite dans cette maisonnette où leur mettrais une invitation une invitation spéciale pour venir participer à mon anniversaire ici au palais l&#x27;homme reçoit là car d&#x27;imitation du seigneur lui-même à se rejoindre à l&#x27;anniversaire du seigneur il se rend là-bas hélas le seigneur avait invité tous ses amis seigneur de toutes les contrées avoisinantes et tous les seniors étaient là et leur attal l&#x27;orphelin arrive dans la salle hélas le seigneur se lève il fait taire toute l&#x27;assemblée regardez vous avez devant vous l&#x27;homme qui a sauvé mon fils il a sauvé la garder chez lui l&#x27;a ramené à la vie cet homme mon fils lui dois la vie eh bien aujourd&#x27;hui c&#x27;est mon anniversaire est bien pour mon anniversaire je décide de faire un cadeau je t&#x27;offre la colline qui est derrière le bois hélas le seigneur d&#x27;à côté se lève ou dit et moi je t&#x27;offre la source qui est à côté de la forêt et l&#x27;autre à côté de vie et moi je t&#x27;offre le champ de pommes qui est derrière la forêt et l&#x27;orphelin entend une deuxième fois tous ces cadeaux qu&#x27;ils avaient entendu à son mariage de la part du belge est mauvais de tous elle se matérialiser les uns après les autres ils se retrouvent avec toutes les les les feuilles d&#x27;acquisition de l&#x27;auberge de la forêt de la colline et il devient extrêmement riche et voici l&#x27;histoire qui se termine bien grâce à dieu et je vous dis à très bientôt pour une nouvelle histoire</div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="histoire-de-tsadikim-19-maguid-de-mezritsh-tu-dois-t-efforcer-d-etre-u-2019-02-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ek3En_xsUcE/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 19 - MAGUID DE MEZRITSH - Tu dois t&#x27;efforcer d’être un homme - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-19-maguid-de-mezritsh-tu-dois-t-efforcer-d-etre-u-2019-02-24.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 19 - MAGUID DE MEZRITSH - Tu dois t&#x27;efforcer d’être un homme - Avi Assouline</a><time class="ep-date" datetime="2019-02-24">24 février 2019 · 12 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ek3En_xsUcE_HISTOIRE_DE_TSADIKIM_19_-_MAGUID_DE_MEZRITSH_-_Tu_dois_t_efforcer_d_être_un_homm.mp3" preload="none" data-ep-id="ek3En_xsUcE"></audio><button class="share-btn" data-vid="ek3En_xsUcE" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 19 - MAGUID DE MEZRITSH - Tu dois t&#x27;efforcer d’être un homme - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="histoire-de-tsadikim-18-baal-shem-tov-es-tu-celui-que-mon-pere-a-connu-2019-02-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/DzBpcLhbTHM/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 18 - BAAL SHEM TOV - Es tu celui que mon père a connu ? - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-18-baal-shem-tov-es-tu-celui-que-mon-pere-a-connu-2019-02-17.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 18 - BAAL SHEM TOV - Es tu celui que mon père a connu ? - Avi Assouline</a><time class="ep-date" datetime="2019-02-17">17 février 2019 · 10 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/DzBpcLhbTHM_HISTOIRE_DE_TSADIKIM_18_-_BAAL_SHEM_TOV_-_Es_tu_celui_que_mon_père_a_connu___-_A.mp3" preload="none" data-ep-id="DzBpcLhbTHM"></audio><button class="share-btn" data-vid="DzBpcLhbTHM" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 18 - BAAL SHEM TOV - Es tu celui que mon père a connu ? - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="histoire-de-tsadikim-17-baal-shem-tov-don-manuel-et-la-providence-divi-2019-02-10.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/VnyaAYI1sks/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 17 - BAAL SHEM TOV - Don Manuel et la providence Divine - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-17-baal-shem-tov-don-manuel-et-la-providence-divi-2019-02-10.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 17 - BAAL SHEM TOV - Don Manuel et la providence Divine - Avi Assouline</a><time class="ep-date" datetime="2019-02-10">10 février 2019 · 9 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/VnyaAYI1sks_HISTOIRE_DE_TSADIKIM_17_-_BAAL_SHEM_TOV_-_Don_Manuel_et_la_providence_Divine_-_A.mp3" preload="none" data-ep-id="VnyaAYI1sks"></audio><button class="share-btn" data-vid="VnyaAYI1sks" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 17 - BAAL SHEM TOV - Don Manuel et la providence Divine - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="histoire-de-tsadikim-16-baal-shem-tov-ne-faites-de-mal-a-aucun-juif-av-2019-02-03.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/N-xdyOKLYO4/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 16 - BAAL SHEM TOV - Ne faites de mal à aucun Juif ! - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-16-baal-shem-tov-ne-faites-de-mal-a-aucun-juif-av-2019-02-03.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 16 - BAAL SHEM TOV - Ne faites de mal à aucun Juif ! - Avi Assouline</a><time class="ep-date" datetime="2019-02-03">3 février 2019 · 8 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/N-xdyOKLYO4_HISTOIRE_DE_TSADIKIM_16_-_BAAL_SHEM_TOV_-_Ne_faites_de_mal_à_aucun_Juif___-_Avi.mp3" preload="none" data-ep-id="N-xdyOKLYO4"></audio><button class="share-btn" data-vid="N-xdyOKLYO4" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 16 - BAAL SHEM TOV - Ne faites de mal à aucun Juif ! - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="histoire-de-tsadikim-15-baal-shem-tov-le-puits-le-vieil-homme-et-le-ta-2019-01-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ZDB5OcrTLq4/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 15 - BAAL SHEM TOV - Le puits, le vieil homme et le Tailleur - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-15-baal-shem-tov-le-puits-le-vieil-homme-et-le-ta-2019-01-27.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 15 - BAAL SHEM TOV - Le puits, le vieil homme et le Tailleur - Avi Assouline</a><time class="ep-date" datetime="2019-01-27">27 janvier 2019 · 24 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ZDB5OcrTLq4_HISTOIRE_DE_TSADIKIM_15_-_BAAL_SHEM_TOV_-_Le_puits__le_vieil_homme_et_le_Tailleu.mp3" preload="none" data-ep-id="ZDB5OcrTLq4"></audio><button class="share-btn" data-vid="ZDB5OcrTLq4" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 15 - BAAL SHEM TOV - Le puits, le vieil homme et le Tailleur - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="histoire-de-tsadikim-21-baal-shem-tov-le-secret-du-pouls-avi-assouline-2020-12-08.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/EejV5L8_Ozs/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 21 - BAAL SHEM TOV - Le secret du pouls - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-21-baal-shem-tov-le-secret-du-pouls-avi-assouline-2020-12-08.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 21 - BAAL SHEM TOV - Le secret du pouls - Avi Assouline</a><time class="ep-date" datetime="2020-12-08">8 décembre 2020 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/EejV5L8_Ozs_HISTOIRE_DE_TSADIKIM_21_-_BAAL_SHEM_TOV_-_Le_secret_du_pouls_-_Avi_Assouline.mp3" preload="none" data-ep-id="EejV5L8_Ozs"></audio><button class="share-btn" data-vid="EejV5L8_Ozs" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 21 - BAAL SHEM TOV - Le secret du pouls - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="histoire-de-tsadikim-20-rabbi-shalom-dov-ber-yaakov-on-ni-on-avi-assou-2019-12-15.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/--mTQvnZoa0/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 20 - RABBI SHALOM DOV BER - Yaakov : On, ni on ! - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-20-rabbi-shalom-dov-ber-yaakov-on-ni-on-avi-assou-2019-12-15.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 20 - RABBI SHALOM DOV BER - Yaakov : On, ni on ! - Avi Assouline</a><time class="ep-date" datetime="2019-12-15">15 décembre 2019 · 26 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/--mTQvnZoa0_HISTOIRE_DE_TSADIKIM_20_-_RABBI_SHALOM_DOV_BER_-_Yaakov___On__ni_on___-_Avi_Asso.mp3" preload="none" data-ep-id="--mTQvnZoa0"></audio><button class="share-btn" data-vid="--mTQvnZoa0" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 20 - RABBI SHALOM DOV BER - Yaakov : On, ni on ! - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="bande-annonce-histoire-de-tsadikim-avi-assouline-2019-12-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/FD_xsLgqxyE/maxresdefault.jpg" alt="BANDE ANNONCE - Histoire de Tsadikim - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="bande-annonce-histoire-de-tsadikim-avi-assouline-2019-12-13.html" style="color:inherit;text-decoration:none;display:block">BANDE ANNONCE - Histoire de Tsadikim - Avi Assouline</a><time class="ep-date" datetime="2019-12-13">13 décembre 2019 · 1 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/FD_xsLgqxyE_BANDE_ANNONCE_-_Histoire_de_Tsadikim_-_Avi_Assouline.mp3" preload="none" data-ep-id="FD_xsLgqxyE"></audio><button class="share-btn" data-vid="FD_xsLgqxyE" data-slug="avi-assouline" data-title="BANDE ANNONCE - Histoire de Tsadikim - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="histoire-de-tsadikim-19-maguid-de-mezritsh-tu-dois-t-efforcer-d-etre-u-2019-02-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ek3En_xsUcE/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 19 - MAGUID DE MEZRITSH - Tu dois t&#x27;efforcer d’être un homme - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-19-maguid-de-mezritsh-tu-dois-t-efforcer-d-etre-u-2019-02-24.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 19 - MAGUID DE MEZRITSH - Tu dois t&#x27;efforcer d’être un homme - Avi Assouline</a><time class="ep-date" datetime="2019-02-24">24 février 2019 · 12 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ek3En_xsUcE_HISTOIRE_DE_TSADIKIM_19_-_MAGUID_DE_MEZRITSH_-_Tu_dois_t_efforcer_d_être_un_homm.mp3" preload="none" data-ep-id="ek3En_xsUcE"></audio><button class="share-btn" data-vid="ek3En_xsUcE" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 19 - MAGUID DE MEZRITSH - Tu dois t&#x27;efforcer d’être un homme - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="histoire-de-tsadikim-18-baal-shem-tov-es-tu-celui-que-mon-pere-a-connu-2019-02-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/DzBpcLhbTHM/maxresdefault.jpg" alt="HISTOIRE DE TSADIKIM 18 - BAAL SHEM TOV - Es tu celui que mon père a connu ? - Avi Assouline" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="histoire-de-tsadikim-18-baal-shem-tov-es-tu-celui-que-mon-pere-a-connu-2019-02-17.html" style="color:inherit;text-decoration:none;display:block">HISTOIRE DE TSADIKIM 18 - BAAL SHEM TOV - Es tu celui que mon père a connu ? - Avi Assouline</a><time class="ep-date" datetime="2019-02-17">17 février 2019 · 10 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/DzBpcLhbTHM_HISTOIRE_DE_TSADIKIM_18_-_BAAL_SHEM_TOV_-_Es_tu_celui_que_mon_père_a_connu___-_A.mp3" preload="none" data-ep-id="DzBpcLhbTHM"></audio><button class="share-btn" data-vid="DzBpcLhbTHM" data-slug="avi-assouline" data-title="HISTOIRE DE TSADIKIM 18 - BAAL SHEM TOV - Es tu celui que mon père a connu ? - Avi Assouline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
 <script>
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       related:'Épisodes récents', transcript_label:'Transcription',
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       related:'פרקים אחרונים', transcript_label:'תמליל',
     },

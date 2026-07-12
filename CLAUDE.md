@@ -192,3 +192,25 @@ git config core.hooksPath .githooks
 gh workflow run update_podcasts.yml --repo dav1403/TheThoraPodcast
 gh run list --repo dav1403/TheThoraPodcast --limit 3
 ```
+
+**Platform title verification** — `scripts/verify_platform_titles.py` +
+`.github/workflows/verify_platform_titles.yml` (weekly, Monday 06:00 UTC) check
+that titles shown on Apple/Spotify still match the site feed (platforms serve
+stale cached titles until they re-ingest the RSS). Join key = YouTube `video_id`
+(= RSS `<guid>` = Apple `episodeGuid`). On mismatch it opens/updates a GitHub
+issue (label `bug`) and fails the run; auto-closes on recovery. Run manually:
+```bash
+python3 scripts/verify_platform_titles.py            # local, exit 1 if mismatch
+gh workflow run verify_platform_titles.yml --repo dav1403/TheThoraPodcast
+```
+- **Apple** needs no credentials (public iTunes Lookup API). The Apple podcast id
+  is parsed from `channels.json` → `platforms.apple` (`.../id<NUMBER>`), or set an
+  explicit `"apple_podcast_id"` on a channel. All current channels resolve an id.
+- **Spotify** is skipped unless `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` are
+  present (the repo already has these secrets); Apple coverage alone catches the
+  reported problem, so Spotify support in the script is left as a documented TODO.
+
+**Line endings** — `.gitattributes` forces LF (`* text=auto eol=lf`) so
+`generate_channel_pages.py` produces byte-identical output on Windows and Linux.
+Without it, regenerating on Windows rewrites every page with CRLF (huge spurious
+diffs). Always regenerate with LF output.

@@ -21,6 +21,26 @@ MONTHS_FR = [
     "juillet", "août", "septembre", "octobre", "novembre", "décembre",
 ]
 
+# Nav "Rabbins" dropdown items, shared across channel/speaker/episode pages.
+# Each item: {"name": str, "slug": str, "count": int}. Populated in main() so the
+# episode count next to each rav is computed once (not recomputed per page/client)
+# and the list is sorted A-Z. Mirrors the client-side dropdown in rabbins.html.
+NAV_ITEMS: list[dict] = []
+
+
+def render_nav_submenu(href_prefix: str = "") -> str:
+    """Render the Rabbins dropdown links from NAV_ITEMS, showing '(N)' episode counts.
+    href_prefix is "" for top-level pages and "../" for episode subpages."""
+    parts = []
+    for it in NAV_ITEMS:
+        count_tag = " ({})".format(it["count"]) if it["count"] else ""
+        parts.append(
+            '      <a href="{}{}.html">{}{}</a>'.format(
+                href_prefix, esc(it["slug"]), esc(it["name"]), count_tag
+            )
+        )
+    return "\n".join(parts)
+
 def slugify(title: str, max_len: int = 70) -> str:
     nfd = unicodedata.normalize("NFD", title)
     result = "".join(c for c in nfd if unicodedata.category(c) != "Mn")
@@ -346,11 +366,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
     else:
         about_block = ""
 
-    submenu_links = "\n".join(
-        f'      <a href="{esc(c["slug"])}.html">{esc(c["podcast_author"])}</a>'
-        for c in all_channels
-        if c.get("enabled")
-    )
+    submenu_links = render_nav_submenu("")
 
     return f"""<!DOCTYPE html>
 <html lang="{default_lang}">
@@ -768,11 +784,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     }
     breadcrumb_json = json.dumps(breadcrumb_schema, ensure_ascii=False, indent=2)
 
-    submenu_links = "\n".join(
-        f'      <a href="../{esc(c["slug"])}.html">{esc(c["podcast_author"])}</a>'
-        for c in all_channels
-        if c.get("enabled")
-    )
+    submenu_links = render_nav_submenu("../")
 
     transcript_path = FEEDS_DIR / "transcripts" / f"{video_id}.txt"
     transcript = transcript_path.read_text(encoding="utf-8").strip() if transcript_path.exists() else ""
@@ -1132,6 +1144,31 @@ def main():
     site_episodes = sum(len(e) for _, e in all_data)
     site_hours    = round(site_episodes * 0.75)
 
+    # Pre-compute per-speaker episode counts (same filter as the speaker pages below)
+    # so the shared nav dropdown can show counts without recomputing per page.
+    entries_cache = {ch["slug"]: entries for ch, entries in all_data}
+    speaker_counts = {}
+    for speaker in speakers:
+        n = 0
+        for ch_slug in speaker.get("from_channels", []):
+            n += sum(
+                1 for ep in entries_cache.get(ch_slug, [])
+                if speaker_matches(ep.get("title", ""), speaker["title_patterns"])
+            )
+        speaker_counts[speaker["slug"]] = n
+
+    # Build the shared "Rabbins" nav dropdown items (channels + speakers), A-Z, with counts.
+    NAV_ITEMS.clear()
+    NAV_ITEMS.extend(
+        {"name": ch["podcast_author"], "slug": ch["slug"], "count": len(entries)}
+        for ch, entries in all_data
+    )
+    NAV_ITEMS.extend(
+        {"name": sp["name"], "slug": sp["slug"], "count": speaker_counts.get(sp["slug"], 0)}
+        for sp in speakers
+    )
+    NAV_ITEMS.sort(key=lambda it: it["name"].lower())
+
     # Channel pages
     generated = []
     for ch, entries in all_data:
@@ -1157,7 +1194,6 @@ def main():
     print(f"  rabbi subdirs/  ({ep_count} channel episode pages generated)")
 
     # Speaker pages
-    entries_cache = {ch["slug"]: entries for ch, entries in all_data}
     for speaker in speakers:
         sp_episodes = []
         for ch_slug in speaker.get("from_channels", []):

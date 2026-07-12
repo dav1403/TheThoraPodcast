@@ -1,0 +1,76 @@
+name: Verify Platform Titles
+
+# Weekly cross-check that episode titles shown on podcast platforms (Apple, and
+# Spotify if credentials are provided) still match the titles the site serves.
+# When David edits a title, the site updates instantly but Apple/Spotify can
+# keep serving the OLD cached title until they re-ingest the RSS feed — this
+# surfaces those stale titles. Pure GitHub Actions, no machine of David's runs.
+#
+# On a mismatch it opens (or comments on) a single GitHub issue, which emails the
+# repo owner, and the run fails. On recovery the issue is auto-closed.
+#
+# Apple needs no credentials (public iTunes Lookup API). To also check Spotify,
+# add repo secrets SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET (see the script
+# header); without them Spotify is simply skipped.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: verify-platform-titles
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compare site titles vs platform titles
+        id: check
+        env:
+          SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+        run: python3 scripts/verify_platform_titles.py
+
+      - name: Open / update alert issue on mismatch
+        if: failure() && steps.check.outputs.ok == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="🟠 Podcast titles out of sync (site vs platform)"
+          BODY=$(printf 'The weekly title check found %s title(s) that differ between the site feed and the platform (Apple).\n\nRe-push / refresh the feed on the affected show(s) so the platform re-ingests the corrected titles.\n\n%b\n\nRun: %s/%s/actions/runs/%s' \
+            "${{ steps.check.outputs.count }}" "${{ steps.check.outputs.details }}" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label bug
+          fi
+
+      - name: Auto-close alert issue on recovery
+        if: success() && steps.check.outputs.ok == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="🟠 Podcast titles out of sync (site vs platform)"
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "✅ All platform titles match again as of $(date -u). Auto-closing."
+            gh issue close "$EXISTING"
+          fi
