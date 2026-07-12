@@ -218,6 +218,18 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    .bubble-count {
+      display: inline-block;
+      margin-left: 5px;
+      padding: 0 6px;
+      border-radius: 9px;
+      background: #eceaf6;
+      color: #6a5acd;
+      font-size: .68rem;
+      font-weight: 700;
+      vertical-align: middle;
+      line-height: 1.55;
+    }
 
     .platform-links { display: flex; flex-wrap: wrap; gap: 8px; }
     .platform-btn {
@@ -383,8 +395,8 @@
 </div>
 
 <div class="sort-bar">
-  <button class="sort-btn active" id="sort-latest" onclick="setSort('latest')" data-i18n="sort_latest">Dernier cours</button>
-  <button class="sort-btn"        id="sort-alpha"  onclick="setSort('alpha')"  data-i18n="sort_alpha">Alphabétique</button>
+  <button class="sort-btn"        id="sort-latest" onclick="setSort('latest')" data-i18n="sort_latest">Dernier cours</button>
+  <button class="sort-btn active" id="sort-alpha"  onclick="setSort('alpha')"  data-i18n="sort_alpha">Alphabétique</button>
   <button class="sort-btn fav-toggle" id="fav-toggle" aria-pressed="false" onclick="toggleFavView(this)" data-i18n="fav_only">★ Mes favoris</button>
 </div>
 
@@ -487,11 +499,15 @@
   // ─── Bubble grid ───────────────────────────────────────────────────────────
   let allData     = [];
   let dataBySlug  = {};
-  let currentSort = 'latest';
+  let currentSort = 'alpha';
 
   function bubbleHtml({ ch, entries }) {
     const latest = latestEpisode(entries);
     const recent = latest && (Date.now() - new Date(latest.published).getTime()) <= 30 * 86400000;
+    const count  = entries.length;
+    const countTag = count
+      ? `<span class="bubble-count" aria-label="${count} ${count > 1 ? t('ep_plural') : t('ep_singular')}">${count}</span>`
+      : '';
     return `
       <button class="bubble" onclick="openRabbi('${escapeHtml(ch.slug)}')" title="${escapeHtml(ch.podcast_author)}">
         <span class="bubble-img-wrap">
@@ -500,7 +516,7 @@
           ${recent ? '<span class="bubble-dot"></span>' : ''}
           ${favStarHtml(ch.slug, 'on-bubble')}
         </span>
-        <span class="bubble-name">${escapeHtml(ch.podcast_author)}</span>
+        <span class="bubble-name">${escapeHtml(ch.podcast_author)}${countTag}</span>
       </button>`;
   }
 
@@ -704,10 +720,18 @@
     });
 
     const sub = document.getElementById('nav-rabbis-submenu');
-    if (sub) sub.innerHTML = [
-      ...channels.map(ch => `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.podcast_author)}</a>`),
-      ...speakers.map(sp => `<a href="${escapeHtml(sp.slug)}.html">${escapeHtml(sp.name)}</a>`)
-    ].join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
+    if (sub) {
+      // Reuse the per-rav episode counts already computed in allData; sort A-Z.
+      const navItems = [
+        ...channels.map(ch => ({ slug: ch.slug, name: ch.podcast_author })),
+        ...speakers.map(sp => ({ slug: sp.slug, name: sp.name })),
+      ]
+        .map(it => ({ ...it, count: (dataBySlug[it.slug]?.entries.length) || 0 }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+      sub.innerHTML = navItems
+        .map(it => `<a href="${escapeHtml(it.slug)}.html">${escapeHtml(it.name)}${it.count ? ` (${it.count})` : ''}</a>`)
+        .join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
+    }
 
     document.addEventListener('click', e => {
       if (e.target.closest('.nav-submenu')) return;
