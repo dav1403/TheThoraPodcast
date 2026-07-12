@@ -232,6 +232,16 @@
     .rabbi-bubble:hover img { transform: translateY(-2px); }
     .rabbi-bubble-name { font-size: .72rem; color: #333; text-align: center; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
+    /* Channel grid (home) — links to per-channel pages with episode counts */
+    #channels-section { margin-bottom: 32px; }
+    .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .channel-grid-card { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 12px 14px; text-decoration: none; transition: transform .15s, box-shadow .15s; }
+    .channel-grid-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .channel-grid-card[hidden] { display: none !important; }
+    .channel-grid-body { min-width: 0; }
+    .channel-grid-name { font-size: .9rem; font-weight: 600; color: #222; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height: 1.25; }
+    .channel-grid-count { font-size: .72rem; color: #999; margin-top: 2px; }
+
     /* Channel sections */
     .channel {
       background: #fff;
@@ -388,6 +398,20 @@
       padding: 48px 20px;
       font-size: 0.9rem;
     }
+
+    /* Full-text search results */
+    .search-results-list { display: flex; flex-direction: column; gap: 8px; }
+    .search-result {
+      display: flex; flex-direction: column; gap: 3px;
+      padding: 10px 12px;
+      border: 1px solid #eee; border-radius: 10px;
+      background: #fff; text-decoration: none; color: inherit;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .search-result:hover { border-color: #e87722; box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+    .search-result-title { font-size: .92rem; font-weight: 600; color: #1a1a2e; line-height: 1.3; }
+    .search-result-meta { font-size: .78rem; color: #888; }
+    .search-more { text-align: center; color: #aaa; font-size: .8rem; padding: 14px 20px 4px; }
 
     /* Persistent player */
     #player {
@@ -620,10 +644,12 @@
   });
 
   // ─── Player ───────────────────────────────────────────────────────────────
-  const PREVIEW_COUNT = 3;
-  const RECENTS_COUNT = 10;
-
-  let allData = [];
+  // Home data now comes from a single pre-built home.json (see
+  // scripts/generate_channel_pages.py → build_home_json). No more per-channel
+  // entries.json fan-out on the homepage.
+  let channels = [];   // [{ slug, name, count }]
+  let speakers = [];   // [{ slug, name, img }]  (only speakers with >=1 episode)
+  let recents  = [];   // [{ slug, ch_name, title, published, thumbnail, audio_url, video_id, url, duration_secs }]
   let activeBtn = null, currentEpId = null;
   let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
 
@@ -684,41 +710,16 @@
       localStorage.setItem('resume_' + currentEpId, Math.floor(playerAudio.currentTime));
   });
 
+  // The home renders only the recents row (deep per-channel lists moved to the
+  // dedicated <slug>.html pages), so a recent card plays straight from its own
+  // baked home.json episode object — no more allData lookup.
   document.addEventListener('click', e => {
-    const btn = e.target.closest('.play-btn[data-slug]');
-    if (btn) {
-      if (btn === activeBtn) {
-        if (playerAudio.paused) {
-          playerAudio.play();
-          btn.classList.add('playing');
-          btn.innerHTML = pauseIcon() + ' ' + t('playing');
-        } else {
-          playerAudio.pause();
-          btn.classList.remove('playing');
-          btn.innerHTML = playIcon() + ' ' + t('listen');
-        }
-        return;
-      }
-      const slug = btn.dataset.slug;
-      const idx  = +btn.dataset.idx;
-      const d    = allData.find(x => x.ch.slug === slug) || speakerData.find(x => x.ch.slug === slug);
-      if (!d) return;
-      if (activeBtn && activeBtn !== btn) {
-        activeBtn.classList.remove('playing');
-        activeBtn.innerHTML = playIcon() + ' Écouter';
-      }
-      activeBtn = btn;
-      btn.classList.add('playing');
-      btn.innerHTML = pauseIcon() + ' En cours…';
-      loadInPlayer(d.entries[idx], d.ch.name, slug);
-    }
-
-    const card = e.target.closest('.recent-card[data-slug]');
+    const card = e.target.closest('.recent-card[data-idx]');
     if (card) {
-      const slug = card.dataset.slug;
-      const idx  = +card.dataset.idx;
-      const d    = allData.find(x => x.ch.slug === slug);
-      if (d) loadInPlayer(d.entries[idx], d.ch.name, slug);
+      if (e.target.closest('a')) return; // let the title link navigate
+      const idx = +card.dataset.idx;
+      const ep  = recents[idx];
+      if (ep) loadInPlayer(ep, ep.ch_name, ep.slug);
     }
   });
 
@@ -750,31 +751,6 @@
 
 
 
-  function renderEpisode(ep, slug, idx) {
-    const thumb = ep.thumbnail
-      ? `<a href="${epUrl(ep, slug)}"><img class="episode-thumb" src="${escapeHtml(ep.thumbnail)}" alt="" loading="lazy"></a>`
-      : `<div class="episode-thumb-ph"></div>`;
-    const desc = ep.description
-      ? `<p class="episode-desc">${escapeHtml(ep.description)}</p>`
-      : '';
-    const playBtn = ep.audio_url
-      ? `<button class="play-btn" data-slug="${escapeHtml(slug)}" data-idx="${idx}">${playIcon()} ${t('listen')}</button>`
-      : '';
-    const shareBtn = ep.title && ep.published
-      ? `<button class="share-btn" data-epfile="${epUrl(ep, slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>`
-      : '';
-    return `
-      <li class="episode" data-title="${escapeHtml((ep.title + ' ' + (ep.tags || []).join(' ')).toLowerCase())}" data-ep-dur="${ep.duration_secs || 0}">
-        ${thumb}
-        <div class="episode-body">
-          <a class="episode-title" href="${epUrl(ep, slug)}">${escapeHtml(ep.title)}</a>
-          <div class="episode-date">${formatDate(ep.published)}${ep.duration_secs > 0 ? " - " + formatDuration(ep.duration_secs) : ""}</div>
-          ${desc}
-          <div class="ep-btn-row">${playBtn}${shareBtn}</div>
-        </div>
-      </li>`;
-  }
-
   // Clickable rabbi bubbles (discovery), consistent with rabbins.html.
   function buildRabbiBubbles(list) {
     if (!list || !list.length) return null;
@@ -793,165 +769,161 @@
     return wrap;
   }
 
+  // Recents are baked into home.json (top 20, HITAT DU JOUR already excluded,
+  // sorted newest-first) — data-idx indexes into the `recents` array so the play
+  // handler can load the episode straight from its baked fields.
   function buildRecents() {
-    const flat = [];
-    for (const { ch, entries } of allData) {
-      // Exclude the daily "HITAT DU JOUR" shiurim from the homepage "Derniers épisodes" feed (they live on hitat.html).
-      entries.forEach((ep, idx) => { if (!/HITAT DU JOUR/i.test(ep.title || '')) flat.push({ ep, ch, idx }); });
-    }
-    flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
-
-    const cards = flat.slice(0, RECENTS_COUNT).map(({ ep, ch, idx }) => `
-      <div class="recent-card" data-ep-dur="${ep.duration_secs || 0}" data-slug="${escapeHtml(ch.slug)}" data-idx="${idx}">
-        <img src="${escapeHtml(ep.thumbnail || `artwork/${ch.slug}.png`)}" alt=""
-             loading="lazy" onerror="this.src='artwork/${escapeHtml(ch.slug)}.png'">
+    const cards = recents.map((ep, idx) => `
+      <div class="recent-card" data-ep-dur="${ep.duration_secs || 0}" data-idx="${idx}">
+        <img src="${escapeHtml(ep.thumbnail || `artwork/${ep.slug}.png`)}" alt=""
+             loading="lazy" onerror="this.src='artwork/${escapeHtml(ep.slug)}.png'">
         <div class="recent-card-body">
-          <div class="recent-card-ch">${escapeHtml(ch.name)}</div>
-          <a class="recent-card-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
+          <div class="recent-card-ch">${escapeHtml(ep.ch_name)}</div>
+          <a class="recent-card-title" href="${escapeHtml(ep.url)}">${escapeHtml(ep.title)}</a>
           <div class="recent-card-date">${formatDate(ep.published)}</div>
         </div>
       </div>`).join('');
 
     const wrap = document.createElement('div');
     wrap.id = 'recents-section';
-    wrap.innerHTML = `<div class="section-label">${t('recents')}</div><div class="recents-row">${cards}</div>`;
+    wrap.innerHTML = `<div class="section-label">${t('recents')}</div>`
+      + `<div class="recents-row">${cards}</div>`
+      + `<div style="margin-top:12px"><a href="derniers-cours.html" style="font-size:.82rem;color:#e87722;text-decoration:none;font-weight:600">${lang === 'he' ? 'כל השיעורים האחרונים →' : 'Voir tous les derniers cours →'}</a></div>`;
     return wrap;
   }
 
-  const PLAT_SVG = {
-    spotify: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>`,
-    apple:   `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.3a7.7 7.7 0 0 1 5.44 13.14c-.37.37-.79.69-1.25.94-.1-.76-.28-1.63-.58-2.35.52-.48.87-1.15.87-1.9 0-1.43-1.16-2.59-2.59-2.59s-2.59 1.16-2.59 2.59c0 .75.32 1.42.83 1.9-.3.72-.48 1.59-.58 2.35a7.68 7.68 0 0 1-1.25-.94A7.7 7.7 0 0 1 12 4.3zm0 2.1a5.6 5.6 0 0 0-3.96 9.56c.18-.83.46-1.74.9-2.45a4.15 4.15 0 0 1-.54-2.03A3.6 3.6 0 0 1 12 7.9a3.6 3.6 0 0 1 3.6 3.58 4.15 4.15 0 0 1-.54 2.03c.44.71.72 1.62.9 2.45A5.6 5.6 0 0 0 12 6.4zm0 3.1a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 5.6c1.05 0 1.82.28 2.3.55-.26 1.18-.38 2.28-.32 3.03a7.65 7.65 0 0 1-1.98.26 7.65 7.65 0 0 1-1.98-.26c.06-.75-.06-1.85-.32-3.03.48-.27 1.25-.55 2.3-.55z"/></svg>`,
-    deezer:  `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.944 17.369h4.512v1.601h-4.512zm0-3.075h4.512v1.6h-4.512zm0-3.074h4.512v1.601h-4.512zm-5.944 6.15h4.512v1.6H13zm0-3.075h4.512v1.6H13zm0-3.074h4.512v1.601H13zm-5.944 6.149h4.512v1.6H7.056zm0-3.075h4.512v1.6H7.056zM1.112 17.37h4.512v1.6H1.112z"/></svg>`,
-  };
-
-  function buildChannel(ch, entries) {
-    const section = document.createElement('section');
-    section.className = 'channel';
-    section.id = ch.slug;
-    section.dataset.name = ch.name.toLowerCase();
-    const platHtml = Object.entries(ch.platforms || {})
-      .filter(([k, url]) => url && PLAT_SVG[k])
-      .map(([k, url]) => `<a class="ch-plat-btn ch-plat-${k}" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="${k.charAt(0).toUpperCase()+k.slice(1)}">${PLAT_SVG[k]}</a>`)
-      .join('');
-
-    section.innerHTML = `
-      <div class="channel-header">
-        <div class="channel-header-left">
-          <a href="${escapeHtml(ch.slug)}.html"><img class="channel-art" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt="${escapeHtml(ch.name)}"
-               onerror="this.style.display='none'"></a>
-          <h2><a href="${escapeHtml(ch.slug)}.html" style="color:inherit;text-decoration:none">${escapeHtml(ch.name)}</a></h2>
-          ${favStarHtml(ch.slug, 'on-channel')}
+  // Channel grid: link to each channel page with its episode count. Replaces the
+  // former per-channel episode lists (deep content now lives on <slug>.html pages).
+  function buildChannelGrid() {
+    const cards = channels.map(ch => `
+      <a class="channel-grid-card" href="${escapeHtml(ch.slug)}.html" data-name="${escapeHtml((ch.name || '').toLowerCase())}" title="${escapeHtml(ch.name)}">
+        <img class="channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.name)}"
+             loading="lazy" onerror="this.style.visibility='hidden'">
+        <div class="channel-grid-body">
+          <div class="channel-grid-name">${escapeHtml(ch.name)}</div>
+          <div class="channel-grid-count">${ch.count} ${lang === 'he' ? 'שיעורים' : 'cours'}</div>
         </div>
-        <div class="channel-platforms">
-          ${platHtml}
-          <a class="rss-link" href="feeds/${escapeHtml(ch.slug)}.xml" target="_blank">RSS</a>
-        </div>
-      </div>`;
+      </a>`).join('');
 
-    if (!entries.length) {
-      section.insertAdjacentHTML('beforeend', `<div class="state">${t('no_episodes')}</div>`);
-      return section;
-    }
+    const wrap = document.createElement('div');
+    wrap.id = 'channels-section';
+    wrap.innerHTML = `<div class="section-label">${lang === 'he' ? 'כל הערוצים' : 'Toutes les chaînes'}</div><div class="channel-grid">${cards}</div>`;
+    return wrap;
+  }
 
-    const ul = document.createElement('ul');
-    ul.className = 'episode-list';
-    ul.innerHTML = entries.map((ep, i) => renderEpisode(ep, ch.slug, i)).join('');
-    section.appendChild(ul);
+  // Full-text search over the WHOLE catalog. The index (search-index.json, one
+  // {t,c,u,d} row per episode of every channel — HITAT included) is fetched
+  // LAZILY the first time the user focuses/types in the box, so the homepage
+  // itself stays ~15 KB (home.json only) at load. Results link to episode pages.
+  const SEARCH_MAX_RESULTS = 100;
+  let searchIndex = null;        // null = not loaded; [] = loaded
+  let searchLoading = null;      // in-flight fetch promise (dedupe)
 
-    const items = ul.querySelectorAll('.episode');
-    items.forEach((el, i) => { if (i >= PREVIEW_COUNT) el.hidden = true; });
-
-    if (entries.length > PREVIEW_COUNT) {
-      const bar = document.createElement('div');
-      bar.className = 'show-more-bar';
-      const btn = document.createElement('button');
-      btn.className = 'show-more-btn';
-      const n = entries.length - PREVIEW_COUNT;
-      btn.textContent = lang === 'he' ? `עוד ${n} פרקים` : `Voir les ${n} épisodes suivants`;
-      btn.addEventListener('click', () => { items.forEach(el => el.hidden = false); bar.remove(); });
-      bar.appendChild(btn);
-      section.appendChild(bar);
-    }
-    return section;
+  function loadSearchIndex() {
+    if (searchIndex) return Promise.resolve(searchIndex);
+    if (searchLoading) return searchLoading;
+    searchLoading = fetch('search-index.json')
+      .then(r => (r.ok ? r.json() : []))
+      .then(data => { searchIndex = Array.isArray(data) ? data : []; return searchIndex; })
+      .catch(() => { searchIndex = []; return searchIndex; });
+    return searchLoading;
   }
 
   function setupSearch() {
     const input    = document.getElementById('search');
     const recents  = document.getElementById('recents-section');
+    const channels = document.getElementById('channels-section');
+    const bubbles  = document.querySelector('.rabbi-bubbles-section');
+    const results  = document.getElementById('search-results');
     const noRes    = document.getElementById('no-results');
 
-    input.addEventListener('input', () => {
-      const q = input.value.toLowerCase().trim();
-      recents.hidden = q.length > 0;
+    const homeSections = [bubbles, recents, channels].filter(Boolean);
+    const showHome = (on) => { homeSections.forEach(s => { s.hidden = !on; }); };
 
-      let anyVisible = false;
-      document.querySelectorAll('.channel').forEach(ch => {
-        const eps = ch.querySelectorAll('.episode');
-        const chMatch = ch.dataset.name && ch.dataset.name.includes(q);
-        let chVisible = false;
-        eps.forEach((ep, i) => {
-          const match = !q || chMatch || ep.dataset.title.includes(q);
-          ep.hidden = q ? !match : i >= PREVIEW_COUNT;
-          if (match) chVisible = true;
-        });
-        if (!q) {
-          const bar = ch.querySelector('.show-more-bar');
-          if (bar) bar.style.display = '';
-          ch.hidden = false;
-        } else {
-          const bar = ch.querySelector('.show-more-bar');
-          if (bar) bar.style.display = 'none';
-          ch.hidden = !chVisible;
-          if (chVisible) anyVisible = true;
-        }
+    function renderResults(q) {
+      const rows = (searchIndex || []).filter(ep => {
+        const t = (ep.t || '').toLowerCase();
+        const c = (ep.c || '').toLowerCase();
+        return t.includes(q) || c.includes(q);
       });
+      // Index is built channel-by-channel; sort matches newest-first for display.
+      rows.sort((a, b) => (b.d || '').localeCompare(a.d || ''));
 
-      noRes.hidden = !q || anyVisible;
+      const total = rows.length;
+      const shown = rows.slice(0, SEARCH_MAX_RESULTS);
+      const cards = shown.map(ep => `
+        <a class="search-result" href="${escapeHtml(ep.u)}">
+          <span class="search-result-title">${escapeHtml(ep.t)}</span>
+          <span class="search-result-meta">${escapeHtml(ep.c)}${ep.d ? ' · ' + formatDate(ep.d) : ''}</span>
+        </a>`).join('');
+
+      const moreNote = total > shown.length
+        ? `<div class="search-more">${lang === 'he'
+            ? `מוצגות ${shown.length} תוצאות מתוך ${total}. דייקו את החיפוש.`
+            : `${shown.length} résultats affichés sur ${total}. Affinez votre recherche.`}</div>`
+        : '';
+
+      results.innerHTML = `<div class="section-label">${lang === 'he' ? 'תוצאות' : 'Résultats'}</div>`
+        + `<div class="search-results-list">${cards}</div>${moreNote}`;
+      results.hidden = false;
+      if (noRes) noRes.hidden = total > 0;
+    }
+
+    let pending = false;
+    async function runSearch() {
+      const q = input.value.toLowerCase().trim();
+      if (!q) {
+        results.hidden = true;
+        results.innerHTML = '';
+        if (noRes) noRes.hidden = true;
+        showHome(true);
+        return;
+      }
+      showHome(false);
+      if (!searchIndex) {
+        // First query before the index arrived: show a brief loading note.
+        results.hidden = false;
+        if (noRes) noRes.hidden = true;
+        results.innerHTML = `<div class="state">${t('loading')}</div>`;
+        if (pending) return;
+        pending = true;
+        await loadSearchIndex();
+        pending = false;
+        // The input may have changed while loading — re-read it.
+        if (input.value.toLowerCase().trim() !== q && input.value.trim()) return runSearch();
+        if (!input.value.trim()) { results.hidden = true; showHome(true); return; }
+      }
+      renderResults(input.value.toLowerCase().trim());
+    }
+
+    // Kick off the lazy load as soon as the user shows intent (focus), so the
+    // index is usually ready by the time they finish typing — never at page load.
+    input.addEventListener('focus', loadSearchIndex, { once: true });
+
+    let debounce;
+    input.addEventListener('input', () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(runSearch, 120);
     });
   }
 
   (async () => {
     const app = document.getElementById('app');
-    let channels = [], speakers = [];
     try {
-      const [chRes, spRes] = await Promise.all([fetch('channels.json'), fetch('speakers.json')]);
-      if (chRes.ok) {
-        channels = (await chRes.json())
-          .filter(ch => ch.enabled)
-          .map(ch => ({ slug: ch.slug, name: ch.podcast_author, platforms: ch.platforms || {} }));
+      const res = await fetch('home.json');
+      if (res.ok) {
+        const home = await res.json();
+        channels = home.channels || [];
+        speakers = home.speakers || [];
+        recents  = home.recents  || [];
+        renderStats((home.stats && home.stats.channels) || 0, (home.stats && home.stats.episodes) || 0);
       }
-      if (spRes.ok) speakers = await spRes.json();
     } catch (_) {}
 
     if (!channels.length) {
       app.innerHTML = `<p class="state">${t('no_channels')}</p>`;
       return;
     }
-
-    allData = await Promise.all(channels.map(async ch => {
-      try {
-        const r = await fetch(`feeds/${ch.slug}.entries.json`);
-        const entries = r.ok ? await r.json() : [];
-        entries.sort((a, b) => new Date(b.published) - new Date(a.published));
-        return { ch, entries };
-      } catch (_) { return { ch, entries: [] }; }
-    }));
-
-    // Build speaker sections from already-loaded channel entries
-    const entriesCache = Object.fromEntries(allData.map(({ ch, entries }) => [ch.slug, entries]));
-    const speakerData = speakers.map(sp => {
-      const entries = sp.from_channels.flatMap(slug =>
-        (entriesCache[slug] || []).filter(ep =>
-          sp.title_patterns.some(p => ep.title && ep.title.toLowerCase().includes(p.toLowerCase()))
-        )
-      ).sort((a, b) => new Date(b.published) - new Date(a.published));
-      // Speakers have no artwork/<slug>.png — use their most recent episode thumbnail.
-      const repImg = (entries.find(e => e.thumbnail) || {}).thumbnail || '';
-      return { ch: { slug: sp.slug, name: sp.name, platforms: {}, img: repImg }, entries };
-    });
-
-    const totalEp = allData.reduce((s, {entries}) => s + entries.length, 0);
-    renderStats(allData.length + speakers.length, totalEp);
 
     const sub = document.getElementById('nav-rabbis-submenu');
     if (sub) sub.innerHTML = [
@@ -962,11 +934,18 @@
     app.innerHTML = '';
     const bubbleList = [
       ...channels.map(ch => ({ slug: ch.slug, name: ch.name })),
-      ...speakerData.filter(d => d.entries.length).map(d => ({ slug: d.ch.slug, name: d.ch.name, img: d.ch.img })),
+      ...speakers.map(sp => ({ slug: sp.slug, name: sp.name, img: sp.img })),
     ];
     const bubblesSection = buildRabbiBubbles(bubbleList);
     if (bubblesSection) app.appendChild(bubblesSection);
     app.appendChild(buildRecents());
+    app.appendChild(buildChannelGrid());
+
+    // Full-text search results land here (populated lazily by setupSearch).
+    const searchResults = document.createElement('div');
+    searchResults.id = 'search-results';
+    searchResults.hidden = true;
+    app.appendChild(searchResults);
 
     const noRes = document.createElement('div');
     noRes.id = 'no-results';
@@ -974,13 +953,6 @@
     noRes.hidden = true;
     noRes.textContent = t('no_results');
     app.appendChild(noRes);
-
-    for (const { ch, entries } of allData) {
-      app.appendChild(buildChannel(ch, entries));
-    }
-    for (const { ch, entries } of speakerData) {
-      if (entries.length) app.appendChild(buildChannel(ch, entries));
-    }
 
     setupSearch();
 

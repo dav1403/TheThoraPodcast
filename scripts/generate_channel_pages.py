@@ -993,6 +993,123 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 """
 
 
+HOME_RECENTS_COUNT = 20
+_HITAT_RE = re.compile(r"HITAT DU JOUR", re.IGNORECASE)
+
+
+def build_home_json(
+    all_data: list[tuple],
+    speakers: list[dict],
+    entries_cache: dict,
+    site_channels: int,
+    site_episodes: int,
+) -> None:
+    """Pre-compute the small home.json the homepage consumes instead of fetching
+    the ~11 MB of per-channel entries.json client-side.
+
+    Mirrors the semantics index.html used to compute at runtime:
+      - channel display name = podcast_author (enabled channels only)
+      - recents = top HOME_RECENTS_COUNT episodes across all channels, HITAT DU JOUR
+        excluded, sorted by `published` desc; URL identical to epUrl(ep, slug)
+      - speakers = only those with >=1 matched episode; img = most-recent matched
+        thumbnail (repImg)
+      - stats.channels = channels + speakers count (matches renderStats today)
+      - stats.episodes = total episodes across channels
+    """
+    channels_out = [
+        {"slug": ch["slug"], "name": ch["podcast_author"], "count": len(entries)}
+        for ch, entries in all_data
+    ]
+
+    # Recents: flatten across channels, drop HITAT DU JOUR, sort newest-first.
+    flat = []
+    for ch, entries in all_data:
+        for ep in entries:
+            if _HITAT_RE.search(ep.get("title") or ""):
+                continue
+            flat.append((ch, ep))
+    flat.sort(key=lambda ce: ce[1].get("published", ""), reverse=True)
+
+    recents_out = []
+    for ch, ep in flat[:HOME_RECENTS_COUNT]:
+        recents_out.append({
+            "slug": ch["slug"],
+            "ch_name": ch["podcast_author"],
+            "title": ep.get("title", ""),
+            "published": ep.get("published", ""),
+            "thumbnail": ep.get("thumbnail", ""),
+            "audio_url": ep.get("audio_url", ""),
+            "video_id": ep.get("video_id", ""),
+            "url": ep_path(ch["slug"], ep),
+            "duration_secs": ep.get("duration_secs", 0) or 0,
+        })
+
+    # Speakers with >=1 matched episode; repImg = most-recent matched thumbnail.
+    speakers_out = []
+    for sp in speakers:
+        matched = []
+        for ch_slug in sp.get("from_channels", []):
+            for ep in entries_cache.get(ch_slug, []):
+                if speaker_matches(ep.get("title", ""), sp["title_patterns"]):
+                    matched.append(ep)
+        if not matched:
+            continue
+        matched.sort(key=lambda x: x.get("published", ""), reverse=True)
+        rep_img = next((e.get("thumbnail") for e in matched if e.get("thumbnail")), "")
+        speakers_out.append({"slug": sp["slug"], "name": sp["name"], "img": rep_img})
+
+    home = {
+        "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "stats": {"channels": site_channels, "episodes": site_episodes},
+        "channels": channels_out,
+        "speakers": speakers_out,
+        "recents": recents_out,
+    }
+    Path("home.json").write_text(
+        json.dumps(home, ensure_ascii=False) + "\n",
+        encoding="utf-8", newline="\n",
+    )
+    print(f"  home.json  ({len(recents_out)} recents, {len(channels_out)} channels, {len(speakers_out)} speakers)")
+
+
+def build_search_index(all_data: list[tuple]) -> None:
+    """Pre-compute a minimal full-text search index over the WHOLE catalog.
+
+    index.html lazy-loads this file (search-index.json) the first time the user
+    focuses/types in the search box, so the homepage itself stays ~15 KB
+    (home.json only) at load. Each entry carries ONLY what the search UI needs —
+    no descriptions or other heavy fields — to keep the payload small:
+      t = episode title, c = channel/rav display name, u = episode page URL
+      (identical to ep_path(slug, ep)), d = published date (YYYY-MM-DD).
+
+    Unlike home.json (which drops HITAT DU JOUR from the recents row), the search
+    index intentionally covers the ENTIRE catalog, HITAT included — every episode
+    of every channel is searchable. The (title, published) guard mirrors the
+    episode-page generation in main() so every URL here points to a page that
+    actually exists.
+    """
+    index = []
+    for ch, entries in all_data:
+        ch_name = ch["podcast_author"]
+        slug = ch["slug"]
+        for ep in entries:
+            title = ep.get("title") or ""
+            published = ep.get("published") or ""
+            if not title or not published:
+                continue
+            index.append({
+                "t": title,
+                "c": ch_name,
+                "u": ep_path(slug, ep),
+                "d": published[:10],
+            })
+    Path("search-index.json").write_text(
+        json.dumps(index, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8", newline="\n",
+    )
+    print(f"  search-index.json  ({len(index)} episodes across {len(all_data)} channels)")
+
+
 def update_sitemap(slug_entries: list[tuple]):
     today = datetime.utcnow().strftime("%Y-%m-%d")
     slugs = [s for s, _ in slug_entries]
@@ -1218,6 +1335,13 @@ def main():
             ep_page = render_episode_page(ep, fake_ch, sp_episodes, enabled)
             (sp_dir / ep_filename(ep, slug)).write_text(ep_page, encoding="utf-8")
             ep_count += 1
+
+    # Pre-computed homepage data (replaces the client-side ~11 MB entries.json fan-out).
+    build_home_json(all_data, speakers, entries_cache, site_channels, site_episodes)
+
+    # Minimal full-text search index over the whole catalog (lazy-loaded by index.html
+    # only on first search focus/keystroke — keeps the homepage at ~15 KB at load).
+    build_search_index(all_data)
 
     update_sitemap(generated)
     print(f"\nDone — {len(generated)} channel + {len(speakers)} speaker pages + {ep_count} episode pages.")
