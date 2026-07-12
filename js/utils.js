@@ -314,17 +314,25 @@ function _buildMobileNav() {
       group.appendChild(row);
       var sub = document.createElement('div');
       sub.className = 'mnav-sub';
-      if (submenu) {
-        Array.prototype.forEach.call(submenu.querySelectorAll('a'), function(sa) {
+      // Some submenus (e.g. the homepage "Rabbins" list) are filled by JS after
+      // load, so mirror the live source each time the accordion opens rather
+      // than snapshotting an empty list at build time.
+      var syncSub = function() {
+        var links = submenu ? submenu.querySelectorAll('a') : [];
+        if (sub.children.length === links.length) return;
+        sub.textContent = '';
+        Array.prototype.forEach.call(links, function(sa) {
           var sc = document.createElement('a');
           sc.className = 'mnav-subitem';
           sc.href = sa.getAttribute('href');
           sc.textContent = sa.textContent.trim();
           sub.appendChild(sc);
         });
-      }
+      };
+      syncSub();
       group.appendChild(sub);
       acc.addEventListener('click', function() {
+        syncSub();
         var open = group.classList.toggle('open');
         acc.setAttribute('aria-expanded', open ? 'true' : 'false');
       });
