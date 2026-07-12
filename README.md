@@ -61,7 +61,9 @@ py -m pip install pytest yt-dlp   # one-time
 py -m pytest tests/ -q
 ```
 
-The generator suite itself is stdlib-only; `yt-dlp` is only needed by the
-pre-existing `tests/test_youtube_discovery.py`. CI runs on `push` and
+The generator suite itself is stdlib-only (only `pytest` required). `yt-dlp`
+above is only needed if you also want to run the pre-existing
+`tests/test_youtube_discovery.py` locally — CI does not run that one (it pulls
+the full YouTube-ingest runtime). CI runs the generator suite on `push` and
 `pull_request` via `.github/workflows/tests.yml` (Python 3.12).
 
