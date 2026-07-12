@@ -834,6 +834,7 @@
           <a href="${escapeHtml(ch.slug)}.html"><img class="channel-art" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt="${escapeHtml(ch.name)}"
                onerror="this.style.display='none'"></a>
           <h2><a href="${escapeHtml(ch.slug)}.html" style="color:inherit;text-decoration:none">${escapeHtml(ch.name)}</a></h2>
+          ${favStarHtml(ch.slug, 'on-channel')}
         </div>
         <div class="channel-platforms">
           ${platHtml}
