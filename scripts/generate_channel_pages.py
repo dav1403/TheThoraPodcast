@@ -105,6 +105,12 @@ CSS = """\
     .nav-submenu a { color: rgba(255,255,255,.78); text-decoration: none; padding: 6px 12px; border-radius: 20px; font-size: .78rem; white-space: nowrap; border: 1px solid rgba(255,255,255,.15); transition: background .12s, color .12s; }
     .nav-submenu a:hover { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
     .nav-submenu .nav-submenu-all { color: rgba(255,255,255,.5); border-style: dashed; font-size: .74rem; margin-top: 4px; width: 100%; text-align: center; }
+    /* Mobile: keep dropdown submenus centered under the nav and within the viewport (fixes off-screen/unclickable items on phones) */
+    @media (max-width: 600px) {
+      .header-nav { position: relative; }
+      .nav-dropdown { position: static; }
+      .nav-submenu { left: 50%; right: auto; transform: translateX(-50%); min-width: 0; max-width: calc(100vw - 24px); width: max-content; }
+    }
     .lang-btn { color: rgba(255,255,255,.65); font-size: .8rem; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
     .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
     main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }

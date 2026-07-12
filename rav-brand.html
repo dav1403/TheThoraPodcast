@@ -1,3 +1,9 @@
+    /* Mobile: keep dropdown submenus centered under the nav and within the viewport (fixes off-screen/unclickable items on phones) */
+    @media (max-width: 600px) {
+      .header-nav { position: relative; }
+      .nav-dropdown { position: static; }
+      .nav-submenu { left: 50%; right: auto; transform: translateX(-50%); min-width: 0; max-width: calc(100vw - 24px); width: max-content; }
+    }
 <!DOCTYPE html>
 <html lang="fr">
 <head>
