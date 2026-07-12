@@ -48,6 +48,33 @@ ANTHROPIC_KEY    = os.environ.get("ANTHROPIC_API_KEY", "")
 MAKE_WEBHOOK_URL = os.environ.get("MAKE_WEBHOOK_URL", "")
 GRAPH_URL        = "https://graph.facebook.com/v19.0"
 
+# Flag file read by the CI "Alert if Anthropic credits exhausted" step. Same
+# pattern as tag_episodes.py: the Python script only drops a flag, the workflow
+# turns it into a GitHub issue so a credit/quota exhaustion no longer fails
+# silently (the post still goes out with fallback text, but the run signals it).
+CREDIT_ERROR_FLAG = Path("/tmp/anthropic_credit_error")
+
+_CREDIT_KEYWORDS = ("credit", "quota", "insufficient", "billing", "payment", "balance")
+
+
+def _is_credit_error(exc: Exception) -> bool:
+    """True when the Anthropic API rejects the call for billing reasons
+    (exhausted credits / insufficient quota) rather than a transient issue."""
+    msg = str(getattr(exc, "message", "") or exc).lower()
+    if "insufficient_quota" in msg:
+        return True
+    status = getattr(exc, "status_code", None)
+    return status in (400, 402, 429) and any(k in msg for k in _CREDIT_KEYWORDS)
+
+
+def _flag_credit_error(exc: Exception) -> None:
+    """Best-effort: drop the flag file the CI alert step turns into an issue.
+    Never raises — an alerting failure must not crash the posting run."""
+    try:
+        CREDIT_ERROR_FLAG.write_text(str(exc))
+    except Exception as flag_err:  # noqa: BLE001 - best effort, never fatal
+        print(f"WARNING: could not write credit-error flag: {flag_err}")
+
 THEMES = [
     "Chabbat", "Tefila", "Téchouva", "Emouna", "Etude de Torah", "Moussar",
     "Halakha", "Kabbala & Spiritualité", "Mariage & Famille",
@@ -228,11 +255,21 @@ def generate_text(prompt, max_tokens=400):
     if not ANTHROPIC_KEY or not _anthropic:
         return None
     client = _anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-    msg = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=max_tokens,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    try:
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=max_tokens,
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except Exception as exc:  # noqa: BLE001
+        # On credit/quota exhaustion: flag it for the CI alert step (visible
+        # signal → GitHub issue) and fall back to the caller's canned text so
+        # the post still goes out. Any other error is a real bug — re-raise.
+        if _is_credit_error(exc):
+            print(f"WARNING: Anthropic credits/quota exhausted — using fallback text: {exc}")
+            _flag_credit_error(exc)
+            return None
+        raise
     return msg.content[0].text.strip()
 
 # ---------------------------------------------------------------------------

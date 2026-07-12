@@ -25,6 +25,7 @@ env:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   post:
@@ -70,6 +71,38 @@ jobs:
             DRY_ARG="--dry-run"
           fi
           python scripts/social_post.py $TYPE_ARG $DRY_ARG
+
+      - name: Alert if Anthropic credits exhausted (social copy)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f /tmp/anthropic_credit_error ]; then
+            echo "No Anthropic credit/quota error detected."
+            exit 0
+          fi
+
+          ERROR=$(cat /tmp/anthropic_credit_error)
+          echo "::warning::Anthropic API credits/quota exhausted - social copy fell back to canned text"
+
+          EXISTING=$(gh issue list --state open --search 'Anthropic credits exhausted in:title' \
+            --json number --jq '.[0].number // empty') || EXISTING=""
+          if [ -n "$EXISTING" ]; then
+            echo "Credit-error issue already open (#$EXISTING) — not creating a duplicate."
+            exit 0
+          fi
+
+          BODY=$(printf 'CI (social posts) could not generate post copy with AI: the Anthropic API rejected the request for billing reasons (credits/quota exhausted). The post went out with fallback text. Top up at https://console.anthropic.com/settings/billing\n\nError:\n%s\n\nRun: %s/%s/actions/runs/%s' \
+            "$ERROR" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+
+          if ! gh issue create \
+                --title "Anthropic credits exhausted - social copy skipped" \
+                --body "$BODY" \
+                --label "bug"; then
+            echo "::error::Anthropic credits exhausted AND the alert issue could not be created (check issues:write permission and the 'bug' label)."
+            exit 1
+          fi
+          echo "Opened a new GitHub issue for the Anthropic credit error."
 
       - name: Commit updated social state
         run: |
