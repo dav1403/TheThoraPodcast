@@ -458,10 +458,10 @@
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link active" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
       <div class="nav-submenu">
-      <a href="avi-assouline.html">Avi Assouline (47)</a>
+      <a href="avi-assouline.html">Avi Assouline (49)</a>
       <a href="avraham-lemmel.html">Avraham Lemmel (26)</a>
       <a href="beth-habad-tlv-nord.html">Beth Habad TLV Nord (815)</a>
-      <a href="rav-avraham-ifrah.html">Breslev - Avraham Ifrah (757)</a>
+      <a href="rav-avraham-ifrah.html">Breslev - Avraham Ifrah (767)</a>
       <a href="joy-galam.html">Joy Galam (71)</a>
       <a href="lev.html">Lev (1711)</a>
       <a href="nahal-haim.html">Nahal Haim - נחל חיים (361)</a>
@@ -477,10 +477,10 @@
       <a href="rav-itshak-sitruk.html">Rav Itshak Sitruk (49)</a>
       <a href="rabbin-jonas.html">Rav Jonas (493)</a>
       <a href="rav-liran-ishai.html">Rav Liran Ishai (29)</a>
-      <a href="rav-menahem-sakhoun.html">Rav Menahem Sakhoun (2071)</a>
+      <a href="rav-menahem-sakhoun.html">Rav Menahem Sakhoun (2081)</a>
       <a href="rav-mimoun.html">Rav Mimoun (3)</a>
       <a href="rav-ruben-attal.html">Rav Ruben Attal (149)</a>
-      <a href="rav-shimshone-attali.html">Rav Shimshone Attali (1782)</a>
+      <a href="rav-shimshone-attali.html">Rav Shimshone Attali (1792)</a>
       <a href="rav-shmouel-timestit.html">Rav Shmouel Timestit (14)</a>
       <a href="rav-simcha-buchinger.html">Rav Simcha Buchinger (24)</a>
       <a href="rav-yaakov-sitruk.html">Rav Yaakov Sitruk (901)</a>
@@ -505,6 +505,7 @@
     </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
+    <a href="mes-favoris.html" data-i18n="nav_favorites">Mes favoris</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
 </header>
@@ -1880,14 +1881,14 @@ Annuler un engagement oral…</p>
 <script>
   const I18N = {
     fr: {
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${n} épisode${n !== 1 ? 's' : ''}`,
       listen:'Écouter', playing:'En cours…',
     },
     he: {
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${n} פרקים`,
@@ -1906,8 +1907,8 @@ Annuler un engagement oral…</p>
     if (epCount) epCount.textContent = I18N[lang].ep_count(145);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `32 ערוצים · 13565 שיעורים · ~10174 שעות`
-      : `32 rabbins · 13565 cours · ~10174h de Torah`;
+      ? `32 ערוצים · 13595 שיעורים · ~10196 שעות`
+      : `32 rabbins · 13595 cours · ~10196h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
