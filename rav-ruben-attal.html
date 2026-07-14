@@ -46,6 +46,15 @@
   "episode": [
     {
       "@type": "PodcastEpisode",
+      "name": "13 juillet 2026",
+      "datePublished": "2026-07-14",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Vx6yUCdHkZ8_13_juillet_2026.mp3"
+      }
+    },
+    {
+      "@type": "PodcastEpisode",
       "name": "Décès Tragique Du Rav Amos, Qui est donc Eliahou Hanavi ? Rav Ruben Attal",
       "datePublished": "2026-07-09",
       "associatedMedia": {
@@ -304,15 +313,6 @@
         "@type": "MediaObject",
         "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/2R35E0XpkuU_Si_Toi_Aussi_Tu_En_As_Marre_De_Prier__Écoute_Ça____Rav_Ruben_Attal.mp3"
       }
-    },
-    {
-      "@type": "PodcastEpisode",
-      "name": "Je Ressens l'envie De Faire Le Mal.. Suis Je Fou ?                RAV RUBEN ATTAL",
-      "datePublished": "2025-11-18",
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/1wFXiYSxN1U_Je_Ressens_l_envie_De_Faire_Le_Mal___Suis_Je_Fou__________________RAV_RUBEN_ATTA.mp3"
-      }
     }
   ]
 }
@@ -458,10 +458,10 @@
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link active" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
       <div class="nav-submenu">
-      <a href="avi-assouline.html">Avi Assouline (35)</a>
+      <a href="avi-assouline.html">Avi Assouline (37)</a>
       <a href="avraham-lemmel.html">Avraham Lemmel (26)</a>
       <a href="beth-habad-tlv-nord.html">Beth Habad TLV Nord (813)</a>
-      <a href="rav-avraham-ifrah.html">Breslev - Avraham Ifrah (672)</a>
+      <a href="rav-avraham-ifrah.html">Breslev - Avraham Ifrah (681)</a>
       <a href="joy-galam.html">Joy Galam (71)</a>
       <a href="lev.html">Lev (1711)</a>
       <a href="nahal-haim.html">Nahal Haim - נחל חיים (361)</a>
@@ -477,10 +477,10 @@
       <a href="rav-itshak-sitruk.html">Rav Itshak Sitruk (48)</a>
       <a href="rabbin-jonas.html">Rav Jonas (493)</a>
       <a href="rav-liran-ishai.html">Rav Liran Ishai (29)</a>
-      <a href="rav-menahem-sakhoun.html">Rav Menahem Sakhoun (1979)</a>
+      <a href="rav-menahem-sakhoun.html">Rav Menahem Sakhoun (1990)</a>
       <a href="rav-mimoun.html">Rav Mimoun (3)</a>
-      <a href="rav-ruben-attal.html">Rav Ruben Attal (148)</a>
-      <a href="rav-shimshone-attali.html">Rav Shimshone Attali (1696)</a>
+      <a href="rav-ruben-attal.html">Rav Ruben Attal (149)</a>
+      <a href="rav-shimshone-attali.html">Rav Shimshone Attali (1705)</a>
       <a href="rav-shmouel-timestit.html">Rav Shmouel Timestit (14)</a>
       <a href="rav-simcha-buchinger.html">Rav Simcha Buchinger (24)</a>
       <a href="rav-yaakov-sitruk.html">Rav Yaakov Sitruk (901)</a>
@@ -2081,11 +2081,11 @@ Cours du Lu…</p>
       el.textContent = t(el.dataset.i18n);
     });
     const epCount = document.getElementById('ep-count');
-    if (epCount) epCount.textContent = I18N[lang].ep_count(148);
+    if (epCount) epCount.textContent = I18N[lang].ep_count(149);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `32 ערוצים · 13293 שיעורים · ~9970 שעות`
-      : `32 rabbins · 13293 cours · ~9970h de Torah`;
+      ? `32 ערוצים · 13323 שיעורים · ~9992 שעות`
+      : `32 rabbins · 13323 cours · ~9992h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
