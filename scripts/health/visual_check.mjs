@@ -92,8 +92,16 @@ async function checkPage(ctx, path) {
   for (const pe of pageErrors) failures.push(`${path}: uncaught JS error: ${pe}`);
 
   if (path === '/') {
+    // The homepage client-renders #app into a rabbi-bubbles section, a "recents"
+    // carousel and a channel grid (see index.html buildChannelGrid/buildRabbiBubbles).
+    // A healthy home therefore shows channel cards (and/or rabbi bubbles); a real
+    // render break leaves only the `<p class="state">` no-channels fallback.
+    // (Old heuristic looked for `.channel`/`.channel-header`/`<section>` which the
+    //  grid refactor removed — a false positive, see issue #29.)
     const sections = await page.evaluate(() =>
-      document.querySelectorAll('#app .channel, #app .channel-header, #app section').length);
+      document.querySelectorAll(
+        '#app .channel-grid-card, #app .rabbi-bubbles, #app .carousel-card, #app .section-label'
+      ).length);
     if (sections === 0) failures.push(`${path}: homepage rendered no channel sections (render broken?)`);
   }
   if (path === '/rabbins.html') {
