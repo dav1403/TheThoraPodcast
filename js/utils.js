@@ -121,6 +121,210 @@ function buildCarousel(label, items) {
   return section;
 }
 
+// ─── Tiny i18n helper (fr/he) reading window.lang ────────────────────────────
+// Standalone so pages/generated pages can label shared UI without their own I18N.
+function _t2(fr, he) { return (window.lang === 'he') ? he : fr; }
+
+// ─── Share row (WhatsApp-first) ──────────────────────────────────────────────
+// A row of share buttons for an episode/page: WhatsApp (lead), Telegram, email,
+// and copy-link. 100% client-side, no third-party tracking script — just plain
+// share URLs + clipboard. Fires a GA4 `share_click` event when gtag is present.
+function _injectShareCSS() {
+  if (document.getElementById('share-css')) return;
+  var s = document.createElement('style');
+  s.id = 'share-css';
+  s.textContent =
+    '.share-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}' +
+    '.share-row .share-lbl{font-size:.75rem;color:#888;margin-inline-end:2px}' +
+    '.share-btn2{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;' +
+      'font-family:inherit;font-size:.8rem;font-weight:600;color:#fff;border-radius:999px;' +
+      'padding:7px 13px;text-decoration:none;line-height:1;transition:transform .12s ease,opacity .12s ease}' +
+    '.share-btn2:hover{transform:translateY(-1px);opacity:.92}' +
+    '.share-btn2 svg{width:15px;height:15px;display:block}' +
+    '.share-wa{background:#25d366}.share-tg{background:#2aabee}' +
+    '.share-em{background:#6b7280}.share-cp{background:#1a1a2e}';
+  document.head.appendChild(s);
+}
+
+function _waIcon()  { return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.9c0 2.1.55 4.05 1.6 5.8L2 22l4.45-1.17a9.9 9.9 0 0 0 5.6 1.7h.01c5.46 0 9.9-4.45 9.9-9.9C21.96 6.45 17.5 2 12.04 2Zm5.8 14.16c-.24.68-1.4 1.3-1.94 1.34-.5.05-1.13.07-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.26-4.8-4.19-4.95-4.39-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.01-2.41.27-.29.58-.36.78-.36.19 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.83 2 .9 2.15.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.16-.29.36-.42.49-.14.14-.28.29-.12.56.16.27.72 1.18 1.55 1.92 1.06.95 1.96 1.24 2.24 1.38.27.14.43.12.59-.07.16-.19.68-.79.86-1.06.18-.27.36-.22.61-.13.24.09 1.55.73 1.82.86.27.14.45.2.51.31.07.11.07.64-.17 1.32Z"/></svg>'; }
+function _tgIcon()  { return '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.94 4.5 2.9 11.84c-1.3.52-1.29 1.25-.24 1.57l4.88 1.52 1.88 5.94c.23.63.11.88.77.88.51 0 .74-.24 1.02-.51l2.44-2.37 4.94 3.65c.91.5 1.56.24 1.79-.84l3.24-15.28c.33-1.32-.5-1.92-1.35-1.53Zm-3.9 3.03-8.98 5.66-.55 3.62-.9-3.5 9.53-6c.44-.28.85-.13.53.22Z"/></svg>'; }
+function _emIcon()  { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'; }
+function _cpIcon()  { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>'; }
+
+// Fire a lightweight GA4 event if gtag is loaded (no-op otherwise).
+function _shareEvent(target, url) {
+  try { if (typeof gtag === 'function') gtag('event', 'share_click', { method: target, item_id: url }); } catch (_) {}
+}
+
+// Small transient toast, self-contained (creates #ttp-toast if absent).
+function shareToast(msg) {
+  var el = document.getElementById('ttp-toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'ttp-toast';
+    el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1a1a2e;' +
+      'color:#fff;padding:10px 18px;border-radius:999px;font-size:.85rem;z-index:9999;opacity:0;' +
+      'transition:opacity .2s ease;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.28)';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(function () { el.style.opacity = '0'; }, 2000);
+}
+
+// Copy a URL to the clipboard, with a legacy fallback, then toast + GA4.
+function shareCopyLink(url) {
+  var done = function () { shareToast(_t2('Lien copié !', 'הקישור הועתק!')); _shareEvent('copy', url); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(done, function () { _shareFallbackCopy(url, done); });
+  } else { _shareFallbackCopy(url, done); }
+}
+function _shareFallbackCopy(url, done) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = url; ta.style.cssText = 'position:fixed;top:-1000px';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta); done();
+  } catch (_) { shareToast(url); }
+}
+
+// buildShareRow(url, title, opts) -> HTMLElement
+//   url   : absolute episode/page URL to share
+//   title : text prepended to the shared message
+//   opts  : { compact:true } hides the "Partager" label (for tight card rows)
+// WhatsApp leads (David's audience is WhatsApp-first); Telegram + email optional.
+function buildShareRow(url, title, opts) {
+  _injectShareCSS();
+  opts = opts || {};
+  var msg = (title ? title + ' — ' : '') + url;
+  var wa = 'https://wa.me/?text=' + encodeURIComponent(msg);
+  var tg = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(title || '');
+  var subject = title || _t2('Un cours de Torah', 'שיעור תורה');
+  var em = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(msg);
+
+  var row = document.createElement('div');
+  row.className = 'share-row';
+  var lbl = opts.compact ? '' : '<span class="share-lbl">' + _t2('Partager', 'שיתוף') + '</span>';
+  row.innerHTML = lbl +
+    '<a class="share-btn2 share-wa" target="_blank" rel="noopener" href="' + wa + '" data-share="whatsapp">' +
+      _waIcon() + '<span>WhatsApp</span></a>' +
+    '<a class="share-btn2 share-tg" target="_blank" rel="noopener" href="' + tg + '" data-share="telegram">' +
+      _tgIcon() + '<span>Telegram</span></a>' +
+    '<a class="share-btn2 share-em" href="' + em + '" data-share="email">' +
+      _emIcon() + '<span>Email</span></a>' +
+    '<button type="button" class="share-btn2 share-cp" data-share="copy">' +
+      _cpIcon() + '<span>' + _t2('Copier le lien', 'העתק קישור') + '</span></button>';
+
+  row.querySelector('.share-wa').addEventListener('click', function () { _shareEvent('whatsapp', url); });
+  row.querySelector('.share-tg').addEventListener('click', function () { _shareEvent('telegram', url); });
+  row.querySelector('.share-em').addEventListener('click', function () { _shareEvent('email', url); });
+  row.querySelector('.share-cp').addEventListener('click', function () { shareCopyLink(url); });
+  return row;
+}
+
+// ─── Resume playback ("Continue where you left off") ──────────────────────────
+// The player already persists position under `resume_<epId>` (see index.html /
+// generate_channel_pages.py). These helpers read that back for a "Reprendre" UI.
+function getResumePosition(epId) {
+  var v = parseInt(localStorage.getItem('resume_' + epId) || '0', 10);
+  return (v > 5) ? v : 0;  // ignore <5s (matches the write threshold)
+}
+function formatMmSs(secs) {
+  secs = Math.max(0, Math.floor(secs || 0));
+  var m = Math.floor(secs / 60), s = secs % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
+}
+// Attach a "Reprendre à mm:ss" banner just above an <audio> element if a saved
+// position exists. Clicking it seeks + plays. Non-destructive if none saved.
+function attachResumeBanner(audioEl, epId) {
+  if (!audioEl || !epId) return;
+  var pos = getResumePosition(epId);
+  if (!pos) return;
+  if (audioEl.previousElementSibling && audioEl.previousElementSibling.classList &&
+      audioEl.previousElementSibling.classList.contains('resume-banner')) return; // idempotent
+  if (!document.getElementById('resume-css')) {
+    var st = document.createElement('style');
+    st.id = 'resume-css';
+    st.textContent = '.resume-banner{display:inline-flex;align-items:center;gap:7px;background:#fff3e6;' +
+      'color:#c65a00;border:1px solid #ffd8ad;border-radius:8px;padding:7px 12px;font-size:.82rem;' +
+      'font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit}' +
+      '.resume-banner:hover{background:#ffe8d1}.resume-banner svg{width:14px;height:14px}';
+    document.head.appendChild(st);
+  }
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'resume-banner';
+  b.innerHTML = '<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>' +
+    _t2('Reprendre à ', 'המשך מ-') + formatMmSs(pos);
+  b.addEventListener('click', function () {
+    var seek = function () { try { audioEl.currentTime = pos; } catch (_) {} audioEl.play(); };
+    if (audioEl.readyState >= 1) seek();
+    else audioEl.addEventListener('loadedmetadata', seek, { once: true });
+    b.remove();
+  });
+  audioEl.parentNode.insertBefore(b, audioEl);
+}
+
+// ─── Favorite EPISODES (localStorage only — no backend, no account) ──────────
+// Distinct from favorite RAVS above. Stores rich objects so a "Mes favoris"
+// page can list them without re-fetching the catalog.
+//   { id, title, ch, url, thumb, date }
+var FAV_EPS_KEY = 'ttp_favorite_episodes';
+
+function getFavoriteEpisodes() {
+  try {
+    var v = JSON.parse(localStorage.getItem(FAV_EPS_KEY) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch (_) { return []; }
+}
+function isFavoriteEpisode(id) {
+  return getFavoriteEpisodes().some(function (e) { return e && e.id === id; });
+}
+// Toggle by id. `meta` (title/ch/url/thumb/date) is stored when adding.
+// Returns true if it is now favorited.
+function toggleFavoriteEpisode(id, meta) {
+  var favs = getFavoriteEpisodes();
+  var i = favs.findIndex(function (e) { return e && e.id === id; });
+  var nowFav;
+  if (i === -1) { favs.unshift(Object.assign({ id: id }, meta || {})); nowFav = true; }
+  else { favs.splice(i, 1); nowFav = false; }
+  try { localStorage.setItem(FAV_EPS_KEY, JSON.stringify(favs)); } catch (_) {}
+  return nowFav;
+}
+
+// Markup for an episode favorite-star. `meta` is JSON-embedded so a click can
+// persist the full record. Reuses the shared star CSS/SVG from favStar above.
+function favEpStarHtml(id, meta, variant) {
+  _injectFavCSS();
+  var fav = isFavoriteEpisode(id);
+  var label = fav ? _t2('Retirer des favoris', 'הסר מהמועדפים') : _t2('Ajouter aux favoris', 'הוסף למועדפים');
+  var m = escapeHtml(JSON.stringify(meta || {}));
+  return '<span class="fav-star fav-ep' + (variant ? ' ' + variant : '') + (fav ? ' is-fav' : '') +
+    '" role="button" tabindex="0" aria-pressed="' + fav + '" aria-label="' + label +
+    '" title="' + label + '" data-fav-ep="' + escapeHtml(id) + '" data-fav-meta="' + m +
+    '" onclick="favEpToggle(event,this)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){favEpToggle(event,this)}">' +
+    starSvg(fav) + '</span>';
+}
+
+function favEpToggle(evt, el) {
+  if (evt) { evt.preventDefault(); evt.stopPropagation(); }
+  var id = el.getAttribute('data-fav-ep');
+  var meta = {};
+  try { meta = JSON.parse(el.getAttribute('data-fav-meta') || '{}'); } catch (_) {}
+  var nowFav = toggleFavoriteEpisode(id, meta);
+  var label = nowFav ? _t2('Retirer des favoris', 'הסר מהמועדפים') : _t2('Ajouter aux favoris', 'הוסף למועדפים');
+  document.querySelectorAll('.fav-ep').forEach(function (s) {
+    if (s.getAttribute('data-fav-ep') !== id) return;
+    s.classList.toggle('is-fav', nowFav);
+    s.setAttribute('aria-pressed', nowFav);
+    s.setAttribute('aria-label', label);
+    s.setAttribute('title', label);
+    s.innerHTML = starSvg(nowFav);
+  });
+  document.dispatchEvent(new CustomEvent('favepchange', { detail: { id: id, fav: nowFav } }));
+}
+
 // ─── Favorite ravs (localStorage only — no backend, no account) ──────────────
 // Persisted as a JSON array of channel/speaker slugs under a single key.
 var FAV_RAVS_KEY = 'ttp_favorite_ravs';

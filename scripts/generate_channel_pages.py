@@ -469,6 +469,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
     </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
+    <a href="mes-favoris.html" data-i18n="nav_favorites">Mes favoris</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
 </header>
@@ -526,14 +527,14 @@ def render_page(ch: dict, entries: list, all_channels: list,
 <script>
   const I18N = {{
     fr: {{
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${{n}} épisode${{n !== 1 ? 's' : ''}}`,
       listen:'Écouter', playing:'En cours…',
     }},
     he: {{
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${{n}} פרקים`,
@@ -782,7 +783,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
             f'<time class="ep-date" datetime="{r["published"][:10]}">{fmt_date(r["published"], lang)}'
             + (f' · {fmt_dur(r.get("duration_secs", 0))}' if r.get('duration_secs') else '') + '</time>'
             f'<div class="ep-actions"><audio class="ep-audio" controls src="{esc(r["audio_url"])}" preload="none" data-ep-id="{esc(r_vid)}"></audio>'
-            f'<button class="share-btn" data-vid="{esc(r_vid)}" data-slug="{esc(slug)}" data-title="{esc(r["title"])}">'
+            f'<button class="share-btn" data-epfile="{esc(ep_path(slug, r))}" data-title="{esc(r["title"])}">'
             f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">'
             f'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>'
             f'<polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
@@ -918,6 +919,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     </div>
     <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
+    <a href="../mes-favoris.html" data-i18n="nav_favorites">Mes favoris</a>
     <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
 </header>
@@ -936,12 +938,9 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
       <button class="speed-btn" data-speed="1.5">1.5×</button>
       <button class="speed-btn" data-speed="2">2×</button>
     </div>
-    <button class="share-btn" data-epfile="{esc(ep_path(slug, ep))}" data-title="{esc(title)}" style="margin-top:8px">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13">
-        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-        <polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-      </svg> Partager cet épisode
-    </button>
+    <div id="ep-share" data-epfile="{esc(ep_path(slug, ep))}" data-title="{esc(title)}"
+         data-vid="{esc(video_id)}" data-ch="{esc(name)}" data-thumb="{esc(thumb)}" data-date="{pub}"
+         style="margin-top:10px"></div>
     {ep_platform_html}
     {desc_tag}
     {f'<details class="transcript"><summary data-i18n="transcript_label">Transcription</summary><div class="transcript-body">{esc(transcript)}</div></details>' if transcript else ''}
@@ -953,12 +952,12 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 <script>
   const I18N = {{
     fr: {{
-      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème',
+      nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       related:'Épisodes récents', transcript_label:'Transcription',
     }},
     he: {{
-      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא',
+      nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       related:'פרקים אחרונים', transcript_label:'תמליל',
     }},
@@ -996,14 +995,27 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   }});
   const mainAudio = document.getElementById('ep-audio');
   if (mainAudio) {{
-    const saved = parseInt(localStorage.getItem('resume_{video_id}') || '0');
-    if (saved > 5) mainAudio.addEventListener('loadedmetadata', () => {{ mainAudio.currentTime = saved; }}, {{once:true}});
     mainAudio.addEventListener('play', () => {{ mainAudio.playbackRate = currentSpeed; }});
     mainAudio.addEventListener('timeupdate', () => {{
       if (mainAudio.currentTime > 5) localStorage.setItem('resume_{video_id}', Math.floor(mainAudio.currentTime));
     }});
     mainAudio.addEventListener('ended', () => {{ localStorage.removeItem('resume_{video_id}'); }});
+    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '{video_id}');
   }}
+  // Share row (WhatsApp-first) + favorite star, built from the shared lib.
+  (function () {{
+    const host = document.getElementById('ep-share');
+    if (!host || typeof buildShareRow !== 'function') return;
+    const url = `{BASE_URL}/${{host.dataset.epfile}}`;
+    const meta = {{ title: host.dataset.title, ch: host.dataset.ch, url: url,
+                    thumb: host.dataset.thumb, date: host.dataset.date }};
+    const star = document.createElement('span');
+    star.innerHTML = favEpStarHtml(host.dataset.vid, meta, 'on-channel');
+    const row = buildShareRow(url, host.dataset.title);
+    row.appendChild(star.firstChild);
+    host.appendChild(row);
+  }})();
   document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {{
     const epId = audio.dataset.epId;
     const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
