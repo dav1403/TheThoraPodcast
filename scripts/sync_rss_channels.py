@@ -28,6 +28,27 @@ HEALTH_FILE   = FEEDS_DIR / "rss_health.json"
 HEALTH_SAMPLE = 5
 
 
+def merge_entries(new_entries: list[dict], existing: dict[str, dict]) -> dict[str, dict]:
+    """Merge freshly-parsed RSS entries with the previously-stored ones.
+
+    The RSS feed is authoritative for the fields it provides, but locally
+    enriched fields must survive the re-sync: `tags` (added by tag_episodes.py),
+    and any other field other scripts add (durations, descriptions, ...).
+    For an episode present in both, carry over every old field the fresh RSS
+    entry is missing; episodes only in `existing` are kept as-is.
+
+    Returns a dict keyed by video_id.
+    """
+    merged = {ep["video_id"]: ep for ep in new_entries}
+    for vid, ep in existing.items():
+        if vid in merged:
+            for k, v in ep.items():
+                merged[vid].setdefault(k, v)
+        else:
+            merged[vid] = ep
+    return merged
+
+
 def strip_html(s: str) -> str:
     return re.sub(r"<[^>]+>", "", s or "").strip()
 
@@ -207,11 +228,7 @@ def main():
             for ep in json.loads(entries_file.read_text(encoding="utf-8")):
                 existing[ep["video_id"]] = ep
 
-        # RSS feed is authoritative; merge preserves any extra local fields
-        merged = {ep["video_id"]: ep for ep in new_entries}
-        for vid, ep in existing.items():
-            if vid not in merged:
-                merged[vid] = ep
+        merged = merge_entries(new_entries, existing)
 
         result = sorted(merged.values(), key=lambda x: x["published"], reverse=True)
         entries_file.write_text(
