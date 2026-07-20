@@ -292,7 +292,7 @@ D&#x27;où apprenons-nous ce conseil qui semble sortir tout droit du c">
     <div style="margin-bottom:8px"><span class="ep-tag">Santé &amp; Réfoua</span></div>
     <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uXRJSK9fusU_Combattre_la_stérilité___28_01_19.mp3" preload="none" data-ep-id="uXRJSK9fusU" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
     <div class="speed-bar">
-      <span data-i18n="speed_label">Vitesse :</span>
+      <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
       <button class="speed-btn" data-speed="1.25">1.25×</button>
       <button class="speed-btn" data-speed="1.5">1.5×</button>
@@ -321,13 +321,18 @@ Toutes ces bonnes actions ont pour but de  faire éclore votre potentiel. En don
   const I18N = {
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
-      lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', transcript_label:'Transcription', speed_label:'Vitesse :',
+      lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      related:'Épisodes récents', transcript_label:'Transcription',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
+      lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
+      related:'Recent episodes', transcript_label:'Transcript',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', transcript_label:'תמליל', speed_label:'מהירות:',
+      related:'פרקים אחרונים', transcript_label:'תמליל',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -338,7 +343,8 @@ Toutes ces bonnes actions ont pour but de  faire éclore votre potentiel. En don
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   }
   function toggleLang() {
-    localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
     location.reload();
   }
   applyLang();

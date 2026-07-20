@@ -292,7 +292,7 @@ https://nedar.im/aDPy
     <div style="margin-bottom:8px"><span class="ep-tag">Paracha</span></div>
     <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/4ezm8Dzz0ak_הרב_מאיר_דוד_שמואלי_שליט_א_-_שידור_חי_יום_ד__-_פרשת_נשא_תשפ_ו.mp3" preload="none" data-ep-id="4ezm8Dzz0ak" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
     <div class="speed-bar">
-      <span data-i18n="speed_label">Vitesse :</span>
+      <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
       <button class="speed-btn" data-speed="1.25">1.25×</button>
       <button class="speed-btn" data-speed="1.5">1.5×</button>
@@ -320,13 +320,18 @@ https://nedar.im/aDPy
   const I18N = {
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
-      lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', transcript_label:'Transcription', speed_label:'Vitesse :',
+      lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      related:'Épisodes récents', transcript_label:'Transcription',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
+      lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
+      related:'Recent episodes', transcript_label:'Transcript',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', transcript_label:'תמליל', speed_label:'מהירות:',
+      related:'פרקים אחרונים', transcript_label:'תמליל',
     },
   };
   let lang = localStorage.getItem('lang') || 'he';
@@ -337,7 +342,8 @@ https://nedar.im/aDPy
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   }
   function toggleLang() {
-    localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
     location.reload();
   }
   applyLang();
