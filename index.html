@@ -243,6 +243,48 @@
     .channel-grid-name { font-size: .9rem; font-weight: 600; color: #222; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height: 1.25; }
     .channel-grid-count { font-size: .72rem; color: #999; margin-top: 2px; }
 
+    /* Hero — featured latest episode (top-of-home headline) */
+    #hero-section { margin-bottom: 34px; }
+    .hero-card {
+      display: flex; gap: 0; align-items: stretch;
+      background: linear-gradient(135deg, #232345 0%, #1a1a2e 100%);
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0,0,0,.18);
+    }
+    .hero-art { position: relative; flex-shrink: 0; width: 42%; max-width: 330px; min-height: 210px; }
+    .hero-art img { width: 100%; height: 100%; object-fit: cover; display: block; background: #2a2a45; }
+    .hero-play {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: 60px; height: 60px; border-radius: 50%; border: none;
+      background: rgba(232,119,34,.95); color: #fff; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,.4); transition: transform .15s, background .15s;
+    }
+    .hero-play:hover { transform: translate(-50%,-50%) scale(1.08); background: #e87722; }
+    .hero-play svg { width: 26px; height: 26px; }
+    .hero-body { flex: 1; min-width: 0; padding: 26px 28px; display: flex; flex-direction: column; justify-content: center; color: #fff; }
+    .hero-eyebrow { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #e8b877; margin-bottom: 10px; }
+    .hero-ch { font-size: .82rem; color: #aab; margin-bottom: 6px; }
+    .hero-title { font-size: 1.5rem; font-weight: 700; color: #fff; text-decoration: none; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .hero-title:hover { color: #e8b877; }
+    .hero-date { font-size: .78rem; color: #8a8aa6; margin-top: 10px; }
+    .hero-cta {
+      margin-top: 18px; align-self: flex-start;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #e87722; color: #fff; border: none; border-radius: 24px;
+      padding: 10px 22px; font-size: .9rem; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: background .15s, transform .15s;
+    }
+    .hero-cta svg { width: 16px; height: 16px; }
+    .hero-cta:hover { background: #d16a1a; transform: translateY(-1px); }
+    @media (max-width: 620px) {
+      .hero-card { flex-direction: column; }
+      .hero-art { width: 100%; max-width: none; height: 190px; min-height: 0; }
+      .hero-body { padding: 20px 20px 24px; }
+      .hero-title { font-size: 1.25rem; }
+    }
+    .rabbi-bubble-count { font-size: .6rem; color: #999; text-align: center; line-height: 1.1; }
+
     /* Channel sections */
     .channel {
       background: #fff;
@@ -727,6 +769,14 @@
     }
   });
 
+  // Hero + any [data-play] trigger plays recents[idx] straight from home.json.
+  document.addEventListener('click', e => {
+    const trigger = e.target.closest('[data-play]');
+    if (!trigger) return;
+    const ep = recents[+trigger.dataset.play];
+    if (ep) loadInPlayer(ep, ep.ch_name, ep.slug);
+  });
+
   document.getElementById('player-close').addEventListener('click', () => {
     playerAudio.pause();
     playerEl.classList.add('hidden');
@@ -755,21 +805,52 @@
 
 
 
-  // Clickable rabbi bubbles (discovery), consistent with rabbins.html.
+  // Hero: the single newest episode, featured big at the top of the home for a
+  // clear headline (recents[0]). Plays straight from its baked home.json fields.
+  function buildHero() {
+    const ep = recents[0];
+    if (!ep) return null;
+    const art = escapeHtml(ep.thumbnail || `artwork/${ep.slug}.png`);
+    const wrap = document.createElement('div');
+    wrap.id = 'hero-section';
+    wrap.innerHTML = `
+      <div class="hero-card">
+        <div class="hero-art">
+          <img src="${art}" alt="" onerror="this.src='artwork/${escapeHtml(ep.slug)}.png'">
+          <button class="hero-play" data-play="0" aria-label="${t('listen')}">${playIcon()}</button>
+        </div>
+        <div class="hero-body">
+          <div class="hero-eyebrow">${lang === 'he' ? 'השיעור האחרון' : 'À la une'}</div>
+          <div class="hero-ch">${escapeHtml(ep.ch_name)}</div>
+          <a class="hero-title" href="${escapeHtml(ep.url)}">${escapeHtml(ep.title)}</a>
+          <div class="hero-date">${formatDate(ep.published)}</div>
+          <button class="hero-cta" data-play="0">${playIcon()} ${t('listen')}</button>
+        </div>
+      </div>`;
+    return wrap;
+  }
+
+  // Single unified discovery section: channels (with cours count) + speakers,
+  // as clickable bubbles. Replaces the former duplicate "Les rabbanim" bubbles
+  // + "Toutes les chaînes" card grid (same channels listed twice).
   function buildRabbiBubbles(list) {
     if (!list || !list.length) return null;
     const bubbles = list.map(r => {
       const img = r.img ? escapeHtml(r.img) : ('artwork/' + escapeHtml(r.slug) + '.png');
+      const count = r.count
+        ? `<span class="rabbi-bubble-count">${r.count} ${lang === 'he' ? 'שיעורים' : 'cours'}</span>`
+        : '';
       return `
         <a class="rabbi-bubble" href="${escapeHtml(r.slug)}.html" title="${escapeHtml(r.name)}">
           <img src="${img}" alt="${escapeHtml(r.name)}" loading="lazy"
                onerror="this.onerror=null;this.src='artwork/${escapeHtml(r.slug)}.png'">
           <span class="rabbi-bubble-name">${escapeHtml(r.name)}</span>
+          ${count}
         </a>`;
     }).join('');
     const wrap = document.createElement('div');
     wrap.className = 'rabbi-bubbles-section';
-    wrap.innerHTML = `<div class="section-label">${lang === 'he' ? 'הרבנים' : 'Les rabbanim'}</div><div class="rabbi-bubbles">${bubbles}</div>`;
+    wrap.innerHTML = `<div class="section-label">${lang === 'he' ? 'כל הרבנים והערוצים' : 'Tous les rabbanim & chaînes'}</div><div class="rabbi-bubbles">${bubbles}</div>`;
     return wrap;
   }
 
@@ -777,8 +858,10 @@
   // sorted newest-first) — data-idx indexes into the `recents` array so the play
   // handler can load the episode straight from its baked fields.
   function buildRecents() {
-    const cards = recents.map((ep, idx) => `
-      <div class="recent-card" data-ep-dur="${ep.duration_secs || 0}" data-idx="${idx}">
+    // idx 0 is featured in the hero above — start the carousel at 1 (data-idx
+    // stays the true recents[] index so playback loads the right episode).
+    const cards = recents.slice(1).map((ep, i) => `
+      <div class="recent-card" data-ep-dur="${ep.duration_secs || 0}" data-idx="${i + 1}">
         <img src="${escapeHtml(ep.thumbnail || `artwork/${ep.slug}.png`)}" alt=""
              loading="lazy" onerror="this.src='artwork/${escapeHtml(ep.slug)}.png'">
         <div class="recent-card-body">
@@ -835,13 +918,13 @@
 
   function setupSearch() {
     const input    = document.getElementById('search');
+    const hero     = document.getElementById('hero-section');
     const recents  = document.getElementById('recents-section');
-    const channels = document.getElementById('channels-section');
     const bubbles  = document.querySelector('.rabbi-bubbles-section');
     const results  = document.getElementById('search-results');
     const noRes    = document.getElementById('no-results');
 
-    const homeSections = [bubbles, recents, channels].filter(Boolean);
+    const homeSections = [hero, bubbles, recents].filter(Boolean);
     const showHome = (on) => { homeSections.forEach(s => { s.hidden = !on; }); };
 
     function renderResults(q) {
@@ -936,14 +1019,21 @@
     ].join('');
 
     app.innerHTML = '';
+
+    // 1. Hero — newest episode, featured. 2. Derniers épisodes carousel.
+    // 3. ONE unified channels/rabbanim section (channels + speakers as bubbles).
+    const heroSection = buildHero();
+    if (heroSection) app.appendChild(heroSection);
+
+    app.appendChild(buildRecents());
+
     const bubbleList = [
-      ...channels.map(ch => ({ slug: ch.slug, name: ch.name })),
+      ...[...channels].sort((a, b) => (b.count || 0) - (a.count || 0))
+        .map(ch => ({ slug: ch.slug, name: ch.name, count: ch.count })),
       ...speakers.map(sp => ({ slug: sp.slug, name: sp.name, img: sp.img })),
     ];
     const bubblesSection = buildRabbiBubbles(bubbleList);
     if (bubblesSection) app.appendChild(bubblesSection);
-    app.appendChild(buildRecents());
-    app.appendChild(buildChannelGrid());
 
     // Full-text search results land here (populated lazily by setupSearch).
     const searchResults = document.createElement('div');
