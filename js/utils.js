@@ -25,7 +25,8 @@ function epUrl(ep, chSlug) {
 }
 
 function formatDate(iso) {
-  var locale = (window.lang === 'he') ? 'he-IL' : 'fr-FR';
+  var lang = (typeof window !== 'undefined' && window.lang) ? window.lang : (localStorage.getItem('lang') || 'fr');
+  var locale = (lang === 'he') ? 'he-IL' : 'fr-FR';
   return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 }
 

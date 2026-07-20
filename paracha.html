@@ -388,7 +388,7 @@
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
-      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a></div>
+      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html" data-i18n="all_rabbis">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <div class="nav-dropdown">
@@ -397,7 +397,7 @@
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
         <a href="hayom-yom.html" data-i18n="nav_hayomyom">Hayom Yom</a>
-        <a href="hiloula.html">Hiloula</a>
+        <a href="hiloula.html" data-i18n="nav_hiloula">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" class="active" data-i18n="nav_paracha">Paracha</a>
@@ -423,10 +423,10 @@
   </div>
 
     <div class="dur-filter" id="dur-filter">
-    <button class="dur-btn active" data-dur="all" onclick="filterDurAll(this)">Tous</button>
-    <button class="dur-btn" data-dur="short" onclick="filterDurAll(this)">&lt; 5 min</button>
-    <button class="dur-btn" data-dur="medium" onclick="filterDurAll(this)">5–20 min</button>
-    <button class="dur-btn" data-dur="long" onclick="filterDurAll(this)">&gt; 20 min</button>
+    <button class="dur-btn active" data-dur="all" onclick="filterDurAll(this)" data-i18n="dur_all">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="filterDurAll(this)" data-i18n="dur_short">&lt; 5 min</button>
+    <button class="dur-btn" data-dur="medium" onclick="filterDurAll(this)" data-i18n="dur_medium">5–20 min</button>
+    <button class="dur-btn" data-dur="long" onclick="filterDurAll(this)" data-i18n="dur_long">&gt; 20 min</button>
   </div>
 <div id="results" hidden>
     <div class="results-header">
@@ -467,6 +467,8 @@ const I18N = {
     ep_singular:'épisode', ep_plural:'épisodes',
     loading_eps:'Chargement des épisodes…',
     show_more:'Voir plus', show_less:'Voir moins',
+    dur_all:'Tous', dur_short:'< 5 min', dur_medium:'5–20 min', dur_long:'> 20 min',
+    nav_hiloula:'Hiloula', all_rabbis:'Tous les rabbins →',
   },
   he: {
     nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -483,6 +485,8 @@ const I18N = {
     ep_singular:'פרק', ep_plural:'פרקים',
     loading_eps:'טוען פרקים…',
     show_more:'הצג עוד', show_less:'הצג פחות',
+    dur_all:'הכול', dur_short:'< 5 דק׳', dur_medium:'5–20 דק׳', dur_long:'> 20 דק׳',
+    nav_hiloula:'הילולה', all_rabbis:'כל הרבנים →',
   },
 };
 const BOOK_HE = { 'Bereshit':'בראשית', 'Shemot':'שמות', 'Vayikra':'ויקרא', 'Bamidbar':'במדבר', 'Devarim':'דברים' };
@@ -652,11 +656,11 @@ document.addEventListener('click', e => {
   }
   if (activeBtn && activeBtn !== btn) {
     activeBtn.classList.remove('playing');
-    activeBtn.innerHTML = playIcon() + ' Écouter';
+    activeBtn.innerHTML = playIcon() + ' ' + t('listen');
   }
   activeBtn = btn;
   btn.classList.add('playing');
-  btn.innerHTML = pauseIcon() + ' En cours…';
+  btn.innerHTML = pauseIcon() + ' ' + t('playing');
   document.getElementById('player-title').textContent   = btn.dataset.title;
   document.getElementById('player-channel').textContent = btn.dataset.channel;
   document.getElementById('player-art').src             = btn.dataset.art || '';
@@ -973,7 +977,7 @@ function selectParacha(slug) {
   const sub = document.getElementById('nav-rabbis-submenu');
   if (sub) sub.innerHTML = enabled.map(ch =>
     `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
-  ).join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
+  ).join('') + `<a class="nav-submenu-all" href="rabbins.html">${t('all_rabbis')}</a>`;
 
   document.addEventListener('click', e => {
     if (e.target.closest('.nav-submenu')) return;

@@ -98,7 +98,7 @@
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
-      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a></div>
+      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html" data-i18n="all_rabbis">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <div class="nav-dropdown">
@@ -133,6 +133,7 @@
       intro_body:"La hiloula est le jour anniversaire du départ d'un tsadik — un moment propice pour étudier sa Torah et se relier à lui. Retrouvez ici les grandes hiloulot de l'année et les cours de Torah qui leur sont consacrés.",
       loading:'Chargement…', next:'prochaine hiloula :', upcoming:'À venir', no_courses:'Aucun cours pour le moment.',
       courses:'Cours associés',
+      all_rabbis:'Tous les rabbins →', footer_contact:'Contactez-nous', footer_legal:'Mentions légales',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -141,6 +142,7 @@
       intro_body:'ההילולה היא יום פטירתו של צדיק — עת רצון ללמוד את תורתו ולהתחבר אליו. כאן תמצאו את ההילולות הגדולות של השנה ואת השיעורים המוקדשים להן.',
       loading:'טוען…', next:'הילולה הבאה:', upcoming:'קרוב', no_courses:'אין שיעורים בינתיים.',
       courses:'שיעורים קשורים',
+      all_rabbis:'כל הרבנים ←', footer_contact:'צרו קשר', footer_legal:'מידע משפטי',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -279,17 +281,18 @@
     const sub = document.getElementById('nav-rabbis-submenu');
     if (sub) sub.innerHTML = channels.map(ch =>
       `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
-    ).join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
+    ).join('') + `<a class="nav-submenu-all" href="rabbins.html">${t('all_rabbis')}</a>`;
   })();
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 
 <footer class="site-footer">
-  <a href="/contact.html">Contactez-nous</a>
+  <a href="/contact.html" data-i18n="footer_contact">Contactez-nous</a>
   &nbsp;·&nbsp;
-  <a href="/cgv.html">Mentions légales</a>
+  <a href="/cgv.html" data-i18n="footer_legal">Mentions légales</a>
   &nbsp;·&nbsp;
   <span>© 2026 The Torah Podcast</span>
 </footer>
+<script>applyLang();</script>
 </body>
 </html>

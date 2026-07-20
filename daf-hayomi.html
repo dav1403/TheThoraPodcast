@@ -208,7 +208,7 @@
   <div class="sticky-inner">
     <div class="search-wrap-global">
       <svg class="search-icon-global" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-input-global" id="global-search" type="search" placeholder="Rechercher un cours…" autocomplete="off">
+      <input class="search-input-global" id="global-search" type="search" placeholder="Rechercher un cours…" data-i18n="|search_ph" autocomplete="off">
     </div>
   </div>
 </div>
@@ -265,12 +265,15 @@
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       page_title:'Daf Hayomi',
       filter_all:'Tous les rabbins',
+      search_ph:'Rechercher un cours…',
+      share:'Partager',
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       load_more:'Voir plus',
       show_more:'Voir plus', show_less:'Voir moins',
       ep_singular:'cours', ep_plural:'cours',
       no_episodes:'Aucun épisode Daf Hayomi trouvé.',
       copied:'Lien copié !',
+      footer_contact:'Contactez-nous', footer_legal:'Mentions légales',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי',
@@ -279,12 +282,15 @@
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       page_title:'דף היומי',
       filter_all:'כל הרבנים',
+      search_ph:'חיפוש שיעור…',
+      share:'שתף',
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       load_more:'טען עוד',
       show_more:'הצג עוד', show_less:'הצג פחות',
       ep_singular:'שיעור', ep_plural:'שיעורים',
       no_episodes:'לא נמצאו שיעורי דף יומי.',
       copied:'הקישור הועתק!',
+      footer_contact:'צור קשר', footer_legal:'תנאי שימוש',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -292,7 +298,11 @@
   function applyLang() {
     document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
-    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.dataset.i18n;
+      if (k[0] === '|') el.placeholder = t(k.slice(1));
+      else el.textContent = t(k);
+    });
     const fr = document.getElementById('daf-intro-fr');
     const he = document.getElementById('daf-intro-he');
     if (fr) fr.style.display = lang === 'he' ? 'none' : '';
@@ -411,7 +421,7 @@
     const playBtn = ep.audio_url
       ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>` : '';
     const shareBtn = ep.title && ep.published
-      ? `<button class="share-btn" data-epfile="${epUrl(ep, ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
+      ? `<button class="share-btn" data-epfile="${epUrl(ep, ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} ${t('share')}</button>` : '';
     return `
       <li class="episode-item${isExtra ? ' ep-extra' : ''}" data-ep-dur="${ep.duration_secs || 0}" data-slug="${escapeHtml(ch.slug)}">
         ${thumb}
@@ -661,9 +671,9 @@
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 
 <footer class="site-footer">
-  <a href="/contact.html">Contactez-nous</a>
+  <a href="/contact.html" data-i18n="footer_contact">Contactez-nous</a>
   &nbsp;·&nbsp;
-  <a href="/cgv.html">Mentions légales</a>
+  <a href="/cgv.html" data-i18n="footer_legal">Mentions légales</a>
   &nbsp;·&nbsp;
   <span>© 2026 The Torah Podcast</span>
 </footer>

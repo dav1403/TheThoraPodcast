@@ -367,7 +367,7 @@
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link active" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
-      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a></div>
+      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html" data-i18n="all_rabbis">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <div class="nav-dropdown">
@@ -376,7 +376,7 @@
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
         <a href="hayom-yom.html" data-i18n="nav_hayomyom">Hayom Yom</a>
-        <a href="hiloula.html">Hiloula</a>
+        <a href="hiloula.html" data-i18n="nav_hiloula">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
@@ -424,6 +424,7 @@
       copy_rss:'Copier RSS', copied:'✓ Copié !',
       ep_singular:'épisode', ep_plural:'épisodes',
       last:'Dernier :', no_channels:'Aucune chaîne disponible.',
+      nav_hiloula:'Hiloula', all_rabbis:'Tous les rabbins →',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -439,6 +440,7 @@
       copy_rss:'העתק RSS', copied:'✓ הועתק !',
       ep_singular:'פרק', ep_plural:'פרקים',
       last:'אחרון :', no_channels:'אין ערוצים זמינים.',
+      nav_hiloula:'הילולה', all_rabbis:'כל הרבנים →',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -730,7 +732,7 @@
         .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
       sub.innerHTML = navItems
         .map(it => `<a href="${escapeHtml(it.slug)}.html">${escapeHtml(it.name)}${it.count ? ` (${it.count})` : ''}</a>`)
-        .join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
+        .join('') + `<a class="nav-submenu-all" href="rabbins.html">${t('all_rabbis')}</a>`;
     }
 
     document.addEventListener('click', e => {

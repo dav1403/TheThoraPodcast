@@ -217,7 +217,7 @@
 <ul class="episode-list" id="episode-list">
   <div class="state">
     <div class="loading-spinner"></div>
-    Chargement…
+    <span id="loading-txt">Chargement…</span>
   </div>
 </ul>
 
@@ -241,6 +241,10 @@
   const slug   = params.get('slug') || '';
   const lang   = params.get('lang') || 'fr';
   window.lang  = lang;   // utils.js helpers (formatDate) read window.lang
+  const T = (fr, he) => (lang === 'he' ? he : fr);
+  document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+  document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
+  { const _lt = document.getElementById('loading-txt'); if (_lt) _lt.textContent = T('Chargement…', 'טוען…'); }
 
   function platformSVG(name) {
     if (name === 'spotify') return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424a.622.622 0 01-.857.207c-2.348-1.435-5.304-1.76-8.785-.964a.623.623 0 11-.277-1.215c3.809-.87 7.076-.496 9.712 1.115.294.18.387.563.207.857zm1.223-2.72a.78.78 0 01-1.072.257c-2.687-1.652-6.785-2.131-9.965-1.166a.78.78 0 01-.973-.519.781.781 0 01.519-.972c3.632-1.102 8.147-.568 11.234 1.328a.78.78 0 01.257 1.072zm.105-2.83C14.691 8.95 9.375 8.775 6.297 9.71a.937.937 0 11-.543-1.793c3.521-1.068 9.376-.861 13.072 1.332a.937.937 0 01-.912 1.624z"/></svg>`;
@@ -284,7 +288,7 @@
     const listEl = document.getElementById('episode-list');
 
     if (!slug) {
-      listEl.innerHTML = `<div class="state">Paramètre <code>slug</code> manquant.</div>`;
+      listEl.innerHTML = `${T("Paramètre <code>slug</code> manquant.", "פרמטר <code>slug</code> חסר.")}`;
       return;
     }
 
@@ -298,7 +302,7 @@
     } catch(_) {}
 
     if (!chInfo) {
-      listEl.innerHTML = `<div class="state">Canal introuvable.</div>`;
+      listEl.innerHTML = `${T("Canal introuvable.", "הערוץ לא נמצא.")}`;
       return;
     }
 
@@ -333,7 +337,7 @@
     episodes.sort((a, b) => new Date(b.published) - new Date(a.published));
 
     if (!episodes.length) {
-      listEl.innerHTML = `<div class="state">Aucun épisode disponible.</div>`;
+      listEl.innerHTML = `${T("Aucun épisode disponible.", "אין פרקים זמינים.")}`;
       return;
     }
 
@@ -348,7 +352,7 @@
         ? `<button class="play-btn"
              data-url="${escapeHtml(ep.audio_url)}"
              data-title="${escapeHtml(ep.title)}"
-             title="Écouter" aria-label="Écouter"
+             title="${T('Écouter', 'האזן')}" aria-label="${T('Écouter', 'האזן')}"
            >${playIcon()}</button>`
         : '';
       return `

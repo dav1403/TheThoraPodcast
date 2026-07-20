@@ -345,6 +345,7 @@
       listen:'Écouter', playing:'En cours…',
       ep_singular:'cours', ep_plural:'cours',
       copied:'Lien copié !',
+      footer_contact:'Contactez-nous', footer_legal:'Mentions légales',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי',
@@ -373,6 +374,7 @@
       listen:'האזן', playing:'מתנגן…',
       ep_singular:'שיעור', ep_plural:'שיעורים',
       copied:'הקישור הועתק!',
+      footer_contact:'צור קשר', footer_legal:'תנאי שימוש',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -890,9 +892,9 @@
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 
 <footer class="site-footer">
-  <a href="/contact.html">Contactez-nous</a>
+  <a href="/contact.html" data-i18n="footer_contact">Contactez-nous</a>
   &nbsp;·&nbsp;
-  <a href="/cgv.html">Mentions légales</a>
+  <a href="/cgv.html" data-i18n="footer_legal">Mentions légales</a>
   &nbsp;·&nbsp;
   <span>© 2026 The Torah Podcast</span>
 </footer>

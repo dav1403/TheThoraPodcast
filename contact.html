@@ -52,54 +52,96 @@
 <body>
 <header>
   <h1><a href="./">The Torah Podcast</a></h1>
-  <p>Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
   <nav class="header-nav">
-    <a href="./">Accueil</a>
-    <a href="rabbins.html">Rabbins</a>
-    <a href="derniers-cours.html">Derniers cours</a>
-    <a href="daf-hayomi.html">Daf Hayomi</a>
-    <a href="paracha.html">Paracha</a>
-    <a href="themes.html">Thème</a>
+    <a href="./" data-i18n="nav_home">Accueil</a>
+    <a href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a>
+    <a href="derniers-cours.html" data-i18n="nav_latest">Derniers cours</a>
+    <a href="daf-hayomi.html" data-i18n="nav_daf">Daf Hayomi</a>
+    <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
+    <a href="themes.html" data-i18n="nav_theme">Thème</a>
+    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_btn">עברית</button>
   </nav>
 </header>
 
 <main>
-  <h2>Contactez-nous</h2>
-  <p>Pour toute question concernant nos cours, nos rabbins ou nos partenariats, n'hésitez pas à nous écrire.</p>
+  <h2 data-i18n="contact_title">Contactez-nous</h2>
+  <p data-i18n="contact_intro">Pour toute question concernant nos cours, nos rabbins ou nos partenariats, n'hésitez pas à nous écrire.</p>
 
   <div class="contact-card">
     <div class="contact-item">
       <div class="contact-icon">✉️</div>
       <div>
-        <div class="contact-label">Email</div>
+        <div class="contact-label" data-i18n="label_email">Email</div>
         <div class="contact-value"><a href="mailto:thetorahpodcast@gmail.com">thetorahpodcast@gmail.com</a></div>
       </div>
     </div>
     <div class="contact-item">
       <div class="contact-icon">🎙️</div>
       <div>
-        <div class="contact-label">Proposer un rabbin ou un cours</div>
-        <div class="contact-value"><a href="mailto:thetorahpodcast@gmail.com?subject=Proposition de cours">Écrire à l'équipe</a></div>
+        <div class="contact-label" data-i18n="label_propose">Proposer un rabbin ou un cours</div>
+        <div class="contact-value"><a href="mailto:thetorahpodcast@gmail.com?subject=Proposition de cours" data-i18n="link_write">Écrire à l'équipe</a></div>
       </div>
     </div>
     <div class="contact-item">
       <div class="contact-icon">🤝</div>
       <div>
-        <div class="contact-label">Partenariats & collaborations</div>
+        <div class="contact-label" data-i18n="label_partners">Partenariats & collaborations</div>
         <div class="contact-value"><a href="mailto:thetorahpodcast@gmail.com?subject=Partenariat">thetorahpodcast@gmail.com</a></div>
       </div>
     </div>
   </div>
 
-  <p style="font-size:.85rem;color:#888">Nous répondons généralement dans les 48 heures.</p>
+  <p style="font-size:.85rem;color:#888" data-i18n="reply_note">Nous répondons généralement dans les 48 heures.</p>
 </main>
 
 <footer class="site-footer">
-  <a href="contact.html">Contactez-nous</a>
+  <a href="contact.html" data-i18n="foot_contact">Contactez-nous</a>
   ·
-  <a href="cgv.html">Mentions légales</a>
+  <a href="cgv.html" data-i18n="foot_legal">Mentions légales</a>
   ·
   <span>© 2026 The Torah Podcast</span>
 </footer>
+
+<script>
+  const lang = localStorage.getItem('lang') || 'fr';
+  document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+  document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+  function toggleLang() {
+    localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
+    location.reload();
+  }
+  const I18N = {
+    fr: {},
+    he: {
+      subtitle: "שיעורי תורה — זמינים בפלטפורמות המועדפות עליכם",
+      nav_home: "בית",
+      nav_rabbis: "רבנים",
+      nav_latest: "שיעורים אחרונים",
+      nav_daf: "דף היומי",
+      nav_paracha: "פרשה",
+      nav_theme: "נושא",
+      lang_btn: "Français",
+      contact_title: "צרו קשר",
+      contact_intro: "לכל שאלה בנוגע לשיעורים, לרבנים או לשיתופי הפעולה שלנו, אל תהססו לכתוב לנו.",
+      label_email: "אימייל",
+      label_propose: "הצעת רב או שיעור",
+      link_write: "כתבו לצוות",
+      label_partners: "שותפויות ושיתופי פעולה",
+      reply_note: "אנו משיבים בדרך כלל תוך 48 שעות.",
+      foot_contact: "צרו קשר",
+      foot_legal: "תנאי שימוש"
+    }
+  };
+  function applyLang() {
+    if (lang !== 'he') return;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      const key = el.getAttribute('data-i18n');
+      const val = I18N.he[key];
+      if (val) el.textContent = val;
+    });
+  }
+  applyLang();
+</script>
 </body>
 </html>

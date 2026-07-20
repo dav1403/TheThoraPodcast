@@ -585,10 +585,10 @@
     <input class="search-input" id="search" type="search" data-i18n="|search_ph" placeholder="Rechercher un épisode ou un rav…" autocomplete="off">
   </div>
   <div class="dur-filter" id="dur-filter-idx" style="max-width:860px;margin:8px auto 0">
-    <button class="dur-btn active" data-dur="all" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">Tous</button>
-    <button class="dur-btn" data-dur="short" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&lt;&nbsp;5&nbsp;min</button>
-    <button class="dur-btn" data-dur="medium" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">5–20&nbsp;min</button>
-    <button class="dur-btn" data-dur="long" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&gt;&nbsp;20&nbsp;min</button>
+    <button class="dur-btn active" data-dur="all" data-i18n="dur_all" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">Tous</button>
+    <button class="dur-btn" data-dur="short" data-i18n="dur_short" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&lt;&nbsp;5&nbsp;min</button>
+    <button class="dur-btn" data-dur="medium" data-i18n="dur_medium" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">5–20&nbsp;min</button>
+    <button class="dur-btn" data-dur="long" data-i18n="dur_long" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&gt;&nbsp;20&nbsp;min</button>
   </div>
 </div>
 
@@ -621,6 +621,7 @@
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       no_results:'Aucun épisode trouvé.', no_episodes:'Aucun épisode disponible.', no_channels:'Aucune chaîne disponible.',
       copied:'Lien copié !',
+      dur_all:'Tous', dur_short:'< 5 min', dur_medium:'5–20 min', dur_long:'> 20 min',
       banner_text:'Pas de musique pendant les Trois Semaines&nbsp;? Écoutez de la Torah à la place — <a href="bein-hametsarim.html">sur vos plateformes habituelles →</a>',
     },
     he: {
@@ -633,6 +634,7 @@
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       no_results:'לא נמצאו פרקים.', no_episodes:'אין פרקים זמינים.', no_channels:'אין ערוצים זמינים.',
       copied:'הקישור הועתק!',
+      dur_all:'הכל', dur_short:'< 5 דק׳', dur_medium:'5–20 דק׳', dur_long:'> 20 דק׳',
       banner_text:'אין מוזיקה בשלושת השבועות? תשמעו תורה במקום — <a href="bein-hametsarim.html">באותן פלטפורמות שאתם רגילים אליהן →</a>',
     },
   };

@@ -388,10 +388,10 @@
       <button class="filter-chip active" data-slug="all" data-i18n="filter_all">Tous les rabbins</button>
     </div>
     <div class="filter-row" id="dur-filter-row" style="margin-top:4px">
-      <button class="filter-chip active" data-dur="all" onclick="filterDurDC(this)">Tous</button>
-      <button class="filter-chip" data-dur="short" onclick="filterDurDC(this)">&lt;&nbsp;5&nbsp;min</button>
-      <button class="filter-chip" data-dur="medium" onclick="filterDurDC(this)">5–20&nbsp;min</button>
-      <button class="filter-chip" data-dur="long" onclick="filterDurDC(this)">&gt;&nbsp;20&nbsp;min</button>
+      <button class="filter-chip active" data-dur="all" data-i18n="dur_all" onclick="filterDurDC(this)">Tous</button>
+      <button class="filter-chip" data-dur="short" data-i18n="dur_short" onclick="filterDurDC(this)">&lt;&nbsp;5&nbsp;min</button>
+      <button class="filter-chip" data-dur="medium" data-i18n="dur_medium" onclick="filterDurDC(this)">5–20&nbsp;min</button>
+      <button class="filter-chip" data-dur="long" data-i18n="dur_long" onclick="filterDurDC(this)">&gt;&nbsp;20&nbsp;min</button>
     </div>
   </div>
 </div>
@@ -440,6 +440,7 @@
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       page_title:'שיעורים אחרונים',
       filter_all:'כל הרבנים',
+      dur_all:'הכל', dur_short:'< 5 דק׳', dur_medium:'5–20 דק׳', dur_long:'> 20 דק׳',
       search_ph:'חיפוש שיעור או רב…',
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       load_more:'טען עוד',

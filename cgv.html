@@ -51,69 +51,128 @@
 <body>
 <header>
   <h1><a href="./">The Torah Podcast</a></h1>
-  <p>Cours de Torah — disponibles sur vos plateformes favorites</p>
+  <p data-i18n="subtitle">Cours de Torah — disponibles sur vos plateformes favorites</p>
   <nav class="header-nav">
-    <a href="./">Accueil</a>
-    <a href="rabbins.html">Rabbins</a>
-    <a href="derniers-cours.html">Derniers cours</a>
-    <a href="daf-hayomi.html">Daf Hayomi</a>
-    <a href="paracha.html">Paracha</a>
-    <a href="themes.html">Thème</a>
+    <a href="./" data-i18n="nav_home">Accueil</a>
+    <a href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a>
+    <a href="derniers-cours.html" data-i18n="nav_latest">Derniers cours</a>
+    <a href="daf-hayomi.html" data-i18n="nav_daf">Daf Hayomi</a>
+    <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
+    <a href="themes.html" data-i18n="nav_theme">Thème</a>
+    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_btn">עברית</button>
   </nav>
 </header>
 
 <main>
 
   <div class="legal-section">
-    <h2>Mentions légales</h2>
+    <h2 data-i18n="legal_title">Mentions légales</h2>
 
-    <h3>Éditeur du site</h3>
-    <p>The Torah Podcast est un service de diffusion de cours de Torah en podcast, proposé à titre gratuit et à but éducatif et religieux.</p>
-    <p>Contact : <a href="mailto:thetorahpodcast@gmail.com">thetorahpodcast@gmail.com</a></p>
+    <h3 data-i18n="editor_h">Éditeur du site</h3>
+    <p data-i18n="editor_p">The Torah Podcast est un service de diffusion de cours de Torah en podcast, proposé à titre gratuit et à but éducatif et religieux.</p>
+    <p><span data-i18n="contact_lbl">Contact :</span> <a href="mailto:thetorahpodcast@gmail.com">thetorahpodcast@gmail.com</a></p>
 
-    <h3>Hébergement</h3>
-    <p>Le site est hébergé via GitHub Pages (GitHub Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis). Les fichiers audio sont hébergés sur Cloudflare R2 (Cloudflare Inc., 101 Townsend St., San Francisco, CA 94107, États-Unis).</p>
+    <h3 data-i18n="host_h">Hébergement</h3>
+    <p data-i18n="host_p">Le site est hébergé via GitHub Pages (GitHub Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis). Les fichiers audio sont hébergés sur Cloudflare R2 (Cloudflare Inc., 101 Townsend St., San Francisco, CA 94107, États-Unis).</p>
   </div>
 
   <div class="legal-section">
-    <h2>Conditions d'utilisation</h2>
+    <h2 data-i18n="terms_title">Conditions d'utilisation</h2>
 
-    <h3>Service gratuit</h3>
-    <p>The Torah Podcast est un service entièrement gratuit. Aucun abonnement payant, aucune transaction commerciale n'est réalisée sur ce site.</p>
+    <h3 data-i18n="free_h">Service gratuit</h3>
+    <p data-i18n="free_p">The Torah Podcast est un service entièrement gratuit. Aucun abonnement payant, aucune transaction commerciale n'est réalisée sur ce site.</p>
 
-    <h3>Propriété intellectuelle</h3>
-    <p>Les cours diffusés sur The Torah Podcast appartiennent à leurs auteurs respectifs (rabbins et intervenants). La diffusion est réalisée avec leur accord ou via des sources publiques (YouTube).</p>
-    <p>Le contenu éditorial du site (code, design, organisation) est la propriété de The Torah Podcast. Toute reproduction sans autorisation est interdite.</p>
+    <h3 data-i18n="ip_h">Propriété intellectuelle</h3>
+    <p data-i18n="ip_p1">Les cours diffusés sur The Torah Podcast appartiennent à leurs auteurs respectifs (rabbins et intervenants). La diffusion est réalisée avec leur accord ou via des sources publiques (YouTube).</p>
+    <p data-i18n="ip_p2">Le contenu éditorial du site (code, design, organisation) est la propriété de The Torah Podcast. Toute reproduction sans autorisation est interdite.</p>
 
-    <h3>Disponibilité du service</h3>
-    <p>The Torah Podcast s'efforce de maintenir le service disponible en continu, sans garantie de disponibilité permanente. Le service peut être modifié ou interrompu à tout moment sans préavis.</p>
+    <h3 data-i18n="avail_h">Disponibilité du service</h3>
+    <p data-i18n="avail_p">The Torah Podcast s'efforce de maintenir le service disponible en continu, sans garantie de disponibilité permanente. Le service peut être modifié ou interrompu à tout moment sans préavis.</p>
   </div>
 
   <div class="legal-section">
-    <h2>Politique de confidentialité</h2>
+    <h2 data-i18n="privacy_title">Politique de confidentialité</h2>
 
-    <h3>Données collectées</h3>
-    <p>The Torah Podcast ne collecte pas de données personnelles identifiables. Le site utilise Google Analytics (GA4) pour mesurer l'audience de manière anonymisée.</p>
+    <h3 data-i18n="data_h">Données collectées</h3>
+    <p data-i18n="data_p">The Torah Podcast ne collecte pas de données personnelles identifiables. Le site utilise Google Analytics (GA4) pour mesurer l'audience de manière anonymisée.</p>
 
-    <h3>Cookies</h3>
-    <p>Le site utilise des cookies techniques nécessaires au fonctionnement (préférences de langue, vitesse de lecture) et des cookies analytiques anonymisés via Google Analytics. En utilisant ce site, vous acceptez l'usage de ces cookies.</p>
+    <h3 data-i18n="cookies_h">Cookies</h3>
+    <p data-i18n="cookies_p">Le site utilise des cookies techniques nécessaires au fonctionnement (préférences de langue, vitesse de lecture) et des cookies analytiques anonymisés via Google Analytics. En utilisant ce site, vous acceptez l'usage de ces cookies.</p>
 
-    <h3>Droits des utilisateurs</h3>
-    <p>Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour exercer ces droits, contactez-nous à <a href="mailto:thetorahpodcast@gmail.com">thetorahpodcast@gmail.com</a>.</p>
+    <h3 data-i18n="rights_h">Droits des utilisateurs</h3>
+    <p><span data-i18n="rights_p1">Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour exercer ces droits, contactez-nous à</span> <a href="mailto:thetorahpodcast@gmail.com">thetorahpodcast@gmail.com</a>.</p>
 
-    <h3>Liens externes</h3>
-    <p>Le site contient des liens vers des plateformes tierces (Spotify, Apple Podcasts, Deezer, YouTube). The Torah Podcast n'est pas responsable du contenu ou des pratiques de confidentialité de ces sites.</p>
+    <h3 data-i18n="ext_h">Liens externes</h3>
+    <p data-i18n="ext_p">Le site contient des liens vers des plateformes tierces (Spotify, Apple Podcasts, Deezer, YouTube). The Torah Podcast n'est pas responsable du contenu ou des pratiques de confidentialité de ces sites.</p>
   </div>
 
-  <p class="updated">Dernière mise à jour : juin 2026</p>
+  <p class="updated" data-i18n="updated">Dernière mise à jour : juin 2026</p>
 </main>
 
 <footer class="site-footer">
-  <a href="contact.html">Contactez-nous</a>
+  <a href="contact.html" data-i18n="foot_contact">Contactez-nous</a>
   ·
-  <a href="cgv.html">Mentions légales</a>
+  <a href="cgv.html" data-i18n="foot_legal">Mentions légales</a>
   ·
   <span>© 2026 The Torah Podcast</span>
 </footer>
+
+<script>
+  const lang = localStorage.getItem('lang') || 'fr';
+  document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+  document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+  function toggleLang() {
+    localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
+    location.reload();
+  }
+  const I18N = {
+    fr: {},
+    he: {
+      subtitle: "שיעורי תורה — זמינים בפלטפורמות המועדפות עליכם",
+      nav_home: "בית",
+      nav_rabbis: "רבנים",
+      nav_latest: "שיעורים אחרונים",
+      nav_daf: "דף היומי",
+      nav_paracha: "פרשה",
+      nav_theme: "נושא",
+      lang_btn: "Français",
+      legal_title: "תנאי שימוש",
+      editor_h: "עורך האתר",
+      editor_p: "The Torah Podcast הוא שירות להפצת שיעורי תורה בפודקאסט, המוצע ללא תשלום למטרות חינוכיות ודתיות.",
+      contact_lbl: "יצירת קשר:",
+      host_h: "אחסון",
+      host_p: "האתר מתארח באמצעות GitHub Pages (GitHub Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, ארצות הברית). קבצי השמע מתארחים ב-Cloudflare R2 (Cloudflare Inc., 101 Townsend St., San Francisco, CA 94107, ארצות הברית).",
+      terms_title: "תנאי השימוש",
+      free_h: "שירות חינמי",
+      free_p: "The Torah Podcast הוא שירות חינמי לחלוטין. אין מנוי בתשלום ואין כל עסקה מסחרית המתבצעת באתר זה.",
+      ip_h: "קניין רוחני",
+      ip_p1: "השיעורים המופצים ב-The Torah Podcast שייכים ליוצריהם בהתאמה (רבנים ומרצים). ההפצה מתבצעת בהסכמתם או באמצעות מקורות ציבוריים (YouTube).",
+      ip_p2: "התוכן העריכתי של האתר (קוד, עיצוב, ארגון) הוא רכושו של The Torah Podcast. כל שכפול ללא אישור אסור.",
+      avail_h: "זמינות השירות",
+      avail_p: "The Torah Podcast שואף לשמור על זמינות רציפה של השירות, ללא התחייבות לזמינות קבועה. השירות עשוי להשתנות או להיפסק בכל עת ללא הודעה מוקדמת.",
+      privacy_title: "מדיניות פרטיות",
+      data_h: "נתונים הנאספים",
+      data_p: "The Torah Podcast אינו אוסף נתונים אישיים מזהים. האתר משתמש ב-Google Analytics (GA4) למדידת קהל באופן אנונימי.",
+      cookies_h: "עוגיות",
+      cookies_p: "האתר משתמש בעוגיות טכניות הנחוצות לתפעול (העדפות שפה, מהירות השמעה) ובעוגיות אנליטיות אנונימיות באמצעות Google Analytics. בשימוש באתר זה, אתם מסכימים לשימוש בעוגיות אלו.",
+      rights_h: "זכויות המשתמשים",
+      rights_p1: "בהתאם ל-RGPD, עומדת לכם זכות גישה, תיקון ומחיקה של הנתונים שלכם. למימוש זכויות אלו, צרו איתנו קשר בכתובת",
+      ext_h: "קישורים חיצוניים",
+      ext_p: "האתר מכיל קישורים לפלטפורמות צד שלישי (Spotify, Apple Podcasts, Deezer, YouTube). The Torah Podcast אינו אחראי לתוכן או לנוהלי הפרטיות של אתרים אלו.",
+      updated: "עדכון אחרון: יוני 2026",
+      foot_contact: "צרו קשר",
+      foot_legal: "תנאי שימוש"
+    }
+  };
+  function applyLang() {
+    if (lang !== 'he') return;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      const key = el.getAttribute('data-i18n');
+      const val = I18N.he[key];
+      if (val) el.textContent = val;
+    });
+  }
+  applyLang();
+</script>
 </body>
 </html>
