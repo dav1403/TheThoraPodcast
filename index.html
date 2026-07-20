@@ -285,6 +285,17 @@
     }
     .rabbi-bubble-count { font-size: .6rem; color: #999; text-align: center; line-height: 1.1; }
 
+    /* Spotlight "Découvrez le rav" — corrélé au Zoom Rabbi des réseaux sociaux */
+    #spotlight-section { margin-bottom: 32px; }
+    .spot-head { display: flex; gap: 15px; align-items: center; text-decoration: none; background: linear-gradient(135deg,#fff 0%,#faf6f0 100%); border: 1px solid #f0e6d8; border-radius: 12px; padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.07); margin-bottom: 12px; transition: box-shadow .15s, transform .15s; }
+    .spot-head:hover { box-shadow: 0 5px 16px rgba(0,0,0,.12); transform: translateY(-1px); }
+    .spot-art { width: 74px; height: 74px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,.14); }
+    .spot-body { min-width: 0; }
+    .spot-kicker { font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #e87722; margin-bottom: 3px; }
+    .spot-name { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; line-height: 1.2; }
+    .spot-meta { font-size: .72rem; color: #999; margin-top: 2px; }
+    .spot-desc { font-size: .78rem; color: #555; margin-top: 6px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
     /* Channel sections */
     .channel {
       background: #fff;
@@ -696,6 +707,7 @@
   let channels = [];   // [{ slug, name, count }]
   let speakers = [];   // [{ slug, name, img }]  (only speakers with >=1 episode)
   let recents  = [];   // [{ slug, ch_name, title, published, thumbnail, audio_url, video_id, url, duration_secs }]
+  let spotlightData = null; // { slug, name, count, description, episodes:[…] } — featured rav (mirrors social Zoom Rabbi)
   let activeBtn = null, currentEpId = null;
   let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
 
@@ -774,6 +786,15 @@
     const trigger = e.target.closest('[data-play]');
     if (!trigger) return;
     const ep = recents[+trigger.dataset.play];
+    if (ep) loadInPlayer(ep, ep.ch_name, ep.slug);
+  });
+
+  // Spotlight courses play from spotlightData.episodes via [data-splay].
+  document.addEventListener('click', e => {
+    if (e.target.closest('a')) return;
+    const trigger = e.target.closest('[data-splay]');
+    if (!trigger || !spotlightData) return;
+    const ep = spotlightData.episodes[+trigger.dataset.splay];
     if (ep) loadInPlayer(ep, ep.ch_name, ep.slug);
   });
 
@@ -924,7 +945,8 @@
     const results  = document.getElementById('search-results');
     const noRes    = document.getElementById('no-results');
 
-    const homeSections = [hero, bubbles, recents].filter(Boolean);
+    const spotlight = document.getElementById('spotlight-section');
+    const homeSections = [hero, bubbles, recents, spotlight].filter(Boolean);
     const showHome = (on) => { homeSections.forEach(s => { s.hidden = !on; }); };
 
     function renderResults(q) {
@@ -994,6 +1016,44 @@
     });
   }
 
+  // Spotlight "Découvrez le rav" — one featured rav (mirrors the social Zoom
+  // Rabbi round-robin, baked into home.json) with a card + a carousel of his
+  // latest courses, playable on-page. Returns null when no spotlight is baked.
+  function buildSpotlight() {
+    const sp = spotlightData;
+    if (!sp || !sp.episodes || !sp.episodes.length) return null;
+    const he = lang === 'he';
+    const art = `artwork/${escapeHtml(sp.slug)}.png`;
+    const heroThumb = escapeHtml(sp.episodes[0].thumbnail || art);
+    const desc = sp.description
+      ? `<div class="spot-desc">${escapeHtml(sp.description)}</div>` : '';
+    const cards = sp.episodes.map((ep, i) => `
+      <div class="recent-card" data-splay="${i}" data-ep-dur="${ep.duration_secs || 0}">
+        <img src="${escapeHtml(ep.thumbnail || art)}" alt="" loading="lazy"
+             onerror="this.src='${art}'">
+        <div class="recent-card-body">
+          <div class="recent-card-ch">${escapeHtml(sp.name)}</div>
+          <a class="recent-card-title" href="${escapeHtml(ep.url)}">${escapeHtml(ep.title)}</a>
+          <div class="recent-card-date">${formatDate(ep.published)}</div>
+        </div>
+      </div>`).join('');
+    const wrap = document.createElement('div');
+    wrap.id = 'spotlight-section';
+    wrap.innerHTML =
+      `<div class="section-label">${he ? 'הרב שכדאי לגלות' : 'À la découverte d’un rav'}</div>` +
+      `<a class="spot-head" href="${escapeHtml(sp.slug)}.html">` +
+        `<img class="spot-art" src="${art}" alt="${escapeHtml(sp.name)}" onerror="this.style.visibility='hidden'">` +
+        `<div class="spot-body">` +
+          `<div class="spot-kicker">${he ? 'הכירו את הרב' : 'Découvrez le rav'}</div>` +
+          `<div class="spot-name">${escapeHtml(sp.name)}</div>` +
+          `<div class="spot-meta">${sp.count} ${he ? 'שיעורים' : 'cours'}</div>` +
+          desc +
+        `</div>` +
+      `</a>` +
+      `<div class="recents-row">${cards}</div>`;
+    return wrap;
+  }
+
   (async () => {
     const app = document.getElementById('app');
     try {
@@ -1003,6 +1063,7 @@
         channels = home.channels || [];
         speakers = home.speakers || [];
         recents  = home.recents  || [];
+        spotlightData = home.spotlight || null;
         renderStats((home.stats && home.stats.channels) || 0, (home.stats && home.stats.episodes) || 0);
       }
     } catch (_) {}
@@ -1026,6 +1087,9 @@
     if (heroSection) app.appendChild(heroSection);
 
     app.appendChild(buildRecents());
+
+    const spotlightSection = buildSpotlight();
+    if (spotlightSection) app.appendChild(spotlightSection);
 
     const bubbleList = [
       ...[...channels].sort((a, b) => (b.count || 0) - (a.count || 0))
