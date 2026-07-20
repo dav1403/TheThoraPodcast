@@ -585,10 +585,10 @@
     <input class="search-input" id="search" type="search" data-i18n="|search_ph" placeholder="Rechercher un épisode ou un rav…" autocomplete="off">
   </div>
   <div class="dur-filter" id="dur-filter-idx" style="max-width:860px;margin:8px auto 0">
-    <button class="dur-btn active" data-dur="all" data-i18n="dur_all" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">Tous</button>
-    <button class="dur-btn" data-dur="short" data-i18n="dur_short" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&lt;&nbsp;5&nbsp;min</button>
-    <button class="dur-btn" data-dur="medium" data-i18n="dur_medium" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">5–20&nbsp;min</button>
-    <button class="dur-btn" data-dur="long" data-i18n="dur_long" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&gt;&nbsp;20&nbsp;min</button>
+    <button class="dur-btn active" data-dur="all" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&lt;&nbsp;5&nbsp;min</button>
+    <button class="dur-btn" data-dur="medium" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">5–20&nbsp;min</button>
+    <button class="dur-btn" data-dur="long" onclick="setDur(this,'idx')" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.75)">&gt;&nbsp;20&nbsp;min</button>
   </div>
 </div>
 
@@ -613,7 +613,7 @@
   const I18N = {
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Paracha', nav_themes:'Thème', nav_all_rabbis:'Tous les rabbins →',
-      lang_toggle:'עברית',
+      lang_toggle:'English',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       listen_note:'Écoute directe sur le site — aucun abonnement ni application requis.',
       search_ph:'Rechercher un épisode ou un rav…',
@@ -621,8 +621,19 @@
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       no_results:'Aucun épisode trouvé.', no_episodes:'Aucun épisode disponible.', no_channels:'Aucune chaîne disponible.',
       copied:'Lien copié !',
-      dur_all:'Tous', dur_short:'< 5 min', dur_medium:'5–20 min', dur_long:'> 20 min',
       banner_text:'Pas de musique pendant les Trois Semaines&nbsp;? Écoutez de la Torah à la place — <a href="bein-hametsarim.html">sur vos plateformes habituelles →</a>',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Parasha', nav_themes:'Topics', nav_all_rabbis:'All rabbis →',
+      lang_toggle:'עברית',
+      subtitle:'Torah classes — available on your favorite platforms',
+      listen_note:'Listen right here on the site — no subscription or app needed.',
+      search_ph:'Search for an episode or a rabbi…',
+      recents:'Latest episodes',
+      listen:'Listen', playing:'Playing…', loading:'Loading…',
+      no_results:'No episodes found.', no_episodes:'No episodes available.', no_channels:'No channels available.',
+      copied:'Link copied!',
+      banner_text:'No music during the Three Weeks? Listen to Torah instead — <a href="bein-hametsarim.html">on your usual platforms →</a>',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_paracha:'פרשה', nav_themes:'נושא', nav_all_rabbis:'כל הרבנים →',
@@ -634,14 +645,13 @@
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       no_results:'לא נמצאו פרקים.', no_episodes:'אין פרקים זמינים.', no_channels:'אין ערוצים זמינים.',
       copied:'הקישור הועתק!',
-      dur_all:'הכל', dur_short:'< 5 דק׳', dur_medium:'5–20 דק׳', dur_long:'> 20 דק׳',
       banner_text:'אין מוזיקה בשלושת השבועות? תשמעו תורה במקום — <a href="bein-hametsarim.html">באותן פלטפורמות שאתם רגילים אליהן →</a>',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
   function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
   function applyLang() {
-    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const k = el.dataset.i18n;
@@ -651,14 +661,16 @@
     // Keys whose value contains intentional inline HTML (e.g. a link).
     document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   }
-  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function toggleLang() { var order=['fr','en','he']; localStorage.setItem('lang', order[(order.indexOf(lang)+1)%order.length]); location.reload(); }
   function renderStats(nCh, nEp) {
     const el = document.getElementById('header-stats');
     if (!el) return;
     const approxH = Math.round(nEp * 0.75);
     el.textContent = lang === 'he'
       ? `${nCh} ערוצים · ${nEp} שיעורים · ~${approxH} שעות`
-      : `${nCh} rabbins · ${nEp} cours · ~${approxH}h de Torah`;
+      : (lang === 'en'
+        ? `${nCh} rabbis · ${nEp} classes · ~${approxH}h of Torah`
+        : `${nCh} rabbins · ${nEp} cours · ~${approxH}h de Torah`);
   }
   applyLang();
 
@@ -843,7 +855,7 @@
           <button class="hero-play" data-play="0" aria-label="${t('listen')}">${playIcon()}</button>
         </div>
         <div class="hero-body">
-          <div class="hero-eyebrow">${lang === 'he' ? 'השיעור האחרון' : 'À la une'}</div>
+          <div class="hero-eyebrow">${lang === 'he' ? 'השיעור האחרון' : (lang === 'en' ? 'Featured' : 'À la une')}</div>
           <div class="hero-ch">${escapeHtml(ep.ch_name)}</div>
           <a class="hero-title" href="${escapeHtml(ep.url)}">${escapeHtml(ep.title)}</a>
           <div class="hero-date">${formatDate(ep.published)}</div>
@@ -861,7 +873,7 @@
     const bubbles = list.map(r => {
       const img = r.img ? escapeHtml(r.img) : ('artwork/' + escapeHtml(r.slug) + '.png');
       const count = r.count
-        ? `<span class="rabbi-bubble-count">${r.count} ${lang === 'he' ? 'שיעורים' : 'cours'}</span>`
+        ? `<span class="rabbi-bubble-count">${r.count} ${lang === 'he' ? 'שיעורים' : (lang === 'en' ? 'classes' : 'cours')}</span>`
         : '';
       return `
         <a class="rabbi-bubble" href="${escapeHtml(r.slug)}.html" title="${escapeHtml(r.name)}">
@@ -873,7 +885,7 @@
     }).join('');
     const wrap = document.createElement('div');
     wrap.className = 'rabbi-bubbles-section';
-    wrap.innerHTML = `<div class="section-label">${lang === 'he' ? 'כל הרבנים והערוצים' : 'Tous les rabbanim & chaînes'}</div><div class="rabbi-bubbles">${bubbles}</div>`;
+    wrap.innerHTML = `<div class="section-label">${lang === 'he' ? 'כל הרבנים והערוצים' : (lang === 'en' ? 'All rabbis & channels' : 'Tous les rabbanim & chaînes')}</div><div class="rabbi-bubbles">${bubbles}</div>`;
     return wrap;
   }
 
@@ -898,7 +910,7 @@
     wrap.id = 'recents-section';
     wrap.innerHTML = `<div class="section-label">${t('recents')}</div>`
       + `<div class="recents-row">${cards}</div>`
-      + `<div style="margin-top:12px"><a href="derniers-cours.html" style="font-size:.82rem;color:#e87722;text-decoration:none;font-weight:600">${lang === 'he' ? 'כל השיעורים האחרונים →' : 'Voir tous les derniers cours →'}</a></div>`;
+      + `<div style="margin-top:12px"><a href="derniers-cours.html" style="font-size:.82rem;color:#e87722;text-decoration:none;font-weight:600">${lang === 'he' ? 'כל השיעורים האחרונים →' : (lang === 'en' ? 'See all latest classes →' : 'Voir tous les derniers cours →')}</a></div>`;
     return wrap;
   }
 
@@ -911,13 +923,13 @@
              loading="lazy" onerror="this.style.visibility='hidden'">
         <div class="channel-grid-body">
           <div class="channel-grid-name">${escapeHtml(ch.name)}</div>
-          <div class="channel-grid-count">${ch.count} ${lang === 'he' ? 'שיעורים' : 'cours'}</div>
+          <div class="channel-grid-count">${ch.count} ${lang === 'he' ? 'שיעורים' : (lang === 'en' ? 'classes' : 'cours')}</div>
         </div>
       </a>`).join('');
 
     const wrap = document.createElement('div');
     wrap.id = 'channels-section';
-    wrap.innerHTML = `<div class="section-label">${lang === 'he' ? 'כל הערוצים' : 'Toutes les chaînes'}</div><div class="channel-grid">${cards}</div>`;
+    wrap.innerHTML = `<div class="section-label">${lang === 'he' ? 'כל הערוצים' : (lang === 'en' ? 'All channels' : 'Toutes les chaînes')}</div><div class="channel-grid">${cards}</div>`;
     return wrap;
   }
 
@@ -971,10 +983,12 @@
       const moreNote = total > shown.length
         ? `<div class="search-more">${lang === 'he'
             ? `מוצגות ${shown.length} תוצאות מתוך ${total}. דייקו את החיפוש.`
-            : `${shown.length} résultats affichés sur ${total}. Affinez votre recherche.`}</div>`
+            : (lang === 'en'
+              ? `${shown.length} of ${total} results shown. Refine your search.`
+              : `${shown.length} résultats affichés sur ${total}. Affinez votre recherche.`)}</div>`
         : '';
 
-      results.innerHTML = `<div class="section-label">${lang === 'he' ? 'תוצאות' : 'Résultats'}</div>`
+      results.innerHTML = `<div class="section-label">${lang === 'he' ? 'תוצאות' : (lang === 'en' ? 'Results' : 'Résultats')}</div>`
         + `<div class="search-results-list">${cards}</div>${moreNote}`;
       results.hidden = false;
       if (noRes) noRes.hidden = total > 0;
@@ -1042,13 +1056,13 @@
     const wrap = document.createElement('div');
     wrap.id = 'spotlight-section';
     wrap.innerHTML =
-      `<div class="section-label">${he ? 'הרב שכדאי לגלות' : 'À la découverte d’un rav'}</div>` +
+      `<div class="section-label">${he ? 'הרב שכדאי לגלות' : (lang === 'en' ? 'Discover a rabbi' : 'À la découverte d’un rav')}</div>` +
       `<a class="spot-head" href="${escapeHtml(sp.slug)}.html">` +
         `<img class="spot-art" src="${art}" alt="${escapeHtml(sp.name)}" onerror="this.style.visibility='hidden'">` +
         `<div class="spot-body">` +
-          `<div class="spot-kicker">${he ? 'הכירו את הרב' : 'Découvrez le rav'}</div>` +
+          `<div class="spot-kicker">${he ? 'הכירו את הרב' : (lang === 'en' ? 'Meet the rabbi' : 'Découvrez le rav')}</div>` +
           `<div class="spot-name">${escapeHtml(sp.name)}</div>` +
-          `<div class="spot-meta">${sp.count} ${he ? 'שיעורים' : 'cours'}</div>` +
+          `<div class="spot-meta">${sp.count} ${he ? 'שיעורים' : (lang === 'en' ? 'classes' : 'cours')}</div>` +
           desc +
         `</div>` +
       `</a>` +

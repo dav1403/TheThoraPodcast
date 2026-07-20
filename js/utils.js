@@ -25,8 +25,7 @@ function epUrl(ep, chSlug) {
 }
 
 function formatDate(iso) {
-  var lang = (typeof window !== 'undefined' && window.lang) ? window.lang : (localStorage.getItem('lang') || 'fr');
-  var locale = (lang === 'he') ? 'he-IL' : 'fr-FR';
+  var locale = window.lang === 'he' ? 'he-IL' : (window.lang === 'en' ? 'en-US' : 'fr-FR');
   return new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
@@ -125,6 +124,8 @@ function buildCarousel(label, items) {
 // ─── Tiny i18n helper (fr/he) reading window.lang ────────────────────────────
 // Standalone so pages/generated pages can label shared UI without their own I18N.
 function _t2(fr, he) { return (window.lang === 'he') ? he : fr; }
+// 3-language helper (fr | en | he). Falls back to fr for any other value.
+function _t3(fr, en, he) { return window.lang === 'he' ? he : (window.lang === 'en' ? en : fr); }
 
 // ─── Share row (WhatsApp-first) ──────────────────────────────────────────────
 // A row of share buttons for an episode/page: WhatsApp (lead), Telegram, email,
@@ -176,7 +177,7 @@ function shareToast(msg) {
 
 // Copy a URL to the clipboard, with a legacy fallback, then toast + GA4.
 function shareCopyLink(url) {
-  var done = function () { shareToast(_t2('Lien copié !', 'הקישור הועתק!')); _shareEvent('copy', url); };
+  var done = function () { shareToast(_t3('Lien copié !', 'Link copied!', 'הקישור הועתק!')); _shareEvent('copy', url); };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(done, function () { _shareFallbackCopy(url, done); });
   } else { _shareFallbackCopy(url, done); }
@@ -201,12 +202,12 @@ function buildShareRow(url, title, opts) {
   var msg = (title ? title + ' — ' : '') + url;
   var wa = 'https://wa.me/?text=' + encodeURIComponent(msg);
   var tg = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(title || '');
-  var subject = title || _t2('Un cours de Torah', 'שיעור תורה');
+  var subject = title || _t3('Un cours de Torah', 'A Torah class', 'שיעור תורה');
   var em = 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(msg);
 
   var row = document.createElement('div');
   row.className = 'share-row';
-  var lbl = opts.compact ? '' : '<span class="share-lbl">' + _t2('Partager', 'שיתוף') + '</span>';
+  var lbl = opts.compact ? '' : '<span class="share-lbl">' + _t3('Partager', 'Share', 'שיתוף') + '</span>';
   row.innerHTML = lbl +
     '<a class="share-btn2 share-wa" target="_blank" rel="noopener" href="' + wa + '" data-share="whatsapp">' +
       _waIcon() + '<span>WhatsApp</span></a>' +
@@ -215,7 +216,7 @@ function buildShareRow(url, title, opts) {
     '<a class="share-btn2 share-em" href="' + em + '" data-share="email">' +
       _emIcon() + '<span>Email</span></a>' +
     '<button type="button" class="share-btn2 share-cp" data-share="copy">' +
-      _cpIcon() + '<span>' + _t2('Copier le lien', 'העתק קישור') + '</span></button>';
+      _cpIcon() + '<span>' + _t3('Copier le lien', 'Copy link', 'העתק קישור') + '</span></button>';
 
   row.querySelector('.share-wa').addEventListener('click', function () { _shareEvent('whatsapp', url); });
   row.querySelector('.share-tg').addEventListener('click', function () { _shareEvent('telegram', url); });
@@ -257,7 +258,7 @@ function attachResumeBanner(audioEl, epId) {
   b.type = 'button';
   b.className = 'resume-banner';
   b.innerHTML = '<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg>' +
-    _t2('Reprendre à ', 'המשך מ-') + formatMmSs(pos);
+    _t3('Reprendre à ', 'Resume at ', 'המשך מ-') + formatMmSs(pos);
   b.addEventListener('click', function () {
     var seek = function () { try { audioEl.currentTime = pos; } catch (_) {} audioEl.play(); };
     if (audioEl.readyState >= 1) seek();
@@ -299,7 +300,7 @@ function toggleFavoriteEpisode(id, meta) {
 function favEpStarHtml(id, meta, variant) {
   _injectFavCSS();
   var fav = isFavoriteEpisode(id);
-  var label = fav ? _t2('Retirer des favoris', 'הסר מהמועדפים') : _t2('Ajouter aux favoris', 'הוסף למועדפים');
+  var label = fav ? _t3('Retirer des favoris', 'Remove from favorites', 'הסר מהמועדפים') : _t3('Ajouter aux favoris', 'Add to favorites', 'הוסף למועדפים');
   var m = escapeHtml(JSON.stringify(meta || {}));
   return '<span class="fav-star fav-ep' + (variant ? ' ' + variant : '') + (fav ? ' is-fav' : '') +
     '" role="button" tabindex="0" aria-pressed="' + fav + '" aria-label="' + label +
@@ -314,7 +315,7 @@ function favEpToggle(evt, el) {
   var meta = {};
   try { meta = JSON.parse(el.getAttribute('data-fav-meta') || '{}'); } catch (_) {}
   var nowFav = toggleFavoriteEpisode(id, meta);
-  var label = nowFav ? _t2('Retirer des favoris', 'הסר מהמועדפים') : _t2('Ajouter aux favoris', 'הוסף למועדפים');
+  var label = nowFav ? _t3('Retirer des favoris', 'Remove from favorites', 'הסר מהמועדפים') : _t3('Ajouter aux favoris', 'Add to favorites', 'הוסף למועדפים');
   document.querySelectorAll('.fav-ep').forEach(function (s) {
     if (s.getAttribute('data-fav-ep') !== id) return;
     s.classList.toggle('is-fav', nowFav);
@@ -610,7 +611,7 @@ function _buildMobileNav() {
       var lang = window.lang || 'fr';
       el.textContent = lang === 'he'
         ? enabled.length + ' ערוצים · ' + totalEp + ' שיעורים · ~' + totalH + ' שעות'
-        : enabled.length + ' rabbins · ' + totalEp + ' cours · ~' + totalH + 'h de Torah';
+        : (window.lang === 'en' ? enabled.length + ' rabbis · ' + totalEp + ' classes · ~' + totalH + 'h of Torah' : enabled.length + ' rabbins · ' + totalEp + ' cours · ~' + totalH + 'h de Torah');
     });
   }).catch(function() {});
 })();

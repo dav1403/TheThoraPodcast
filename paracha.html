@@ -388,7 +388,7 @@
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
-      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html" data-i18n="all_rabbis">Tous les rabbins →</a></div>
+      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <div class="nav-dropdown">
@@ -397,7 +397,7 @@
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
         <a href="hayom-yom.html" data-i18n="nav_hayomyom">Hayom Yom</a>
-        <a href="hiloula.html" data-i18n="nav_hiloula">Hiloula</a>
+        <a href="hiloula.html">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" class="active" data-i18n="nav_paracha">Paracha</a>
@@ -423,10 +423,10 @@
   </div>
 
     <div class="dur-filter" id="dur-filter">
-    <button class="dur-btn active" data-dur="all" onclick="filterDurAll(this)" data-i18n="dur_all">Tous</button>
-    <button class="dur-btn" data-dur="short" onclick="filterDurAll(this)" data-i18n="dur_short">&lt; 5 min</button>
-    <button class="dur-btn" data-dur="medium" onclick="filterDurAll(this)" data-i18n="dur_medium">5–20 min</button>
-    <button class="dur-btn" data-dur="long" onclick="filterDurAll(this)" data-i18n="dur_long">&gt; 20 min</button>
+    <button class="dur-btn active" data-dur="all" onclick="filterDurAll(this)">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="filterDurAll(this)">&lt; 5 min</button>
+    <button class="dur-btn" data-dur="medium" onclick="filterDurAll(this)">5–20 min</button>
+    <button class="dur-btn" data-dur="long" onclick="filterDurAll(this)">&gt; 20 min</button>
   </div>
 <div id="results" hidden>
     <div class="results-header">
@@ -454,7 +454,7 @@
 const I18N = {
   fr: {
     nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Paracha', nav_themes:'Thème',
-    lang_toggle:'עברית',
+    lang_toggle:'English',
     subtitle_parasha:'Cours par Paracha',
     banner_label:'Paracha de la semaine',
     banner_label_split:'Décalage Israël / Diaspora',
@@ -467,8 +467,22 @@ const I18N = {
     ep_singular:'épisode', ep_plural:'épisodes',
     loading_eps:'Chargement des épisodes…',
     show_more:'Voir plus', show_less:'Voir moins',
-    dur_all:'Tous', dur_short:'< 5 min', dur_medium:'5–20 min', dur_long:'> 20 min',
-    nav_hiloula:'Hiloula', all_rabbis:'Tous les rabbins →',
+  },
+  en: {
+    nav_home:'Home', nav_rabbis:'Rabbis', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Parasha', nav_themes:'Topics',
+    lang_toggle:'עברית',
+    subtitle_parasha:'Classes by Parasha',
+    banner_label:'Parasha of the week',
+    banner_label_split:'Israel / Diaspora difference',
+    cycle_il:'🇮🇱 Israel',
+    cycle_dia:'🌍 Diaspora',
+    listen:'Listen', playing:'Playing…',
+    no_parasha:'Not available',
+    no_ep_found:'No episodes found for this parasha.',
+    no_ep_hint:'The classes may be titled differently.',
+    ep_singular:'episode', ep_plural:'episodes',
+    loading_eps:'Loading episodes…',
+    show_more:'See more', show_less:'See less',
   },
   he: {
     nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -485,15 +499,13 @@ const I18N = {
     ep_singular:'פרק', ep_plural:'פרקים',
     loading_eps:'טוען פרקים…',
     show_more:'הצג עוד', show_less:'הצג פחות',
-    dur_all:'הכול', dur_short:'< 5 דק׳', dur_medium:'5–20 דק׳', dur_long:'> 20 דק׳',
-    nav_hiloula:'הילולה', all_rabbis:'כל הרבנים →',
   },
 };
 const BOOK_HE = { 'Bereshit':'בראשית', 'Shemot':'שמות', 'Vayikra':'ויקרא', 'Bamidbar':'במדבר', 'Devarim':'דברים' };
 let lang = localStorage.getItem('lang') || 'fr';
 function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
 function applyLang() {
-  document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+  document.documentElement.lang = lang;
   document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const k = el.dataset.i18n;
@@ -501,14 +513,20 @@ function applyLang() {
     else el.textContent = t(k);
   });
 }
-function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+function toggleLang() {
+  var order = ['fr', 'en', 'he'];
+  localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
+  location.reload();
+}
 function renderStats(nCh, nEp) {
   const el = document.getElementById('header-stats');
   if (!el) return;
   const approxH = Math.round(nEp * 0.75);
   el.textContent = lang === 'he'
     ? `${nCh} ערוצים · ${nEp} שיעורים · ~${approxH} שעות`
-    : `${nCh} rabbins · ${nEp} cours · ~${approxH}h de Torah`;
+    : (lang === 'en'
+      ? `${nCh} rabbis · ${nEp} classes · ~${approxH}h of Torah`
+      : `${nCh} rabbins · ${nEp} cours · ~${approxH}h de Torah`);
 }
 applyLang();
 
@@ -690,7 +708,7 @@ function renderResults(slug, allData) {
   const groups = findEpisodesForParacha(slug, allData);
   const total = groups.reduce((s, g) => s + g.episodes.length, 0);
 
-  document.getElementById('results-title').textContent = lang === 'he' ? p.he : p.fr;
+  document.getElementById('results-title').textContent = lang === 'he' ? p.he : (lang === 'en' ? p.fr : p.fr);
   document.getElementById('results-he').textContent    = lang === 'he' ? '' : p.he;
   const epWord = total > 1 ? t('ep_plural') : t('ep_singular');
   document.getElementById('results-count').textContent = total ? `${total} ${epWord}` : '';
@@ -738,7 +756,7 @@ function renderResults(slug, allData) {
   const _flat = [];
   groups.forEach(g => g.episodes.forEach(ep => _flat.push({ ep, ch: g.ch })));
   _flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
-  const _carLabel = (lang === 'he' ? 'שיעורים אחרונים · ' : 'Derniers cours · ') + (lang === 'he' ? p.he : p.fr);
+  const _carLabel = (lang === 'he' ? 'שיעורים אחרונים · ' : (lang === 'en' ? 'Latest classes · ' : 'Derniers cours · ')) + (lang === 'he' ? p.he : p.fr);
   const _car = buildCarousel(_carLabel, _flat.slice(0, 20));
   if (_car) body.insertBefore(_car, body.firstChild);
 
@@ -766,12 +784,12 @@ function renderRecentParachiot(allData) {
   }
   if (!scored.length) { mount.innerHTML = ''; return; }
   scored.sort((a, b) => b.latest - a.latest);
-  const label = lang === 'he' ? 'פרשות שנלמדו לאחרונה' : 'Parachiot récemment enseignées';
+  const label = lang === 'he' ? 'פרשות שנלמדו לאחרונה' : (lang === 'en' ? 'Recently taught parashiot' : 'Parachiot récemment enseignées');
   mount.innerHTML =
     `<div class="rp-label">${label}</div><div class="recent-parachiot-row">` +
     scored.slice(0, 12).map(({ slug }) => {
       const p = PARACHIOT[slug];
-      return `<button class="rp-chip" onclick="selectParacha('${slug}')">${escapeHtml(lang === 'he' ? p.he : p.fr)}</button>`;
+      return `<button class="rp-chip" onclick="selectParacha('${slug}')">${escapeHtml(lang === 'he' ? p.he : (lang === 'en' ? p.fr : p.fr))}</button>`;
     }).join('') +
     `</div>`;
 }
@@ -791,7 +809,7 @@ function buildBooks(allData) {
     return `
     <div class="book-section${isOpen ? '' : ' collapsed'}" data-book="${book.name}">
       <button class="book-title" onclick="toggleBook(this)" aria-expanded="${isOpen}">
-        <span>${lang === 'he' ? (BOOK_HE[book.name] || book.name) : book.name}</span>
+        <span>${lang === 'he' ? (BOOK_HE[book.name] || book.name) : (lang === 'en' ? book.name : book.name)}</span>
         <span class="book-caret">▾</span>
       </button>
       <div class="chips">
@@ -800,7 +818,7 @@ function buildBooks(allData) {
           const c = counts[slug] || 0;
           return `<button class="chip ${c > 0 ? 'has-episodes' : ''}"
             data-slug="${slug}" onclick="selectParacha('${slug}')">
-            ${lang === 'he' ? p.he : p.fr}
+            ${lang === 'he' ? p.he : (lang === 'en' ? p.fr : p.fr)}
             <span class="chip-count">${c}</span>
           </button>`;
         }).join('')}
@@ -928,10 +946,10 @@ function selectParacha(slug) {
       </div>
       <div class="cycle-toggle">
         <button class="cycle-btn${activeCycle === 'il'  ? ' active' : ''}" data-cycle="il">
-          ${t('cycle_il')} — ${lang === 'he' ? pIL.he : pIL.fr}
+          ${t('cycle_il')} — ${lang === 'he' ? pIL.he : (lang === 'en' ? pIL.fr : pIL.fr)}
         </button>
         <button class="cycle-btn${activeCycle === 'dia' ? ' active' : ''}" data-cycle="dia">
-          ${t('cycle_dia')} — ${lang === 'he' ? pDia.he : pDia.fr}
+          ${t('cycle_dia')} — ${lang === 'he' ? pDia.he : (lang === 'en' ? pDia.fr : pDia.fr)}
         </button>
       </div>`;
 
@@ -950,7 +968,7 @@ function selectParacha(slug) {
     const currentSlug = slugIL || slugDia;
     if (currentSlug) {
       const p = PARACHIOT[currentSlug];
-      document.getElementById('banner-name').textContent = lang === 'he' ? p.he : p.fr;
+      document.getElementById('banner-name').textContent = lang === 'he' ? p.he : (lang === 'en' ? p.fr : p.fr);
       document.getElementById('banner-he').textContent   = p.he;
       banner.onclick = () => selectParacha(currentSlug);
     } else {
@@ -977,7 +995,7 @@ function selectParacha(slug) {
   const sub = document.getElementById('nav-rabbis-submenu');
   if (sub) sub.innerHTML = enabled.map(ch =>
     `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
-  ).join('') + `<a class="nav-submenu-all" href="rabbins.html">${t('all_rabbis')}</a>`;
+  ).join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
 
   document.addEventListener('click', e => {
     if (e.target.closest('.nav-submenu')) return;

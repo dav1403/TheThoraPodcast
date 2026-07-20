@@ -388,10 +388,10 @@
       <button class="filter-chip active" data-slug="all" data-i18n="filter_all">Tous les rabbins</button>
     </div>
     <div class="filter-row" id="dur-filter-row" style="margin-top:4px">
-      <button class="filter-chip active" data-dur="all" data-i18n="dur_all" onclick="filterDurDC(this)">Tous</button>
-      <button class="filter-chip" data-dur="short" data-i18n="dur_short" onclick="filterDurDC(this)">&lt;&nbsp;5&nbsp;min</button>
-      <button class="filter-chip" data-dur="medium" data-i18n="dur_medium" onclick="filterDurDC(this)">5–20&nbsp;min</button>
-      <button class="filter-chip" data-dur="long" data-i18n="dur_long" onclick="filterDurDC(this)">&gt;&nbsp;20&nbsp;min</button>
+      <button class="filter-chip active" data-dur="all" onclick="filterDurDC(this)">Tous</button>
+      <button class="filter-chip" data-dur="short" onclick="filterDurDC(this)">&lt;&nbsp;5&nbsp;min</button>
+      <button class="filter-chip" data-dur="medium" onclick="filterDurDC(this)">5–20&nbsp;min</button>
+      <button class="filter-chip" data-dur="long" onclick="filterDurDC(this)">&gt;&nbsp;20&nbsp;min</button>
     </div>
   </div>
 </div>
@@ -423,7 +423,7 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours',
       nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Paracha', nav_themes:'Thème', nav_all_rabbis:'Tous les rabbins →',
-      lang_toggle:'עברית',
+      lang_toggle:'English',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       page_title:'Derniers cours',
       filter_all:'Tous les rabbins',
@@ -433,6 +433,19 @@
       load_more:'Voir plus',
       no_episodes:'Aucun épisode trouvé.',
     },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis', nav_last_classes:'Latest classes',
+      nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Parasha', nav_themes:'Topics', nav_all_rabbis:'All rabbis →',
+      lang_toggle:'עברית',
+      subtitle:'Torah classes — available on your favorite platforms',
+      page_title:'Latest classes',
+      filter_all:'All rabbis',
+      dur_all:'All', dur_short:'< 5 min', dur_medium:'5–20 min', dur_long:'> 20 min',
+      search_ph:'Search for an episode or a rabbi…',
+      listen:'Listen', playing:'Playing…', loading:'Loading…',
+      load_more:'See more',
+      no_episodes:'No episodes found.',
+    },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים',
       nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_paracha:'פרשה', nav_themes:'נושא', nav_all_rabbis:'כל הרבנים →',
@@ -440,7 +453,6 @@
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       page_title:'שיעורים אחרונים',
       filter_all:'כל הרבנים',
-      dur_all:'הכל', dur_short:'< 5 דק׳', dur_medium:'5–20 דק׳', dur_long:'> 20 דק׳',
       search_ph:'חיפוש שיעור או רב…',
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       load_more:'טען עוד',
@@ -450,7 +462,7 @@
   let lang = localStorage.getItem('lang') || 'fr';
   function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
   function applyLang() {
-    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.dataset.i18n;
@@ -458,7 +470,11 @@
       else { el.textContent = t(key); }
     });
   }
-  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function toggleLang() {
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
+    location.reload();
+  }
   applyLang();
 
   document.addEventListener('click', e => {
@@ -699,7 +715,7 @@
     const totalEp = flat.length;
     document.getElementById('page-subtitle').textContent = lang === 'he'
       ? `${totalEp} שיעורים מכל הרבנים, לפי סדר פרסום`
-      : `${totalEp} cours de tous les rabbins, par ordre de publication`;
+      : (lang === 'en' ? `${totalEp} classes from all rabbis, by publication order` : `${totalEp} cours de tous les rabbins, par ordre de publication`);
 
     // Build channel filter chips
     const filterRow = document.getElementById('filter-row');

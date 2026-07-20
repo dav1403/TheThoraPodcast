@@ -98,7 +98,7 @@
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
-      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html" data-i18n="all_rabbis">Tous les rabbins →</a></div>
+      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <div class="nav-dropdown">
@@ -128,12 +128,19 @@
   const I18N = {
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème',
-      lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       intro_title:'Hiloulot des tsadikim',
       intro_body:"La hiloula est le jour anniversaire du départ d'un tsadik — un moment propice pour étudier sa Torah et se relier à lui. Retrouvez ici les grandes hiloulot de l'année et les cours de Torah qui leur sont consacrés.",
       loading:'Chargement…', next:'prochaine hiloula :', upcoming:'À venir', no_courses:'Aucun cours pour le moment.',
       courses:'Cours associés',
-      all_rabbis:'Tous les rabbins →', footer_contact:'Contactez-nous', footer_legal:'Mentions légales',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics',
+      lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
+      intro_title:'Hiloulot of the tsadikim',
+      intro_body:"The hiloula is the anniversary of a tsadik's passing — a fitting time to study his Torah and connect to him. Find here the major hiloulot of the year and the Torah classes dedicated to them.",
+      loading:'Loading…', next:'next hiloula:', upcoming:'Upcoming', no_courses:'No classes for now.',
+      courses:'Related classes',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -142,7 +149,6 @@
       intro_body:'ההילולה היא יום פטירתו של צדיק — עת רצון ללמוד את תורתו ולהתחבר אליו. כאן תמצאו את ההילולות הגדולות של השנה ואת השיעורים המוקדשים להן.',
       loading:'טוען…', next:'הילולה הבאה:', upcoming:'קרוב', no_courses:'אין שיעורים בינתיים.',
       courses:'שיעורים קשורים',
-      all_rabbis:'כל הרבנים ←', footer_contact:'צרו קשר', footer_legal:'מידע משפטי',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -153,7 +159,11 @@
     document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   }
-  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function toggleLang() {
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
+    location.reload();
+  }
   applyLang();
 
   document.addEventListener('click', e => {
@@ -184,10 +194,11 @@
   ];
 
   const MONTH_FR = { Nisan:'Nissan', Iyyar:'Iyar', Sivan:'Sivan', Tamuz:'Tamouz', Av:'Av', Elul:'Eloul', Tishrei:'Tichri', Cheshvan:'Héchvan', Kislev:'Kislev', Tevet:'Tévet', Shvat:'Chevat', Adar:'Adar' };
+  const MONTH_EN = { Nisan:'Nisan', Iyyar:'Iyar', Sivan:'Sivan', Tamuz:'Tammuz', Av:'Av', Elul:'Elul', Tishrei:'Tishrei', Cheshvan:'Cheshvan', Kislev:'Kislev', Tevet:'Tevet', Shvat:'Shevat', Adar:'Adar' };
   const MONTH_HE = { Nisan:'ניסן', Iyyar:'אייר', Sivan:'סיון', Tamuz:'תמוז', Av:'אב', Elul:'אלול', Tishrei:'תשרי', Cheshvan:'חשון', Kislev:'כסלו', Tevet:'טבת', Shvat:'שבט', Adar:'אדר' };
 
   function hebDateLabel(h) {
-    const mo = lang === 'he' ? (MONTH_HE[h.hm] || h.hm) : (MONTH_FR[h.hm] || h.hm);
+    const mo = lang === 'he' ? (MONTH_HE[h.hm] || h.hm) : (lang === 'en' ? (MONTH_EN[h.hm] || h.hm) : (MONTH_FR[h.hm] || h.hm));
     return `${h.hd} ${mo}` + (h.extra ? ' · ' + h.extra : '');
   }
 
@@ -257,7 +268,7 @@
 
     const mount = document.getElementById('hil-list');
     mount.innerHTML = '';
-    const fmt = new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : 'fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const fmt = new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : (lang === 'en' ? 'en-US' : 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric' });
     cards.forEach((c, i) => {
       const section = document.createElement('section');
       section.className = 'hil-card' + (i === 0 && c.next ? ' upcoming' : '');
@@ -281,18 +292,17 @@
     const sub = document.getElementById('nav-rabbis-submenu');
     if (sub) sub.innerHTML = channels.map(ch =>
       `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
-    ).join('') + `<a class="nav-submenu-all" href="rabbins.html">${t('all_rabbis')}</a>`;
+    ).join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
   })();
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 
 <footer class="site-footer">
-  <a href="/contact.html" data-i18n="footer_contact">Contactez-nous</a>
+  <a href="/contact.html">Contactez-nous</a>
   &nbsp;·&nbsp;
-  <a href="/cgv.html" data-i18n="footer_legal">Mentions légales</a>
+  <a href="/cgv.html">Mentions légales</a>
   &nbsp;·&nbsp;
   <span>© 2026 The Torah Podcast</span>
 </footer>
-<script>applyLang();</script>
 </body>
 </html>

@@ -99,7 +99,7 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours',
       nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
-      lang_toggle:'עברית',
+      lang_toggle:'English',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       intro:'Vos favoris et votre écoute en cours sont enregistrés sur cet appareil, sans compte.',
       resume_title:'Reprendre l’écoute',
@@ -108,6 +108,19 @@
       no_favorites:'Aucun favori pour le moment. Ajoutez un cours à vos favoris avec l’étoile ★ sur sa page.',
       no_resume:'Aucune écoute en cours.',
       browse:'Parcourir les cours',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis', nav_last_classes:'Latest classes',
+      nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
+      lang_toggle:'עברית',
+      subtitle:'Torah classes — available on your favorite platforms',
+      intro:'Your favorites and your current listening are saved on this device, no account needed.',
+      resume_title:'Resume listening',
+      favorites_title:'My favorite classes',
+      resume_at:'Resume at ',
+      no_favorites:'No favorites yet. Add a class to your favorites with the ★ star on its page.',
+      no_resume:'No listening in progress.',
+      browse:'Browse classes',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים',
@@ -125,11 +138,15 @@
   };
   function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
   function applyLang() {
-    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   }
-  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function toggleLang() {
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
+    location.reload();
+  }
   window.toggleLang = toggleLang;
   applyLang();
 
@@ -149,7 +166,7 @@
     if (!sub) return;
     const items = [].concat(home.channels || [], home.speakers || [])
       .map(c => `<a href="${escapeHtml(c.slug)}.html">${escapeHtml(c.name)}</a>`).join('');
-    sub.innerHTML = items + `<a href="rabbins.html" style="opacity:.6">${lang==='he'?'כל הרבנים →':'Tous les rabbins →'}</a>`;
+    sub.innerHTML = items + `<a href="rabbins.html" style="opacity:.6">${lang==='he'?'כל הרבנים →':(lang==='en'?'All rabbis →':'Tous les rabbins →')}</a>`;
   }).catch(()=>{});
 
   function favCardHtml(ep) {

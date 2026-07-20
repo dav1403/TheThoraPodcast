@@ -208,7 +208,7 @@
   <div class="sticky-inner">
     <div class="search-wrap-global">
       <svg class="search-icon-global" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-input-global" id="global-search" type="search" placeholder="Rechercher un cours…" data-i18n="|search_ph" autocomplete="off">
+      <input class="search-input-global" id="global-search" type="search" placeholder="Rechercher un cours…" autocomplete="off">
     </div>
   </div>
 </div>
@@ -261,19 +261,30 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi',
       nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Paracha', nav_themes:'Thème',
-      lang_toggle:'עברית',
+      lang_toggle:'English',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       page_title:'Daf Hayomi',
       filter_all:'Tous les rabbins',
-      search_ph:'Rechercher un cours…',
-      share:'Partager',
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       load_more:'Voir plus',
       show_more:'Voir plus', show_less:'Voir moins',
       ep_singular:'cours', ep_plural:'cours',
       no_episodes:'Aucun épisode Daf Hayomi trouvé.',
       copied:'Lien copié !',
-      footer_contact:'Contactez-nous', footer_legal:'Mentions légales',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi',
+      nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Parasha', nav_themes:'Topics',
+      lang_toggle:'עברית',
+      subtitle:'Torah classes — available on your favorite platforms',
+      page_title:'Daf Hayomi',
+      filter_all:'All rabbis',
+      listen:'Listen', playing:'Playing…', loading:'Loading…',
+      load_more:'See more',
+      show_more:'See more', show_less:'Show less',
+      ep_singular:'class', ep_plural:'classes',
+      no_episodes:'No Daf Hayomi episodes found.',
+      copied:'Link copied!',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי',
@@ -282,33 +293,30 @@
       subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       page_title:'דף היומי',
       filter_all:'כל הרבנים',
-      search_ph:'חיפוש שיעור…',
-      share:'שתף',
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       load_more:'טען עוד',
       show_more:'הצג עוד', show_less:'הצג פחות',
       ep_singular:'שיעור', ep_plural:'שיעורים',
       no_episodes:'לא נמצאו שיעורי דף יומי.',
       copied:'הקישור הועתק!',
-      footer_contact:'צור קשר', footer_legal:'תנאי שימוש',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
   function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
   function applyLang() {
-    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const k = el.dataset.i18n;
-      if (k[0] === '|') el.placeholder = t(k.slice(1));
-      else el.textContent = t(k);
-    });
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
     const fr = document.getElementById('daf-intro-fr');
     const he = document.getElementById('daf-intro-he');
     if (fr) fr.style.display = lang === 'he' ? 'none' : '';
     if (he) he.style.display = lang === 'he' ? '' : 'none';
   }
-  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function toggleLang() {
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
+    location.reload();
+  }
   applyLang();
 
   document.addEventListener('click', e => {
@@ -421,7 +429,7 @@
     const playBtn = ep.audio_url
       ? `<button class="play-btn" data-ep-id="${escapeHtml(ep.video_id)}">${playIcon()} ${t('listen')}</button>` : '';
     const shareBtn = ep.title && ep.published
-      ? `<button class="share-btn" data-epfile="${epUrl(ep, ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} ${t('share')}</button>` : '';
+      ? `<button class="share-btn" data-epfile="${epUrl(ep, ch.slug)}" data-title="${escapeHtml(ep.title)}">${shareIcon()} Partager</button>` : '';
     return `
       <li class="episode-item${isExtra ? ' ep-extra' : ''}" data-ep-dur="${ep.duration_secs || 0}" data-slug="${escapeHtml(ch.slug)}">
         ${thumb}
@@ -530,11 +538,11 @@
     const el = document.getElementById('header-stats');
     if (el) el.textContent = lang === 'he'
       ? `${dafChannels} ערוצים · ${flat.length} שיעורי דף יומי`
-      : `${dafChannels} chaînes · ${flat.length} cours de Daf Hayomi`;
+      : (lang === 'en' ? `${dafChannels} channels · ${flat.length} Daf Hayomi classes` : `${dafChannels} chaînes · ${flat.length} cours de Daf Hayomi`);
 
     document.getElementById('page-subtitle').textContent = lang === 'he'
       ? `${flat.length} שיעורי דף יומי`
-      : `${flat.length} cours de Daf Hayomi`;
+      : (lang === 'en' ? `${flat.length} Daf Hayomi classes` : `${flat.length} cours de Daf Hayomi`);
 
     // Build channel filter chips (only channels that have Daf Hayomi episodes)
     const filterRow = document.getElementById('filter-row');
@@ -598,7 +606,7 @@
       const dafNum   = parseInt(refUrl.split('.')[1]) || 2;
       const shasSlug = MASECHTA_MAP[masEn] || masEn.toLowerCase();
 
-      labelEl.textContent = lang === 'he' ? 'הדף היומי' : 'Daf du jour';
+      labelEl.textContent = lang === 'he' ? 'הדף היומי' : (lang === 'en' ? 'Today\'s daf' : 'Daf du jour');
       nameEl.textContent  = dispEn;
       heEl.textContent    = dispHe;
       banner.classList.remove('loading');
@@ -606,6 +614,7 @@
 
       let panelOpen = false, activeAmud = 'a';
       readBtn.textContent = lang === 'he' ? '📖 צורת הדף' : '📖 Tsurat haDaf';
+      // Tsurat haDaf is a proper term kept identical across fr/en
 
       function pdfUrl(amud) {
         return `https://www.shas.org/daf-pdf/api/?masechta=${shasSlug}&daf=${dafNum}&amud=${amud}`;
@@ -614,13 +623,13 @@
       function buildPanel() {
         const labelA   = lang === 'he' ? 'עמוד א׳' : 'Amud A';
         const labelB   = lang === 'he' ? 'עמוד ב׳' : 'Amud B';
-        const openLbl  = lang === 'he' ? 'פתח בכרטיסייה חדשה ↗' : 'Ouvrir dans un nouvel onglet ↗';
+        const openLbl  = lang === 'he' ? 'פתח בכרטיסייה חדשה ↗' : (lang === 'en' ? 'Open in a new tab ↗' : 'Ouvrir dans un nouvel onglet ↗');
         const curPdf   = pdfUrl(activeAmud);
         const mobile   = window.innerWidth < 768;
 
         const mainContent = mobile
           ? `<div style="text-align:center;padding:28px 16px 20px;">` +
-              `<a class="daf-open-btn" href="${curPdf}" target="_blank" rel="noopener">📖 ${lang === 'he' ? 'פתח את הדף' : 'Ouvrir le daf'}</a>` +
+              `<a class="daf-open-btn" href="${curPdf}" target="_blank" rel="noopener">📖 ${lang === 'he' ? 'פתח את הדף' : (lang === 'en' ? 'Open the daf' : 'Ouvrir le daf')}</a>` +
             `</div>`
           : `<iframe src="${curPdf}" width="100%" height="680" style="border:none;display:block;border-radius:6px;" title="${escapeHtml(dispEn)}"></iframe>` +
             `<div style="text-align:center;margin-top:6px;">` +
@@ -660,7 +669,7 @@
         buildPanel();
         textPanel.style.display = '';
         panelOpen = true;
-        readBtn.textContent = lang === 'he' ? '✕ סגור' : '✕ Fermer';
+        readBtn.textContent = lang === 'he' ? '✕ סגור' : (lang === 'en' ? '✕ Close' : '✕ Fermer');
       });
 
     } catch(_) {
@@ -671,9 +680,9 @@
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 
 <footer class="site-footer">
-  <a href="/contact.html" data-i18n="footer_contact">Contactez-nous</a>
+  <a href="/contact.html">Contactez-nous</a>
   &nbsp;·&nbsp;
-  <a href="/cgv.html" data-i18n="footer_legal">Mentions légales</a>
+  <a href="/cgv.html">Mentions légales</a>
   &nbsp;·&nbsp;
   <span>© 2026 The Torah Podcast</span>
 </footer>

@@ -367,7 +367,7 @@
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link active" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
-      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html" data-i18n="all_rabbis">Tous les rabbins →</a></div>
+      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <div class="nav-dropdown">
@@ -376,7 +376,7 @@
         <a href="daf-hayomi.html" data-i18n="nav_daf_hayomi">Daf Hayomi</a>
         <a href="hitat.html" data-i18n="nav_hitat">Hitat Yomi</a>
         <a href="hayom-yom.html" data-i18n="nav_hayomyom">Hayom Yom</a>
-        <a href="hiloula.html" data-i18n="nav_hiloula">Hiloula</a>
+        <a href="hiloula.html">Hiloula</a>
       </div>
     </div>
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
@@ -412,7 +412,7 @@
   const I18N = {
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Paracha', nav_themes:'Thème',
-      lang_toggle:'עברית',
+      lang_toggle:'English',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       loading:'Chargement…',
       sort_latest:'Dernier cours', sort_alpha:'Alphabétique',
@@ -424,7 +424,21 @@
       copy_rss:'Copier RSS', copied:'✓ Copié !',
       ep_singular:'épisode', ep_plural:'épisodes',
       last:'Dernier :', no_channels:'Aucune chaîne disponible.',
-      nav_hiloula:'Hiloula', all_rabbis:'Tous les rabbins →',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Parasha', nav_themes:'Topics',
+      lang_toggle:'עברית',
+      subtitle:'Torah classes — available on your favorite platforms',
+      loading:'Loading…',
+      sort_latest:'Latest class', sort_alpha:'Alphabetical',
+      fav_only:'★ My favorites',
+      search_ph:'Search for a rabbi or a class…',
+      no_results:'No rabbi found.',
+      no_favs:'No favorites yet. Tap a rabbi\'s star to find them here.',
+      all_courses:'See all classes →',
+      copy_rss:'Copy RSS', copied:'✓ Copied!',
+      ep_singular:'episode', ep_plural:'episodes',
+      last:'Last:', no_channels:'No channels available.',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -440,13 +454,12 @@
       copy_rss:'העתק RSS', copied:'✓ הועתק !',
       ep_singular:'פרק', ep_plural:'פרקים',
       last:'אחרון :', no_channels:'אין ערוצים זמינים.',
-      nav_hiloula:'הילולה', all_rabbis:'כל הרבנים →',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
   function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
   function applyLang() {
-    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const k = el.dataset.i18n;
@@ -454,7 +467,11 @@
       else el.textContent = t(k);
     });
   }
-  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function toggleLang() {
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
+    location.reload();
+  }
   applyLang();
 
   const PLATFORM_META = {
@@ -698,7 +715,9 @@
     document.getElementById('header-stats').textContent =
       lang === 'he'
         ? `${nRabbis} ערוצים · ${totalEpisodes} שיעורים · ~${approxH} שעות`
-        : `${nRabbis} rabbins · ${totalEpisodes} cours · ~${approxH}h de Torah`;
+        : (lang === 'en'
+          ? `${nRabbis} rabbis · ${totalEpisodes} classes · ~${approxH}h of Torah`
+          : `${nRabbis} rabbins · ${totalEpisodes} cours · ~${approxH}h de Torah`);
 
     setSort(currentSort);
 
@@ -710,7 +729,7 @@
           flat.push({ ep, ch: { slug: ch.slug, name: ch.podcast_author } });
       }));
       flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
-      const car = buildCarousel(lang === 'he' ? 'שיעורים אחרונים' : 'Derniers cours', flat.slice(0, 15));
+      const car = buildCarousel(lang === 'he' ? 'שיעורים אחרונים' : (lang === 'en' ? 'Latest classes' : 'Derniers cours'), flat.slice(0, 15));
       const mount = document.getElementById('rabbi-carousel');
       if (car && mount) mount.appendChild(car);
     })();
@@ -732,7 +751,7 @@
         .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
       sub.innerHTML = navItems
         .map(it => `<a href="${escapeHtml(it.slug)}.html">${escapeHtml(it.name)}${it.count ? ` (${it.count})` : ''}</a>`)
-        .join('') + `<a class="nav-submenu-all" href="rabbins.html">${t('all_rabbis')}</a>`;
+        .join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
     }
 
     document.addEventListener('click', e => {

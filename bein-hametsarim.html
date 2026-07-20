@@ -180,7 +180,7 @@
     <a href="./" data-i18n="nav_home">Accueil</a>
     <div class="nav-dropdown" id="nav-dropdown">
       <a class="nav-dd-link" href="rabbins.html" data-i18n="nav_rabbis">Rabbins</a><button class="nav-dd-caret" aria-label="Voir la liste">▾</button>
-      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html" data-i18n="all_rabbis">Tous les rabbins →</a></div>
+      <div class="nav-submenu" id="nav-rabbis-submenu"><a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a></div>
     </div>
     <a href="derniers-cours.html" data-i18n="nav_last_classes">Derniers cours</a>
     <div class="nav-dropdown">
@@ -318,7 +318,7 @@
   const I18N = {
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Paracha', nav_themes:'Thème',
-      lang_toggle:'עברית',
+      lang_toggle:'English',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       loading:'Chargement…',
       hero_kicker:'Bein Hametsarim · Les 3 Semaines',
@@ -336,7 +336,27 @@
       copy_rss:'Copier RSS', copied:'✓ Copié !',
       ep_singular:'épisode', ep_plural:'épisodes',
       last:'Dernier :', all_courses:'Voir tous les cours →', no_channels:'Aucune chaîne disponible.',
-      all_rabbis:'Tous les rabbins →', footer_contact:'Contactez-nous', footer_legal:'Mentions légales',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Parasha', nav_themes:'Topics',
+      lang_toggle:'עברית',
+      subtitle:'Torah classes — available on your favorite platforms',
+      loading:'Loading…',
+      hero_kicker:'Bein Hametsarim · The Three Weeks',
+      hero_title:'No music during the Three Weeks? <strong>Listen to Torah</strong> — on your usual platforms.',
+      hero_lead:'Keep your listening habits. Open Spotify, Apple Podcasts or Deezer as usual — and simply replace the music with a Torah class. Dozens of rabbis, thousands of shiurim, within earshot.',
+      hero_cta:'Choose a rav →', hero_cta2:'Where to start',
+      listen_note:'Or listen right here on the site — no subscription or app needed.',
+      rabbis_head:'Listen to your rabbis',
+      rabbis_sub:'Click a rav to subscribe on Spotify, Apple Podcasts or Deezer — or copy his RSS feed.',
+      start_head:'Where to start', start_sub:'Three simple ways to fill your listening time.',
+      start_recent_title:'The latest classes', start_recent_desc:'The most recent shiurim from all the rabbis, gathered in one place.',
+      start_daf_title:'Daf Hayomi', start_daf_desc:'One class a day on the page of Gemara studied around the world.',
+      start_hitat_title:'Hitat Yomi', start_hitat_desc:'The daily study — Chumash, Tehillim, Tanya, Rambam — and the class of the day.',
+      start_go:'Listen →',
+      copy_rss:'Copy RSS', copied:'✓ Copied!',
+      ep_singular:'episode', ep_plural:'episodes',
+      last:'Latest:', all_courses:'See all classes →', no_channels:'No channels available.',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_paracha:'פרשה', nav_themes:'נושא',
@@ -358,7 +378,6 @@
       copy_rss:'העתק RSS', copied:'✓ הועתק !',
       ep_singular:'פרק', ep_plural:'פרקים',
       last:'אחרון :', all_courses:'לכל השיעורים →', no_channels:'אין ערוצים זמינים.',
-      all_rabbis:'כל הרבנים ←', footer_contact:'צרו קשר', footer_legal:'מידע משפטי',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -367,7 +386,7 @@
   // Keys whose values contain intentional inline HTML (<strong>).
   const HTML_KEYS = new Set(['hero_title']);
   function applyLang() {
-    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const k = el.dataset.i18n;
@@ -380,7 +399,7 @@
     if (fr) fr.style.display = lang === 'he' ? 'none' : '';
     if (he) he.style.display = lang === 'he' ? '' : 'none';
   }
-  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function toggleLang() { var order=['fr','en','he']; localStorage.setItem('lang', order[(order.indexOf(lang)+1)%order.length]); location.reload(); }
   applyLang();
 
   // Nav dropdown
@@ -541,7 +560,9 @@
     const nRabbis = channels.length + speakers.length;
     document.getElementById('header-stats').textContent = lang === 'he'
       ? `${nRabbis} ערוצים · ${totalEpisodes} שיעורים · ~${approxH} שעות`
-      : `${nRabbis} rabbins · ${totalEpisodes} cours · ~${approxH}h de Torah`;
+      : (lang === 'en'
+        ? `${nRabbis} rabbis · ${totalEpisodes} classes · ~${approxH}h of Torah`
+        : `${nRabbis} rabbins · ${totalEpisodes} cours · ~${approxH}h de Torah`);
 
     renderGrid();
 
@@ -549,7 +570,7 @@
     if (sub) sub.innerHTML = [
       ...channels.map(ch => `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.podcast_author)}</a>`),
       ...speakers.map(sp => `<a href="${escapeHtml(sp.slug)}.html">${escapeHtml(sp.name)}</a>`)
-    ].join('') + `<a class="nav-submenu-all" href="rabbins.html">${t('all_rabbis')}</a>`;
+    ].join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
   })();
 
   // ─── Écoute directe : un cours jouable tout de suite sur la page ───────────
@@ -604,10 +625,10 @@
       recents = (h && h.recents) || [];
       if (!recents.length) return;
       const he      = lang === 'he';
-      const head   = he ? 'הפלייליסט שלכם לשלושת השבועות'        : 'Votre playlist pour ces semaines';
-      const sub    = he ? 'שיעור במקום מוזיקה — נגנו ישירות כאן.' : 'Un cours à la place de la musique — lancez-le directement ici.';
-      const listen = he ? 'להאזנה'                              : 'Écouter';
-      const seeAll = he ? 'כל השיעורים האחרונים →'               : 'Voir tous les derniers cours →';
+      const head   = he ? 'הפלייליסט שלכם לשלושת השבועות'        : (lang === 'en' ? 'Your playlist for these weeks' : 'Votre playlist pour ces semaines');
+      const sub    = he ? 'שיעור במקום מוזיקה — נגנו ישירות כאן.' : (lang === 'en' ? 'A class instead of music — play it right here.' : 'Un cours à la place de la musique — lancez-le directement ici.');
+      const listen = he ? 'להאזנה'                              : (lang === 'en' ? 'Listen' : 'Écouter');
+      const seeAll = he ? 'כל השיעורים האחרונים →'               : (lang === 'en' ? 'See all latest classes →' : 'Voir tous les derniers cours →');
       // Variante playlist (distincte du hero+carrousel de la home) : une file de
       // cours numérotés, jouables sur place — métaphore "playlist" collant à la
       // campagne (remplacer la musique par de la Torah).
@@ -635,12 +656,11 @@
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 
 <footer class="site-footer">
-  <a href="/contact.html" data-i18n="footer_contact">Contactez-nous</a>
+  <a href="/contact.html">Contactez-nous</a>
   &nbsp;·&nbsp;
-  <a href="/cgv.html" data-i18n="footer_legal">Mentions légales</a>
+  <a href="/cgv.html">Mentions légales</a>
   &nbsp;·&nbsp;
   <span>© 2026 The Torah Podcast</span>
 </footer>
-<script>applyLang();</script>
 </body>
 </html>

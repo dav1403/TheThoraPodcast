@@ -338,7 +338,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
         audio_tag = (
             f'<button class="play-btn" data-ep-id="{esc(video_id)}" '
             f'data-audio="{esc(audio_url)}" data-title="{esc(ep["title"])}" data-thumb="{esc(thumb)}">'
-            f'<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> <span data-i18n="listen">Écouter</span></button>'
+            f'<svg viewBox="0 0 10 10" fill="currentColor"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button>'
             if audio_url else ""
         )
         share_tag = (
@@ -346,7 +346,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
             f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">'
             f'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>'
             f'<polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>'
-            f' <span data-i18n="share">Partager</span></button>'
+            f' Partager</button>'
             if ep.get("title") and ep.get("published") else ""
         )
         dur_secs = ep.get("duration_secs", 0) or 0
@@ -487,10 +487,10 @@ def render_page(ch: dict, entries: list, all_channels: list,
   {about_block}
   <h2 class="section-label" data-i18n="all_episodes">Tous les épisodes</h2>
   <div class="dur-filter">
-    <button class="dur-btn active" data-dur="all" data-i18n="dur_all" onclick="filterDur(this)">Tous</button>
-    <button class="dur-btn" data-dur="short" data-i18n="dur_short" onclick="filterDur(this)">&lt; 5 min</button>
-    <button class="dur-btn" data-dur="medium" data-i18n="dur_medium" onclick="filterDur(this)">5–20 min</button>
-    <button class="dur-btn" data-dur="long" data-i18n="dur_long" onclick="filterDur(this)">&gt; 20 min</button>
+    <button class="dur-btn active" data-dur="all" onclick="filterDur(this)">Tous</button>
+    <button class="dur-btn" data-dur="short" onclick="filterDur(this)">&lt; 5 min</button>
+    <button class="dur-btn" data-dur="medium" onclick="filterDur(this)">5–20 min</button>
+    <button class="dur-btn" data-dur="long" onclick="filterDur(this)">&gt; 20 min</button>
   </div>
   <div class="episode-list" id="ep-list">
 {episodes_html}
@@ -528,19 +528,24 @@ def render_page(ch: dict, entries: list, all_channels: list,
   const I18N = {{
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
-      lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
-      dur_all:'Tous', dur_short:'< 5 min', dur_medium:'5–20 min', dur_long:'> 20 min',
       ep_count: n => `${{n}} épisode${{n !== 1 ? 's' : ''}}`,
-      listen:'Écouter', playing:'En cours…', share:'Partager',
+      listen:'Écouter', playing:'En cours…',
+    }},
+    en: {{
+      nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
+      lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
+      all_episodes:'All episodes',
+      ep_count: n => `${{n}} episode${{n !== 1 ? 's' : ''}}`,
+      listen:'Listen', playing:'Playing…',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
-      dur_all:'הכל', dur_short:'< 5 דק׳', dur_medium:'5–20 דק׳', dur_long:'> 20 דק׳',
       ep_count: n => `${{n}} פרקים`,
-      listen:'האזן', playing:'מתנגן…', share:'שתף',
+      listen:'האזן', playing:'מתנגן…',
     }},
   }};
   let lang = localStorage.getItem('lang') || '{default_lang}';
@@ -578,17 +583,18 @@ def render_page(ch: dict, entries: list, all_channels: list,
     if (about.scrollHeight > 100) {{
       about.classList.add('collapsed');
       btn.classList.add('visible');
-      btn.textContent = lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾';
+      btn.textContent = lang === 'he' ? 'הצג עוד ▾' : (lang === 'en' ? 'Show more ▾' : 'Voir plus ▾');
       btn.addEventListener('click', () => {{
         const isCollapsed = about.classList.toggle('collapsed');
         btn.textContent = isCollapsed
-          ? (lang === 'he' ? 'הצג עוד ▾' : 'Voir plus ▾')
-          : (lang === 'he' ? 'הצג פחות ▴' : 'Voir moins ▴');
+          ? (lang === 'he' ? 'הצג עוד ▾' : (lang === 'en' ? 'Show more ▾' : 'Voir plus ▾'))
+          : (lang === 'he' ? 'הצג פחות ▴' : (lang === 'en' ? 'Show less ▴' : 'Voir moins ▴'));
       }});
     }}
   }})();
   function toggleLang() {{
-    localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
     location.reload();
   }}
   applyLang();
@@ -934,7 +940,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     {f'<div style="margin-bottom:8px">{tags_html}</div>' if tags_html else ''}
     {audio_tag}
     <div class="speed-bar">
-      <span data-i18n="speed_label">Vitesse :</span>
+      <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
       <button class="speed-btn" data-speed="1.25">1.25×</button>
       <button class="speed-btn" data-speed="1.5">1.5×</button>
@@ -955,13 +961,18 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   const I18N = {{
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
-      lang_toggle:'עברית', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', transcript_label:'Transcription', speed_label:'Vitesse :',
+      lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
+      related:'Épisodes récents', transcript_label:'Transcription',
+    }},
+    en: {{
+      nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
+      lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
+      related:'Recent episodes', transcript_label:'Transcript',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', transcript_label:'תמליל', speed_label:'מהירות:',
+      related:'פרקים אחרונים', transcript_label:'תמליל',
     }},
   }};
   let lang = localStorage.getItem('lang') || '{lang}';
@@ -972,7 +983,8 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     document.querySelectorAll('[data-i18n]').forEach(el => {{ el.textContent = t(el.dataset.i18n); }});
   }}
   function toggleLang() {{
-    localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr');
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
     location.reload();
   }}
   applyLang();

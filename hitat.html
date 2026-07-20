@@ -321,7 +321,7 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi',
       nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Paracha', nav_themes:'Thème',
-      lang_toggle:'עברית',
+      lang_toggle:'English',
       subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       page_title:'Hitat Yomi',
       page_subtitle:'Houmach · Tehilim · Tania · Rambam · Hayom Yom du jour',
@@ -345,7 +345,34 @@
       listen:'Écouter', playing:'En cours…',
       ep_singular:'cours', ep_plural:'cours',
       copied:'Lien copié !',
-      footer_contact:'Contactez-nous', footer_legal:'Mentions légales',
+    },
+    en: {
+      nav_home:'Home', nav_rabbis:'Rabbis', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi',
+      nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_paracha:'Parasha', nav_themes:'Topics',
+      lang_toggle:'עברית',
+      subtitle:'Torah classes — available on your favorite platforms',
+      page_title:'Hitat Yomi',
+      page_subtitle:'Chumash · Tehillim · Tanya · Rambam · Hayom Yom of the day',
+      loading:'Loading…',
+      read:'Read', close:'Close',
+      block_chumash:'Chumash', block_tehilim:'Tehillim', block_tania:'Tanya',
+      block_rambam:'Rambam — 3 chapters', block_hayomyom:'Hayom Yom',
+      hayomyom_ref:"Today's thought",
+      hayomyom_note:"Hayom Yom is not available in free access (Kehot rights). Read today's thought directly on Chabad.org.",
+      hayomyom_btn:"Read today's Hayom Yom on Chabad.org ↗",
+      unavailable:'Unavailable',
+      trans_label:'Translation (English)',
+      show_trans:'Show translation (English)',
+      hide_trans:'Hide translation',
+      sefaria_link:'view on Sefaria ↗',
+      today_btn:'Today',
+      day_label:'Day',
+      hitat_day_head:"Today's Hitat",
+      no_hitat_ep:'No Hitat class found for this date.',
+      hitat_not_published:"The class for this date is not yet published — here is the latest available:",
+      listen:'Listen', playing:'Playing…',
+      ep_singular:'class', ep_plural:'classes',
+      copied:'Link copied!',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי',
@@ -374,14 +401,13 @@
       listen:'האזן', playing:'מתנגן…',
       ep_singular:'שיעור', ep_plural:'שיעורים',
       copied:'הקישור הועתק!',
-      footer_contact:'צור קשר', footer_legal:'תנאי שימוש',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
   window.lang = lang;
   function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
   function applyLang() {
-    document.documentElement.lang = lang === 'he' ? 'he' : 'fr';
+    document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
     const fr = document.getElementById('hitat-intro-fr');
@@ -389,7 +415,11 @@
     if (fr) fr.style.display = lang === 'he' ? 'none' : '';
     if (he) he.style.display = lang === 'he' ? '' : 'none';
   }
-  function toggleLang() { localStorage.setItem('lang', lang === 'fr' ? 'he' : 'fr'); location.reload(); }
+  function toggleLang() {
+    var order = ['fr', 'en', 'he'];
+    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
+    location.reload();
+  }
   applyLang();
 
   // Nav dropdown
@@ -892,9 +922,9 @@
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 
 <footer class="site-footer">
-  <a href="/contact.html" data-i18n="footer_contact">Contactez-nous</a>
+  <a href="/contact.html">Contactez-nous</a>
   &nbsp;·&nbsp;
-  <a href="/cgv.html" data-i18n="footer_legal">Mentions légales</a>
+  <a href="/cgv.html">Mentions légales</a>
   &nbsp;·&nbsp;
   <span>© 2026 The Torah Podcast</span>
 </footer>
