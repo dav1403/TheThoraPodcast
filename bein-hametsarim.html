@@ -218,6 +218,56 @@
 
 <div class="wrap">
 
+  <style>
+    /* Écoute directe : hero + carrousel + player on-page (esprit home). Classes
+       préfixées dl- pour ne pas entrer en collision avec le .hero/.hero-title
+       du hero "plateformes" de cette page. */
+    #direct-listen { margin-bottom: 30px; }
+    .dl-hero { display:flex; gap:0; align-items:stretch; background:linear-gradient(135deg,#232345 0%,#1a1a2e 100%); border-radius:14px; overflow:hidden; box-shadow:0 4px 18px rgba(0,0,0,.16); margin-bottom:16px; }
+    .dl-art { position:relative; flex-shrink:0; width:34%; max-width:230px; min-height:138px; }
+    .dl-art img { width:100%; height:100%; object-fit:cover; display:block; background:#2a2a45; }
+    .dl-play-ov { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:46px; height:46px; border-radius:50%; border:none; background:rgba(232,119,34,.95); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 12px rgba(0,0,0,.4); transition:transform .15s,background .15s; }
+    .dl-play-ov:hover { transform:translate(-50%,-50%) scale(1.08); background:#e87722; }
+    .dl-play-ov svg { width:20px; height:20px; }
+    .dl-hero-body { flex:1; min-width:0; padding:16px 20px; display:flex; flex-direction:column; justify-content:center; color:#fff; }
+    .dl-eyebrow { font-size:.64rem; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:#e8b877; margin-bottom:6px; }
+    .dl-ch { font-size:.76rem; color:#aab; margin-bottom:4px; }
+    .dl-title { font-size:1.12rem; font-weight:700; color:#fff; text-decoration:none; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .dl-title:hover { color:#e8b877; }
+    .dl-date { font-size:.72rem; color:#8a8aa6; margin-top:6px; }
+    .dl-cta { margin-top:12px; align-self:flex-start; display:inline-flex; align-items:center; gap:7px; background:#e87722; color:#fff; border:none; border-radius:22px; padding:7px 16px; font-size:.82rem; font-weight:600; cursor:pointer; font-family:inherit; transition:background .15s,transform .15s; }
+    .dl-cta svg { width:14px; height:14px; }
+    .dl-cta:hover { background:#d16a1a; transform:translateY(-1px); }
+    .dl-recents { display:flex; gap:12px; overflow-x:auto; padding-bottom:6px; scrollbar-width:thin; }
+    .dl-recents::-webkit-scrollbar { height:4px; }
+    .dl-recents::-webkit-scrollbar-thumb { background:#ddd; border-radius:2px; }
+    .dl-card { flex-shrink:0; width:150px; background:#fff; border-radius:10px; box-shadow:0 1px 4px rgba(0,0,0,.08); overflow:hidden; cursor:pointer; transition:transform .15s,box-shadow .15s; }
+    .dl-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.12); }
+    .dl-card img { width:100%; height:84px; object-fit:cover; background:#e0e0e0; display:block; }
+    .dl-card-body { padding:7px 9px 9px; }
+    .dl-card-ch { font-size:.62rem; color:#999; text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dl-card-title { font-size:.76rem; font-weight:600; color:#222; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; text-decoration:none; }
+    .dl-card-title:hover { color:#e87722; }
+    .dl-card-date { font-size:.62rem; color:#bbb; margin-top:3px; }
+    @media (max-width:620px){ .dl-hero{flex-direction:column} .dl-art{width:100%;max-width:none;height:150px;min-height:0} }
+    /* Mini-player fixe */
+    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:400; transform:translateY(0); transition:transform .25s ease; }
+    #player.hidden { transform:translateY(100%); }
+    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
+    #player-info { min-width:0; flex:1; }
+    #player-title { font-size:.82rem; font-weight:600; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    #player-channel { font-size:.68rem; color:#99a; }
+    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
+    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
+    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
+    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
+    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
+    #player-close:hover { color:#fff; }
+    @media (max-width:500px){ #player-art{display:none} }
+  </style>
+
+  <section class="section" id="direct-listen" hidden></section>
+
   <section class="section">
     <div class="about-card" id="about-fr">
       <p><strong>Bein Hametsarim</strong> — « entre les étroits » — désigne les Trois Semaines de deuil qui vont du <strong>17 Tamouz</strong> au <strong>9 Av</strong> (Ticha BeAv), en souvenir de la destruction du Temple de Jérusalem. Durant cette période, l'usage est d'adopter certaines pratiques de deuil, parmi lesquelles <strong>s'abstenir d'écouter de la musique</strong>.</p>
@@ -260,6 +310,17 @@
     </div>
   </section>
 
+</div>
+
+<div id="player" class="hidden">
+  <img id="player-art" src="" alt="">
+  <div id="player-info">
+    <div id="player-title"></div>
+    <div id="player-channel"></div>
+  </div>
+  <audio id="player-audio" controls></audio>
+  <button id="speed-cycle-btn" title="Vitesse de lecture">1×</button>
+  <button id="player-close" title="Fermer">✕</button>
 </div>
 
 <div id="modal-overlay" class="modal-overlay" onclick="closeModal()"></div>
@@ -500,6 +561,97 @@
       ...channels.map(ch => `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.podcast_author)}</a>`),
       ...speakers.map(sp => `<a href="${escapeHtml(sp.slug)}.html">${escapeHtml(sp.name)}</a>`)
     ].join('') + `<a class="nav-submenu-all" href="rabbins.html">Tous les rabbins →</a>`;
+  })();
+
+  // ─── Écoute directe : un cours jouable tout de suite sur la page ───────────
+  // Même idée que la home refondue : hero (dernier épisode) + carrousel des
+  // derniers cours, joués sur place via un mini-player. Données = home.json
+  // (recents déjà triés newest-first, HITAT exclu).
+  (function directListen() {
+    const host     = document.getElementById('direct-listen');
+    const playerEl = document.getElementById('player');
+    const audio    = document.getElementById('player-audio');
+    const pTitle   = document.getElementById('player-title');
+    const pCh      = document.getElementById('player-channel');
+    const pArt     = document.getElementById('player-art');
+    if (!host || !playerEl) return;
+
+    let recents = [];
+    let speed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+    const SPEEDS = [1, 1.25, 1.5, 2];
+    const speedBtn = document.getElementById('speed-cycle-btn');
+    function updSpeed() { speedBtn.textContent = speed + '×'; speedBtn.classList.toggle('active', speed !== 1); }
+    updSpeed();
+    speedBtn.addEventListener('click', () => {
+      const i = SPEEDS.indexOf(speed);
+      speed = SPEEDS[i === -1 ? 1 : (i + 1) % SPEEDS.length];
+      localStorage.setItem('playbackSpeed', speed);
+      audio.playbackRate = speed;
+      updSpeed();
+    });
+
+    function play(ep) {
+      if (!ep) return;
+      pTitle.textContent = ep.title;
+      pCh.textContent    = ep.ch_name;
+      pArt.src           = ep.thumbnail || ('artwork/' + ep.slug + '.png');
+      audio.src          = ep.audio_url;
+      audio.playbackRate = speed;
+      audio.play();
+      playerEl.classList.remove('hidden');
+    }
+    document.getElementById('player-close').addEventListener('click', () => {
+      audio.pause();
+      playerEl.classList.add('hidden');
+    });
+
+    host.addEventListener('click', e => {
+      if (e.target.closest('a')) return;              // let title links navigate
+      const trg = e.target.closest('[data-play]');
+      if (trg) play(recents[+trg.dataset.play]);
+    });
+
+    fetch('home.json').then(r => r.ok ? r.json() : null).then(h => {
+      recents = (h && h.recents) || [];
+      if (!recents.length) return;
+      const he      = lang === 'he';
+      const head    = he ? 'להאזין לשיעור עכשיו'                 : 'Écoutez un cours maintenant';
+      const sub     = he ? 'שיעור מיד, ישירות באתר — בלי לצאת.'   : 'Un shiour tout de suite, directement ici — sans quitter la page.';
+      const eyebrow = he ? 'השיעור האחרון'                       : 'À la une';
+      const listen  = he ? 'להאזנה'                             : 'Écouter';
+      const seeAll  = he ? 'כל השיעורים האחרונים →'              : 'Voir tous les derniers cours →';
+      const hero    = recents[0];
+      const heroArt = escapeHtml(hero.thumbnail || ('artwork/' + hero.slug + '.png'));
+      const cards = recents.slice(1).map((ep, i) => `
+        <div class="dl-card" data-play="${i + 1}">
+          <img src="${escapeHtml(ep.thumbnail || ('artwork/' + ep.slug + '.png'))}" alt="" loading="lazy"
+               onerror="this.src='artwork/${escapeHtml(ep.slug)}.png'">
+          <div class="dl-card-body">
+            <div class="dl-card-ch">${escapeHtml(ep.ch_name)}</div>
+            <a class="dl-card-title" href="${escapeHtml(ep.url)}">${escapeHtml(ep.title)}</a>
+            <div class="dl-card-date">${formatDate(ep.published)}</div>
+          </div>
+        </div>`).join('');
+      host.innerHTML =
+        `<div class="section-head">${head}</div>` +
+        `<div class="section-sub">${sub}</div>` +
+        `<div class="dl-hero">` +
+          `<div class="dl-art">` +
+            `<img src="${heroArt}" alt="" onerror="this.src='artwork/${escapeHtml(hero.slug)}.png'">` +
+            `<button class="dl-play-ov" data-play="0" aria-label="${listen}">${playIcon()}</button>` +
+          `</div>` +
+          `<div class="dl-hero-body">` +
+            `<div class="dl-eyebrow">${eyebrow}</div>` +
+            `<div class="dl-ch">${escapeHtml(hero.ch_name)}</div>` +
+            `<a class="dl-title" href="${escapeHtml(hero.url)}">${escapeHtml(hero.title)}</a>` +
+            `<div class="dl-date">${formatDate(hero.published)}</div>` +
+            `<button class="dl-cta" data-play="0">${playIcon()} ${listen}</button>` +
+          `</div>` +
+        `</div>` +
+        `<div class="dl-recents">${cards}</div>` +
+        `<div style="margin-top:12px"><a href="derniers-cours.html" style="font-size:.82rem;color:#e87722;text-decoration:none;font-weight:600">${seeAll}</a></div>`;
+      host.hidden = false;
+    }).catch(() => {});
   })();
 </script>
 
