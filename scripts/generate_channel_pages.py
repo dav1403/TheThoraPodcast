@@ -1110,12 +1110,59 @@ def build_home_json(
         rep_img = next((e.get("thumbnail") for e in matched if e.get("thumbnail")), "")
         speakers_out.append({"slug": sp["slug"], "name": sp["name"], "img": rep_img})
 
+    # Spotlight "Découvrez le rav" — mirror the social "Zoom Rabbi" round-robin so
+    # the homepage features the SAME rav currently promoted on Facebook/Instagram.
+    # social_state.json rabbi_index points at the NEXT rav to post, so the one being
+    # promoted right now is index-1 (same channels.json enabled order social_post
+    # uses). Rotation cadence = whenever the social workflow advances the index.
+    spotlight = None
+    try:
+        st = json.loads(Path("social_state.json").read_text(encoding="utf-8-sig"))
+        enabled = [c for c in json.loads(CHANNELS_FILE.read_text(encoding="utf-8-sig"))
+                   if c.get("enabled", True)]
+        if enabled:
+            n = len(enabled)
+            sp_ch = enabled[(int(st.get("rabbi_index", 0)) - 1) % n]
+            sp_entries = entries_cache.get(sp_ch["slug"], [])
+            eps = sorted(
+                [e for e in sp_entries if not _HITAT_RE.search(e.get("title") or "")],
+                key=lambda e: e.get("published", ""), reverse=True,
+            )[:8]
+            info_path = FEEDS_DIR / f"{sp_ch['slug']}.channel_info.json"
+            info = {}
+            if info_path.exists():
+                try:
+                    info = json.loads(info_path.read_text(encoding="utf-8-sig"))
+                except Exception:
+                    info = {}
+            if eps:
+                spotlight = {
+                    "slug": sp_ch["slug"],
+                    "name": sp_ch["podcast_author"],
+                    "count": len(sp_entries),
+                    "description": (info.get("description") or "")[:280],
+                    "episodes": [{
+                        "slug": sp_ch["slug"],
+                        "ch_name": sp_ch["podcast_author"],
+                        "title": e.get("title", ""),
+                        "published": e.get("published", ""),
+                        "thumbnail": e.get("thumbnail", ""),
+                        "audio_url": e.get("audio_url", ""),
+                        "video_id": e.get("video_id", ""),
+                        "url": ep_path(sp_ch["slug"], e),
+                        "duration_secs": e.get("duration_secs", 0) or 0,
+                    } for e in eps],
+                }
+    except Exception:
+        spotlight = None
+
     home = {
         "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "stats": {"channels": site_channels, "episodes": site_episodes},
         "channels": channels_out,
         "speakers": speakers_out,
         "recents": recents_out,
+        "spotlight": spotlight,
     }
     Path("home.json").write_text(
         json.dumps(home, ensure_ascii=False) + "\n",
