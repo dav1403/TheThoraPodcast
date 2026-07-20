@@ -213,6 +213,10 @@
     <p>Le <strong>Hitat</strong> (חת"ת) est le programme d'étude quotidien institué par le Rabbi précédent de Loubavitch, Rabbi Yossef Yits'hak Schneersohn. Chaque jour, on étudie la portion de <strong>Houmach</strong> (la paracha de la semaine avec Rachi, selon le jour), les <strong>Tehilim</strong> (Psaumes répartis sur les jours du mois) et un passage du <strong>Tania</strong>.</p>
     <p>Le Rabbi de Loubavitch y a ajouté l'étude quotidienne du <strong>Rambam</strong> (3 chapitres du Michné Torah) et l'apprentissage du <strong>Hayom Yom</strong>, la pensée du jour. Retrouvez ici le texte intégral de l'étude du jour, en hébreu, avec sa traduction anglaise lorsqu'elle est disponible.</p>
   </div>
+  <div class="daf-intro" id="hitat-intro-en" style="display:none;">
+    <p>The <strong>Hitat</strong> (חת"ת) is the daily study program instituted by the previous Lubavitcher Rebbe, Rabbi Yosef Yitzchak Schneersohn. Each day, one studies the portion of <strong>Chumash</strong> (the weekly parasha with Rashi, according to the day), <strong>Tehillim</strong> (Psalms spread across the days of the month) and a passage of <strong>Tanya</strong>.</p>
+    <p>The Lubavitcher Rebbe added the daily study of <strong>Rambam</strong> (3 chapters of Mishneh Torah) and the learning of <strong>Hayom Yom</strong>, the thought of the day. Here you'll find the full text of the day's study, in Hebrew, with its English translation when available.</p>
+  </div>
   <div class="daf-intro" id="hitat-intro-he" style="display:none; direction:rtl; text-align:right;">
     <p><strong>חת"ת</strong> הוא סדר הלימוד היומי שתיקן כ"ק אדמו"ר הריי"צ מליובאוויטש: בכל יום לומדים את חלק ה<strong>חומש</strong> (פרשת השבוע עם רש"י, לפי היום), <strong>תהילים</strong> (כפי חלוקת ימי החודש) ושיעור ב<strong>תניא</strong>.</p>
     <p>כ"ק אדמו"ר מליובאוויטש הוסיף את לימוד ה<strong>רמב"ם</strong> היומי (שלושה פרקים) ואת לימוד ה<strong>היום יום</strong>. כאן תמצאו את הטקסט המלא של לימוד היום בעברית, עם תרגום לאנגלית כשהוא זמין.</p>
@@ -410,10 +414,7 @@
     document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-    const fr = document.getElementById('hitat-intro-fr');
-    const he = document.getElementById('hitat-intro-he');
-    if (fr) fr.style.display = lang === 'he' ? 'none' : '';
-    if (he) he.style.display = lang === 'he' ? '' : 'none';
+    ['fr','en','he'].forEach(function(l){ var el=document.getElementById('hitat-intro-'+l); if(el) el.style.display = (lang===l)?'':'none'; });
   }
   function toggleLang() {
     var order = ['fr', 'en', 'he'];

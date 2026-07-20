@@ -436,9 +436,21 @@
     'Am Israël & Actualité':'עם ישראל ועדכונים', 'Santé & Réfoua':'בריאות ורפואה',
     'Parnassa':'פרנסה',
   };
+  const THEME_EN = {
+    'Chabbat':'Shabbat', 'Tefila':'Prayer', 'Téchouva':'Repentance', 'Emouna':'Faith',
+    'Etude de Torah':'Torah study', 'Moussar':'Mussar', 'Halakha':'Halakha',
+    'Kabbala & Spiritualité':'Kabbalah & Spirituality', 'Mariage & Famille':'Marriage & Family',
+    'Daf Hayomi':'Daf Hayomi', 'Likoutei Moharan':'Likutei Moharan',
+    'Roch Hachana & Yom Kippour':'Rosh Hashana & Yom Kippur',
+    "Souccot & Sim'hat Torah":"Sukkot & Simchat Torah",
+    'Hanoucca':'Chanukah', 'Pourim':'Purim', "Pessa'h":'Passover',
+    'Chavouot':'Shavuot', 'Paracha':'Parasha', 'Histoire juive':'Jewish history',
+    'Am Israël & Actualité':'People of Israel & Current events', 'Santé & Réfoua':'Health & Refua',
+    'Parnassa':'Livelihood',
+  };
   let lang = localStorage.getItem('lang') || 'fr';
   function t(k) { return (I18N[lang]||{})[k] || I18N.fr[k] || k; }
-  function themeName(frKey) { return lang === 'he' && THEME_HE[frKey] ? THEME_HE[frKey] : frKey; }
+  function themeName(frKey) { return lang === 'he' && THEME_HE[frKey] ? THEME_HE[frKey] : (lang === 'en' && THEME_EN[frKey] ? THEME_EN[frKey] : frKey); }
   function applyLang() {
     document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';

@@ -197,6 +197,10 @@
     <p>Le <strong>Hayom Yom</strong> (« היום יום », « De jour en jour ») est un recueil du Rabbi de Loubavitch : une pensée, une coutume ou un enseignement de la Hassidout pour <strong>chaque jour du calendrier hébraïque</strong>. C'est l'un des cinq volets du <a href="hitat.html" style="color:#1a1a2e;font-weight:600;">Hitat</a> quotidien.</p>
     <p>Retrouvez ici le <strong>cours du jour en vidéo</strong>, commenté par le <strong>Rav Israël Arnauve</strong> (Beth Habad TLV Nord), qui reprend le Hayom Yom de la date hébraïque en cours, et lisez le texte original sur Chabad.org.</p>
   </div>
+  <div class="daf-intro" id="hy-intro-en" style="display:none;">
+    <p>The <strong>Hayom Yom</strong> ("היום יום", "From day to day") is a collection by the Lubavitcher Rebbe: a thought, a custom, or a teaching of Chassidut for <strong>every day of the Hebrew calendar</strong>. It is one of the five parts of the daily <a href="hitat.html" style="color:#1a1a2e;font-weight:600;">Hitat</a>.</p>
+    <p>Here you'll find the <strong>video class of the day</strong>, commented by <strong>Rav Israël Arnauve</strong> (Beth Habad TLV North), covering the Hayom Yom of the current Hebrew date, and read the original text on Chabad.org.</p>
+  </div>
   <div class="daf-intro" id="hy-intro-he" style="display:none; direction:rtl; text-align:right;">
     <p><strong>היום יום</strong> הוא לקט מכ"ק אדמו"ר מליובאוויטש: מחשבה, מנהג או שיעור בחסידות ל<strong>כל יום בלוח העברי</strong>. זהו אחד מחמשת חלקי לימוד ה<a href="hitat.html" style="color:#1a1a2e;font-weight:600;">חת"ת</a> היומי.</p>
     <p>כאן תמצאו את <strong>שיעור היום בווידאו</strong>, בהעברת <strong>הרב ישראל ארנוב</strong> (בית חב"ד תל אביב צפון), על היום יום של התאריך העברי הנוכחי, ותוכלו ללמוד את הטקסט המקורי באתר Chabad.org.</p>
@@ -342,10 +346,7 @@
     document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-    const fr = document.getElementById('hy-intro-fr');
-    const he = document.getElementById('hy-intro-he');
-    if (fr) fr.style.display = lang === 'he' ? 'none' : '';
-    if (he) he.style.display = lang === 'he' ? '' : 'none';
+    ['fr','en','he'].forEach(function(l){ var el=document.getElementById('hy-intro-'+l); if(el) el.style.display = (lang===l)?'':'none'; });
   }
   function toggleLang() {
     var order = ['fr', 'en', 'he'];

@@ -222,6 +222,10 @@
     <p>Le <strong>Daf Hayomi</strong> (דף היומי, « la page du jour ») est un programme d'étude du Talmud Babylonien créé en 1923 par le Rav Meir Shapiro. Chaque jour, des centaines de milliers de Juifs à travers le monde étudient la <strong>même page de Gemara</strong>, créant ainsi une communauté d'étude mondiale synchronisée. Le cycle complet compte 2 711 pages (dafim) et s'étend sur environ <strong>7 ans et demi</strong>.</p>
     <p>Retrouvez ici les cours Daf Hayomi de nos rabbins, enregistrés chaque jour pour vous accompagner dans cette étude.</p>
   </div>
+  <div class="daf-intro" id="daf-intro-en" style="display:none;">
+    <p>The <strong>Daf Hayomi</strong> (דף היומי, "the page of the day") is a Babylonian Talmud study program created in 1923 by Rav Meir Shapiro. Every day, hundreds of thousands of Jews around the world study the <strong>same page of Gemara</strong>, forming a synchronized worldwide study community. The full cycle covers 2,711 pages (dafim) and spans about <strong>seven and a half years</strong>.</p>
+    <p>Here you'll find the Daf Hayomi classes from our rabbis, recorded each day to accompany you in this study.</p>
+  </div>
   <div class="daf-intro" id="daf-intro-he" style="display:none; direction:rtl; text-align:right;">
     <p><strong>דף היומי</strong> הוא לוח לימוד התלמוד הבבלי שנוסד בשנת תרפ"ג (1923) על ידי הרב מאיר שפירא מלובלין. בכל יום לומדים מאות אלפי יהודים ברחבי העולם את <strong>אותה הדף מהגמרא</strong>, ויוצרים קהילת לימוד עולמית מסונכרנת. המחזור המלא כולל 2,711 דפים ונמשך כ-<strong>שבע וחצי שנים</strong>.</p>
     <p>כאן תמצאו שיעורי דף היומי של הרבנים שלנו, המוקלטים מדי יום כדי ללוות אתכם בלימוד.</p>
@@ -307,10 +311,7 @@
     document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-    const fr = document.getElementById('daf-intro-fr');
-    const he = document.getElementById('daf-intro-he');
-    if (fr) fr.style.display = lang === 'he' ? 'none' : '';
-    if (he) he.style.display = lang === 'he' ? '' : 'none';
+    ['fr','en','he'].forEach(function(l){ var el=document.getElementById('daf-intro-'+l); if(el) el.style.display = (lang===l)?'':'none'; });
   }
   function toggleLang() {
     var order = ['fr', 'en', 'he'];

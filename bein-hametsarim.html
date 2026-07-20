@@ -260,6 +260,10 @@
       <p><strong>Bein Hametsarim</strong> — « entre les étroits » — désigne les Trois Semaines de deuil qui vont du <strong>17 Tamouz</strong> au <strong>9 Av</strong> (Ticha BeAv), en souvenir de la destruction du Temple de Jérusalem. Durant cette période, l'usage est d'adopter certaines pratiques de deuil, parmi lesquelles <strong>s'abstenir d'écouter de la musique</strong>.</p>
       <p>Ces semaines sont aussi une invitation à se rapprocher, par l'étude. Puisque la musique se met en retrait, c'est le moment idéal pour remplir ces temps d'écoute par un <strong>cours de Torah</strong> — dans la voiture, en marchant, en cuisinant. Rien à changer à vos habitudes : les mêmes applications, une autre écoute.</p>
     </div>
+    <div class="about-card" id="about-en" style="display:none;">
+      <p><strong>Bein Hametsarim</strong> — "between the straits" — refers to the Three Weeks of mourning from <strong>17 Tammuz</strong> to <strong>9 Av</strong> (Tisha B'Av), in memory of the destruction of the Temple in Jerusalem. During this period, the custom is to adopt certain mourning practices, among them <strong>refraining from listening to music</strong>.</p>
+      <p>These weeks are also an invitation to draw closer through study. Since music steps aside, it's the perfect time to fill your listening time with a <strong>Torah class</strong> — in the car, while walking, while cooking. Nothing to change in your habits: the same apps, a different kind of listening.</p>
+    </div>
     <div class="about-card" id="about-he" style="display:none; direction:rtl; text-align:right;">
       <p><strong>בין המצרים</strong> הם שלושת השבועות של אבל, מ<strong>י״ז בתמוז</strong> ועד <strong>תשעה באב</strong>, לזכר חורבן בית המקדש. בימים אלו נהוג לנהוג מקצת מנהגי אבלות, וביניהם <strong>להימנע משמיעת מוזיקה</strong>.</p>
       <p>שבועות אלו הם גם הזמנה להתקרב דרך הלימוד. כאשר המוזיקה נחה, זו העת המושלמת למלא את זמן ההאזנה ב<strong>שיעור תורה</strong> — ברכב, בהליכה, במטבח. אין צורך לשנות הרגלים: אותן אפליקציות, האזנה אחרת.</p>
@@ -394,10 +398,7 @@
       else if (HTML_KEYS.has(k)) el.innerHTML = t(k);
       else el.textContent = t(k);
     });
-    const fr = document.getElementById('about-fr');
-    const he = document.getElementById('about-he');
-    if (fr) fr.style.display = lang === 'he' ? 'none' : '';
-    if (he) he.style.display = lang === 'he' ? '' : 'none';
+    ['fr','en','he'].forEach(function(l){ var el=document.getElementById('about-'+l); if(el) el.style.display = (lang===l)?'':'none'; });
   }
   function toggleLang() { var order=['fr','en','he']; localStorage.setItem('lang', order[(order.indexOf(lang)+1)%order.length]); location.reload(); }
   applyLang();
