@@ -7,7 +7,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).parent))
 from process_podcasts import (
     get_channel_info, upload_audio_to_r2, asset_exists_in_r2,
-    download_audio, build_rss_feed, load_feed_entries, save_feed_entries,
+    download_audio, channel_intro_trim_sec, build_rss_feed, load_feed_entries, save_feed_entries,
     load_processed, save_processed, FEEDS_DIR, AUDIO_DIR, API_KEY, GITHUB_REPO,
     discover_channel_tab_ids, fetch_video_metadata,
 )
@@ -118,7 +118,8 @@ def backfill_channel(channel_cfg, processed, state):
             if f.is_file():
                 f.unlink()
         try:
-            mp3_path, yt_duration = download_audio(video["url"], AUDIO_DIR)
+            mp3_path, yt_duration = download_audio(
+                video["url"], AUDIO_DIR, channel_intro_trim_sec(channel_cfg))
             file_size = mp3_path.stat().st_size
             final_path = AUDIO_DIR / mp3_filename
             mp3_path.rename(final_path)

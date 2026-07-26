@@ -395,8 +395,67 @@ def get_invidious_instances() -> list[str]:
         return INVIDIOUS_FALLBACK_INSTANCES
 
 
-def _download_stream_and_convert(audio_url: str, video_id: str, out_dir: Path, tag: str) -> Path:
-    """Download an audio stream URL and convert to MP3 via ffmpeg."""
+def channel_intro_trim_sec(channel_cfg: dict) -> int:
+    """Return the per-channel intro trim (in seconds) to strip from the start of
+    every episode's audio, or 0 when not configured.
+
+    Configured per channel in channels.json via the optional integer field
+    ``intro_trim_sec`` (default 0). Use a positive value to cut the leading N
+    seconds (e.g. a musical jingle that triggers copyright takedowns). 0 (or the
+    field being absent) means NO trimming and a byte-identical pipeline.
+    """
+    try:
+        val = int(channel_cfg.get("intro_trim_sec", 0) or 0)
+    except (TypeError, ValueError):
+        val = 0
+    return val if val > 0 else 0
+
+
+def build_ffmpeg_encode_cmd(src: Path, dst: Path, intro_trim_sec: int = 0) -> list[str]:
+    """Build the ffmpeg command that (re-)encodes ``src`` to a 128k stereo MP3.
+
+    When ``intro_trim_sec`` > 0, a ``-ss <sec>`` input seek is inserted BEFORE
+    ``-i`` so ffmpeg skips the first N seconds fast, and the stream is re-encoded
+    (so the cut is clean at frame boundaries). When it is 0, the command is
+    identical to the original (no ``-ss``) — a strict no-op relative to the
+    previous behaviour.
+    """
+    cmd = ["ffmpeg"]
+    if intro_trim_sec and intro_trim_sec > 0:
+        cmd += ["-ss", str(int(intro_trim_sec))]
+    cmd += ["-i", str(src), "-vn", "-ar", "44100", "-ac", "2",
+            "-b:a", "128k", str(dst), "-y"]
+    return cmd
+
+
+def apply_intro_trim(mp3_path: Path, intro_trim_sec: int = 0) -> Path:
+    """Trim the first ``intro_trim_sec`` seconds off an existing MP3, in place.
+
+    No-op (returns the path unchanged, no ffmpeg call) when ``intro_trim_sec``
+    <= 0. Used by download paths that produce a finished MP3 (e.g. yt-dlp) where
+    the trim cannot be folded into the initial conversion.
+    """
+    if not intro_trim_sec or intro_trim_sec <= 0:
+        return mp3_path
+    trimmed = mp3_path.with_name(mp3_path.stem + "_trimmed.mp3")
+    cmd = build_ffmpeg_encode_cmd(mp3_path, trimmed, intro_trim_sec)
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        if trimmed.exists():
+            trimmed.unlink()
+        raise RuntimeError(f"ffmpeg intro-trim failed: {result.stderr[-300:]}")
+    trimmed.replace(mp3_path)
+    print(f"  Trimmed first {intro_trim_sec}s (intro jingle) off audio")
+    return mp3_path
+
+
+def _download_stream_and_convert(audio_url: str, video_id: str, out_dir: Path, tag: str,
+                                 intro_trim_sec: int = 0) -> Path:
+    """Download an audio stream URL and convert to MP3 via ffmpeg.
+
+    When ``intro_trim_sec`` > 0 the leading N seconds are dropped during the
+    conversion (``-ss`` before ``-i``). 0 leaves the command unchanged.
+    """
     mime_hint = "webm"  # default; ffmpeg handles both webm/opus and m4a/aac
     ext = "webm"
     tmp_path = out_dir / f"{video_id}.{ext}"
@@ -416,8 +475,7 @@ def _download_stream_and_convert(audio_url: str, video_id: str, out_dir: Path, t
         raise RuntimeError("Downloaded file too small — blocked or rate-limited")
 
     result = subprocess.run(
-        ["ffmpeg", "-i", str(tmp_path), "-vn", "-ar", "44100", "-ac", "2",
-         "-b:a", "128k", str(mp3_path), "-y"],
+        build_ffmpeg_encode_cmd(tmp_path, mp3_path, intro_trim_sec),
         capture_output=True, text=True,
     )
     tmp_path.unlink()
@@ -428,7 +486,8 @@ def _download_stream_and_convert(audio_url: str, video_id: str, out_dir: Path, t
     return mp3_path
 
 
-def download_via_invidious(video_url: str, video_id: str, out_dir: Path) -> Path:
+def download_via_invidious(video_url: str, video_id: str, out_dir: Path,
+                           intro_trim_sec: int = 0) -> Path:
     """Try downloading audio via Invidious API (proxied streams). Returns MP3 path."""
     instances = get_invidious_instances()
     for base in instances:
@@ -457,7 +516,7 @@ def download_via_invidious(video_url: str, video_id: str, out_dir: Path) -> Path
             audio_url = best["url"]
 
             print(f"  [invidious] Trying stream from {base} ...")
-            result = _download_stream_and_convert(audio_url, video_id, out_dir, f"invidious/{base}")
+            result = _download_stream_and_convert(audio_url, video_id, out_dir, f"invidious/{base}", intro_trim_sec)
             return result
 
         except Exception as e:
@@ -502,7 +561,8 @@ def get_piped_instances() -> list[str]:
         return PIPED_FALLBACK_INSTANCES
 
 
-def download_via_piped(video_url: str, video_id: str, out_dir: Path) -> Path:
+def download_via_piped(video_url: str, video_id: str, out_dir: Path,
+                       intro_trim_sec: int = 0) -> Path:
     """Try downloading audio via Piped API (proxied streams). Returns MP3 path."""
     instances = get_piped_instances()
     for base in instances:
@@ -532,7 +592,7 @@ def download_via_piped(video_url: str, video_id: str, out_dir: Path) -> Path:
             )
             audio_url = chosen["url"]
             print(f"  [piped] Trying stream from {base} ...")
-            return _download_stream_and_convert(audio_url, video_id, out_dir, f"piped/{base}")
+            return _download_stream_and_convert(audio_url, video_id, out_dir, f"piped/{base}", intro_trim_sec)
 
         except Exception as e:
             print(f"  [piped] {base} failed: {e}")
@@ -586,7 +646,8 @@ def get_cobalt_instances() -> list[str]:
         return COBALT_FALLBACK_INSTANCES
 
 
-def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
+def download_via_cobalt(video_url: str, video_id: str, out_dir: Path,
+                        intro_trim_sec: int = 0) -> Path:
     """Try downloading audio via cobalt public instances. Returns MP3 path."""
     instances = get_cobalt_instances()
     if not instances:
@@ -631,7 +692,7 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
                 raise RuntimeError("Downloaded file too small")
 
             print(f"  [cobalt] Downloaded via {base_url}")
-            return out_path
+            return apply_intro_trim(out_path, intro_trim_sec)
 
         except Exception as e:
             print(f"  [cobalt] {base_url} failed: {e}")
@@ -640,9 +701,13 @@ def download_via_cobalt(video_url: str, video_id: str, out_dir: Path) -> Path:
     raise RuntimeError("All cobalt instances failed")
 
 
-def download_audio(video_url: str, out_dir: Path) -> Path:
+def download_audio(video_url: str, out_dir: Path, intro_trim_sec: int = 0) -> Path:
     """Download audio as MP3. If cookies are available, tries yt-dlp first.
-    Otherwise falls back to Invidious → Piped → cobalt → yt-dlp."""
+    Otherwise falls back to Invidious → Piped → cobalt → yt-dlp.
+
+    ``intro_trim_sec`` (default 0) cuts the leading N seconds off the produced
+    audio (per-channel intro jingle). 0 = no trimming, pipeline unchanged.
+    """
     video_id = video_url.split("v=")[-1].split("&")[0]
     cookies_file = os.environ.get("YOUTUBE_COOKIES_FILE")
     has_cookies = bool(cookies_file and Path(cookies_file).exists())
@@ -651,17 +716,17 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
     # Proxy chain (Invidious/Piped/cobalt) is only tried when we have no cookies.
     if not has_cookies:
         try:
-            return download_via_invidious(video_url, video_id, out_dir)
+            return download_via_invidious(video_url, video_id, out_dir, intro_trim_sec)
         except Exception as e:
             print(f"  [invidious] All instances failed ({e}) — trying Piped")
 
         try:
-            return download_via_piped(video_url, video_id, out_dir)
+            return download_via_piped(video_url, video_id, out_dir, intro_trim_sec)
         except Exception as e:
             print(f"  [piped] All instances failed ({e}) — trying cobalt")
 
         try:
-            return download_via_cobalt(video_url, video_id, out_dir)
+            return download_via_cobalt(video_url, video_id, out_dir, intro_trim_sec)
         except Exception as e:
             print(f"  [cobalt] Failed ({e}) — falling back to yt-dlp")
 
@@ -695,7 +760,10 @@ def download_audio(video_url: str, out_dir: Path) -> Path:
     if not mp3_files:
         raise FileNotFoundError(f"No MP3 found in {out_dir} after downloading {video_url}")
     duration_secs = int((info or {}).get("duration") or 0)
-    return mp3_files[0], duration_secs
+    mp3 = apply_intro_trim(mp3_files[0], intro_trim_sec)
+    if intro_trim_sec and intro_trim_sec > 0 and duration_secs:
+        duration_secs = max(0, duration_secs - int(intro_trim_sec))
+    return mp3, duration_secs
 
 
 _AUTH_PATTERNS = ("sign in", "bot", "403", "cookies", "login", "authentication", "private")
@@ -822,8 +890,11 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
     global AUTH_FAILED
     slug       = channel_cfg["slug"]
     channel_id = channel_cfg["youtube_channel_id"]
+    intro_trim = channel_intro_trim_sec(channel_cfg)
     print(f"\n{'='*60}")
     print(f"Channel: {slug} ({channel_id})")
+    if intro_trim:
+        print(f"  intro_trim_sec = {intro_trim}s (leading audio will be cut)")
     print(f"{'='*60}")
 
     print("  Fetching channel info from YouTube...")
@@ -870,7 +941,7 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
                 if f.is_file():
                     f.unlink()
             try:
-                mp3_path, yt_duration = download_audio(video["url"], AUDIO_DIR)
+                mp3_path, yt_duration = download_audio(video["url"], AUDIO_DIR, intro_trim)
                 file_size  = mp3_path.stat().st_size
                 final_path = AUDIO_DIR / mp3_filename
                 mp3_path.rename(final_path)

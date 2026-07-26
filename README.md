@@ -20,10 +20,36 @@ This activates the pre-commit hook that blocks accidental commits of empty or co
     "podcast_email": "email",
     "podcast_language": "fr",
     "podcast_category": "Religion & Spirituality",
-    "enabled": true
+    "enabled": true,
+    "intro_trim_sec": 0
   }
 
 > Run workflow
+
+## Cutting an intro jingle (copyright takedowns)
+
+Some channels open every episode with a musical **jingle** that triggers
+copyright takedowns (podcasts get pulled from Spotify). To strip the leading
+seconds of audio, set **`intro_trim_sec`** on that channel in `channels.json`:
+
+- `0` (default) — no trimming, pipeline byte-identical to before.
+- `> 0` — cut the first N seconds off every episode of that channel. The value
+  is per channel (jingle length varies by rabbi/channel), e.g. `"intro_trim_sec": 12`.
+
+Applied via an `ffmpeg -ss <sec>` input seek during conversion; NEW episodes are
+trimmed automatically by `process_podcasts.py` / `backfill_podcasts.py`.
+
+**Retro-trim episodes already live on R2** with `scripts/reprocess_trim.py`
+(dry-run by default — nothing is written until you pass `--apply`):
+
+    # preview what would be re-trimmed for one channel:
+    py scripts/reprocess_trim.py --channel <slug>
+
+    # actually download → trim → overwrite the R2 objects in place:
+    py scripts/reprocess_trim.py --channel <slug> --apply
+
+It is idempotent (each entry is stamped `intro_trimmed`, so re-running never
+double-trims) and updates the feed sidecars + rebuilds the RSS.
 
 ## Tests
 
