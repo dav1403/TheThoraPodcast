@@ -1,0 +1,83 @@
+<!--
+  ios-Info.plist.snippet
+  ======================
+  À fusionner MANUELLEMENT dans `mobile/ios/App/App/Info.plist` APRÈS avoir lancé
+  `npx cap add ios` (ce fichier est généré par Capacitor, il n'existe pas encore
+  dans le repo — d'où ce snippet plutôt qu'un patch automatique).
+
+  Coller les clés ci-dessous à l'intérieur du <dict> racine d'Info.plist.
+
+  ⚠️ UIBackgroundModes=audio ne suffit PAS à lui seul : il faut AUSSI configurer
+  l'AVAudioSession en catégorie `playback` au démarrage (voir AppDelegate.swift
+  plus bas), sinon iOS coupe le son dès que l'app passe en arrière-plan ou que
+  l'écran se verrouille. Et Apple REJETTE une app qui déclare `audio` sans
+  réellement lire de l'audio en arrière-plan.
+-->
+
+<key>UIBackgroundModes</key>
+<array>
+  <string>audio</string>
+</array>
+
+<!-- Le site est en HTTPS : aucune exception ATS n'est nécessaire.
+     Ne PAS ajouter NSAllowsArbitraryLoads (motif de rejet App Store). -->
+
+<!-- Nom affiché sous l'icône -->
+<key>CFBundleDisplayName</key>
+<string>The Torah Podcast</string>
+
+<!-- Orientations : portrait sur iPhone, tout sur iPad -->
+<key>UISupportedInterfaceOrientations</key>
+<array>
+  <string>UIInterfaceOrientationPortrait</string>
+</array>
+<key>UISupportedInterfaceOrientations~ipad</key>
+<array>
+  <string>UIInterfaceOrientationPortrait</string>
+  <string>UIInterfaceOrientationPortraitUpsideDown</string>
+  <string>UIInterfaceOrientationLandscapeLeft</string>
+  <string>UIInterfaceOrientationLandscapeRight</string>
+</array>
+
+
+<!--
+  ============================================================================
+  À AJOUTER dans `mobile/ios/App/App/AppDelegate.swift`
+  ============================================================================
+  1. En haut du fichier :
+
+       import AVFoundation
+
+  2. Dans `application(_:didFinishLaunchingWithOptions:)`, AVANT `return true` :
+
+       do {
+           try AVAudioSession.sharedInstance().setCategory(
+               .playback,
+               mode: .spokenAudio,          // cours de Torah = parole
+               options: [.allowAirPlay, .allowBluetooth]
+           )
+           try AVAudioSession.sharedInstance().setActive(true)
+       } catch {
+           print("AVAudioSession setup failed: \(error)")
+       }
+
+  Effet : la lecture continue écran verrouillé / app en arrière-plan, et les
+  contrôles du centre de contrôle + écouteurs Bluetooth fonctionnent.
+
+  3. (optionnel, recommandé) Métadonnées sur l'écran verrouillé.
+     Le WebView ne renseigne PAS automatiquement le Now Playing Info Center.
+     Deux options honnêtes :
+       a) laisser le site utiliser l'API web `navigator.mediaSession`
+          (métadonnées + play/pause/seek) — supportée par WKWebView sur iOS 15+,
+          c'est la voie la plus simple et elle ne demande aucun code natif ;
+       b) sinon, pont natif MPNowPlayingInfoCenter à écrire à la main.
+     👉 Recommandation : implémenter `navigator.mediaSession` côté site
+        (fichier `js/` du player) — ça bénéficie aussi au web mobile.
+
+  4. Playback en WKWebView : autoriser la lecture sans geste utilisateur.
+     Dans `mobile/ios/App/App/Info.plist` Capacitor gère déjà
+     `allowsInlineMediaPlayback`. Si la lecture auto est bloquée, ajouter dans
+     capacitor.config.ts :  ios: { ... }  →  aucune clé officielle ; passer par
+     `WKWebViewConfiguration.mediaTypesRequiringUserActionForPlayback = []`
+     dans une sous-classe du bridge. À ne faire QUE si le besoin est constaté.
+-->

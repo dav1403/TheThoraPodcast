@@ -1,0 +1,32 @@
+{
+  "name": "thetorahpodcast-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capacitor wrapper shipping thetorahpodcast.net as a native iOS/Android app",
+  "scripts": {
+    "add:ios": "cap add ios",
+    "add:android": "cap add android",
+    "sync": "cap sync",
+    "sync:ios": "cap sync ios",
+    "sync:android": "cap sync android",
+    "open:ios": "cap open ios",
+    "open:android": "cap open android",
+    "assets": "capacitor-assets generate --iconBackgroundColor '#1a1a2e' --iconBackgroundColorDark '#1a1a2e' --splashBackgroundColor '#1a1a2e' --splashBackgroundColorDark '#1a1a2e'",
+    "doctor": "cap doctor",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/app": "^6.0.2",
+    "@capacitor/browser": "^6.0.4",
+    "@capacitor/core": "^6.2.0",
+    "@capacitor/ios": "^6.2.0",
+    "@capacitor/splash-screen": "^6.0.3",
+    "@capacitor/status-bar": "^6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.0",
+    "typescript": "^5.6.3"
+  }
+}
