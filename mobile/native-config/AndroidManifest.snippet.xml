@@ -1,0 +1,32 @@
+<!--
+  A reporter dans android/app/src/main/AndroidManifest.xml
+  (apres `npx cap add android`).
+-->
+
+<!-- ===== Permissions : a placer au niveau <manifest>, avant <application> ===== -->
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+<!-- Lecture audio : empeche la mise en veille et autorise un service de lecture -->
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+<!--
+  ===== Sur la balise <application>, ajouter/verifier =====
+
+  android:usesCleartextTraffic="false"
+  android:hardwareAccelerated="true"
+
+  ===== Sur la <activity> MainActivity, verifier =====
+
+  android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+  (valeur par defaut generee par Capacitor : evite le rechargement du WebView
+   a la rotation, donc la coupure du son)
+
+  ===== LIMITE CONNUE =====
+  Android suspend la lecture media d'un WebView quand l'app passe en arriere-plan.
+  Ces permissions sont necessaires mais NON suffisantes pour une lecture
+  ecran-eteint fiable : il faudrait un MediaSessionService natif en foreground
+  service (chantier v2, cf. mobile/README.md point 5).
+-->

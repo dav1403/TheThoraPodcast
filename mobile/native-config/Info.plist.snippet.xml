@@ -1,0 +1,25 @@
+<!--
+  A ajouter dans le <dict> racine de ios/App/App/Info.plist
+  (apres `npx cap add ios`).
+-->
+
+<!-- Lecture audio quand l'app est en arriere-plan / ecran verrouille -->
+<key>UIBackgroundModes</key>
+<array>
+  <string>audio</string>
+</array>
+
+<!-- Nom affiche sous l'icone -->
+<key>CFBundleDisplayName</key>
+<string>Torah Podcast</string>
+
+<!-- Barre de statut claire sur fond sombre -->
+<key>UIStatusBarStyle</key>
+<string>UIStatusBarStyleLightContent</string>
+<key>UIViewControllerBasedStatusBarAppearance</key>
+<false/>
+
+<!--
+  Le site est charge en HTTPS : aucune exception ATS n'est necessaire.
+  N'ajouter NSAllowsArbitraryLoads sous AUCUN pretexte (rejet Apple).
+-->

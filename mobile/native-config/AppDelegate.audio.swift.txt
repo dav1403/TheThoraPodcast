@@ -1,0 +1,34 @@
+// ios/App/App/AppDelegate.swift
+//
+// Active la session audio en categorie "playback" pour que la lecture continue
+// lorsque l'ecran est verrouille ou que l'app passe en arriere-plan.
+// La cle UIBackgroundModes=audio dans Info.plist ne suffit pas seule.
+
+import UIKit
+import Capacitor
+import AVFoundation   // <-- AJOUTER
+
+@UIApplicationMain
+class AppDelegate: UIResponder, UIApplicationDelegate {
+
+    var window: UIWindow?
+
+    func application(_ application: UIApplication,
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+
+        // ---- AJOUTER CE BLOC ----
+        do {
+            let session = AVAudioSession.sharedInstance()
+            // .spokenAudio = contenu parle (cours / podcast)
+            try session.setCategory(.playback, mode: .spokenAudio, options: [])
+            try session.setActive(true)
+        } catch {
+            print("AVAudioSession setup failed: \(error)")
+        }
+        // ---- FIN DU BLOC ----
+
+        return true
+    }
+
+    // ... le reste du AppDelegate genere par Capacitor reste inchange ...
+}
