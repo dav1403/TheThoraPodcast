@@ -44,21 +44,38 @@ npx cap sync          # a relancer apres chaque changement de config ou de plugi
 
 ## 4. Icone et splash screen
 
-Les sources sont dans `resources/` (`icon.png` 1024x1024, `splash.png` et
-`splash-dark.png` 2732x2732) — **placeholders derives du favicon du site**, a
-remplacer par un vrai visuel avant soumission.
+Les sources sont dans `resources/` et sont **derivees de l'identite visuelle du
+site** (logo navy `#1a1a2e` + or : rouleau de Torah + micro + ondes, cf.
+`../favicon.png`) :
 
-Generation de toutes les tailles :
+- `icon.png` 1024x1024 — **embleme seul** (le mot-logo « THE TORAH PODCAST » est
+  retire car illisible en petite taille), sur fond blanc, **opaque, sans canal
+  alpha** (exigence Apple).
+- `splash.png` / `splash-dark.png` 2732x2732 — embleme sur une carte blanche
+  arrondie, centree sur le navy `#1a1a2e` de la marque.
+
+Ces fichiers sont **regenerables** a partir du logo du site :
+
+```bash
+py scripts/build_source_assets.py   # depuis le dossier mobile/ (ou la racine du repo)
+```
+
+> Ce ne sont pas des placeholders geometriques : ce sont de vrais visuels
+> derives de la charte. David peut deposer un visuel definitif sur mesure dans
+> `resources/icon.png` / `resources/splash.png` puis relancer `npm run assets`.
+
+Generation de toutes les tailles natives (a lancer apres `npx cap add`) :
 
 ```bash
 npx capacitor-assets generate \
-  --iconBackgroundColor '#0b0b0f' --iconBackgroundColorDark '#0b0b0f' \
-  --splashBackgroundColor '#0b0b0f' --splashBackgroundColorDark '#0b0b0f'
+  --iconBackgroundColor '#1a1a2e' --iconBackgroundColorDark '#1a1a2e' \
+  --splashBackgroundColor '#1a1a2e' --splashBackgroundColorDark '#1a1a2e'
 # ou simplement : npm run assets
 ```
 
 Contraintes stores : icone **1024x1024 PNG, opaque, sans coins arrondis, sans
-transparence** (Apple rejette une icone avec canal alpha).
+transparence** (Apple rejette une icone avec canal alpha) — respecte par
+`icon.png` ci-dessus.
 
 ## 5. Lecture audio en arriere-plan
 
@@ -115,9 +132,21 @@ et sur la `<application>` : `android:usesCleartextTraffic="false"`.
 > Sur iOS, `UIBackgroundModes: audio` + `AVAudioSession.playback` suffisent pour
 > que la lecture continue ecran verrouille.
 
-Bonus cote **site** (pas cote app) : exposer `navigator.mediaSession.metadata`
-(titre, auteur, artwork) donne les controles lecture sur l'ecran verrouille et
-dans le centre de controle — a faire dans le lecteur de `episode.html`.
+Cote **site** : `navigator.mediaSession` est **desormais implemente** (voir
+`js/utils.js`, fonction `setupMediaSession`). Il branche le lecteur partage
+`#player-audio` sur l'API Media Session de l'OS : titre + auteur + artwork sur
+l'ecran verrouille et dans le centre de controle, avec boutons play/pause/seek
+fonctionnels. C'est la **moitie cote-site** de la lecture en arriere-plan :
+- sur **iOS**, combine a `UIBackgroundModes:audio` + `AVAudioSession.playback`,
+  cela suffit pour une lecture continue et pilotable ecran verrouille ;
+- sur **Android**, cela affiche la notification media mais ne suffit pas a
+  empecher le WebView de suspendre le son en arriere-plan profond — il faut le
+  service natif ci-dessus (option 2), a brancher au build.
+
+> ⚠️ **A VERIFIER par David au 1er build device** : la continuite ecran-eteint
+> ne peut pas etre prouvee sans un vrai build iOS (Mac) / Android (Studio). Le
+> cote site (Media Session) et la config native (Info.plist / AndroidManifest /
+> AppDelegate) sont en place ; le comportement reel se valide sur appareil.
 
 ## 6. Ouvrir / builder
 
@@ -144,8 +173,10 @@ commite (deja couvert par le `.gitignore`).
 - [ ] Icone 1024x1024 (opaque, sans alpha)
 - [ ] Captures d'ecran : iPhone 6.7" et 6.5" ; Android telephone (+ 7" et 10" si tablette declaree)
 - [ ] Nom (30 car.), sous-titre, description, mots-cles
-- [ ] **Politique de confidentialite** en ligne et publiquement accessible — page
-      dediee sur thetorahpodcast.net (URL obligatoire des deux cotes)
+- [x] **Politique de confidentialite** en ligne et publiquement accessible — page
+      dediee **<https://thetorahpodcast.net/politique-confidentialite.html>**
+      (alias : `/privacy.html`). FR/EN/HE, mise en ligne via ce depot. C'est
+      l'URL a coller des deux cotes (App Store Connect + Play Console).
 - [ ] Formulaire **App Privacy** (Apple) / **Data safety** (Google) : declarer ce
       qui est reellement collecte (analytics, cookies du site inclus)
 - [ ] Classification du contenu / age rating

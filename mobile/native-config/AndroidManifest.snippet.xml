@@ -29,4 +29,17 @@
   Ces permissions sont necessaires mais NON suffisantes pour une lecture
   ecran-eteint fiable : il faudrait un MediaSessionService natif en foreground
   service (chantier v2, cf. mobile/README.md point 5).
+
+  ===== Chantier v2 : service de lecture en foreground =====
+  Cote site, l'API Media Session est deja branchee (js/utils.js -> setupMediaSession).
+  Pour la continuite ecran-eteint sur Android, declarer un service de lecture
+  media, DANS <application>, une fois le plugin/service natif ajoute :
+
+  <service
+      android:name=".AudioPlaybackService"
+      android:exported="false"
+      android:foregroundServiceType="mediaPlayback" />
+
+  (Le nom/classe depend du plugin retenu ; ex. @capacitor-community/media-session
+   pour exposer MediaSession + un MediaSessionService relayant le <audio> du WebView.)
 -->

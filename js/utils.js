@@ -615,3 +615,73 @@ function _buildMobileNav() {
     });
   }).catch(function() {});
 })();
+
+// ─── Media Session (lock-screen / control-center controls) ───────────────────
+// Wires the shared #player-audio element to the OS Media Session API so the
+// currently-playing class shows up with artwork + title on the lock screen and
+// in the notification shade, with working play/pause/seek buttons. This is the
+// SITE-SIDE half of "background audio":
+//   • iOS (Capacitor wrapper w/ UIBackgroundModes:audio + AVAudioSession.playback):
+//     this makes playback continue and be controllable with the screen locked.
+//   • Android WebView: surfaces the media notification & metadata, but the WebView
+//     still suspends playback in the deep background — a native MediaSession
+//     foreground service is required for reliable screen-off playback there
+//     (see mobile/native-config/, tracked as a build-time task).
+// No-op when the API or the player element is absent (older browsers, pages
+// without a player). Reads metadata straight from the existing player DOM, so it
+// stays correct across index.html, generated channel pages and the other players.
+(function setupMediaSession() {
+  function init() {
+    if (!('mediaSession' in navigator)) return;
+    var audio = document.getElementById('player-audio');
+    if (!audio) return;
+    var ms = navigator.mediaSession;
+
+    function updateMetadata() {
+      var titleEl = document.getElementById('player-title');
+      var chEl    = document.getElementById('player-channel');
+      var artEl   = document.getElementById('player-art');
+      var title = (titleEl && titleEl.textContent.trim()) || 'The Torah Podcast';
+      var artist = (chEl && chEl.textContent.trim()) || 'The Torah Podcast';
+      var art = (artEl && artEl.getAttribute('src')) || '/favicon.png';
+      try {
+        ms.metadata = new MediaMetadata({
+          title: title,
+          artist: artist,
+          album: 'The Torah Podcast',
+          artwork: [
+            { src: art, sizes: '512x512', type: 'image/png' },
+            { src: '/favicon.png', sizes: '1024x1024', type: 'image/png' }
+          ]
+        });
+      } catch (_) {}
+    }
+
+    audio.addEventListener('play', function () { updateMetadata(); try { ms.playbackState = 'playing'; } catch (_) {} });
+    audio.addEventListener('playing', function () { updateMetadata(); try { ms.playbackState = 'playing'; } catch (_) {} });
+    audio.addEventListener('loadedmetadata', updateMetadata);
+    audio.addEventListener('pause', function () { try { ms.playbackState = 'paused'; } catch (_) {} });
+
+    function set(action, fn) { try { ms.setActionHandler(action, fn); } catch (_) {} }
+    set('play',  function () { audio.play(); });
+    set('pause', function () { audio.pause(); });
+    set('seekbackward', function (d) { audio.currentTime = Math.max(0, audio.currentTime - ((d && d.seekOffset) || 10)); });
+    set('seekforward',  function (d) { audio.currentTime = Math.min(audio.duration || Infinity, audio.currentTime + ((d && d.seekOffset) || 10)); });
+    set('seekto', function (d) { if (d && d.seekTime != null) audio.currentTime = d.seekTime; });
+
+    // Keep the OS scrubber in sync when the duration/position is known.
+    audio.addEventListener('timeupdate', function () {
+      if (!('setPositionState' in ms)) return;
+      if (!isFinite(audio.duration) || audio.duration <= 0) return;
+      try {
+        ms.setPositionState({
+          duration: audio.duration,
+          playbackRate: audio.playbackRate || 1,
+          position: Math.min(audio.currentTime, audio.duration)
+        });
+      } catch (_) {}
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
