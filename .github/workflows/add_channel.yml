@@ -138,13 +138,15 @@ jobs:
               print(f"ERROR: channel ID '{yt_id}' already exists"); sys.exit(1)
 
           # ── build and append entry ────────────────────────────────────────
-          platforms = {"rss": f"https://thetorahpodcast.net/feeds/{slug}.xml"}
-          if spotify_url:
-              platforms["spotify"] = spotify_url
-          if apple_url:
-              platforms["apple"] = apple_url
-          if deezer_url:
-              platforms["deezer"] = deezer_url
+          # Always write spotify/apple/deezer placeholders (empty if not provided)
+          # so links can just be pasted into channels.json afterwards. The site
+          # skips empty platform values, so blanks never render as broken buttons.
+          platforms = {
+              "spotify": spotify_url,
+              "apple": apple_url,
+              "deezer": deezer_url,
+              "rss": f"https://thetorahpodcast.net/feeds/{slug}.xml",
+          }
 
           entry = {
               "slug": slug,
