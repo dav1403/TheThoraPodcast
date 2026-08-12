@@ -4,8 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       slug:
-        description: 'Slug EXACT de la chaine existante (tel quel dans channels.json, casse comprise)'
+        description: 'Chaine a completer (liste des chaines ayant au moins une plateforme manquante)'
         required: true
+        type: choice
+        # Liste auto-generee depuis channels.json (chaines avec >=1 plateforme manquante).
+        # Regenerer avec: python scripts/refresh_update_channel_dropdown.py
+        options:
+        # BEGIN-AUTOGEN-SLUGS
+          - "(aucune chaine a completer)"
+        # END-AUTOGEN-SLUGS
       spotify:
         description: 'URL Spotify (optionnel — laisser vide pour ne pas modifier)'
         required: false
@@ -49,6 +56,11 @@ jobs:
 
           if not slug:
               print("ERROR: slug requis"); sys.exit(1)
+
+          if slug == "(aucune chaine a completer)":
+              print("Placeholder recu: aucune chaine n'a de plateforme manquante.")
+              print("Toutes les chaines ont deja spotify/apple/deezer. Rien a faire.")
+              sys.exit(0)
 
           channels_path = Path("channels.json")
           channels = json.loads(channels_path.read_text(encoding="utf-8-sig"))
