@@ -1,0 +1,115 @@
+name: Update Channel Platforms
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: 'Slug EXACT de la chaine existante (tel quel dans channels.json, casse comprise)'
+        required: true
+      spotify:
+        description: 'URL Spotify (optionnel — laisser vide pour ne pas modifier)'
+        required: false
+      apple:
+        description: 'URL Apple Podcasts (optionnel — laisser vide pour ne pas modifier)'
+        required: false
+      deezer:
+        description: 'URL Deezer (optionnel — laisser vide pour ne pas modifier)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Update channel platforms in channels.json
+        env:
+          IN_SLUG: ${{ github.event.inputs.slug }}
+          IN_SPOTIFY: ${{ github.event.inputs.spotify }}
+          IN_APPLE: ${{ github.event.inputs.apple }}
+          IN_DEEZER: ${{ github.event.inputs.deezer }}
+        run: |
+          python - <<'PYEOF'
+          import json, os, sys
+          from pathlib import Path
+
+          slug    = os.environ.get("IN_SLUG", "").strip()
+          spotify = os.environ.get("IN_SPOTIFY", "").strip()
+          apple   = os.environ.get("IN_APPLE", "").strip()
+          deezer  = os.environ.get("IN_DEEZER", "").strip()
+
+          if not slug:
+              print("ERROR: slug requis"); sys.exit(1)
+
+          channels_path = Path("channels.json")
+          channels = json.loads(channels_path.read_text(encoding="utf-8-sig"))
+
+          channel = next((ch for ch in channels if ch.get("slug") == slug), None)
+          if channel is None:
+              print(f"ERROR: slug introuvable: {slug}")
+              all_slugs = [ch.get("slug", "") for ch in channels]
+              close = [s for s in all_slugs if s and (slug.lower() in s.lower() or s.lower() in slug.lower())]
+              if close:
+                  print("Slugs proches:", ", ".join(close))
+              print("Tous les slugs:", ", ".join(all_slugs))
+              sys.exit(1)
+
+          provided = {"spotify": spotify, "apple": apple, "deezer": deezer}
+          existing = channel.get("platforms", {})
+
+          # Recompose platforms in canonical order spotify/apple/deezer/rss,
+          # reusing existing values for platforms not provided (non-empty input).
+          new_platforms = {}
+          for key in ("spotify", "apple", "deezer"):
+              val = provided[key]
+              if val:  # provided and non-empty → update
+                  new_platforms[key] = val
+              elif key in existing:  # keep existing value untouched
+                  new_platforms[key] = existing[key]
+
+          # Preserve rss and any other extra keys, rss right after the trio.
+          if "rss" in existing:
+              new_platforms["rss"] = existing["rss"]
+          for key, val in existing.items():
+              if key not in new_platforms:
+                  new_platforms[key] = val
+
+          channel["platforms"] = new_platforms
+
+          channels_path.write_text(
+              json.dumps(channels, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8"
+          )
+          print(f"Updated channel '{slug}':")
+          print(json.dumps(channel, ensure_ascii=False, indent=2))
+          PYEOF
+
+      - name: Commit and push (with rebase-retry)
+        run: |
+          git config --global user.name  "Podcast Bot"
+          git config --global user.email "action@github.com"
+          git add channels.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: update platforms ${{ github.event.inputs.slug }} [skip ci]"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push; then
+              echo "Pushed on attempt $i."
+              exit 0
+            fi
+            echo "Push attempt $i failed, retrying..."
+            sleep 3
+          done
+          echo "ERROR: push failed after 5 attempts"
+          exit 1
