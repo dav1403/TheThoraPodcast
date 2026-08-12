@@ -296,6 +296,57 @@ def fetch_video_metadata(video_ids: list[str]) -> list[dict]:
         ordered.append(video)
     return ordered
 
+def fetch_video_status(video_id: str) -> tuple[str, dict | None]:
+    """Classify a single video for the backfill pipeline, distinguishing the
+    three cases that fetch_video_metadata() collapses into None.
+
+    Returns:
+      ("ok", video_dict)  → normal, downloadable video (same shape as fetch_video_metadata).
+      ("premiere", None)  → live/upcoming (Premiere): not yet downloadable, retry later.
+      ("absent", None)    → video absent from the API response (deleted/private/unlisted).
+
+    Raises Exception on a transient API error so the caller can re-queue and
+    retry rather than burning the ID into processed.json.
+    """
+    r = requests.get(
+        "https://www.googleapis.com/youtube/v3/videos",
+        params={
+            "key": API_KEY,
+            "id": video_id,
+            "part": "snippet,contentDetails",
+            "maxResults": 1,
+        },
+        timeout=20,
+    )
+    data = r.json()
+    if "error" in data:
+        # Transient / quota / auth error — signal the caller to retry.
+        raise Exception(f"YouTube API error: {data['error']['message']}")
+
+    items = data.get("items", [])
+    if not items:
+        return ("absent", None)
+
+    item = items[0]
+    snippet = item.get("snippet", {})
+    thumbs = snippet.get("thumbnails", {})
+    vid_id = item.get("id") or video_id
+    live_status = snippet.get("liveBroadcastContent", "none")
+    if live_status in ("live", "upcoming"):
+        return ("premiere", None)
+
+    video = {
+        "id":          vid_id,
+        "title":       html.unescape(snippet.get("title", "")),
+        "description": html.unescape(snippet.get("description", "")),
+        "published":   snippet.get("publishedAt", ""),
+        "thumbnail":   _best_thumbnail_url(thumbs),
+        "url":         f"https://www.youtube.com/watch?v={vid_id}",
+        "duration":    _parse_iso8601_duration((item.get("contentDetails") or {}).get("duration", "")),
+        "live_status": live_status,
+    }
+    return ("ok", video)
+
 def get_channel_info(channel_id: str) -> dict:
     """
     Fetch the YouTube channel's name, description, and best available thumbnail.

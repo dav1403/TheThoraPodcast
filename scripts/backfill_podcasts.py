@@ -9,7 +9,7 @@ from process_podcasts import (
     get_channel_info, upload_audio_to_r2, asset_exists_in_r2,
     download_audio, channel_intro_trim_sec, build_rss_feed, load_feed_entries, save_feed_entries,
     load_processed, save_processed, FEEDS_DIR, AUDIO_DIR, API_KEY, GITHUB_REPO,
-    discover_channel_tab_ids, fetch_video_metadata,
+    discover_channel_tab_ids, fetch_video_metadata, fetch_video_status,
 )
 
 BACKFILL_STATE_FILE = Path("backfill_state.json")
@@ -34,12 +34,19 @@ def discover_missing_videos(channel_id, already_done):
     print("    " + str(len(all_ids)) + " total on channel, " + str(len(missing)) + " not yet in feed.")
     return missing, len(all_ids)
 
+# Number of independent scan passes a video must be missing from the YouTube
+# API before we treat it as permanently gone and burn it into processed.json.
+ABSENT_CONFIRM_THRESHOLD = 2
+
 def get_video_info(video_id):
-    try:
-        videos = fetch_video_metadata([video_id])
-        return videos[0] if videos else None
-    except Exception:
-        return None
+    """Classify a video, distinguishing transient/premiere from confirmed-absent.
+
+    Returns a (status, video) tuple:
+      ("ok", dict) | ("premiere", None) | ("absent", None).
+    Raises on a transient API error so the caller can re-queue instead of
+    burning the ID.
+    """
+    return fetch_video_status(video_id)
 
 def backfill_channel(channel_cfg, processed, state):
     slug = channel_cfg["slug"]
@@ -96,12 +103,46 @@ def backfill_channel(channel_cfg, processed, state):
     video_id = todo[0]
     ch_state["todo"] = todo[1:]
     save_backfill_state(state)
-    video = get_video_info(video_id)
-    if not video:
-        print("  [" + slug + "] Video " + video_id + " unavailable (private/deleted).")
-        processed.setdefault(slug, []).append(video_id)
-        save_processed(processed)
-        return 0
+
+    try:
+        status, video = get_video_info(video_id)
+    except Exception as e:
+        # Transient API error (quota/auth/network) — do NOT burn the ID.
+        # Re-queue at the end of todo and retry on a later pass, like download-fail.
+        print("  [" + slug + "] Metadata fetch failed for " + video_id + ": " + str(e) + " (will retry).")
+        ch_state["todo"] = ch_state.get("todo", []) + [video_id]
+        save_backfill_state(state)
+        return 1
+
+    if status == "premiere":
+        # Live/upcoming Premiere — not yet downloadable. Re-queue, never burn.
+        print("  [" + slug + "] Video " + video_id + " is live/upcoming (premiere) - deferring.")
+        ch_state["todo"] = ch_state.get("todo", []) + [video_id]
+        save_backfill_state(state)
+        return 1
+
+    if status == "absent":
+        # Absent from the API response. Could still be a transient blip, so only
+        # confirm as permanently gone after ABSENT_CONFIRM_THRESHOLD passes.
+        misses = ch_state.setdefault("miss_counts", {})
+        misses[video_id] = misses.get(video_id, 0) + 1
+        if misses[video_id] >= ABSENT_CONFIRM_THRESHOLD:
+            print("  [" + slug + "] Video " + video_id + " confirmed unavailable (private/deleted) after "
+                  + str(misses[video_id]) + " misses.")
+            misses.pop(video_id, None)
+            save_backfill_state(state)
+            processed.setdefault(slug, []).append(video_id)
+            save_processed(processed)
+            return 0
+        # First miss — re-queue for a confirmation pass rather than burning it.
+        print("  [" + slug + "] Video " + video_id + " missing from API (miss "
+              + str(misses[video_id]) + "/" + str(ABSENT_CONFIRM_THRESHOLD) + ") - will re-check.")
+        ch_state["todo"] = ch_state.get("todo", []) + [video_id]
+        save_backfill_state(state)
+        return 1
+
+    # status == "ok": clear any stale miss counter and proceed to download.
+    ch_state.get("miss_counts", {}).pop(video_id, None)
     print("  [" + slug + "] Backfilling: " + video["title"] + " (" + video["published"][:10] + ")")
     channel_info = get_channel_info(channel_id)
     safe_title = "".join(c if c.isalnum() or c in "-_" else "_" for c in video["title"])
