@@ -118,8 +118,10 @@ Soyez un des partenair">
     .nav-submenu a { color: rgba(255,255,255,.78); text-decoration: none; padding: 6px 12px; border-radius: 20px; font-size: .78rem; white-space: nowrap; border: 1px solid rgba(255,255,255,.15); transition: background .12s, color .12s; }
     .nav-submenu a:hover { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
     .nav-submenu .nav-submenu-all { color: rgba(255,255,255,.5); border-style: dashed; font-size: .74rem; margin-top: 4px; width: 100%; text-align: center; }
-    .lang-btn { color: rgba(255,255,255,.65); font-size: .8rem; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
-    .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+        .lang-switch { display: inline-flex; gap: 2px; margin: 6px auto 14px; padding: 2px; border: 1px solid rgba(255,255,255,.2); border-radius: 20px; background: rgba(255,255,255,.05); }
+    .lang-opt { color: rgba(255,255,255,.6); font-size: .75rem; font-weight: 600; padding: 4px 11px; border-radius: 16px; border: none; background: none; cursor: pointer; font-family: inherit; letter-spacing: .02em; transition: background .15s, color .15s; }
+    .lang-opt:hover { color: #fff; }
+    .lang-opt.active { background: #e87722; color: #fff; }
     main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
     .ch-card { background: #fff; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,.08); display: flex; align-items: flex-start; gap: 20px; padding: 20px 24px; margin-bottom: 28px; }
     .ch-art { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #e0e0e0; }
@@ -289,8 +291,12 @@ Soyez un des partenair">
     <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
     <a href="../mes-favoris.html" data-i18n="nav_favorites">Mes favoris</a>
-    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
+  <div class="lang-switch" role="group" aria-label="Language">
+    <button type="button" class="lang-opt" data-lang="fr" onclick="setLang('fr')">FR</button>
+    <button type="button" class="lang-opt" data-lang="en" onclick="setLang('en')">EN</button>
+    <button type="button" class="lang-opt" data-lang="he" onclick="setLang('he')">עב</button>
+  </div>
 </header>
 <main>
   <p class="breadcrumb"><a href="../">Accueil</a> › <a href="../rav-shimshone-attali.html">Rav Shimshone Attali</a> › HIZOOK 76 - Pourim</p>
@@ -348,15 +354,12 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
   let lang = localStorage.getItem('lang') || 'fr';
   function t(k) { const d = I18N[lang] || {}; return d[k] || I18N.fr[k] || k; }
   function applyLang() {
+    document.querySelectorAll('.lang-opt').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === lang); });
     document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   }
-  function toggleLang() {
-    var order = ['fr', 'en', 'he'];
-    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
-    location.reload();
-  }
+  function setLang(l) { if (l === lang) return; localStorage.setItem('lang', l); location.reload(); }
   applyLang();
   document.addEventListener('click', e => {
     if (e.target.closest('.nav-submenu')) return;

@@ -112,8 +112,10 @@ Rejoignez-nous sur notre groupe facebook :  htt">
     .nav-submenu a { color: rgba(255,255,255,.78); text-decoration: none; padding: 6px 12px; border-radius: 20px; font-size: .78rem; white-space: nowrap; border: 1px solid rgba(255,255,255,.15); transition: background .12s, color .12s; }
     .nav-submenu a:hover { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
     .nav-submenu .nav-submenu-all { color: rgba(255,255,255,.5); border-style: dashed; font-size: .74rem; margin-top: 4px; width: 100%; text-align: center; }
-    .lang-btn { color: rgba(255,255,255,.65); font-size: .8rem; padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,.2); background: none; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
-    .lang-btn:hover { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.5); }
+        .lang-switch { display: inline-flex; gap: 2px; margin: 6px auto 14px; padding: 2px; border: 1px solid rgba(255,255,255,.2); border-radius: 20px; background: rgba(255,255,255,.05); }
+    .lang-opt { color: rgba(255,255,255,.6); font-size: .75rem; font-weight: 600; padding: 4px 11px; border-radius: 16px; border: none; background: none; cursor: pointer; font-family: inherit; letter-spacing: .02em; transition: background .15s, color .15s; }
+    .lang-opt:hover { color: #fff; }
+    .lang-opt.active { background: #e87722; color: #fff; }
     main { max-width: 860px; margin: 0 auto; padding: 24px 16px 40px; }
     .ch-card { background: #fff; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,.08); display: flex; align-items: flex-start; gap: 20px; padding: 20px 24px; margin-bottom: 28px; }
     .ch-art { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #e0e0e0; }
@@ -283,8 +285,12 @@ Rejoignez-nous sur notre groupe facebook :  htt">
     <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
     <a href="../mes-favoris.html" data-i18n="nav_favorites">Mes favoris</a>
-    <button class="lang-btn" onclick="toggleLang()" data-i18n="lang_toggle">עברית</button>
   </nav>
+  <div class="lang-switch" role="group" aria-label="Language">
+    <button type="button" class="lang-opt" data-lang="fr" onclick="setLang('fr')">FR</button>
+    <button type="button" class="lang-opt" data-lang="en" onclick="setLang('en')">EN</button>
+    <button type="button" class="lang-opt" data-lang="he" onclick="setLang('he')">עב</button>
+  </div>
 </header>
 <main>
   <p class="breadcrumb"><a href="../">Accueil</a> › <a href="../rav-chemouny-benyamin.html">Rav Chemouny Benyamin</a> › Daf Hayomi Chabat Page 144</p>
@@ -304,7 +310,7 @@ Rejoignez-nous sur notre groupe facebook :  htt">
     <div id="ep-share" data-epfile="Rav-Chemouny-Benyamin/daf-hayomi-chabat-page-144-2020-07-28.html" data-title="Daf Hayomi Chabat Page 144"
          data-vid="97647wb8Sy4" data-ch="Rav Chemouny Benyamin" data-thumb="https://i.ytimg.com/vi/97647wb8Sy4/hqdefault.jpg" data-date="2020-07-28"
          style="margin-top:10px"></div>
-    
+    <div class="platform-links" style="margin-top:12px"><a class="platform-btn btn-spotify" href="https://open.spotify.com/show/034645aGfaNMGkq8EXnsDG" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>Spotify</a><a class="platform-btn btn-apple" href="https://podcasts.apple.com/us/podcast/centre-rachi-israel/id6800893745" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.3a7.7 7.7 0 0 1 5.44 13.14c-.37.37-.79.69-1.25.94-.1-.76-.28-1.63-.58-2.35.52-.48.87-1.15.87-1.9 0-1.43-1.16-2.59-2.59-2.59s-2.59 1.16-2.59 2.59c0 .75.32 1.42.83 1.9-.3.72-.48 1.59-.58 2.35a7.68 7.68 0 0 1-1.25-.94A7.7 7.7 0 0 1 12 4.3zm0 2.1a5.6 5.6 0 0 0-3.96 9.56c.18-.83.46-1.74.9-2.45a4.15 4.15 0 0 1-.54-2.03A3.6 3.6 0 0 1 12 7.9a3.6 3.6 0 0 1 3.6 3.58 4.15 4.15 0 0 1-.54 2.03c.44.71.72 1.62.9 2.45A5.6 5.6 0 0 0 12 6.4zm0 3.1a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 5.6c1.05 0 1.82.28 2.3.55-.26 1.18-.38 2.28-.32 3.03a7.65 7.65 0 0 1-1.98.26 7.65 7.65 0 0 1-1.98-.26c.06-.75-.06-1.85-.32-3.03.48-.27 1.25-.55 2.3-.55z"/></svg>Apple Podcasts</a><a class="platform-btn btn-deezer" href="https://deezer.com/show/1003470112" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.944 17.369h4.512v1.601h-4.512zm0-3.075h4.512v1.6h-4.512zm0-3.074h4.512v1.601h-4.512zm-5.944 6.15h4.512v1.6H13zm0-3.075h4.512v1.6H13zm0-3.074h4.512v1.601H13zm-5.944 6.149h4.512v1.6H7.056zm0-3.075h4.512v1.6H7.056zM1.112 17.37h4.512v1.6H1.112z"/></svg>Deezer</a></div>
     <p style="font-size:.9rem;color:#444;line-height:1.7;white-space:pre-line;margin-top:16px">Abonnez-vous à la chaîne YouTube du Centre Rachi pour rester informé des derniers contenus originaux. 
 
 
@@ -345,15 +351,12 @@ http://www.centrerachi.com/index.php/dons/</p>
   let lang = localStorage.getItem('lang') || 'fr';
   function t(k) { const d = I18N[lang] || {}; return d[k] || I18N.fr[k] || k; }
   function applyLang() {
+    document.querySelectorAll('.lang-opt').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === lang); });
     document.documentElement.lang = lang;
     document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr';
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   }
-  function toggleLang() {
-    var order = ['fr', 'en', 'he'];
-    localStorage.setItem('lang', order[(order.indexOf(lang) + 1) % order.length]);
-    location.reload();
-  }
+  function setLang(l) { if (l === lang) return; localStorage.setItem('lang', l); location.reload(); }
   applyLang();
   document.addEventListener('click', e => {
     if (e.target.closest('.nav-submenu')) return;
