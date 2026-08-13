@@ -46,6 +46,11 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
+        with:
+          # Full history: the commit step rebases onto main to survive a race with
+          # the hourly pipeline, and rebasing on a depth-1 shallow clone is unsafe.
+          fetch-depth: 0
+          ref: main
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
@@ -181,4 +186,20 @@ jobs:
           git config --global user.email "action@github.com"
           git add channels.json
           git commit -m "feat: add channel ${{ github.event.inputs.slug }} [skip ci]"
-          git push
+          # Rebase-then-push with retry: the hourly "Update Podcast Feeds" pipeline
+          # pushes to main constantly, so a naive push here loses the race and the
+          # new channel is silently never added. Same pattern as
+          # repair_missing_audio.yml's commit step.
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase --autostash origin main || true
+            if git push; then
+              echo "Pushed on attempt $attempt."
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "::error::git push failed after 5 rebase attempts."
+              exit 1
+            fi
+            echo "Push rejected (attempt $attempt) — someone pushed first; rebasing and retrying."
+            sleep $((attempt * 5))
+          done
