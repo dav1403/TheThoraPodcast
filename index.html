@@ -459,6 +459,18 @@
     .search-result-meta { font-size: .78rem; color: #888; }
     .search-more { text-align: center; color: #aaa; font-size: .8rem; padding: 14px 20px 4px; }
 
+    /* Full-text search INSIDE the classes (transcripts) */
+    #fts-results { margin-top: 26px; }
+    .fts-sub { font-size: .78rem; color: #999; margin: -6px 0 10px; }
+    .fts-result { align-items: stretch; }
+    .fts-snippet {
+      font-size: .82rem; color: #555; line-height: 1.45; margin-top: 4px;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .fts-snippet mark { background: #ffe9d2; color: #b4530a; padding: 0 1px; border-radius: 2px; }
+    .fts-state { color: #aaa; font-size: .82rem; padding: 6px 2px; }
+
     /* Persistent player */
     #player {
       position: fixed;
@@ -617,6 +629,10 @@
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       no_results:'Aucun épisode trouvé.', no_episodes:'Aucun épisode disponible.', no_channels:'Aucune chaîne disponible.',
       copied:'Lien copié !',
+      fts_section:'Dans le contenu des cours',
+      fts_sub:'Résultats trouvés dans la transcription automatique des cours.',
+      fts_searching:'Recherche dans les cours…',
+      fts_none:'Aucun passage trouvé dans les cours.',
       banner_text:'Pas de musique pendant les Trois Semaines&nbsp;? Écoutez de la Torah à la place — <a href="bein-hametsarim.html">sur vos plateformes habituelles →</a>',
     },
     en: {
@@ -629,6 +645,10 @@
       listen:'Listen', playing:'Playing…', loading:'Loading…',
       no_results:'No episodes found.', no_episodes:'No episodes available.', no_channels:'No channels available.',
       copied:'Link copied!',
+      fts_section:'Inside the classes',
+      fts_sub:'Matches found in the automatic transcript of the classes.',
+      fts_searching:'Searching inside the classes…',
+      fts_none:'No passage found inside the classes.',
       banner_text:'No music during the Three Weeks? Listen to Torah instead — <a href="bein-hametsarim.html">on your usual platforms →</a>',
     },
     he: {
@@ -641,6 +661,10 @@
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       no_results:'לא נמצאו פרקים.', no_episodes:'אין פרקים זמינים.', no_channels:'אין ערוצים זמינים.',
       copied:'הקישור הועתק!',
+      fts_section:'בתוך תוכן השיעורים',
+      fts_sub:'תוצאות שנמצאו בתמלול האוטומטי של השיעורים.',
+      fts_searching:'מחפש בתוך השיעורים…',
+      fts_none:'לא נמצא קטע בתוך השיעורים.',
       banner_text:'אין מוזיקה בשלושת השבועות? תשמעו תורה במקום — <a href="bein-hametsarim.html">באותן פלטפורמות שאתם רגילים אליהן →</a>',
     },
   };
@@ -948,12 +972,219 @@
     return searchLoading;
   }
 
+  // ─── Full-text search INSIDE the classes (transcripts) ─────────────────────
+  // The title/rav search above reads search-index.json. This block searches the
+  // ~16 000 auto-transcripts, which total ~500 MB and can obviously never be
+  // shipped to the browser. scripts/build_transcript_index.py pre-computes a
+  // SHARDED inverted index in CI (search-fts/); a query downloads only:
+  //   1 manifest.json (~4 KB) + one terms/t_<prefix>.json per query term
+  //   (~1-200 KB) + one docs/<n>.json per shard actually hit (~200 KB).
+  // Snippets are not stored in the index — the raw transcript of a displayed
+  // result is fetched on demand (feeds/transcripts/<video_id>.txt) so the
+  // excerpt shown is the real text around the match.
+  // The tokeniser below MUST mirror normalise()/count_tokens() in the builder,
+  // otherwise a typed word would not hash to the shard it was indexed into.
+  const FTS_DIR = 'search-fts';
+  const FTS_MAX_RESULTS = 12;       // rendered results
+  const FTS_MAX_SNIPPETS = 8;       // transcripts fetched for an excerpt
+  const FTS_PREFIX_EXPAND = 20;     // keys merged for an unfinished last word
+  let ftsManifest = null, ftsManifestLoading = null;
+  const ftsShardCache = new Map();  // shard name -> Promise<object>
+  const ftsDocCache   = new Map();  // shard number -> Promise<array>
+  let ftsRunId = 0;                 // guards against out-of-order responses
+
+  function ftsLoadManifest() {
+    if (ftsManifest) return Promise.resolve(ftsManifest);
+    if (ftsManifestLoading) return ftsManifestLoading;
+    ftsManifestLoading = fetch(FTS_DIR + '/manifest.json')
+      .then(r => (r.ok ? r.json() : null))
+      .then(m => {
+        if (m) { m.stopSet = new Set(m.stopwords || []); ftsManifest = m; }
+        return ftsManifest;
+      })
+      .catch(() => null);
+    return ftsManifestLoading;
+  }
+
+  // Length-preserving fold: one input char -> one output char, so an offset in
+  // the folded string is also a valid offset in the raw transcript (needed to
+  // slice a snippet out of the original text).
+  function ftsFoldChar(c) {
+    const cp = c.charCodeAt(0);
+    if (cp >= 0x0591 && cp <= 0x05C7) return ' ';
+    if (cp === 0x05F3 || cp === 0x05F4) return ' ';
+    return c.toLowerCase().normalize('NFD')[0];
+  }
+  function ftsFold(s) {
+    let out = '';
+    for (let i = 0; i < s.length; i++) out += ftsFoldChar(s[i]);
+    return out;
+  }
+
+  const FTS_TOKEN_RE = /[a-z]+|[א-ת]+/g;
+  function ftsTokens(q) {
+    const m = ftsManifest;
+    const stop = (m && m.stopSet) || new Set();
+    const minLat = (m && m.min_len_latin) || 3;
+    const minHeb = (m && m.min_len_hebrew) || 2;
+    return (ftsFold(q).match(FTS_TOKEN_RE) || []).filter(tok => {
+      const min = tok.charCodeAt(0) >= 0x05d0 ? minHeb : minLat;
+      return tok.length >= min && !stop.has(tok);
+    });
+  }
+
+  // Mirrors shard_key() in the builder: first prefix_len chars, non-ASCII
+  // escaped as x%04x so hebrew prefixes stay filesystem-safe.
+  function ftsShardName(term) {
+    const n = (ftsManifest && ftsManifest.prefix_len) || 3;
+    let out = '';
+    for (const c of term.slice(0, n)) {
+      out += (c.charCodeAt(0) < 128) ? c
+           : 'x' + c.charCodeAt(0).toString(16).padStart(4, '0');
+    }
+    return out;
+  }
+
+  function ftsLoadShard(name) {
+    if (!ftsShardCache.has(name)) {
+      ftsShardCache.set(name, fetch(FTS_DIR + '/terms/t_' + name + '.json')
+        .then(r => (r.ok ? r.json() : {}))
+        .catch(() => ({})));
+    }
+    return ftsShardCache.get(name);
+  }
+
+  function ftsLoadDocShard(n) {
+    if (!ftsDocCache.has(n)) {
+      ftsDocCache.set(n, fetch(FTS_DIR + '/docs/' + n + '.json')
+        .then(r => (r.ok ? r.json() : []))
+        .catch(() => []));
+    }
+    return ftsDocCache.get(n);
+  }
+
+  // Scores documents: a doc matching more query terms always outranks one
+  // matching fewer (soft AND — a strict AND would too often return nothing,
+  // since a posting list only keeps the top `max_postings` classes per term),
+  // then by summed term frequency (the builder already folded the title bonus
+  // into those frequencies).
+  async function ftsScore(tokens) {
+    const agg = new Map();
+    for (let i = 0; i < tokens.length; i++) {
+      const term = tokens[i];
+      const shard = await ftsLoadShard(ftsShardName(term));
+      const lists = [];
+      if (shard[term]) {
+        lists.push(shard[term]);
+      } else if (i === tokens.length - 1 && term.length >= 3) {
+        // Last word may still be half-typed: fall back to a prefix match.
+        for (const k of Object.keys(shard)) {
+          if (k.indexOf(term) === 0) {
+            lists.push(shard[k]);
+            if (lists.length >= FTS_PREFIX_EXPAND) break;
+          }
+        }
+      }
+      if (!lists.length) continue;
+      const seen = new Set();
+      for (const list of lists) {
+        for (let j = 0; j < list.length; j += 2) {
+          const id = list[j], tf = list[j + 1];
+          const cur = agg.get(id) || { n: 0, score: 0 };
+          if (!seen.has(id)) { cur.n += 1; seen.add(id); }
+          cur.score += tf;
+          agg.set(id, cur);
+        }
+      }
+    }
+    return [...agg.entries()]
+      .map(([id, v]) => ({ id: id, n: v.n, score: v.score }))
+      .sort((a, b) => (b.n - a.n) || (b.score - a.score));
+  }
+
+  async function ftsResolveDocs(hits) {
+    const size = (ftsManifest && ftsManifest.doc_shard_size) || 1000;
+    const needed = [...new Set(hits.map(h => Math.floor(h.id / size)))];
+    const shards = {};
+    await Promise.all(needed.map(async n => { shards[n] = await ftsLoadDocShard(n); }));
+    return hits.map(h => {
+      const row = (shards[Math.floor(h.id / size)] || [])[h.id % size];
+      return row ? { v: row[0], t: row[1], c: row[2], u: row[3], d: row[4] } : null;
+    }).filter(Boolean);
+  }
+
+  // Pulls the real sentence around the first match out of the transcript.
+  async function ftsSnippet(videoId, tokens) {
+    const res = await fetch('feeds/transcripts/' + encodeURIComponent(videoId) + '.txt');
+    if (!res.ok) return null;
+    const raw = await res.text();
+    const folded = ftsFold(raw);
+    let at = -1, hit = '';
+    for (const tok of tokens) {
+      const i = folded.indexOf(tok);
+      if (i >= 0 && (at < 0 || i < at)) { at = i; hit = tok; }
+    }
+    if (at < 0) return null;
+    let start = Math.max(0, at - 90);
+    const end = Math.min(raw.length, at + hit.length + 130);
+    if (start > 0) { const sp = raw.indexOf(' ', start); if (sp > 0 && sp < at) start = sp + 1; }
+    const before = raw.slice(start, at),
+          match  = raw.slice(at, at + hit.length),
+          after  = raw.slice(at + hit.length, end);
+    return (start > 0 ? '… ' : '') + escapeHtml(before)
+         + '<mark>' + escapeHtml(match) + '</mark>'
+         + escapeHtml(after) + (end < raw.length ? ' …' : '');
+  }
+
+  async function runFts(query, container) {
+    const runId = ++ftsRunId;
+    if (!query || query.trim().length < 3) { container.hidden = true; container.innerHTML = ''; return; }
+    await ftsLoadManifest();
+    if (runId !== ftsRunId) return;
+    if (!ftsManifest) { container.hidden = true; return; }   // index not deployed yet
+
+    const tokens = ftsTokens(query);
+    if (!tokens.length) { container.hidden = true; container.innerHTML = ''; return; }
+
+    const head = '<div class="section-label">' + escapeHtml(t('fts_section')) + '</div>'
+               + '<div class="fts-sub">' + escapeHtml(t('fts_sub')) + '</div>';
+    container.hidden = false;
+    container.innerHTML = head + '<div class="fts-state">' + escapeHtml(t('fts_searching')) + '</div>';
+
+    const hits = (await ftsScore(tokens)).slice(0, FTS_MAX_RESULTS);
+    if (runId !== ftsRunId) return;
+    const docs = await ftsResolveDocs(hits);
+    if (runId !== ftsRunId) return;
+
+    if (!docs.length) {
+      container.innerHTML = head + '<div class="fts-state">' + escapeHtml(t('fts_none')) + '</div>';
+      return;
+    }
+    container.innerHTML = head + '<div class="search-results-list">' + docs.map((d, i) =>
+        '<a class="search-result fts-result" href="' + escapeHtml(d.u) + '">'
+      +   '<span class="search-result-title">' + escapeHtml(d.t) + '</span>'
+      +   '<span class="search-result-meta">' + escapeHtml(d.c)
+      +     (d.d ? ' · ' + formatDate(d.d) : '') + '</span>'
+      +   '<span class="fts-snippet" id="fts-snip-' + runId + '-' + i + '"></span>'
+      + '</a>').join('') + '</div>';
+
+    // Snippets stream in after the list is on screen: each one costs a
+    // transcript fetch (~30 KB), so only the first few results get one.
+    docs.slice(0, FTS_MAX_SNIPPETS).forEach(async (d, i) => {
+      const html = await ftsSnippet(d.v, tokens).catch(() => null);
+      if (runId !== ftsRunId || !html) return;
+      const el = document.getElementById('fts-snip-' + runId + '-' + i);
+      if (el) el.innerHTML = html;
+    });
+  }
+
   function setupSearch() {
     const input    = document.getElementById('search');
     const hero     = document.getElementById('hero-section');
     const recents  = document.getElementById('recents-section');
     const bubbles  = document.querySelector('.rabbi-bubbles-section');
     const results  = document.getElementById('search-results');
+    const ftsBox   = document.getElementById('fts-results');
     const noRes    = document.getElementById('no-results');
 
     const spotlight = document.getElementById('spotlight-section');
@@ -988,6 +1219,8 @@
       results.innerHTML = `<div class="section-label">${lang === 'he' ? 'תוצאות' : (lang === 'en' ? 'Results' : 'Résultats')}</div>`
         + `<div class="search-results-list">${cards}</div>${moreNote}`;
       results.hidden = false;
+      // The transcript section below may still be searching; hiding the global
+      // "no episode found" line as soon as a title matched is enough here.
       if (noRes) noRes.hidden = total > 0;
     }
 
@@ -998,9 +1231,13 @@
         results.hidden = true;
         results.innerHTML = '';
         if (noRes) noRes.hidden = true;
+        if (ftsBox) runFts('', ftsBox);
         showHome(true);
         return;
       }
+      // Transcript search runs in parallel with the title search: it hits
+      // different files and must never delay the (instant) title results.
+      if (ftsBox) runFts(q, ftsBox);
       showHome(false);
       if (!searchIndex) {
         // First query before the index arrived: show a brief loading note.
@@ -1117,6 +1354,12 @@
     searchResults.id = 'search-results';
     searchResults.hidden = true;
     app.appendChild(searchResults);
+
+    // Transcript ("inside the classes") results, populated lazily by runFts.
+    const ftsResults = document.createElement('div');
+    ftsResults.id = 'fts-results';
+    ftsResults.hidden = true;
+    app.appendChild(ftsResults);
 
     const noRes = document.createElement('div');
     noRes.id = 'no-results';
