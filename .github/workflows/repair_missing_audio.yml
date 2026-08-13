@@ -201,6 +201,10 @@ jobs:
           YOUTUBE_COOKIES_FILE: ${{ env.YOUTUBE_COOKIES_FILE }}
         run: python scripts/fetch_transcripts.py --budget 50
 
+      - name: Track ingestion volume (watchdog for "green but empty" runs)
+        id: ingest
+        run: python scripts/ci_ingest_watchdog.py
+
       - name: Generate per-channel HTML pages and update sitemap
         run: python scripts/generate_channel_pages.py
 
@@ -346,6 +350,50 @@ jobs:
             exit 1
           fi
           echo "Opened a new GitHub issue for the Anthropic credit error."
+
+      - name: Alert if ingestion has been stuck at zero
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ADDED: ${{ steps.ingest.outputs.added }}
+          PENDING: ${{ steps.ingest.outputs.pending }}
+          ZERO_STREAK: ${{ steps.ingest.outputs.zero_streak }}
+        run: |
+          # A run can be green and still download nothing (per-episode errors are
+          # caught; expired cookies give silent 403s). One zero run is normal, so we
+          # only alert after THRESHOLD consecutive zero runs *while work is pending*.
+          # The streak is computed and persisted by scripts/ci_ingest_watchdog.py in
+          # feeds/ingest_state.json (staged by the `git add feeds/` above).
+          THRESHOLD=3
+          TITLE="⚠️ Ingestion à zéro"
+          if [ -z "$ZERO_STREAK" ]; then
+            echo "Watchdog step did not run (earlier failure) — nothing to evaluate."
+            exit 0
+          fi
+          echo "added=$ADDED pending=$PENDING zero_streak=$ZERO_STREAK (threshold $THRESHOLD)"
+
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" \
+            --json number --jq '.[0].number // empty' 2>/dev/null) || EXISTING=""
+
+          if [ "$ZERO_STREAK" -lt "$THRESHOLD" ]; then
+            # Recovered: close a previously opened alert so it does not linger.
+            if [ "$ZERO_STREAK" -eq 0 ] && [ -n "$EXISTING" ]; then
+              gh issue close "$EXISTING" --comment "Auto-résolu : $ADDED épisode(s) ingéré(s) au run ${{ github.run_id }}." 2>/dev/null \
+                && echo "Closed stale ingestion issue #$EXISTING." \
+                || echo "Could not auto-close issue #$EXISTING (best-effort)."
+            fi
+            exit 0
+          fi
+
+          echo "::warning::No episode ingested for $ZERO_STREAK consecutive runs while $PENDING episode(s) are pending."
+          BODY=$(printf 'Le pipeline est vert mais **n'"'"'ingère plus rien** depuis **%s runs consécutifs**, alors que **%s épisode(s)** restent à récupérer.\n\nCauses probables : cookies YouTube expirés (403 silencieux), yt-dlp cassé, quota API, R2 injoignable.\n\nÀ vérifier : logs des steps « Run podcast update » / « Run backfill », secret `YOUTUBE_COOKIES_POOL`.\n\nRun : %s/%s/actions/runs/%s' \
+            "$ZERO_STREAK" "$PENDING" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY" && echo "Commented on existing issue #$EXISTING."
+          else
+            gh issue create --title "$TITLE" --body "$BODY" --label "bug" && echo "Opened ingestion-zero issue."
+          fi
 
       - name: Generate run summary
         if: always()
