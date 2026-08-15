@@ -175,7 +175,11 @@
     details.transcript summary::before { content:'▶'; font-size:.6rem; color:#999; transition:transform .2s; }
     details.transcript[open] summary::before { transform:rotate(90deg); }
     details.transcript summary:hover { background:#f5f5f0; }
-    .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }
+    .transcript-count { margin-inline-start:auto; font-weight:400; color:#999; font-size:.72rem; }
+    .transcript-note { margin:0; padding:10px 18px 0; font-size:.7rem; color:#999; font-style:italic; }
+    .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:460px; overflow-y:auto; }
+    .transcript-body p { margin:0 0 12px; }
+    .transcript-body p:last-child { margin-bottom:0; }
     .play-btn { display:inline-flex; align-items:center; gap:6px; background:#1a1a2e; color:#fff; border:none; border-radius:20px; padding:5px 13px; font-size:.76rem; cursor:pointer; transition:background .15s; font-family:inherit; }
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
@@ -237,7 +241,7 @@
       <a href="../avi-assouline.html">Avi Assouline (109)</a>
       <a href="../avraham-lemmel.html">Avraham Lemmel (26)</a>
       <a href="../beth-habad-tlv-nord.html">Beth Habad TLV Nord (845)</a>
-      <a href="../rav-avraham-ifrah.html">Breslev - Avraham Ifrah (7218)</a>
+      <a href="../rav-avraham-ifrah.html">Breslev - Avraham Ifrah (7228)</a>
       <a href="../joy-galam.html">Joy Galam (89)</a>
       <a href="../lev.html">Lev (1741)</a>
       <a href="../nahal-haim.html">Nahal Haim - נחל חיים (369)</a>
@@ -246,8 +250,8 @@
       <a href="../rav-barak-ben-nissan.html">Rav Barack Ben Nissan (356)</a>
       <a href="../rav-benizri.html">Rav Benizri (1628)</a>
       <a href="../rav-brand.html">Rav Brand (212)</a>
-      <a href="../rav-chemouny-benyamin.html">Rav Chemouny Benyamin (571)</a>
-      <a href="../rav-chlomo-valensi.html">Rav Chlomo Valensi - Ahavat HM (263)</a>
+      <a href="../rav-chemouny-benyamin.html">Rav Chemouny Benyamin (581)</a>
+      <a href="../rav-chlomo-valensi.html">Rav Chlomo Valensi - Ahavat HM (273)</a>
       <a href="../rav-dagani-cohen.html">Rav Dagani Cohen (123)</a>
       <a href="../eitan-galam.html">Rav Eitan Galam (148)</a>
       <a href="../rav-eliaou-hassan.html">Rav Eliaou Hassan (11)</a>
@@ -332,17 +336,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', transcript_label:'Transcription',
+      related:'Épisodes récents', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', transcript_label:'Transcript',
+      related:'Recent episodes', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', transcript_label:'תמליל',
+      related:'פרקים אחרונים', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
