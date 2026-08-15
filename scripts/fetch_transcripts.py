@@ -39,6 +39,9 @@ def vtt_to_text(vtt: str) -> str:
         line = line.strip()
         if not line or line.startswith("WEBVTT") or line.startswith("NOTE") or "-->" in line:
             continue
+        # Caption metadata header ("Kind: captions", "Language: fr") is not speech.
+        if re.match(r"^(Kind|Language):\s", line, re.IGNORECASE):
+            continue
         line = re.sub(r"<[^>]+>", "", line).strip()
         if line and line not in seen:
             seen.add(line)

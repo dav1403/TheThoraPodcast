@@ -115,6 +115,59 @@ def fmt_date(iso, lang):
         return iso[:10]
 
 
+# Auto-caption files start with a "Kind: captions Language: fr" metadata header
+# (kept by fetch_transcripts.py's VTT flattening). Same regex as
+# scripts/build_transcript_index.py so display, SEO and search agree.
+TRANSCRIPT_HEADER_RE = re.compile(
+    r"^\s*Kind:\s*captions\s+Language:\s*\S+\s*", re.IGNORECASE
+)
+
+
+def clean_transcript(text: str) -> str:
+    """Remove the caption metadata header and normalise whitespace."""
+    if not text:
+        return ""
+    return re.sub(r"\s+", " ", TRANSCRIPT_HEADER_RE.sub("", text)).strip()
+
+
+MAX_WORDS_PER_PARA = 90
+
+
+def _split_by_words(text: str, size: int = MAX_WORDS_PER_PARA) -> list[str]:
+    words = text.split()
+    return [" ".join(words[i:i + size]) for i in range(0, len(words), size)]
+
+
+def transcript_paragraphs(text: str, sentences_per_para: int = 4) -> list[str]:
+    """Split a flat auto-caption blob into readable paragraphs.
+
+    Auto-captions are often unpunctuated, so sentence grouping is only a first
+    pass: any chunk that stays too long is cut again on a word budget.
+    """
+    if not text:
+        return []
+    # Keep the punctuation with the sentence it closes.
+    parts = [p.strip() for p in re.split(r"(?<=[.!?…])\s+", text) if p.strip()]
+    if not parts:
+        parts = [text]
+    grouped = [
+        " ".join(parts[i:i + sentences_per_para])
+        for i in range(0, len(parts), sentences_per_para)
+    ]
+    out: list[str] = []
+    for chunk in grouped:
+        if len(chunk.split()) > MAX_WORDS_PER_PARA * 1.5:
+            out.extend(_split_by_words(chunk))
+        else:
+            out.append(chunk)
+    return out
+
+
+def render_transcript_html(text: str) -> str:
+    """Escaped <p> blocks for the transcript panel under the player."""
+    return "".join(f"<p>{esc(p)}</p>" for p in transcript_paragraphs(text))
+
+
 def fmt_dur(secs):
     if not secs or int(secs) <= 0:
         return ""
@@ -226,7 +279,11 @@ CSS = """\
     details.transcript summary::before { content:'▶'; font-size:.6rem; color:#999; transition:transform .2s; }
     details.transcript[open] summary::before { transform:rotate(90deg); }
     details.transcript summary:hover { background:#f5f5f0; }
-    .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:400px; overflow-y:auto; }
+    .transcript-count { margin-inline-start:auto; font-weight:400; color:#999; font-size:.72rem; }
+    .transcript-note { margin:0; padding:10px 18px 0; font-size:.7rem; color:#999; font-style:italic; }
+    .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:460px; overflow-y:auto; }
+    .transcript-body p { margin:0 0 12px; }
+    .transcript-body p:last-child { margin-bottom:0; }
     .play-btn { display:inline-flex; align-items:center; gap:6px; background:#1a1a2e; color:#fff; border:none; border-radius:20px; padding:5px 13px; font-size:.76rem; cursor:pointer; transition:background .15s; font-family:inherit; }
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
@@ -839,7 +896,10 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     submenu_links = render_nav_submenu("../")
 
     transcript_path = FEEDS_DIR / "transcripts" / f"{video_id}.txt"
-    transcript = transcript_path.read_text(encoding="utf-8").strip() if transcript_path.exists() else ""
+    transcript = (
+        clean_transcript(transcript_path.read_text(encoding="utf-8"))
+        if transcript_path.exists() else ""
+    )
 
     seo_desc_src = desc or transcript
     seo_desc = seo_desc_src[:155] if seo_desc_src else f"Écoutez {title} — cours de {name} sur The Torah Podcast."
@@ -856,6 +916,20 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         f' style="width:100%;max-width:480px;border-radius:10px;margin-bottom:16px;object-fit:cover">'
         if thumb else ""
     )
+    transcript_block = ""
+    if transcript:
+        transcript_words = len(transcript.split())
+        transcript_block = (
+            '<details class="transcript" id="transcript">'
+            '<summary><span data-i18n="transcript_label">Transcription</span>'
+            f'<span class="transcript-count">{transcript_words} '
+            '<span data-i18n="transcript_words">mots</span></span></summary>'
+            '<p class="transcript-note" data-i18n="transcript_auto">'
+            'Transcription automatique — peut contenir des erreurs.</p>'
+            f'<div class="transcript-body">{render_transcript_html(transcript)}</div>'
+            '</details>'
+        )
+
     desc_tag  = f'<p style="font-size:.9rem;color:#444;line-height:1.7;white-space:pre-line;margin-top:16px">{esc(desc)}</p>' if desc else ""
     breadcrumb_title = (title[:60] + "…") if len(title) > 60 else title
 
@@ -958,7 +1032,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
          style="margin-top:10px"></div>
     {ep_platform_html}
     {desc_tag}
-    {f'<details class="transcript"><summary data-i18n="transcript_label">Transcription</summary><div class="transcript-body">{esc(transcript)}</div></details>' if transcript else ''}
+    {transcript_block}
   </div>
   {f'<p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list">{related_html}</div>' if related_html else ''}
   <div class="toast" id="toast"></div>
@@ -969,17 +1043,17 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', transcript_label:'Transcription',
+      related:'Épisodes récents', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.',
     }},
     en: {{
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', transcript_label:'Transcript',
+      related:'Recent episodes', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', transcript_label:'תמליל',
+      related:'פרקים אחרונים', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.',
     }},
   }};
   let lang = localStorage.getItem('lang') || '{lang}';

@@ -1117,7 +1117,8 @@
   async function ftsSnippet(videoId, tokens) {
     const res = await fetch('feeds/transcripts/' + encodeURIComponent(videoId) + '.txt');
     if (!res.ok) return null;
-    const raw = await res.text();
+    // Strip the caption metadata header before folding so offsets stay aligned.
+    const raw = (await res.text()).replace(/^\s*Kind:\s*captions\s+Language:\s*\S+\s*/i, '');
     const folded = ftsFold(raw);
     let at = -1, hit = '';
     for (const tok of tokens) {
