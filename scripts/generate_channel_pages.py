@@ -168,6 +168,71 @@ def render_transcript_html(text: str) -> str:
     return "".join(f"<p>{esc(p)}</p>" for p in transcript_paragraphs(text))
 
 
+# --- SEO (chantier B): make the episode page carry real, crawlable text ------
+# The transcript panel added by chantier D lives in a collapsed <details>, which
+# search engines de-prioritise. We additionally surface a short readable extract
+# above the fold and derive the meta description from the transcript whenever
+# the YouTube description is promotional boilerplate (emoji/links/hashtags).
+
+EXTRACT_WORDS = 130          # visible lead extract under the player
+_EMOJI_RE = re.compile(
+    "[\U0001F000-\U0001FAFF\u2190-\u21FF\u2600-\u27BF\uFE00-\uFE0F]"
+)
+_URL_RE = re.compile(r"https?://\S+|www\.\S+")
+
+
+def desc_text_score(desc: str) -> int:
+    """Letters left in a YouTube description once links/emoji/hashtags are gone.
+
+    Many channels reuse the same promo block on every upload, which produces
+    thousands of identical meta descriptions. A low score means the description
+    carries no episode-specific text and the transcript is a better source.
+    """
+    if not desc:
+        return 0
+    stripped = _EMOJI_RE.sub(" ", _URL_RE.sub(" ", desc))
+    stripped = re.sub(r"[#@]\S+", " ", stripped)
+    return sum(1 for c in stripped if c.isalpha())
+
+
+def seo_snippet(text: str, limit: int = 155) -> str:
+    """Trim to `limit` chars on a word boundary (no mid-word cuts in SERPs)."""
+    text = re.sub(r"\s+", " ", (text or "")).strip()
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    if " " in cut:
+        cut = cut[:cut.rindex(" ")]
+    return cut.rstrip(" ,;:.-") + "…"
+
+
+def transcript_extract(text: str, max_words: int = EXTRACT_WORDS) -> str:
+    """First `max_words` words of the transcript, cut on a paragraph boundary."""
+    out, used = [], 0
+    for para in transcript_paragraphs(text):
+        n = len(para.split())
+        if out and used + n > max_words:
+            break
+        out.append(para)
+        used += n
+        if used >= max_words:
+            break
+    return " ".join(out)
+
+
+def iso_duration(secs) -> str:
+    """schema.org ISO-8601 duration, e.g. 3725 -> PT1H2M5S."""
+    try:
+        secs = int(secs or 0)
+    except (TypeError, ValueError):
+        return ""
+    if secs <= 0:
+        return ""
+    h, rem = divmod(secs, 3600)
+    m, sec = divmod(rem, 60)
+    return "PT" + (f"{h}H" if h else "") + (f"{m}M" if m else "") + (f"{sec}S" if sec else "")
+
+
 def fmt_dur(secs):
     if not secs or int(secs) <= 0:
         return ""
@@ -273,6 +338,12 @@ CSS = """\
     .site-footer a:hover { color: #fff; }
     .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
     .toast.show { opacity:1; }
+    .ep-extract { margin-top:20px; padding:16px 18px; background:#fbfaf7; border-inline-start:3px solid #e87722; border-radius:8px; }
+    .ep-extract h2 { font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:0 0 8px; }
+    .ep-extract p { margin:0; font-size:.88rem; color:#444; line-height:1.75; }
+    .ep-extract-more { margin-top:10px !important; font-size:.78rem !important; }
+    .ep-extract-more a { color:#e87722; text-decoration:none; font-weight:600; }
+    .ep-extract-more a:hover { text-decoration:underline; }
     details.transcript { margin-top:20px; border:1px solid #e8e8e8; border-radius:10px; overflow:hidden; }
     details.transcript summary { padding:10px 16px; font-size:.78rem; font-weight:600; color:#555; cursor:pointer; background:#fafafa; list-style:none; display:flex; align-items:center; gap:6px; }
     details.transcript summary::-webkit-details-marker { display:none; }
@@ -880,7 +951,10 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         schema["associatedMedia"] = {"@type": "MediaObject", "contentUrl": audio}
     if thumb:
         schema["image"] = thumb
-    schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
+    schema["inLanguage"] = lang
+    _dur_iso = iso_duration(ep.get("duration_secs"))
+    if _dur_iso:
+        schema["duration"] = _dur_iso
 
     breadcrumb_schema = {
         "@context": "https://schema.org",
@@ -901,8 +975,15 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         if transcript_path.exists() else ""
     )
 
-    seo_desc_src = desc or transcript
-    seo_desc = seo_desc_src[:155] if seo_desc_src else f"Écoutez {title} — cours de {name} sur The Torah Podcast."
+    # Prefer the YouTube description only when it actually says something about
+    # this episode; otherwise the transcript is the better (and unique) source.
+    extract = transcript_extract(transcript) if transcript else ""
+    seo_desc_src = desc if desc_text_score(desc) >= 120 else (transcript or desc)
+    seo_desc = (
+        seo_snippet(seo_desc_src)
+        if seo_desc_src
+        else f"Écoutez {title} — cours de {name} sur The Torah Podcast."
+    )
     og_locale = "he_IL" if lang == "he" else "fr_FR"
     og_locale_alt = "fr_FR" if lang == "he" else "he_IL"
     og_image = thumb if thumb else f"{BASE_URL}/artwork/{slug}.png"
@@ -916,6 +997,25 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         f' style="width:100%;max-width:480px;border-radius:10px;margin-bottom:16px;object-fit:cover">'
         if thumb else ""
     )
+    # Visible lead extract: real crawlable text above the collapsed panel.
+    extract_block = ""
+    if extract:
+        extract_block = (
+            '<section class="ep-extract">'
+            '<h2 data-i18n="extract_title">Extrait du cours</h2>'
+            f'<p>{esc(extract)}</p>'
+            '<p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">'
+            'Lire la transcription complète ↓</a></p>'
+            '</section>'
+        )
+
+    if transcript:
+        # Signals that this page holds a real, machine-readable text body.
+        schema["abstract"] = seo_snippet(transcript, 300)
+        schema["wordCount"] = len(transcript.split())
+        schema["description"] = seo_desc
+    schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
+
     transcript_block = ""
     if transcript:
         transcript_words = len(transcript.split())
@@ -1032,6 +1132,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
          style="margin-top:10px"></div>
     {ep_platform_html}
     {desc_tag}
+    {extract_block}
     {transcript_block}
   </div>
   {f'<p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list">{related_html}</div>' if related_html else ''}
@@ -1043,17 +1144,17 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.',
     }},
     en: {{
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.',
     }},
   }};
   let lang = localStorage.getItem('lang') || '{lang}';
@@ -1313,12 +1414,16 @@ def update_sitemap(slug_entries: list[tuple]):
         f"  </url>"
         for slug in slugs
     )
+    # Episodes backed by a transcript now carry real indexable text (chantier B),
+    # so they get a higher crawl priority than audio-only stubs.
+    tdir = FEEDS_DIR / "transcripts"
+    with_text = {f.stem for f in tdir.glob("*.txt")} if tdir.is_dir() else set()
     episode_entries = "\n".join(
         f"  <url>\n"
         f"    <loc>{BASE_URL}/{ep_path(slug, ep)}</loc>\n"
         f"    <lastmod>{ep['published'][:10]}</lastmod>\n"
-        f"    <changefreq>never</changefreq>\n"
-        f"    <priority>0.6</priority>\n"
+        f"    <changefreq>monthly</changefreq>\n"
+        f"    <priority>{'0.7' if ep.get('video_id') in with_text else '0.5'}</priority>\n"
         f"  </url>"
         for slug, entries in slug_entries
         for ep in entries
