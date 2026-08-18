@@ -130,6 +130,23 @@ def clean_transcript(text: str) -> str:
     return re.sub(r"\s+", " ", TRANSCRIPT_HEADER_RE.sub("", text)).strip()
 
 
+# A transcript's script is a property of the audio, not of the UI language:
+# a French-speaking visitor can open a Hebrew shiur. The page-level dir follows
+# the UI (applyLang), so the transcript needs its own dir to avoid a Hebrew
+# body rendered left-to-right with the punctuation flipped to the wrong end.
+HEBREW_CHAR_RE = re.compile("[֐-׿]")
+LETTER_RE = re.compile(r"[^\W\d_]", re.UNICODE)
+
+
+def is_rtl_text(text: str, sample: int = 2000) -> bool:
+    """True when the sampled head of `text` is predominantly Hebrew."""
+    head = text[:sample]
+    letters = len(LETTER_RE.findall(head))
+    if not letters:
+        return False
+    return len(HEBREW_CHAR_RE.findall(head)) / letters > 0.5
+
+
 MAX_WORDS_PER_PARA = 90
 
 
@@ -429,6 +446,9 @@ CSS = """\
     details.transcript[open] summary::before { transform:rotate(90deg); }
     details.transcript summary:hover { background:#f5f5f0; }
     .transcript-count { margin-inline-start:auto; font-weight:400; color:#999; font-size:.72rem; }
+    .transcript-copy { background:none; border:1px solid #ddd; border-radius:14px; padding:3px 10px; font-size:.7rem; font-family:inherit; color:#666; cursor:pointer; transition:background .15s,border-color .15s; }
+    .transcript-copy:hover { background:#fff; border-color:#e87722; color:#e87722; }
+    .transcript-body[dir="rtl"] { text-align:right; }
     .transcript-note { margin:0; padding:10px 18px 0; font-size:.7rem; color:#999; font-style:italic; }
     .transcript-body { padding:14px 18px; font-size:.82rem; color:#555; line-height:1.75; word-break:break-word; max-height:460px; overflow-y:auto; }
     .transcript-body p { margin:0 0 12px; }
@@ -1080,11 +1100,14 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     )
     # Visible lead extract: real crawlable text above the collapsed panel.
     extract_block = ""
+    # The transcript's own script drives its direction, independently of the UI
+    # language chosen by the visitor (see is_rtl_text).
+    tr_dir = ' dir="rtl" lang="he"' if is_rtl_text(transcript) else ""
     if extract:
         extract_block = (
             '<section class="ep-extract">'
             '<h2 data-i18n="extract_title">Extrait du cours</h2>'
-            f'<p>{esc(extract)}</p>'
+            f'<p{tr_dir}>{esc(extract)}</p>'
             '<p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">'
             'Lire la transcription complète ↓</a></p>'
             '</section>'
@@ -1104,10 +1127,12 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
             '<details class="transcript" id="transcript">'
             '<summary><span data-i18n="transcript_label">Transcription</span>'
             f'<span class="transcript-count">{transcript_words} '
-            '<span data-i18n="transcript_words">mots</span></span></summary>'
+            '<span data-i18n="transcript_words">mots</span></span>'
+            '<button type="button" class="transcript-copy" id="transcript-copy"'
+            ' data-i18n="transcript_copy">Copier</button></summary>'
             '<p class="transcript-note" data-i18n="transcript_auto">'
             'Transcription automatique — peut contenir des erreurs.</p>'
-            f'<div class="transcript-body">{render_transcript_html(transcript)}</div>'
+            f'<div class="transcript-body"{tr_dir}>{render_transcript_html(transcript)}</div>'
             '</details>'
         )
 
@@ -1225,17 +1250,17 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
     }},
     en: {{
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
     }},
   }};
   let lang = localStorage.getItem('lang') || '{lang}';
@@ -1312,6 +1337,26 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     if (navigator.share) navigator.share({{title: btn.dataset.title, url}});
     else navigator.clipboard.writeText(url).then(() => showToast('Lien copié !'));
   }});
+  (function () {{
+    const btn = document.getElementById('transcript-copy');
+    const body = document.querySelector('.transcript-body');
+    if (!btn || !body) return;
+    btn.addEventListener('click', e => {{
+      // The button lives inside <summary>: without this the click would also
+      // toggle the panel open/closed.
+      e.preventDefault(); e.stopPropagation();
+      const text = Array.from(body.querySelectorAll('p'))
+        .map(p => p.textContent.trim()).join('
+
+');
+      navigator.clipboard.writeText(text).then(() => {{
+        btn.textContent = t('transcript_copied');
+        showToast(t('transcript_copied'));
+        clearTimeout(btn._timer);
+        btn._timer = setTimeout(() => {{ btn.textContent = t('transcript_copy'); }}, 2000);
+      }}).catch(() => showToast(t('transcript_copy_error')));
+    }});
+  }})();
 </script>
 <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/sw.js');</script>
 </body>
