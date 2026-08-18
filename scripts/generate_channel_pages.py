@@ -175,6 +175,9 @@ def render_transcript_html(text: str) -> str:
 # the YouTube description is promotional boilerplate (emoji/links/hashtags).
 
 EXTRACT_WORDS = 130          # visible lead extract under the player
+# Below this a transcript file is a no-captions placeholder or a few stray
+# words, not an indexable body (see update_sitemap).
+MIN_TRANSCRIPT_BYTES = 400
 _EMOJI_RE = re.compile(
     "[\U0001F000-\U0001FAFF\u2190-\u21FF\u2600-\u27BF\uFE00-\uFE0F]"
 )
@@ -206,10 +209,85 @@ def seo_snippet(text: str, limit: int = 155) -> str:
     return cut.rstrip(" ,;:.-") + "…"
 
 
+# Auto-captions almost never open on the actual class: they start with a music
+# cue, applause, a chanted jingle or a bare greeting ("[Musique] Bircat chalom
+# à tous"). Taking the first words verbatim shipped that noise as the visible
+# lead AND as <meta name="description"> on thousands of pages, so the lead
+# skips the non-informative opening paragraphs instead.
+_CUE_RE = re.compile(r"[\[\(][^\[\]\(\)]{0,40}[\]\)]|[♪♫]")
+MIN_LEAD_WORDS = 12          # a shorter paragraph is a cue/greeting, not content
+_JINGLE_RATIO = 0.55         # distinct/total words below this = chanted jingle
+
+
+def strip_cues(text: str) -> str:
+    """Drop bracketed caption cues ([Musique], [Applaudissements], ♪)."""
+    return re.sub(r"\s+", " ", _CUE_RE.sub(" ", text or "")).strip()
+
+
+def _is_chant(words: list[str]) -> bool:
+    """True for a sung/repeated passage rather than speech."""
+    if not words:
+        return True
+    lowered = [w.lower().strip(".,;:!?…\"'") for w in words]
+    if len(set(lowered)) / len(lowered) < _JINGLE_RATIO:
+        return True
+    # A word chanted three times in a row ("spéciale spéciale spéciale") is a
+    # sung intro, never speech.
+    return any(
+        lowered[i] and lowered[i] == lowered[i + 1] == lowered[i + 2]
+        for i in range(len(lowered) - 2)
+    )
+
+
+def _is_filler(para: str) -> bool:
+    """True for an opening paragraph that carries no episode-specific content."""
+    words = strip_cues(para).split()
+    return len(words) < MIN_LEAD_WORDS or _is_chant(words)
+
+
+MIN_LEAD_SENTENCE_WORDS = 6  # "Bonjour à tous." is a greeting, not the class
+
+
+def _strip_lead_filler_sentences(text: str) -> str:
+    """Drop the cues/greetings/chants the class opens on.
+
+    Paragraphs group several sentences, so a jingle short enough to share a
+    paragraph with the actual class has to be cut at sentence level first.
+    """
+    sentences = [s for s in re.split(r"(?<=[.!?…])\s+", text) if s.strip()]
+    for i, sentence in enumerate(sentences):
+        words = strip_cues(sentence).split()
+        if len(words) < MIN_LEAD_SENTENCE_WORDS or _is_chant(words):
+            continue
+        return " ".join(sentences[i:])
+    return text
+
+
+def informative_paragraphs(text: str) -> list[str]:
+    """Transcript paragraphs with the filler intro dropped and cues stripped.
+
+    Only *leading* filler is skipped: a music cue in the middle of a class is
+    part of the flow, while the ones at the top are the channel's jingle.
+    """
+    out: list[str] = []
+    for para in transcript_paragraphs(_strip_lead_filler_sentences(text)):
+        if not out and _is_filler(para):
+            continue
+        cleaned = strip_cues(para)
+        if cleaned:
+            out.append(cleaned)
+    return out
+
+
 def transcript_extract(text: str, max_words: int = EXTRACT_WORDS) -> str:
-    """First `max_words` words of the transcript, cut on a paragraph boundary."""
+    """First `max_words` words of real content, cut on a paragraph boundary.
+
+    Falls back to the raw paragraphs when every paragraph looks like filler
+    (short clips, chanted classes) so a page never loses its lead entirely.
+    """
+    paras = informative_paragraphs(text) or transcript_paragraphs(text)
     out, used = [], 0
-    for para in transcript_paragraphs(text):
+    for para in paras:
         n = len(para.split())
         if out and used + n > max_words:
             break
@@ -978,7 +1056,10 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     # Prefer the YouTube description only when it actually says something about
     # this episode; otherwise the transcript is the better (and unique) source.
     extract = transcript_extract(transcript) if transcript else ""
-    seo_desc_src = desc if desc_text_score(desc) >= 120 else (transcript or desc)
+    # `extract` is already the jingle-free head of the transcript, so it is the
+    # right source for the SERP snippet too (the raw transcript would put the
+    # music cue back in <meta description>).
+    seo_desc_src = desc if desc_text_score(desc) >= 120 else (extract or transcript or desc)
     seo_desc = (
         seo_snippet(seo_desc_src)
         if seo_desc_src
@@ -1011,7 +1092,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 
     if transcript:
         # Signals that this page holds a real, machine-readable text body.
-        schema["abstract"] = seo_snippet(transcript, 300)
+        schema["abstract"] = seo_snippet(extract or transcript, 300)
         schema["wordCount"] = len(transcript.split())
         schema["description"] = seo_desc
     schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
@@ -1416,8 +1497,15 @@ def update_sitemap(slug_entries: list[tuple]):
     )
     # Episodes backed by a transcript now carry real indexable text (chantier B),
     # so they get a higher crawl priority than audio-only stubs.
+    # fetch_transcripts.py writes an EMPTY .txt when YouTube has no captions,
+    # so the file is a "we tried" marker, not text: 9 846 of the 27 156 files
+    # are 0 byte (measured 18/08/2026). Keying on existence advertised ~10 000
+    # thin pages to crawlers at the high priority reserved for real content.
     tdir = FEEDS_DIR / "transcripts"
-    with_text = {f.stem for f in tdir.glob("*.txt")} if tdir.is_dir() else set()
+    with_text = (
+        {f.stem for f in tdir.glob("*.txt") if f.stat().st_size >= MIN_TRANSCRIPT_BYTES}
+        if tdir.is_dir() else set()
+    )
     episode_entries = "\n".join(
         f"  <url>\n"
         f"    <loc>{BASE_URL}/{ep_path(slug, ep)}</loc>\n"
