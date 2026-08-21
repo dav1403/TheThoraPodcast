@@ -49,7 +49,16 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v7
         with:
+          # Full history: the commit step rebases onto main to survive a race with
+          # the hourly pipeline, and rebasing on a depth-1 shallow clone is unsafe.
+          # BUT the repo carries ~28 Go of regenerated artefacts in its history, so
+          # a plain fetch-depth: 0 fills the runner disk and hangs forever.
+          # filter: blob:none = blobless partial clone: all commits/trees, zero
+          # historical blobs. Git hydrates the few blobs it actually needs on
+          # demand (checkout of HEAD, pull --rebase), so the rebase-retry below
+          # keeps working.
           fetch-depth: 0
+          filter: blob:none
           # Explicit branch ref (not the default github.sha) so a run delayed in the
           # concurrency queue (e.g. behind a manual workflow_dispatch) checks out main
           # as it stands at execution time, not at trigger time. Without this, a
