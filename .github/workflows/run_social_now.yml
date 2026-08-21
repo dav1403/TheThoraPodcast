@@ -12,7 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          # Full history: the commit step rebases onto main to survive a race with
+          # the hourly pipeline, and rebasing on a depth-1 shallow clone is unsafe.
+          # BUT the repo carries ~28 Go of regenerated artefacts in its history, so
+          # a plain fetch-depth: 0 fills the runner disk and hangs forever.
+          # filter: blob:none = blobless partial clone: all commits/trees, zero
+          # historical blobs. Git hydrates the few blobs it actually needs on
+          # demand (checkout of HEAD, pull --rebase), so the rebase-retry below
+          # keeps working.
           fetch-depth: 0
+          filter: blob:none
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
