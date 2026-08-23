@@ -11,6 +11,8 @@ import unicodedata
 from datetime import datetime
 from pathlib import Path
 
+from build_mobile_index import build_mobile_index
+
 BASE_URL       = "https://thetorahpodcast.net"
 CHANNELS_FILE  = Path("channels.json")
 SPEAKERS_FILE  = Path("speakers.json")
@@ -1783,6 +1785,11 @@ def main():
     # Minimal full-text search index over the whole catalog (lazy-loaded by index.html
     # only on first search focus/keystroke — keeps the homepage at ~15 KB at load).
     build_search_index(all_data)
+
+    # Pre-computed study rattachements for the mobile app (mobile/): the same
+    # daf / hitat / hayom-yom / paracha / hiloula / theme buckets the study pages
+    # compute in the browser, so the app doesn't have to pull ~31 MB of feeds.
+    build_mobile_index(all_data)
 
     update_sitemap(generated)
     print(f"\nDone — {len(generated)} channel + {len(speakers)} speaker pages + {ep_count} episode pages.")

@@ -237,7 +237,10 @@ jobs:
           # search-fts/ carries a leading-dot state file (.build-state.json) that
           # `git add search-fts/` picks up, and WITHOUT which every rebuild
           # renumbers the documents and rewrites all ~17 000 shards.
-          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html home.json search-index.json search-fts/
+          # mobile/ holds the pre-computed study rattachements the mobile app reads
+          # (daf / hitat / hayom-yom / paracha / hiloula / themes). Same trap as
+          # home.json above: omit it and the app's course lists freeze.
+          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html home.json search-index.json search-fts/ mobile/
           # Stage every channel's episode-page directory, derived from channels.json slugs.
           # Robust against slug casing/prefix (was hardcoded to rav-*/ rabbin-*/ beth-*/,
           # which silently skipped dirs like Rav-Itshak-Sitruk/, Nahal-Haim/, lev/, torah_fr/).
