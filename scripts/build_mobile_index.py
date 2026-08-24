@@ -17,6 +17,7 @@ JSON:
   - paracha   : title keyword match per parasha             (paracha.html)
   - hiloula   : title/description keyword match per tsadik  (hiloula.html)
   - themes    : the AI `tags` carried by each episode       (themes.html)
+  - durations : every class binned by length                (mobile only)
 
 Only episodes belonging to at least one bucket are emitted, and each episode is
 stored ONCE as a positional array; buckets hold integer indices into it.
@@ -488,6 +489,34 @@ CAP_THEME = 300
 CAP_PARACHA = 250
 CAP_DAF = 300
 CAP_HILOULA = 60
+CAP_DURATION = 300
+
+# Duration bins (mobile only).
+#
+# The site's shared filter (js/utils.js `filterDurAll`) offers three coarse
+# buckets - < 5 min / 5-20 min / > 20 min. The app wants a finer, *continuous*
+# ladder so "j'ai 25 minutes" is one tap: the 300 s and 1200 s cut points are
+# the site's, 600 s and 1800 s only subdivide them, so the two never disagree -
+# it is the same ladder, one notch finer.
+# `(slug, label, min_secs_inclusive, max_secs_exclusive_or_None)`.
+DURATIONS = [
+    ("moins-5", "< 5 min", 1, 300),
+    ("5-10", "5-10 min", 300, 600),
+    ("10-20", "10-20 min", 600, 1200),
+    ("20-30", "20-30 min", 1200, 1800),
+    ("30-plus", "30 min et +", 1800, None),
+]
+
+
+def duration_bin(secs: int) -> str | None:
+    """Slug of the bin a length falls into; None when unknown (0) or negative."""
+    if not secs or secs < 1:
+        return None
+    for slug, _label, lo, hi in DURATIONS:
+        if secs >= lo and (hi is None or secs < hi):
+            return slug
+    return None
+
 
 THEME_SLUGS = {
     "Chabbat": "chabbat", "Tefila": "tefila", "Téchouva": "techouva",
@@ -566,6 +595,8 @@ def build_mobile_index(all_data: list[tuple]) -> None:
     hayomyom: dict[str, list] = {}
     daf: list = []
     daf_total = 0
+    durations: dict[str, list] = {slug: [] for slug, *_ in DURATIONS}
+    duration_totals: dict[str, int] = {slug: 0 for slug, *_ in DURATIONS}
 
     for ch_idx, ep in flat:
         title = ep["title"]
@@ -577,6 +608,12 @@ def build_mobile_index(all_data: list[tuple]) -> None:
             if row is None:
                 row = _row(ch_idx, ep, prefixes)
             return row
+
+        bin_slug = duration_bin(int(ep.get("duration_secs") or 0))
+        if bin_slug:
+            duration_totals[bin_slug] += 1
+            if len(durations[bin_slug]) < CAP_DURATION:
+                durations[bin_slug].append(get_row())
 
         if "Daf Hayomi" in tags:
             daf_total += 1
@@ -630,6 +667,13 @@ def build_mobile_index(all_data: list[tuple]) -> None:
             f"paracha-{slug}.json",
             {"generated_at": generated_at, "total": paracha_totals[slug], "episodes": rows},
         )
+    for slug, rows in durations.items():
+        if not rows:
+            continue
+        written += _write(
+            f"duration-{slug}.json",
+            {"generated_at": generated_at, "total": duration_totals[slug], "episodes": rows},
+        )
     written += _write("daf.json", {"generated_at": generated_at, "total": daf_total, "episodes": daf})
     written += _write("hiloula.json", {"generated_at": generated_at, "tsadikim": hiloula})
 
@@ -666,6 +710,11 @@ def build_mobile_index(all_data: list[tuple]) -> None:
              "file": f"paracha-{s}.json" if paracha[s] else None,
              "total": paracha_totals[s]}
             for book, slugs in BOOKS for s in slugs
+        ],
+        "durations": [
+            {"slug": slug, "label": label, "min": lo, "max": hi,
+             "file": f"duration-{slug}.json", "total": duration_totals[slug]}
+            for slug, label, lo, hi in DURATIONS if durations[slug]
         ],
         "hitat_days": sorted(hitat),
         "hayomyom_days": sorted(hayomyom, key=int),
