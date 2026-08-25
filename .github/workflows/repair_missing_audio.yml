@@ -146,6 +146,13 @@ jobs:
           mkdir -p artwork
           python scripts/generate_artwork.py
 
+      # The masters above are 0.5-5 MB each (55 MB for the roster) because Apple
+      # requires >= 1400 px. The site and the app display them in <= 104 px slots
+      # and GitHub Pages offers no CDN resizing, so the 256 px variant has to be
+      # built and committed here. Idempotent: only re-encodes changed artwork.
+      - name: Build artwork thumbnails (256px WebP for site + mobile app)
+        run: python scripts/build_artwork_thumbs.py
+
       - name: Sync external RSS channels
         run: python scripts/sync_rss_channels.py
 
@@ -240,7 +247,11 @@ jobs:
           # mobile/ holds the pre-computed study rattachements the mobile app reads
           # (daf / hitat / hayom-yom / paracha / hiloula / themes). Same trap as
           # home.json above: omit it and the app's course lists freeze.
-          git add feeds/ processed.json backfill_state.json artwork/ sitemap.xml *.html home.json search-index.json search-fts/ mobile/
+          # artwork/thumb/ is spelled out even though `artwork/` already covers it:
+          # it is the 256 px WebP set the site and the app load instead of the
+          # multi-MB masters, and it carries a leading-dot state file
+          # (.state.json) without which every run re-encodes all the thumbnails.
+          git add feeds/ processed.json backfill_state.json artwork/ artwork/thumb/ sitemap.xml *.html home.json search-index.json search-fts/ mobile/
           # Stage every channel's episode-page directory, derived from channels.json slugs.
           # Robust against slug casing/prefix (was hardcoded to rav-*/ rabbin-*/ beth-*/,
           # which silently skipped dirs like Rav-Itshak-Sitruk/, Nahal-Haim/, lev/, torah_fr/).

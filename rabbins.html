@@ -522,6 +522,26 @@
   let dataBySlug  = {};
   let currentSort = 'alpha';
 
+  // Channel artwork exists in two sizes: artwork/<slug>.png is the 3000x3000
+  // Apple Podcasts master (0.5-5 MB), artwork/thumb/<slug>.webp the 256 px
+  // variant built by scripts/build_artwork_thumbs.py. Every image on this page
+  // sits in a <= 104 px box, so the thumbnail is always the first choice; the
+  // master remains a fallback for a channel whose thumbnail isn't built yet.
+  const artThumb = slug => `artwork/thumb/${slug}.webp`;
+  const artFull  = slug => `artwork/${slug}.png`;
+
+  // Ordered <img> source fallback for markup built through innerHTML: each
+  // failure pops the next candidate off data-q; once the list is empty the
+  // element degrades to the flat grey placeholder used before this chain.
+  function imgChain(sources) {
+    const list = sources.filter(Boolean);
+    const rest = JSON.stringify(list.slice(1)).replace(/"/g, '&quot;');
+    const onerr = "var q=JSON.parse(this.dataset.q||'[]');"
+      + "if(q.length){this.src=q.shift();this.dataset.q=JSON.stringify(q)}"
+      + "else{this.onerror=null;this.style.background='#cfcfd6';this.removeAttribute('src')}";
+    return `src="${escapeHtml(list[0] || '')}" data-q="${rest}" onerror="${onerr}"`;
+  }
+
   function bubbleHtml({ ch, entries }) {
     const latest = latestEpisode(entries);
     const recent = latest && (Date.now() - new Date(latest.published).getTime()) <= 30 * 86400000;
@@ -532,8 +552,8 @@
     return `
       <button class="bubble" onclick="openRabbi('${escapeHtml(ch.slug)}')" title="${escapeHtml(ch.podcast_author)}">
         <span class="bubble-img-wrap">
-          <img class="bubble-img" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt="${escapeHtml(ch.podcast_author)}"
-               loading="lazy" onerror="if(this.dataset.fb){this.style.background='#cfcfd6';this.removeAttribute('src')}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(ch.slug)}.png'}">
+          <img class="bubble-img" ${imgChain([ch.img, artThumb(ch.slug), artFull(ch.slug)])} alt="${escapeHtml(ch.podcast_author)}"
+               loading="lazy">
           ${recent ? '<span class="bubble-dot"></span>' : ''}
           ${favStarHtml(ch.slug, 'on-bubble')}
         </span>
@@ -633,8 +653,7 @@
       <div class="modal" onclick="event.stopPropagation()" role="dialog" aria-modal="true" aria-label="${escapeHtml(ch.podcast_author)}">
         <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
         <div class="modal-head">
-          <img class="modal-art" src="${ch.img ? escapeHtml(ch.img) : 'artwork/' + escapeHtml(ch.slug) + '.png'}" alt=""
-               onerror="if(this.dataset.fb){this.style.background='#cfcfd6';this.removeAttribute('src')}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(ch.slug)}.png'}">
+          <img class="modal-art" ${imgChain([ch.img, artThumb(ch.slug), artFull(ch.slug)])} alt="">
           <div>
             <div class="modal-name">${escapeHtml(ch.podcast_author)}${favStarHtml(ch.slug, 'on-channel')}</div>
             ${sub ? `<div class="modal-sub">${sub}</div>` : ''}

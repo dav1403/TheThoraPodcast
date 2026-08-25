@@ -787,7 +787,10 @@
     currentEpId = ep.video_id;
     playerTitle.textContent = ep.title;
     playerCh.textContent    = chName;
-    playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
+    // 44 px slot — never the 3000 px master. Falls back thumbnail -> PNG master
+    // (a brand-new channel may not have a generated thumbnail yet).
+    playerArt.onerror       = () => { playerArt.onerror = null; playerArt.src = `artwork/${slug}.png`; };
+    playerArt.src           = ep.thumbnail || `artwork/thumb/${slug}.webp`;
     playerAudio.src         = ep.audio_url;
     playerAudio.playbackRate = currentSpeed;
     const saved = parseInt(localStorage.getItem('resume_' + ep.video_id) || '0');
@@ -861,18 +864,41 @@
 
 
 
+  // Channel artwork exists in two sizes. artwork/<slug>.png is the 3000x3000
+  // Apple Podcasts master (0.5-5 MB each) — it belongs in the RSS <itunes:image>
+  // and nowhere else on this page, which never shows an artwork larger than
+  // ~100 px. artwork/thumb/<slug>.webp is the 256 px variant built by
+  // scripts/build_artwork_thumbs.py; the master stays as a fallback for a
+  // channel added between two pipeline runs, whose thumbnail isn't built yet.
+  const artThumb = slug => `artwork/thumb/${slug}.webp`;
+  const artFull  = slug => `artwork/${slug}.png`;
+
+  // Ordered <img> source fallback, for markup built through innerHTML (where an
+  // onerror handler can't close over a variable). Returns the src/data-q/onerror
+  // attributes: each failure pops the next candidate off data-q, and the last
+  // one stops the chain — `hide` blanks the element instead of leaving a broken
+  // image icon. Falsy candidates are dropped, so `imgChain([maybeUrl, ...])`
+  // works without a guard at the call site.
+  function imgChain(sources, hide) {
+    const list = sources.filter(Boolean);
+    const rest = JSON.stringify(list.slice(1)).replace(/"/g, '&quot;');
+    const onerr = "var q=JSON.parse(this.dataset.q||'[]');"
+      + "if(q.length){this.src=q.shift();this.dataset.q=JSON.stringify(q)}"
+      + "else{this.onerror=null;" + (hide ? "this.style.visibility='hidden'" : "") + "}";
+    return `src="${escapeHtml(list[0] || '')}" data-q="${rest}" onerror="${onerr}"`;
+  }
+
   // Hero: the single newest episode, featured big at the top of the home for a
   // clear headline (recents[0]). Plays straight from its baked home.json fields.
   function buildHero() {
     const ep = recents[0];
     if (!ep) return null;
-    const art = escapeHtml(ep.thumbnail || `artwork/${ep.slug}.png`);
     const wrap = document.createElement('div');
     wrap.id = 'hero-section';
     wrap.innerHTML = `
       <div class="hero-card">
         <div class="hero-art">
-          <img src="${art}" alt="" onerror="this.src='artwork/${escapeHtml(ep.slug)}.png'">
+          <img ${imgChain([ep.thumbnail, artThumb(ep.slug), artFull(ep.slug)])} alt="">
           <button class="hero-play" data-play="0" aria-label="${t('listen')}">${playIcon()}</button>
         </div>
         <div class="hero-body">
@@ -892,14 +918,15 @@
   function buildRabbiBubbles(list) {
     if (!list || !list.length) return null;
     const bubbles = list.map(r => {
-      const img = r.img ? escapeHtml(r.img) : ('artwork/' + escapeHtml(r.slug) + '.png');
+      // Channels have no `img` and fall straight to their 256 px thumbnail;
+      // speakers carry the thumbnail of their latest episode (they own no
+      // artwork of their own) and only reach the artwork candidates if it 404s.
       const count = r.count
         ? `<span class="rabbi-bubble-count">${r.count} ${lang === 'he' ? 'שיעורים' : (lang === 'en' ? 'classes' : 'cours')}</span>`
         : '';
       return `
         <a class="rabbi-bubble" href="${escapeHtml(r.slug)}.html" title="${escapeHtml(r.name)}">
-          <img src="${img}" alt="${escapeHtml(r.name)}" loading="lazy"
-               onerror="this.onerror=null;this.src='artwork/${escapeHtml(r.slug)}.png'">
+          <img ${imgChain([r.img, artThumb(r.slug), artFull(r.slug)])} alt="${escapeHtml(r.name)}" loading="lazy">
           <span class="rabbi-bubble-name">${escapeHtml(r.name)}</span>
           ${count}
         </a>`;
@@ -918,8 +945,8 @@
     // stays the true recents[] index so playback loads the right episode).
     const cards = recents.slice(1).map((ep, i) => `
       <div class="recent-card" data-ep-dur="${ep.duration_secs || 0}" data-idx="${i + 1}">
-        <img src="${escapeHtml(ep.thumbnail || `artwork/${ep.slug}.png`)}" alt=""
-             loading="lazy" onerror="this.src='artwork/${escapeHtml(ep.slug)}.png'">
+        <img ${imgChain([ep.thumbnail, artThumb(ep.slug), artFull(ep.slug)])} alt=""
+             loading="lazy">
         <div class="recent-card-body">
           <div class="recent-card-ch">${escapeHtml(ep.ch_name)}</div>
           <a class="recent-card-title" href="${escapeHtml(ep.url)}">${escapeHtml(ep.title)}</a>
@@ -940,8 +967,8 @@
   function buildChannelGrid() {
     const cards = channels.map(ch => `
       <a class="channel-grid-card" href="${escapeHtml(ch.slug)}.html" data-name="${escapeHtml((ch.name || '').toLowerCase())}" title="${escapeHtml(ch.name)}">
-        <img class="channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="${escapeHtml(ch.name)}"
-             loading="lazy" onerror="this.style.visibility='hidden'">
+        <img class="channel-art" ${imgChain([artThumb(ch.slug), artFull(ch.slug)], true)} alt="${escapeHtml(ch.name)}"
+             loading="lazy">
         <div class="channel-grid-body">
           <div class="channel-grid-name">${escapeHtml(ch.name)}</div>
           <div class="channel-grid-count">${ch.count} ${lang === 'he' ? 'שיעורים' : (lang === 'en' ? 'classes' : 'cours')}</div>
@@ -1274,14 +1301,12 @@
     const sp = spotlightData;
     if (!sp || !sp.episodes || !sp.episodes.length) return null;
     const he = lang === 'he';
-    const art = `artwork/${escapeHtml(sp.slug)}.png`;
-    const heroThumb = escapeHtml(sp.episodes[0].thumbnail || art);
+    const artFallbacks = [artThumb(sp.slug), artFull(sp.slug)];
     const desc = sp.description
       ? `<div class="spot-desc">${escapeHtml(sp.description)}</div>` : '';
     const cards = sp.episodes.map((ep, i) => `
       <div class="recent-card" data-splay="${i}" data-ep-dur="${ep.duration_secs || 0}">
-        <img src="${escapeHtml(ep.thumbnail || art)}" alt="" loading="lazy"
-             onerror="this.src='${art}'">
+        <img ${imgChain([ep.thumbnail, ...artFallbacks])} alt="" loading="lazy">
         <div class="recent-card-body">
           <div class="recent-card-ch">${escapeHtml(sp.name)}</div>
           <a class="recent-card-title" href="${escapeHtml(ep.url)}">${escapeHtml(ep.title)}</a>
@@ -1293,7 +1318,7 @@
     wrap.innerHTML =
       `<div class="section-label">${he ? 'הרב שכדאי לגלות' : (lang === 'en' ? 'Discover a rabbi' : 'À la découverte d’un rav')}</div>` +
       `<a class="spot-head" href="${escapeHtml(sp.slug)}.html">` +
-        `<img class="spot-art" src="${art}" alt="${escapeHtml(sp.name)}" onerror="this.style.visibility='hidden'">` +
+        `<img class="spot-art" ${imgChain(artFallbacks, true)} alt="${escapeHtml(sp.name)}">` +
         `<div class="spot-body">` +
           `<div class="spot-kicker">${he ? 'הכירו את הרב' : (lang === 'en' ? 'Meet the rabbi' : 'Découvrez le rav')}</div>` +
           `<div class="spot-name">${escapeHtml(sp.name)}</div>` +

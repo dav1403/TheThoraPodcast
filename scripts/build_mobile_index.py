@@ -693,10 +693,28 @@ def build_mobile_index(all_data: list[tuple]) -> None:
     for month, days in hy_shards.items():
         written += _write(f"hayom-yom-{month}.json", {"generated_at": generated_at, "days": days})
 
+    # Where the app finds a channel's artwork. `<thumb_base><slug><thumb_ext>` is
+    # the 256 px WebP built by scripts/build_artwork_thumbs.py (~10 KB) and is
+    # what every avatar/bubble/list row must load; `<full_base><slug><full_ext>`
+    # is the 3000x3000 Apple Podcasts master (0.5-5 MB, 55 MB for the roster) and
+    # must only be used where a genuinely large image is displayed. `thumb_slugs`
+    # lists the channels whose thumbnail is already committed — a channel absent
+    # from it (added between two pipeline runs) has to fall back to the master.
+    thumb_dir = Path("artwork/thumb")
+    thumb_slugs = sorted(p.stem for p in thumb_dir.glob("*.webp")) if thumb_dir.is_dir() else []
+
     manifest = {
         "generated_at": generated_at,
         "version": 1,
         "channels": channels,
+        "artwork": {
+            "thumb_base": "https://thetorahpodcast.net/artwork/thumb/",
+            "thumb_ext": ".webp",
+            "thumb_size": 256,
+            "full_base": "https://thetorahpodcast.net/artwork/",
+            "full_ext": ".png",
+            "thumb_slugs": thumb_slugs,
+        },
         "audio_prefixes": prefix_list,
         "daf": {"file": "daf.json", "total": daf_total},
         "themes": [

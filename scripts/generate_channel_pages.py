@@ -107,6 +107,29 @@ def ep_path(ch_slug: str, ep: dict) -> str:
 def esc(s):
     return _html.escape(str(s), quote=True)
 
+
+def img_chain(sources: list[str], prefix: str = "") -> str:
+    """Render src/data-q/onerror attributes for an ordered <img> fallback list.
+
+    Channel artwork exists in two sizes: `artwork/<slug>.png` is the 3000x3000
+    Apple Podcasts master (0.5-5 MB apiece) that the RSS `itunes:image` needs,
+    and `artwork/thumb/<slug>.webp` is the 256 px variant built by
+    scripts/build_artwork_thumbs.py. Small display slots must take the thumbnail
+    and keep the master only as a fallback (a channel added between two pipeline
+    runs has no thumbnail yet), hence a chain rather than a single onerror.
+
+    Each failure pops the next candidate off data-q; the last one stops the
+    chain. `prefix` prepends a relative path for pages nested one level down.
+    """
+    urls = [prefix + u if u.startswith("artwork/") else u for u in sources if u]
+    rest = json.dumps(urls[1:]).replace('"', "&quot;")
+    onerr = (
+        "var q=JSON.parse(this.dataset.q||'[]');"
+        "if(q.length){this.src=q.shift();this.dataset.q=JSON.stringify(q)}"
+        "else{this.onerror=null}"
+    )
+    return f'src="{esc(urls[0] if urls else "")}" data-q="{rest}" onerror="{onerr}"'
+
 def fmt_date(iso, lang):
     try:
         d = datetime.fromisoformat(iso.replace("Z", "+00:00"))
@@ -709,7 +732,9 @@ def render_page(ch: dict, entries: list, all_channels: list,
 </header>
 <main>
   <div class="ch-card">
-    <img class="ch-art" src="{esc(ch.get('thumbnail') or f'artwork/{slug}.png')}" alt="{esc(name)}" onerror="this.src='artwork/{slug}.png'">
+    <!-- 80 px header slot: the 256 px thumbnail, never the 3000x3000 master
+         (which stays reserved for the RSS itunes:image). See img_chain(). -->
+    <img class="ch-art" {img_chain([ch.get('thumbnail', ''), f'artwork/thumb/{slug}.webp', f'artwork/{slug}.png'])} alt="{esc(name)}">
     <div>
       <h1 class="ch-name">{esc(name)}<span id="ch-fav-slot" data-slug="{slug}"></span></h1>
       <p class="ch-count" id="ep-count"></p>
