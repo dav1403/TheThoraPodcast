@@ -890,9 +890,14 @@ function extractSlugFromHebcal(data) {
 
 async function fetchCurrentParashot() {
   try {
+    // The Hebcal URL must vary by day, or a shared CDN cache entry from a
+    // previous week gets served (observed 25/08/2026: the Jerusalem URL
+    // returned a response cached 27h earlier, showing last week's parasha).
+    const now = new Date();
+    const dp = `&gy=${now.getFullYear()}&gm=${now.getMonth() + 1}&gd=${now.getDate()}`;
     const [dataIL, diaDia] = await Promise.all([
-      fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=293397&M=on').then(r => r.json()),
-      fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=2988507&M=on').then(r => r.json()),
+      fetch(`https://www.hebcal.com/shabbat?cfg=json&geonameid=293397&M=on${dp}`).then(r => r.json()),
+      fetch(`https://www.hebcal.com/shabbat?cfg=json&geonameid=2988507&M=on${dp}`).then(r => r.json()),
     ]);
     return { il: extractSlugFromHebcal(dataIL), dia: extractSlugFromHebcal(diaDia) };
   } catch (_) { return { il: null, dia: null }; }
