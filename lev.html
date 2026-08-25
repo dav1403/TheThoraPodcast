@@ -485,7 +485,7 @@
       <a href="rav-barak-ben-nissan.html">Rav Barack Ben Nissan (360)</a>
       <a href="rav-benizri.html">Rav Benizri (1645)</a>
       <a href="rav-brand.html">Rav Brand (212)</a>
-      <a href="rav-chemouny-benyamin.html">Rav Chemouny Benyamin (2879)</a>
+      <a href="rav-chemouny-benyamin.html">Rav Chemouny Benyamin (2909)</a>
       <a href="rav-chlomo-valensi.html">Rav Chlomo Valensi - Ahavat HM (838)</a>
       <a href="rav-dagani-cohen.html">Rav Dagani Cohen (124)</a>
       <a href="eitan-galam.html">Rav Eitan Galam (149)</a>
@@ -535,7 +535,9 @@
 </header>
 <main>
   <div class="ch-card">
-    <img class="ch-art" src="artwork/lev.png" alt="Lev" onerror="this.src='artwork/lev.png'">
+    <!-- 80 px header slot: the 256 px thumbnail, never the 3000x3000 master
+         (which stays reserved for the RSS itunes:image). See img_chain(). -->
+    <img class="ch-art" src="artwork/thumb/lev.webp" data-q="[&quot;artwork/lev.png&quot;]" onerror="var q=JSON.parse(this.dataset.q||'[]');if(q.length){this.src=q.shift();this.dataset.q=JSON.stringify(q)}else{this.onerror=null}" alt="Lev">
     <div>
       <h1 class="ch-name">Lev<span id="ch-fav-slot" data-slug="lev"></span></h1>
       <p class="ch-count" id="ep-count"></p>
@@ -18795,8 +18797,8 @@ FLV M2U00545 Cours lundi 8 03 10</p>
     if (epCount) epCount.textContent = I18N[lang].ep_count(1756);
     const statsEl = document.getElementById('header-stats');
     if (statsEl) statsEl.textContent = lang === 'he'
-      ? `37 ערוצים · 30798 שיעורים · ~23098 שעות`
-      : `37 rabbins · 30798 cours · ~23098h de Torah`;
+      ? `37 ערוצים · 30828 שיעורים · ~23121 שעות`
+      : `37 rabbins · 30828 cours · ~23121h de Torah`;
   }
   function filterDur(btn) {
     document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
