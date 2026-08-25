@@ -524,7 +524,9 @@
   function loadInPlayer(ep, chName, slug) {
     playerTitle.textContent = ep.title;
     playerCh.textContent    = chName;
-    playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
+    // 44 px slot — the thumbnail, never the 3000 px master.
+    playerArt.onerror       = () => { playerArt.onerror = null; playerArt.src = `artwork/${slug}.png`; };
+    playerArt.src           = ep.thumbnail || `artwork/thumb/${slug}.webp`;
     playerAudio.src         = ep.audio_url;
     playerAudio.playbackRate = currentSpeed;
     playerAudio.play();
@@ -729,7 +731,7 @@
       `<button class="filter-chip${activeRabbiFilter === 'all' ? ' active' : ''}" data-slug="all">${escapeHtml(t('filter_all'))}</button>`,
       ...channels.map(ch =>
         `<button class="filter-chip${activeRabbiFilter === ch.slug ? ' active' : ''}" data-slug="${escapeHtml(ch.slug)}">` +
-        `<img src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">` +
+        `<img src="artwork/thumb/${escapeHtml(ch.slug)}.webp" alt="" onerror="if(this.dataset.fb){this.onerror=null;this.style.display='none'}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(ch.slug)}.png'}">` +
         `${escapeHtml(ch.name)}</button>`
       ),
     ].join('');

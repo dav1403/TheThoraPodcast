@@ -365,7 +365,9 @@
     currentEpId = ep.video_id;
     playerTitle.textContent = ep.title;
     playerCh.textContent    = chName;
-    playerArt.src           = ep.thumbnail || `artwork/${slug}.png`;
+    // 44 px slot — the thumbnail, never the 3000 px master.
+    playerArt.onerror       = () => { playerArt.onerror = null; playerArt.src = `artwork/${slug}.png`; };
+    playerArt.src           = ep.thumbnail || `artwork/thumb/${slug}.webp`;
     playerAudio.src         = ep.audio_url;
     playerAudio.playbackRate = currentSpeed;
     const saved = parseInt(localStorage.getItem('resume_' + ep.video_id) || '0');
@@ -439,7 +441,7 @@
         ${thumb}
         <div class="ep-body">
           <div class="ep-channel">
-            <img class="ep-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" loading="lazy">
+            <img class="ep-channel-art" src="artwork/thumb/${escapeHtml(ch.slug)}.webp" alt="" loading="lazy" onerror="if(this.dataset.fb){this.onerror=null;this.style.display='none'}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(ch.slug)}.png'}">
             <a class="ep-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           </div>
           <a class="ep-title" href="${epUrl(ep, ch.slug)}">${escapeHtml(ep.title)}</a>
@@ -501,7 +503,7 @@
       return `
       <div class="result-channel">
         <div class="result-channel-header">
-          <img class="result-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">
+          <img class="result-channel-art" src="artwork/thumb/${escapeHtml(ch.slug)}.webp" alt="" onerror="if(this.dataset.fb){this.onerror=null;this.style.display='none'}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(ch.slug)}.png'}">
           <a class="result-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
           <div class="result-channel-count">${n} ${n > 1 ? t('ep_plural') : t('ep_singular')}</div>
         </div>
@@ -557,7 +559,7 @@
       const btn = document.createElement('button');
       btn.className = 'filter-chip';
       btn.dataset.slug = ch.slug;
-      btn.innerHTML = `<img src="artwork/${escapeHtml(ch.slug)}.png" alt=""> ${escapeHtml(ch.name)}`;
+      btn.innerHTML = `<img src="artwork/thumb/${escapeHtml(ch.slug)}.webp" alt="" onerror="if(this.dataset.fb){this.onerror=null;this.style.display='none'}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(ch.slug)}.png'}"> ${escapeHtml(ch.name)}`;
       filterRow.appendChild(btn);
     }
     filterRow.addEventListener('click', e => {

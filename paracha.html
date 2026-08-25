@@ -728,7 +728,7 @@ function renderResults(slug, allData) {
   body.innerHTML = groups.map(({ ch, episodes }) => `
     <div class="result-channel">
       <div class="result-channel-header">
-        <img class="result-channel-art" src="artwork/${escapeHtml(ch.slug)}.png" alt="" onerror="this.style.display='none'">
+        <img class="result-channel-art" src="artwork/thumb/${escapeHtml(ch.slug)}.webp" alt="" onerror="if(this.dataset.fb){this.onerror=null;this.style.display='none'}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(ch.slug)}.png'}">
         <a class="result-channel-name" href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>
         <div class="result-channel-count">${episodes.length} ${episodes.length > 1 ? t('ep_plural') : t('ep_singular')}</div>
       </div>
@@ -746,7 +746,7 @@ function renderResults(slug, allData) {
                   data-audio="${escapeHtml(ep.audio_url)}"
                   data-title="${escapeHtml(ep.title)}"
                   data-channel="${escapeHtml(ch.name)}"
-                  data-art="${escapeHtml(ep.thumbnail || `artwork/${ch.slug}.png`)}">
+                  data-art="${escapeHtml(ep.thumbnail || `artwork/thumb/${ch.slug}.webp`)}">
                   ${playIcon()} ${t('listen')}
                 </button>` : ''}
             </div>

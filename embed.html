@@ -308,7 +308,10 @@
 
     // Render header
     const header = document.getElementById('widget-header');
-    document.getElementById('ch-art').src = `artwork/${slug}.png`;
+    const chArt = document.getElementById('ch-art');
+    // Small embed header: thumbnail first, PNG master only if it 404s.
+    chArt.onerror = () => { chArt.onerror = null; chArt.src = `artwork/${slug}.png`; };
+    chArt.src = `artwork/thumb/${slug}.webp`;
     document.getElementById('ch-name').textContent = chInfo.podcast_author;
     document.getElementById('ch-meta').textContent =
       chInfo.podcast_language === 'he' ? 'עברית' : 'Cours en français';
