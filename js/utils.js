@@ -127,6 +127,219 @@ function _t2(fr, he) { return (window.lang === 'he') ? he : fr; }
 // 3-language helper (fr | en | he). Falls back to fr for any other value.
 function _t3(fr, en, he) { return window.lang === 'he' ? he : (window.lang === 'en' ? en : fr); }
 
+// ─── Preferences module (single place for every persisted user setting) ──────
+// Before this, every page read localStorage by hand ('lang', 'playbackSpeed',
+// 'ttp_favorite_*'…). TTPPrefs is the one typed door: it validates values,
+// falls back safely when localStorage is unavailable (private mode / iframe),
+// and notifies listeners. Add new preferences here, never inline in a page.
+//
+// Keys owned here:
+//   lang             — UI language of the SITE ('fr' | 'en' | 'he')
+//   ttp_course_lang  — language SPOKEN in the classes ('all' | 'fr' | 'he')
+// The two are deliberately independent: an Israeli may read the site in Hebrew
+// and still want the French shiurim, and a French speaker may keep the site in
+// French while listening only to Hebrew classes.
+window.TTPPrefs = (function () {
+  var DEFS = {
+    lang:            { key: 'lang',            values: ['fr', 'en', 'he'],  def: 'fr'  },
+    courseLang:      { key: 'ttp_course_lang', values: ['all', 'fr', 'he'], def: 'all' },
+  };
+  var listeners = {};
+
+  function read(name) {
+    var d = DEFS[name];
+    var v = null;
+    try { v = localStorage.getItem(d.key); } catch (_) {}
+    return (d.values.indexOf(v) !== -1) ? v : d.def;
+  }
+  function write(name, value) {
+    var d = DEFS[name];
+    if (d.values.indexOf(value) === -1) return read(name);
+    try { localStorage.setItem(d.key, value); } catch (_) {}
+    (listeners[name] || []).forEach(function (fn) { try { fn(value); } catch (_) {} });
+    return value;
+  }
+  return {
+    get:  read,
+    set:  write,
+    on:   function (name, fn) { (listeners[name] = listeners[name] || []).push(fn); },
+    // Shorthands — the two settings read all over the site.
+    uiLang:     function () { return read('lang'); },
+    courseLang: function () { return read('courseLang'); },   // 'all' | 'fr' | 'he'
+  };
+})();
+
+// ─── Course language: detection + filtering ──────────────────────────────────
+// Mirrors scripts/lang_detect.py EXACTLY (dominant script of the title, channel
+// `podcast_language` as the tie-break for letter-less titles). Baked values are
+// preferred whenever present, so this fallback only ever runs on the pages that
+// read `feeds/<slug>.entries.json`, which carries no per-episode language:
+//   • home.json                → ep.lang
+//   • search-index.json        → ep.l
+//   • search-fts docs rows     → row[5]
+//   • mobile/*.json rows       → row[7]
+// Only 'fr' and 'he' ever come out — same contract as the Python side.
+function _courseScriptCounts(text) {
+  var hebrew = 0, latin = 0, s = String(text || '');
+  for (var i = 0; i < s.length; i++) {
+    var cp = s.charCodeAt(i);
+    if (cp >= 0x0590 && cp <= 0x05FF) hebrew++;
+    else if (cp < 0x0590 && /\p{L}/u.test(s[i])) latin++;
+  }
+  return [hebrew, latin];
+}
+
+// detectCourseLang(title, fallback) — the JS twin of lang_detect.detect_lang().
+function detectCourseLang(title, fallback) {
+  var c = _courseScriptCounts(title);
+  if (c[0] === 0 && c[1] === 0) return (fallback === 'he') ? 'he' : 'fr';
+  return c[0] > c[1] ? 'he' : 'fr';
+}
+
+// The language of one episode. `ch` is the channel record (for its
+// `podcast_language` fallback) and may be omitted.
+function episodeCourseLang(ep, ch) {
+  if (!ep) return 'fr';
+  if (ep.lang === 'fr' || ep.lang === 'he') return ep.lang;
+  if (ep.l === 'fr' || ep.l === 'he') return ep.l;
+  var fb = (ch && (ch.podcast_language || ch.lang)) || 'fr';
+  return detectCourseLang(ep.title || ep.t || '', fb);
+}
+
+// True when the episode must be shown under the current preference.
+function courseLangKeeps(ep, ch) {
+  var pref = window.TTPPrefs.courseLang();
+  return pref === 'all' || episodeCourseLang(ep, ch) === pref;
+}
+
+// Filter a raw `feeds/<slug>.entries.json` array. No-op when the pref is 'all',
+// so the default path costs nothing.
+function filterEntriesByCourseLang(entries, ch) {
+  if (window.TTPPrefs.courseLang() === 'all') return entries || [];
+  return (entries || []).filter(function (ep) { return courseLangKeeps(ep, ch); });
+}
+
+// One-stop fetch used by every page that reads a channel feed: fetches and
+// applies the course-language filter, so a page only has to swap its fetch call
+// and every list, count and chip downstream follows automatically.
+function fetchChannelEntries(ch) {
+  var slug = (typeof ch === 'string') ? ch : (ch && ch.slug);
+  var chRec = (typeof ch === 'string') ? null : ch;
+  return fetch('feeds/' + slug + '.entries.json')
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .catch(function () { return []; })
+    .then(function (entries) { return filterEntriesByCourseLang(entries, chRec); });
+}
+
+// Pick the count matching the active preference out of a precomputed record
+// carrying `<base>`, `<base>_fr` and `<base>_he` (home.json stats/channels/
+// spotlight, mobile manifest totals). Falls back to the total when the
+// per-language figure is missing (older artefacts).
+function courseLangCount(rec, base) {
+  if (!rec) return 0;
+  base = base || 'count';
+  var pref = window.TTPPrefs.courseLang();
+  if (pref === 'all') return rec[base] || 0;
+  var v = rec[base + '_' + pref];
+  return (typeof v === 'number') ? v : (rec[base] || 0);
+}
+
+// ─── Course-language control (auto-injected into every page header) ──────────
+// Sits under the existing UI-language switch. Deliberately worded so it can't
+// be read as "language of the site": it carries its own label and spells the
+// languages out ("Français"/"Hébreu"), where the site switch shows FR/EN/עב.
+var COURSE_LANG_I18N = {
+  fr: { label: 'Langue des cours', all: 'Toutes', fr: 'Français', he: 'Hébreu',
+        empty: 'Aucun cours dans cette langue ici.', reset: 'Voir toutes les langues' },
+  en: { label: 'Language of the classes', all: 'All', fr: 'French', he: 'Hebrew',
+        empty: 'No class in this language here.', reset: 'Show all languages' },
+  he: { label: 'שפת השיעורים', all: 'הכול', fr: 'צרפתית', he: 'עברית',
+        empty: 'אין שיעורים בשפה זו כאן.', reset: 'הצג את כל השפות' },
+};
+function _clT(k) {
+  var d = COURSE_LANG_I18N[window.TTPPrefs.uiLang()] || COURSE_LANG_I18N.fr;
+  return d[k] || COURSE_LANG_I18N.fr[k] || k;
+}
+
+// Switching the preference reloads: every page computes its lists and counters
+// at load from the filtered data, so a reload is both the simplest and the only
+// way to guarantee nothing (chips, totals, hero, carousels) is left stale.
+function setCourseLang(v) {
+  if (v === window.TTPPrefs.courseLang()) return;
+  window.TTPPrefs.set('courseLang', v);
+  location.reload();
+}
+
+function _injectCourseLangCSS() {
+  if (document.getElementById('courselang-css')) return;
+  var s = document.createElement('style');
+  s.id = 'courselang-css';
+  s.textContent =
+    '.courselang-switch{display:flex;width:fit-content;align-items:center;flex-wrap:wrap;justify-content:center;' +
+      'gap:4px;margin:0 auto 14px;padding:4px 10px;border:1px solid rgba(255,255,255,.18);' +
+      'border-radius:20px;background:rgba(255,255,255,.05)}' +
+    '.courselang-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;' +
+      'color:rgba(255,255,255,.5);font-weight:600;margin-inline-end:4px}' +
+    '.courselang-opt{color:rgba(255,255,255,.62);font-size:.75rem;font-weight:600;padding:4px 11px;' +
+      'border-radius:16px;border:none;background:none;cursor:pointer;font-family:inherit;' +
+      'letter-spacing:.02em;transition:background .15s,color .15s}' +
+    '.courselang-opt:hover{color:#fff}' +
+    '.courselang-opt.active{background:#e87722;color:#fff}' +
+    '.courselang-empty{max-width:520px;margin:26px auto;padding:18px 20px;text-align:center;' +
+      'border:1px dashed #d8d8e0;border-radius:12px;color:#666;font-size:.9rem}' +
+    '.courselang-empty button{margin-top:10px;display:inline-block;border:none;cursor:pointer;' +
+      'background:#e87722;color:#fff;font-family:inherit;font-weight:600;font-size:.82rem;' +
+      'padding:8px 16px;border-radius:20px}';
+  document.head.appendChild(s);
+}
+
+// Markup for the "this filter emptied the page" state — never leave a blank
+// screen: always offer the way back to "Toutes".
+function courseLangEmptyHtml() {
+  _injectCourseLangCSS();
+  return '<div class="courselang-empty">' + escapeHtml(_clT('empty')) +
+    '<br><button type="button" onclick="setCourseLang(\'all\')">' +
+    escapeHtml(_clT('reset')) + '</button></div>';
+}
+// True when the current page has an active (non-'all') course-language filter —
+// pages use it to decide between "no result" and "no result *in this language*".
+function courseLangFiltering() { return window.TTPPrefs.courseLang() !== 'all'; }
+
+function _buildCourseLangSwitch() {
+  if (document.querySelector('.courselang-switch')) return;      // idempotent
+  var anchor = document.querySelector('header .lang-switch');
+  var header = document.querySelector('header');
+  if (!anchor && !header) return;                                // e.g. embed.html
+  _injectCourseLangCSS();
+  var cur = window.TTPPrefs.courseLang();
+  var box = document.createElement('div');
+  box.className = 'courselang-switch';
+  box.setAttribute('role', 'group');
+  box.setAttribute('aria-label', _clT('label'));
+  box.innerHTML = '<span class="courselang-label">' + escapeHtml(_clT('label')) + '</span>' +
+    ['all', 'fr', 'he'].map(function (v) {
+      return '<button type="button" class="courselang-opt' + (v === cur ? ' active' : '') +
+        '" data-course-lang="' + v + '" aria-pressed="' + (v === cur) + '">' +
+        escapeHtml(_clT(v)) + '</button>';
+    }).join('');
+  box.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-course-lang]');
+    if (b) setCourseLang(b.getAttribute('data-course-lang'));
+  });
+  // `.courselang-switch` is display:flex (block-level), so inserting it right
+  // after the inline-flex UI-language switch puts it on its own centered row.
+  if (anchor && anchor.parentNode) anchor.insertAdjacentElement('afterend', box);
+  else header.appendChild(box);
+}
+
+(function initCourseLangSwitch() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _buildCourseLangSwitch);
+  } else {
+    _buildCourseLangSwitch();
+  }
+})();
+
 // ─── Share row (WhatsApp-first) ──────────────────────────────────────────────
 // A row of share buttons for an episode/page: WhatsApp (lead), Telegram, email,
 // and copy-link. 100% client-side, no third-party tracking script — just plain
@@ -602,16 +815,19 @@ function _buildMobileNav() {
   if (!el || el.textContent.trim()) return;
   fetch('channels.json').then(function(r) { return r.ok ? r.json() : []; }).then(function(channels) {
     var enabled = channels.filter(function(c) { return c.enabled; });
-    return Promise.all(enabled.map(function(ch) {
-      return fetch('feeds/' + ch.slug + '.entries.json')
-        .then(function(r) { return r.ok ? r.json() : []; }).catch(function() { return []; });
-    })).then(function(results) {
+    // Entries come back already filtered by the course-language preference, so
+    // the header total never claims 31 624 classes while only 5 099 are shown.
+    return Promise.all(enabled.map(fetchChannelEntries)).then(function(results) {
       var totalEp = results.reduce(function(s, eps) { return s + eps.length; }, 0);
+      // Under a filter, a channel with nothing left in that language is not
+      // counted either — otherwise "22 rabbins · 5 099 cours" would be a lie.
+      var nCh = results.filter(function(eps) { return eps.length > 0; }).length;
       var totalH  = Math.round(totalEp * 0.75);
-      var lang = window.lang || 'fr';
+      var lang = window.TTPPrefs.uiLang();
       el.textContent = lang === 'he'
-        ? enabled.length + ' ערוצים · ' + totalEp + ' שיעורים · ~' + totalH + ' שעות'
-        : (window.lang === 'en' ? enabled.length + ' rabbis · ' + totalEp + ' classes · ~' + totalH + 'h of Torah' : enabled.length + ' rabbins · ' + totalEp + ' cours · ~' + totalH + 'h de Torah');
+        ? nCh + ' ערוצים · ' + totalEp + ' שיעורים · ~' + totalH + ' שעות'
+        : (lang === 'en' ? nCh + ' rabbis · ' + totalEp + ' classes · ~' + totalH + 'h of Torah'
+                         : nCh + ' rabbins · ' + totalEp + ' cours · ~' + totalH + 'h de Torah');
     });
   }).catch(function() {});
 })();
