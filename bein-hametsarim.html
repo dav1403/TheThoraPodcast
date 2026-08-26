@@ -462,7 +462,10 @@
   }
 
   function renderGrid() {
-    const data = [...allData].sort((a, b) => {
+    // Drop ravs with nothing left in the selected course language.
+    const base = courseLangFiltering() ? allData.filter(d => d.entries.length) : [...allData];
+    if (!base.length) { document.getElementById('app').innerHTML = courseLangEmptyHtml(); return; }
+    const data = base.sort((a, b) => {
       const la = latestEpisode(a.entries), lb = latestEpisode(b.entries);
       if (!la && !lb) return 0;
       if (!la) return 1;
@@ -539,11 +542,10 @@
     }
 
     const channelData = await Promise.all(channels.map(async ch => {
-      try {
-        const r = await fetch(`feeds/${ch.slug}.entries.json`);
-        const entries = r.ok ? await r.json() : [];
-        return { ch, entries };
-      } catch (_) { return { ch, entries: [] }; }
+      // Course-language preference applied at the source (js/utils.js): the
+      // rav bubbles, their counts and the header total all follow from here.
+      try { return { ch, entries: await fetchChannelEntries(ch) }; }
+      catch (_) { return { ch, entries: [] }; }
     }));
 
     // Speaker pseudo-channels: filter source-channel entries by title patterns,
@@ -564,7 +566,11 @@
 
     const totalEpisodes = channelData.reduce((sum, { entries }) => sum + entries.length, 0);
     const approxH = Math.round(totalEpisodes * 0.75);
-    const nRabbis = channels.length + speakers.length;
+    // Under a course-language filter, only count the ravs who still have a class
+    // in that language — otherwise the header would advertise silent rabbis.
+    const nRabbis = courseLangFiltering()
+      ? [...channelData, ...speakerData].filter(d => d.entries.length).length
+      : channels.length + speakers.length;
     document.getElementById('header-stats').textContent = lang === 'he'
       ? `${nRabbis} ערוצים · ${totalEpisodes} שיעורים · ~${approxH} שעות`
       : (lang === 'en'
@@ -629,7 +635,9 @@
     });
 
     fetch('home.json').then(r => r.ok ? r.json() : null).then(h => {
-      recents = (h && h.recents) || [];
+      // home.json bakes a per-episode `lang` — filter the playlist on it so the
+      // "instead of music" queue only plays classes in the chosen language.
+      recents = ((h && h.recents) || []).filter(ep => courseLangKeeps(ep));
       if (!recents.length) return;
       const he      = lang === 'he';
       const head   = he ? 'הפלייליסט שלכם לשלושת השבועות'        : (lang === 'en' ? 'Your playlist for these weeks' : 'Votre playlist pour ces semaines');

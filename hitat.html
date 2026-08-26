@@ -807,7 +807,11 @@
     if (!toShow.length) {
       const earlier = all.filter(x => x.key <= selKey).sort((a, b) => b.key - a.key);
       if (!earlier.length) {
-        results.innerHTML = `<div class="no-results" style="text-align:center;color:#aaa;padding:32px 20px;background:#fff;border-radius:12px;font-size:.9rem;">${t('no_hitat_ep')}</div>`;
+        // Nothing at all: distinguish "not published yet" from "your course
+        // language filter hides every Hitat class".
+        results.innerHTML = courseLangFiltering()
+          ? courseLangEmptyHtml()
+          : `<div class="no-results" style="text-align:center;color:#aaa;padding:32px 20px;background:#fff;border-radius:12px;font-size:.9rem;">${t('no_hitat_ep')}</div>`;
         return;
       }
       const latestKey = earlier[0].key;
@@ -901,17 +905,15 @@
   (async () => {
     let channels = [];
     try { channels = await fetch('channels.json').then(r => r.ok ? r.json() : []); } catch (_) {}
-    const enabled = channels.filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
+    const enabled = channels.filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author, podcast_language: ch.podcast_language }));
 
     const sub = document.getElementById('nav-rabbis-submenu');
     if (sub) sub.innerHTML = enabled.map(ch => `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`).join('');
 
     hitatAllData = await Promise.all(enabled.map(async ch => {
-      try {
-        const r = await fetch(`feeds/${ch.slug}.entries.json`);
-        const entries = r.ok ? await r.json() : [];
-        return { ch, entries };
-      } catch (_) { return { ch, entries: [] }; }
+      // Course-language preference applied at the source (js/utils.js).
+      try { return { ch, entries: await fetchChannelEntries(ch) }; }
+      catch (_) { return { ch, entries: [] }; }
     }));
 
     // Now that feeds are loaded, render the current date's episode list.

@@ -626,7 +626,11 @@
     const slice = items.slice(0, visibleCount);
 
     if (!slice.length) {
-      app.innerHTML = `<div class="state">${t('no_episodes')}</div>`;
+      // Never a blank page: when the course-language filter is what emptied it,
+      // say so and offer the way back to "Toutes".
+      app.innerHTML = courseLangFiltering() && !searchQuery && activeFilter === 'all'
+        ? courseLangEmptyHtml()
+        : `<div class="state">${t('no_episodes')}</div>`;
       return;
     }
 
@@ -655,7 +659,7 @@
       if (res.ok) {
         channels = (await res.json())
           .filter(ch => ch.enabled)
-          .map(ch => ({ slug: ch.slug, name: ch.podcast_author, platforms: ch.platforms || {} }));
+          .map(ch => ({ slug: ch.slug, name: ch.podcast_author, platforms: ch.platforms || {}, podcast_language: ch.podcast_language }));
       }
     } catch (_) {}
 
@@ -681,11 +685,10 @@
 
     // Load all episodes
     const allData = await Promise.all(channels.map(async ch => {
-      try {
-        const r = await fetch(`feeds/${ch.slug}.entries.json`);
-        const entries = r.ok ? await r.json() : [];
-        return { ch, entries };
-      } catch (_) { return { ch, entries: [] }; }
+      // fetchChannelEntries (js/utils.js) applies the course-language
+      // preference, so the list, the total and the chips all follow from here.
+      try { return { ch, entries: await fetchChannelEntries(ch) }; }
+      catch (_) { return { ch, entries: [] }; }
     }));
 
     // Flatten and sort by date desc
@@ -714,8 +717,10 @@
 
     // Build channel filter chips
     const filterRow = document.getElementById('filter-row');
-    for (const { ch } of allData) {
-      if (!ch) continue;
+    for (const { ch, entries } of allData) {
+      // Drop chips for channels that have nothing left in the chosen course
+      // language — a chip that always yields "no episode" is just noise.
+      if (!ch || !entries.length) continue;
       const btn = document.createElement('button');
       btn.className = 'filter-chip';
       btn.dataset.slug = ch.slug;

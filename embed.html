@@ -330,12 +330,25 @@
       .map(p => `<a class="plat-btn ${p.cls}" href="${escapeHtml(chInfo.platforms[p.key])}" target="_blank" rel="noopener" title="${p.label}">${platformSVG(p.key)}</a>`)
       .join('');
 
-    // Load episodes
+    // Load episodes.
+    // Course language: the widget lives on someone else's page, where the
+    // visitor has no control, so the EMBEDDER decides via ?courselang=fr|he
+    // (default: the stored site preference). A filter that would empty the
+    // widget is ignored — a dead embed on a partner site is worse than an
+    // unfiltered one.
     let episodes = [];
     try {
       const epRes = await fetch(`feeds/${slug}.entries.json`);
       if (epRes.ok) episodes = await epRes.json();
     } catch(_) {}
+
+    const forced = new URLSearchParams(location.search).get('courselang');
+    const wanted = (forced === 'fr' || forced === 'he' || forced === 'all')
+      ? forced : TTPPrefs.courseLang();
+    if (wanted !== 'all') {
+      const kept = episodes.filter(ep => episodeCourseLang(ep, chInfo) === wanted);
+      if (kept.length) episodes = kept;
+    }
 
     episodes.sort((a, b) => new Date(b.published) - new Date(a.published));
 

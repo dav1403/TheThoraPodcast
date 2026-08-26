@@ -234,15 +234,14 @@
     let channels = [];
     try {
       const r = await fetch('channels.json');
-      if (r.ok) channels = (await r.json()).filter(c => c.enabled).map(c => ({ slug: c.slug, name: c.podcast_author }));
+      if (r.ok) channels = (await r.json()).filter(c => c.enabled).map(c => ({ slug: c.slug, name: c.podcast_author, podcast_language: c.podcast_language }));
     } catch (_) {}
 
     const data = await Promise.all(channels.map(async ch => {
-      try {
-        const r = await fetch(`feeds/${ch.slug}.entries.json`);
-        const entries = r.ok ? await r.json() : [];
-        return { ch, entries };
-      } catch (_) { return { ch, entries: [] }; }
+      // Course-language preference applied at the source (js/utils.js): each
+      // hiloula card then counts and lists only classes in that language.
+      try { return { ch, entries: await fetchChannelEntries(ch) }; }
+      catch (_) { return { ch, entries: [] }; }
     }));
 
     // Match courses per hiloula
@@ -275,8 +274,12 @@
 
     const mount = document.getElementById('hil-list');
     mount.innerHTML = '';
+    // Every hiloula emptied by the language filter → one clear message with a
+    // way back, instead of a wall of "aucun cours".
+    const langEmptied = courseLangFiltering() && !cards.some(c => c.items.length);
+    if (langEmptied) mount.innerHTML = courseLangEmptyHtml();
     const fmt = new Intl.DateTimeFormat(lang === 'he' ? 'he-IL' : (lang === 'en' ? 'en-US' : 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric' });
-    cards.forEach((c, i) => {
+    (langEmptied ? [] : cards).forEach((c, i) => {
       const section = document.createElement('section');
       section.className = 'hil-card' + (i === 0 && c.next ? ' upcoming' : '');
       const nextTxt = c.next ? ` · <span class="hil-next">${t('next')} ${fmt.format(c.next)}</span>` : '';

@@ -765,7 +765,9 @@ function renderResults(slug, allData) {
   const body = document.getElementById('results-body');
 
   if (!groups.length) {
-    body.innerHTML = `<div class="no-results">${t('no_ep_found')}<br>${t('no_ep_hint')}</div>`;
+    body.innerHTML = courseLangFiltering()
+      ? courseLangEmptyHtml()
+      : `<div class="no-results">${t('no_ep_found')}<br>${t('no_ep_hint')}</div>`;
     document.getElementById('results').hidden = false;
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
@@ -1033,18 +1035,20 @@ function selectParacha(slug) {
   }
 
   // Load all episodes
-  const enabled = channels.filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
+  const enabled = channels.filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author, podcast_language: ch.podcast_language }));
   globalAllData = await Promise.all(enabled.map(async ch => {
     try {
-      const r = await fetch(`feeds/${ch.slug}.entries.json`);
-      const entries = r.ok ? await r.json() : [];
+      // Course-language preference applied at the source (js/utils.js), so the
+      // per-paracha counts and the book grid below are counts for that language.
+      const entries = await fetchChannelEntries(ch);
       entries.sort((a, b) => new Date(b.published) - new Date(a.published));
       return { ch, entries };
     } catch (_) { return { ch, entries: [] }; }
   }));
 
   const totalEp = globalAllData.reduce((s, {entries}) => s + entries.length, 0);
-  renderStats(globalAllData.length + speakers.length, totalEp);
+  const nCh = globalAllData.filter(d => d.entries.length).length;
+  renderStats(nCh + (nCh === globalAllData.length ? speakers.length : 0), totalEp);
 
   const sub = document.getElementById('nav-rabbis-submenu');
   if (sub) sub.innerHTML = enabled.map(ch =>

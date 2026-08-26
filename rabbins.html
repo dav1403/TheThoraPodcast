@@ -562,7 +562,12 @@
   }
 
   function getSorted(sort) {
-    const data = [...allData];
+    // A rav with no class left in the selected course language is dropped from
+    // the grid rather than shown as an empty bubble. Favourites are NEVER
+    // filtered — see render(), the user picked those explicitly.
+    const data = courseLangFiltering()
+      ? allData.filter(d => d.entries.length)
+      : [...allData];
     if (sort === 'alpha') {
       data.sort((a, b) => a.ch.podcast_author.localeCompare(b.ch.podcast_author, 'fr'));
     } else {
@@ -601,8 +606,9 @@
   function render() {
     let list = getSorted(currentSort);
     if (favOnly) {
+      // Favourites bypass the course-language filter entirely.
       const favs = getFavoriteRavs();
-      list = list.filter(d => favs.indexOf(d.ch.slug) !== -1);
+      list = allData.filter(d => favs.indexOf(d.ch.slug) !== -1);
     }
     if (searchQuery) {
       list = list
@@ -610,6 +616,12 @@
         .filter(x => x.r >= 0)
         .sort((a, b) => a.r - b.r)   // stable: name matches before title-only matches
         .map(x => x.d);
+    }
+    if (!list.length && !favOnly && !searchQuery && courseLangFiltering()) {
+      document.getElementById('app').innerHTML = courseLangEmptyHtml();
+      const nr = document.getElementById('no-results');
+      if (nr) nr.hidden = true;
+      return;
     }
     document.getElementById('app').innerHTML = list.map(bubbleHtml).join('');
     const noRes = document.getElementById('no-results');
@@ -700,13 +712,10 @@
     }
 
     const channelData = await Promise.all(channels.map(async ch => {
-      try {
-        const r = await fetch(`feeds/${ch.slug}.entries.json`);
-        const entries = r.ok ? await r.json() : [];
-        return { ch, entries };
-      } catch (_) {
-        return { ch, entries: [] };
-      }
+      // Course-language preference applied at the source (js/utils.js): the
+      // rav bubbles, their counts and the header total all follow from here.
+      try { return { ch, entries: await fetchChannelEntries(ch) }; }
+      catch (_) { return { ch, entries: [] }; }
     }));
 
     // Build speaker pseudo-channels by filtering source channel entries
@@ -732,7 +741,11 @@
 
     const totalEpisodes = channelData.reduce((sum, { entries }) => sum + entries.length, 0);
     const approxH = Math.round(totalEpisodes * 0.75);
-    const nRabbis = channels.length + speakers.length;
+    // Under a course-language filter, only count the ravs who still have a class
+    // in that language — otherwise the header would advertise silent rabbis.
+    const nRabbis = courseLangFiltering()
+      ? [...channelData, ...speakerData].filter(d => d.entries.length).length
+      : channels.length + speakers.length;
     document.getElementById('header-stats').textContent =
       lang === 'he'
         ? `${nRabbis} ערוצים · ${totalEpisodes} שיעורים · ~${approxH} שעות`

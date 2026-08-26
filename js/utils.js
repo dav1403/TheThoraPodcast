@@ -332,12 +332,37 @@ function _buildCourseLangSwitch() {
   else header.appendChild(box);
 }
 
-(function initCourseLangSwitch() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _buildCourseLangSwitch);
-  } else {
-    _buildCourseLangSwitch();
+// Generated channel pages bake their episode list into static HTML, with the
+// course language on each row (`data-ep-lang`, see generate_channel_pages.py).
+// Most channels are single-language and nothing happens; the mixed ones
+// (Rav-benizri, Nahal-Haim) get their other-language classes hidden, and the
+// on-page counter — any [data-ep-count] element — is rewritten to match.
+// No-op on pages without the attribute (older, not-yet-regenerated pages).
+function _applyCourseLangToStaticList() {
+  var pref = window.TTPPrefs.courseLang();
+  var rows = document.querySelectorAll('[data-ep-lang]');
+  if (!rows.length) return;
+  var shown = 0;
+  Array.prototype.forEach.call(rows, function (el) {
+    var keep = (pref === 'all') || (el.getAttribute('data-ep-lang') === pref);
+    el.hidden = !keep;
+    if (keep) shown++;
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-ep-count]'), function (el) {
+    el.textContent = String(shown);
+  });
+  if (shown === 0) {
+    var list = rows[0].parentNode;
+    if (list && !list.querySelector('.courselang-empty')) {
+      list.insertAdjacentHTML('beforeend', courseLangEmptyHtml());
+    }
   }
+}
+
+(function initCourseLangSwitch() {
+  var run = function () { _buildCourseLangSwitch(); _applyCourseLangToStaticList(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
 })();
 
 // ─── Share row (WhatsApp-first) ──────────────────────────────────────────────

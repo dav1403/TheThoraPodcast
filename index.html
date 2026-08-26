@@ -890,6 +890,9 @@
 
   // Hero: the single newest episode, featured big at the top of the home for a
   // clear headline (recents[0]). Plays straight from its baked home.json fields.
+  // recents[] is filtered by course language before this runs, so recents[0] is
+  // the newest class IN THE ACTIVE LANGUAGE — the hero never shows a hole (nor a
+  // hidden-language episode) when a filter is on.
   function buildHero() {
     const ep = recents[0];
     if (!ep) return null;
@@ -1136,8 +1139,12 @@
     await Promise.all(needed.map(async n => { shards[n] = await ftsLoadDocShard(n); }));
     return hits.map(h => {
       const row = (shards[Math.floor(h.id / size)] || [])[h.id % size];
-      return row ? { v: row[0], t: row[1], c: row[2], u: row[3], d: row[4] } : null;
-    }).filter(Boolean);
+      // row[5] = course language (search-fts docs shards, see
+      // scripts/build_transcript_index.py) — appended last, so an older shard
+      // without it simply reads as undefined and is kept.
+      return row ? { v: row[0], t: row[1], c: row[2], u: row[3], d: row[4], l: row[5] } : null;
+    }).filter(Boolean)
+      .filter(d => !d.l || courseLangKeeps(d));
   }
 
   // Pulls the real sentence around the first match out of the transcript.
@@ -1221,6 +1228,8 @@
 
     function renderResults(q) {
       const rows = (searchIndex || []).filter(ep => {
+        // search-index.json carries the course language in `l`.
+        if (!courseLangKeeps(ep)) return false;
         const t = (ep.t || '').toLowerCase();
         const c = (ep.c || '').toLowerCase();
         return t.includes(q) || c.includes(q);
@@ -1249,7 +1258,11 @@
       results.hidden = false;
       // The transcript section below may still be searching; hiding the global
       // "no episode found" line as soon as a title matched is enough here.
-      if (noRes) noRes.hidden = total > 0;
+      if (noRes) {
+        noRes.hidden = total > 0;
+        noRes.innerHTML = (total === 0 && courseLangFiltering())
+          ? courseLangEmptyHtml() : escapeHtml(t('no_results'));
+      }
     }
 
     let pending = false;
@@ -1298,6 +1311,8 @@
   // Rabbi round-robin, baked into home.json) with a card + a carousel of his
   // latest courses, playable on-page. Returns null when no spotlight is baked.
   function buildSpotlight() {
+    // Filtered out entirely (a Hebrew-only rav under the French filter)? Drop
+    // the section rather than render an empty "Découvrez le rav" block.
     const sp = spotlightData;
     if (!sp || !sp.episodes || !sp.episodes.length) return null;
     const he = lang === 'he';
@@ -1336,16 +1351,37 @@
       const res = await fetch('home.json');
       if (res.ok) {
         const home = await res.json();
-        channels = home.channels || [];
+        // home.json bakes a per-episode `lang` and per-language counters
+        // (stats.episodes_fr/_he, channels[].count_fr/_he, spotlight.count_fr/_he).
+        // Everything below therefore reads the numbers of the ACTIVE course
+        // language — never the 31 624 total while showing 5 099 classes.
+        channels = (home.channels || [])
+          .map(ch => Object.assign({}, ch, { count: courseLangCount(ch, 'count') }))
+          .filter(ch => ch.count > 0);
         speakers = home.speakers || [];
-        recents  = home.recents  || [];
+        recents  = (home.recents || []).filter(ep => courseLangKeeps(ep));
         spotlightData = home.spotlight || null;
-        renderStats((home.stats && home.stats.channels) || 0, (home.stats && home.stats.episodes) || 0);
+        if (spotlightData) {
+          spotlightData = Object.assign({}, spotlightData, {
+            count: courseLangCount(spotlightData, 'count'),
+            episodes: (spotlightData.episodes || []).filter(ep => courseLangKeeps(ep)),
+          });
+        }
+        // stats.channels counts channels AND speakers (37 vs 22 channels), so
+        // keep the baked figure unfiltered; under a filter, fall back to the
+        // channels that still have classes (+ speakers, which home.json does not
+        // break down per language).
+        renderStats(
+          courseLangFiltering() ? channels.length + speakers.length
+                                : ((home.stats && home.stats.channels) || 0),
+          courseLangCount(home.stats || {}, 'episodes'));
       }
     } catch (_) {}
 
     if (!channels.length) {
-      app.innerHTML = `<p class="state">${t('no_channels')}</p>`;
+      app.innerHTML = courseLangFiltering()
+        ? courseLangEmptyHtml()
+        : `<p class="state">${t('no_channels')}</p>`;
       return;
     }
 

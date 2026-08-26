@@ -593,7 +593,7 @@
   async function loadAll() {
     try {
       const res = await fetch('channels.json');
-      if (res.ok) CHANNELS = (await res.json()).filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
+      if (res.ok) CHANNELS = (await res.json()).filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author, podcast_language: ch.podcast_language }));
     } catch(_) {}
 
     let speakerCount = 0;
@@ -603,11 +603,9 @@
     } catch(_) {}
 
     const results = await Promise.allSettled(
-      CHANNELS.map(ch =>
-        fetch(`feeds/${ch.slug}.entries.json`)
-          .then(r => r.ok ? r.json() : [])
-          .then(entries => ({ ch, entries }))
-      )
+      // fetchChannelEntries (js/utils.js) applies the course-language filter,
+      // so every per-theme count below is already the count for that language.
+      CHANNELS.map(ch => fetchChannelEntries(ch).then(entries => ({ ch, entries })))
     );
     allData = results
       .filter(r => r.status === 'fulfilled')
@@ -631,7 +629,8 @@
     );
 
     const totalEp = allEpisodes.length;
-    renderStats(allData.length + speakerCount, totalEp);
+    const nCh = allData.filter(d => d.entries.length).length;
+    renderStats(nCh + (nCh === allData.length ? speakerCount : 0), totalEp);
 
     renderGrid();
 
@@ -663,6 +662,10 @@
         <div class="theme-count">${count} ${epWord}</div>
       </button>`;
     }).join('');
+    if (!allEpisodes.length && courseLangFiltering()) {
+      grid.innerHTML = courseLangEmptyHtml();
+      return;
+    }
 
     grid.addEventListener('click', e => {
       const btn = e.target.closest('.theme-btn');
@@ -688,7 +691,9 @@
       : items.filter(x => x.ch.slug === activeRabbiFilter);
 
     if (visible.length === 0) {
-      list.innerHTML = `<li class="state">${t('no_ep')}</li>`;
+      list.innerHTML = courseLangFiltering() && activeRabbiFilter === 'all'
+        ? `<li>${courseLangEmptyHtml()}</li>`
+        : `<li class="state">${t('no_ep')}</li>`;
       return;
     }
     list.innerHTML = visible.map(({ ep, ch, gidx }) => {

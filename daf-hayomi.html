@@ -482,7 +482,12 @@
   function renderList() {
     const app = document.getElementById('app');
     const items = workingItems();
-    if (!items.length) { app.innerHTML = `<div class="state">${t('no_episodes')}</div>`; return; }
+    if (!items.length) {
+      app.innerHTML = courseLangFiltering() && !window._globalSearch
+        ? courseLangEmptyHtml()
+        : `<div class="state">${t('no_episodes')}</div>`;
+      return;
+    }
 
     // Group by channel slug
     const groups = new Map();
@@ -518,7 +523,7 @@
     let channels = [];
     try {
       const res = await fetch('channels.json');
-      if (res.ok) channels = (await res.json()).filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
+      if (res.ok) channels = (await res.json()).filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author, podcast_language: ch.podcast_language }));
     } catch(_) {}
     if (!channels.length) { app.innerHTML = `<div class="state">${t('no_episodes')}</div>`; return; }
 
@@ -526,7 +531,9 @@
     if (sub) sub.innerHTML = channels.map(ch => `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`).join('');
 
     const allData = await Promise.all(channels.map(async ch => {
-      try { const r = await fetch(`feeds/${ch.slug}.entries.json`); return { ch, entries: r.ok ? await r.json() : [] }; }
+      // Already filtered by the course-language preference (js/utils.js), so
+      // the Daf counts + chips below are the counts for the chosen language.
+      try { return { ch, entries: await fetchChannelEntries(ch) }; }
       catch(_) { return { ch, entries: [] }; }
     }));
 

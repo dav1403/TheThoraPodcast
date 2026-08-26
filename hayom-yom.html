@@ -501,7 +501,11 @@
     if (!toShow.length) {
       const sorted = all.slice().sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
       if (!sorted.length) {
-        results.innerHTML = `<div class="no-results" style="text-align:center;color:#aaa;padding:32px 20px;background:#fff;border-radius:12px;font-size:.9rem;">${t('no_hy_ep')}</div>`;
+        // Nothing at all: distinguish "not published yet" from "your course
+        // language filter hides every Hayom Yom class".
+        results.innerHTML = courseLangFiltering()
+          ? courseLangEmptyHtml()
+          : `<div class="no-results" style="text-align:center;color:#aaa;padding:32px 20px;background:#fff;border-radius:12px;font-size:.9rem;">${t('no_hy_ep')}</div>`;
         return;
       }
       toShow = [sorted[0]];
@@ -712,17 +716,15 @@
   (async () => {
     let channels = [];
     try { channels = await fetch('channels.json').then(r => r.ok ? r.json() : []); } catch (_) {}
-    const enabled = channels.filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author }));
+    const enabled = channels.filter(ch => ch.enabled).map(ch => ({ slug: ch.slug, name: ch.podcast_author, podcast_language: ch.podcast_language }));
 
     const subNav = document.getElementById('nav-rabbis-submenu');
     if (subNav) subNav.innerHTML = enabled.map(ch => `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`).join('');
 
     hyChannels = await Promise.all(enabled.map(async ch => {
-      try {
-        const r = await fetch(`feeds/${ch.slug}.entries.json`);
-        const entries = r.ok ? await r.json() : [];
-        return { ch, entries };
-      } catch (_) { return { ch, entries: [] }; }
+      // Course-language preference applied at the source (js/utils.js).
+      try { return { ch, entries: await fetchChannelEntries(ch) }; }
+      catch (_) { return { ch, entries: [] }; }
     }));
 
     // Re-render for the current date now that feeds are loaded.
