@@ -12,7 +12,10 @@ def _run(gen, fixture_workdir, all_data, speakers, entries_cache):
 def test_home_json_structure(gen, fixture_workdir, all_data, speakers, entries_cache):
     home = _run(gen, fixture_workdir, all_data, speakers, entries_cache)
     assert set(home) >= {"generated_at", "stats", "channels", "speakers", "recents"}
-    assert set(home["stats"]) == {"channels", "episodes"}
+    # `episodes_fr`/`episodes_he` are part of the contract: any UI that filters
+    # on the course language needs a total it can actually display.
+    assert set(home["stats"]) == {"channels", "episodes", "episodes_fr", "episodes_he"}
+    assert home["stats"]["episodes_fr"] + home["stats"]["episodes_he"] == home["stats"]["episodes"]
     for r in home["recents"]:
         assert set(r) >= {"slug", "ch_name", "title", "published", "url"}
 

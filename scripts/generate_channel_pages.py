@@ -8,10 +8,12 @@ import json
 import html as _html
 import re
 import unicodedata
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 
 from build_mobile_index import build_mobile_index
+from lang_detect import episode_lang
 
 BASE_URL       = "https://thetorahpodcast.net"
 CHANNELS_FILE  = Path("channels.json")
@@ -1413,11 +1415,26 @@ def build_home_json(
         thumbnail (repImg)
       - stats.channels = channels + speakers count (matches renderStats today)
       - stats.episodes = total episodes across channels
+
+    Every episode also carries `lang` (the language of the CLASS, not of the
+    UI — scripts/lang_detect.py) and every precomputed total is doubled by a
+    per-language breakdown (`count_fr`/`count_he`, `episodes_fr`/`episodes_he`),
+    without which any language filter in the UI would display wrong counts.
     """
-    channels_out = [
-        {"slug": ch["slug"], "name": ch["podcast_author"], "count": len(entries)}
-        for ch, entries in all_data
-    ]
+    # Every pre-computed total is also broken down per course language, because
+    # the moment the UI filters on a language a single `count` is wrong (a rav
+    # with 1 648 classes shows 515 to a French speaker). count_fr + count_he ==
+    # count, always — detect_lang() only ever returns "fr" or "he".
+    channels_out = []
+    for ch, entries in all_data:
+        per_lang = Counter(episode_lang(ep, ch) for ep in entries)
+        channels_out.append({
+            "slug": ch["slug"],
+            "name": ch["podcast_author"],
+            "count": len(entries),
+            "count_fr": per_lang["fr"],
+            "count_he": per_lang["he"],
+        })
 
     # Recents: flatten across channels, drop HITAT DU JOUR, sort newest-first.
     flat = []
@@ -1440,6 +1457,7 @@ def build_home_json(
             "video_id": ep.get("video_id", ""),
             "url": ep_path(ch["slug"], ep),
             "duration_secs": ep.get("duration_secs", 0) or 0,
+            "lang": episode_lang(ep, ch),
         })
 
     # Speakers with >=1 matched episode; repImg = most-recent matched thumbnail.
@@ -1482,10 +1500,13 @@ def build_home_json(
                 except Exception:
                     info = {}
             if eps:
+                sp_lang = Counter(episode_lang(e, sp_ch) for e in sp_entries)
                 spotlight = {
                     "slug": sp_ch["slug"],
                     "name": sp_ch["podcast_author"],
                     "count": len(sp_entries),
+                    "count_fr": sp_lang["fr"],
+                    "count_he": sp_lang["he"],
                     "description": (info.get("description") or "")[:280],
                     "episodes": [{
                         "slug": sp_ch["slug"],
@@ -1497,6 +1518,7 @@ def build_home_json(
                         "video_id": e.get("video_id", ""),
                         "url": ep_path(sp_ch["slug"], e),
                         "duration_secs": e.get("duration_secs", 0) or 0,
+                        "lang": episode_lang(e, sp_ch),
                     } for e in eps],
                 }
     except Exception:
@@ -1504,7 +1526,12 @@ def build_home_json(
 
     home = {
         "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "stats": {"channels": site_channels, "episodes": site_episodes},
+        "stats": {
+            "channels": site_channels,
+            "episodes": site_episodes,
+            "episodes_fr": sum(c["count_fr"] for c in channels_out),
+            "episodes_he": sum(c["count_he"] for c in channels_out),
+        },
         "channels": channels_out,
         "speakers": speakers_out,
         "recents": recents_out,
@@ -1525,7 +1552,11 @@ def build_search_index(all_data: list[tuple]) -> None:
     (home.json only) at load. Each entry carries ONLY what the search UI needs —
     no descriptions or other heavy fields — to keep the payload small:
       t = episode title, c = channel/rav display name, u = episode page URL
-      (identical to ep_path(slug, ep)), d = published date (YYYY-MM-DD).
+      (identical to ep_path(slug, ep)), d = published date (YYYY-MM-DD),
+      l = course language ("fr"/"he", see scripts/lang_detect.py) so the search
+      UI can filter results without a second lookup. `l` costs ~10 bytes per
+      entry (+5 % on the file) and is emitted for every entry rather than for
+      Hebrew only, so the consumer never has to guess a default.
 
     Unlike home.json (which drops HITAT DU JOUR from the recents row), the search
     index intentionally covers the ENTIRE catalog, HITAT included — every episode
@@ -1547,6 +1578,7 @@ def build_search_index(all_data: list[tuple]) -> None:
                 "c": ch_name,
                 "u": ep_path(slug, ep),
                 "d": published[:10],
+                "l": episode_lang(ep, ch),
             })
     Path("search-index.json").write_text(
         json.dumps(index, ensure_ascii=False, separators=(",", ":")) + "\n",

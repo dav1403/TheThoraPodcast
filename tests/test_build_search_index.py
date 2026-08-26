@@ -11,7 +11,8 @@ def test_index_required_fields(gen, fixture_workdir, all_data):
     index = _run(gen, fixture_workdir, all_data)
     assert index, "search index should not be empty"
     for e in index:
-        assert set(e) == {"t", "c", "u", "d"}
+        assert set(e) == {"t", "c", "u", "d", "l"}
+        assert e["l"] in ("fr", "he")  # language of the CLASS, not of the UI
         assert e["t"], "title must be non-empty"
         assert e["u"], "url must be non-empty"
         assert e["u"].endswith(".html")
