@@ -364,6 +364,12 @@
     .site-footer { background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }
     .site-footer a { color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }
     .site-footer a:hover { color: #fff; }
+    /* Prev/next paracha navigation (canonical annual order, wraps around). */
+    .paracha-nav { display: flex; justify-content: space-between; gap: 8px; margin: 10px 0 14px; }
+    .pnav-btn { flex: 0 1 auto; max-width: 48%; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-family: inherit; font-size: .85rem; color: #1a1a2e; transition: background .12s, border-color .12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pnav-btn:hover { background: #f4f4f8; border-color: #bbb; }
+    .pnav-next { margin-inline-start: auto; }
+
     /* Recently-taught parachiot quick row (sorted by most recent course, desc). */
     .recent-parachiot { margin: 6px 0 20px; }
     .rp-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; margin: 4px 0 8px; }
@@ -440,6 +446,10 @@
       <div class="results-he" id="results-he"></div>
       <div class="results-count" id="results-count"></div>
     </div>
+    <div class="paracha-nav" id="paracha-nav" hidden>
+      <button type="button" class="pnav-btn" id="pnav-prev" onclick="navParacha(-1)"></button>
+      <button type="button" class="pnav-btn pnav-next" id="pnav-next" onclick="navParacha(1)"></button>
+    </div>
     <div id="results-body"></div>
   </div>
 </main>
@@ -468,6 +478,7 @@ const I18N = {
     cycle_dia:'🌍 Diaspora',
     listen:'Écouter', playing:'En cours…',
     no_parasha:'Non disponible',
+    prev_paracha:'Paracha précédente', next_paracha:'Paracha suivante',
     no_ep_found:'Aucun épisode trouvé pour cette paracha.',
     no_ep_hint:'Les cours sont peut-être titrés différemment.',
     ep_singular:'épisode', ep_plural:'épisodes',
@@ -484,6 +495,7 @@ const I18N = {
     cycle_dia:'🌍 Diaspora',
     listen:'Listen', playing:'Playing…',
     no_parasha:'Not available',
+    prev_paracha:'Previous parasha', next_paracha:'Next parasha',
     no_ep_found:'No episodes found for this parasha.',
     no_ep_hint:'The classes may be titled differently.',
     ep_singular:'episode', ep_plural:'episodes',
@@ -500,6 +512,7 @@ const I18N = {
     cycle_dia:'🌍 חו"ל',
     listen:'האזן', playing:'מתנגן…',
     no_parasha:'לא זמין',
+    prev_paracha:'פרשה קודמת', next_paracha:'פרשה הבאה',
     no_ep_found:'לא נמצאו פרקים לפרשה זו.',
     no_ep_hint:'ייתכן שהשיעורים כותרתם שונה.',
     ep_singular:'פרק', ep_plural:'פרקים',
@@ -706,8 +719,41 @@ playerAudio.addEventListener('ended', () => {
 
 
 
+// ─── Prev/next paracha navigation ────────────────────────────────────────────
+// Canonical annual order (the BOOKS list), wrap-around at both ends.
+// Deliberately independent of the Israel/Diaspora weekly split: the split only
+// affects which paracha is "current" this week, not the reading order itself.
+const PARACHA_ORDER = BOOKS.flatMap(b => b.parashiot);
+function parachaName(slug) {
+  const p = PARACHIOT[slug];
+  return lang === 'he' ? p.he : p.fr;
+}
+function navParacha(dir) {
+  const i = PARACHA_ORDER.indexOf(selectedSlug);
+  if (i === -1) return;
+  selectParacha(PARACHA_ORDER[(i + dir + PARACHA_ORDER.length) % PARACHA_ORDER.length]);
+}
+function updateParachaNav(slug) {
+  const nav = document.getElementById('paracha-nav');
+  const i = PARACHA_ORDER.indexOf(slug);
+  if (!nav) return;
+  if (i === -1) { nav.hidden = true; return; }
+  const prev = PARACHA_ORDER[(i - 1 + PARACHA_ORDER.length) % PARACHA_ORDER.length];
+  const next = PARACHA_ORDER[(i + 1) % PARACHA_ORDER.length];
+  const pb = document.getElementById('pnav-prev');
+  const nb = document.getElementById('pnav-next');
+  pb.textContent = '‹ ' + parachaName(prev);
+  pb.title = t('prev_paracha');
+  pb.setAttribute('aria-label', t('prev_paracha') + ' — ' + parachaName(prev));
+  nb.textContent = parachaName(next) + ' ›';
+  nb.title = t('next_paracha');
+  nb.setAttribute('aria-label', t('next_paracha') + ' — ' + parachaName(next));
+  nav.hidden = false;
+}
+
 function renderResults(slug, allData) {
   const p = PARACHIOT[slug];
+  updateParachaNav(slug);
   const groups = findEpisodesForParacha(slug, allData);
   const total = groups.reduce((s, g) => s + g.episodes.length, 0);
 
