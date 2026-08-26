@@ -16,8 +16,11 @@ JSON files it actually needs:
                            PREFIX_LEN-character normalised prefix of the term.
                            The "t_" prefix keeps names like "aux" from colliding
                            with Windows reserved device names on a dev machine.
-      docs/<n>.json        [[video_id, title, channel, url, date], ...] — doc
-                           metadata for ids [n*DOC_SHARD, (n+1)*DOC_SHARD)
+      docs/<n>.json        [[video_id, title, channel, url, date, lang], ...] —
+                           doc metadata for ids [n*DOC_SHARD, (n+1)*DOC_SHARD).
+                           `lang` = language of the CLASS ("fr"/"he", see
+                           scripts/lang_detect.py); appended last so an older
+                           client that destructures 5 fields keeps working.
       .build-state.json    corpus fingerprint + timestamp (skip identical rebuild)
 
 The front-end (index.html) tokenises the query the same way, fetches one term
@@ -48,6 +51,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from generate_channel_pages import ep_path  # noqa: E402  (URL form must match the site)
+from lang_detect import LANGS, episode_lang  # noqa: E402
 
 FEEDS_DIR = Path("feeds")
 TRANSCRIPTS_DIR = FEEDS_DIR / "transcripts"
@@ -55,7 +59,7 @@ CHANNELS_FILE = Path("channels.json")
 OUT_DIR = Path("search-fts")
 STATE_FILE = OUT_DIR / ".build-state.json"
 
-INDEX_VERSION = 1          # bump when the on-disk format changes
+INDEX_VERSION = 2          # bump when the on-disk format changes (2 = doc rows carry `lang`)
 PREFIX_LEN = 3             # term shard key = first PREFIX_LEN normalised chars
 DOC_SHARD = 1000           # documents per docs/<n>.json shard
 MIN_LEN_LATIN = 3          # shorter latin tokens are noise ("le", "un", "ça")
@@ -139,7 +143,7 @@ def shard_key(term: str) -> str:
 
 
 def load_episodes() -> dict[str, dict]:
-    """video_id -> {t, c, u, d}. Mirrors build_search_index(): an episode
+    """video_id -> {t, c, u, d, l}. Mirrors build_search_index(): an episode
     without title or published date has no generated page, so it is skipped."""
     channels = json.loads(CHANNELS_FILE.read_text(encoding="utf-8-sig"))
     episodes: dict[str, dict] = {}
@@ -161,6 +165,7 @@ def load_episodes() -> dict[str, dict]:
                 "c": ch["podcast_author"],
                 "u": ep_path(ch["slug"], ep),
                 "d": published[:10],
+                "l": episode_lang(ep, ch),
             }
     return episodes
 
@@ -240,7 +245,11 @@ def main():
     if STATE_FILE.exists():
         try:
             prev = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-            if prev.get("index_version") == INDEX_VERSION:
+            # Doc ids are format-independent, so they are carried over from
+            # ANY previous index version. Dropping them on a version bump would
+            # renumber every document and rewrite all ~17 000 term shards in git
+            # for nothing.
+            if int(prev.get("index_version") or 0) <= INDEX_VERSION:
                 prev_doc_ids = {k: int(v) for k, v in (prev.get("doc_ids") or {}).items()}
         except Exception as e:
             print(f"  WARN: previous state unusable ({e}) — doc ids will be reassigned")
@@ -284,7 +293,7 @@ def main():
             doc_id = next_id
             doc_ids[vid] = doc_id
             next_id += 1
-        entries_by_id[doc_id] = [vid, meta["t"], meta["c"], meta["u"], meta["d"]]
+        entries_by_id[doc_id] = [vid, meta["t"], meta["c"], meta["u"], meta["d"], meta["l"]]
         for tok, n in tf.items():
             n = min(n, TF_CAP)
             postings.setdefault(tok, []).append((doc_id, n))
@@ -356,6 +365,8 @@ def main():
         "max_postings": MAX_POSTINGS,
         "title_boost": TITLE_BOOST,
         "n_docs": indexed,
+        "n_docs_by_lang": {lang: sum(1 for d in docs if d and d[5] == lang)
+                           for lang in LANGS},
         "max_doc_id": next_id - 1,
         "n_terms": kept,
         "n_term_shards": len(shards),
