@@ -22,6 +22,12 @@ JSON:
 Only episodes belonging to at least one bucket are emitted, and each episode is
 stored ONCE as a positional array; buckets hold integer indices into it.
 
+Each row carries the language of the CLASS (`lang`, last position — see
+scripts/lang_detect.py), each bucket is capped PER LANGUAGE, and every `total`
+in the manifest comes with a `total_fr`/`total_he` breakdown, so the app can
+offer a "French only / Hebrew only" filter without ever showing an empty bucket
+or a count it cannot honour.
+
 Called by `generate_channel_pages.py`; also runnable standalone from the repo
 root, where it reads `channels.json` + `feeds/*.entries.json` and writes the
 `mobile/` directory (one manifest + one file per bucket, so the app downloads
@@ -35,6 +41,8 @@ import re
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
+
+from lang_detect import LANGS, episode_lang
 
 # ─── Tables — kept byte-identical to the site pages ──────────────────────────
 # THEMES: themes.html · PARACHIOT: paracha.html · HILOULOT: hiloula.html
@@ -511,6 +519,13 @@ _YTIMG = re.compile(r"^https://i\.ytimg\.com/vi/([^/]+)/([a-z_]+)\.jpg$")
 # `total` from the manifest, so a cap only bounds how deep you can scroll — it
 # never changes the counts the user reads. Newest-first, so the cap drops the
 # oldest classes.
+#
+# ⚠️ The cap is applied PER COURSE LANGUAGE (see Bucket below), not on the merged
+# stream. Filtering after the cap would be broken: 16 % of the catalogue is
+# Hebrew and it is very unevenly spread (Rav-benizri is 69 % Hebrew), so a theme
+# whose 300 most recent classes happen to be Hebrew would come out EMPTY for a
+# French-speaking user. Capping each language separately guarantees every
+# language gets its own `CAP_*` most recent classes in every bucket.
 CAP_THEME = 300
 CAP_PARACHA = 250
 CAP_DAF = 300
@@ -566,8 +581,12 @@ def _encode_thumb(thumb: str, video_id: str) -> str:
     return thumb or ""
 
 
-def _row(ch_idx: int, ep: dict, prefixes: dict[str, int]) -> list:
-    """One episode as a positional row — the app's `decodeEpisode` mirrors it."""
+def _row(ch_idx: int, ep: dict, prefixes: dict[str, int], lang: str) -> list:
+    """One episode as a positional row — the app's `decodeEpisode` mirrors it.
+
+    `lang` is APPENDED at the end (index 7): an older app build simply ignores
+    the extra element, so the index stays backward-compatible.
+    """
     url = ep["audio_url"]
     head, _, tail = url.rpartition("/")
     idx = prefixes.get(head + "/")
@@ -582,12 +601,66 @@ def _row(ch_idx: int, ep: dict, prefixes: dict[str, int]) -> list:
         int(ep.get("duration_secs") or 0),
         audio,
         _encode_thumb(ep.get("thumbnail") or "", ep["video_id"]),
+        lang,
     ]
 
 
+class Bucket:
+    """A capped, newest-first list of rows whose cap is enforced per language.
+
+    `total`/`total_fr`/`total_he` always count EVERY matching class (the cap
+    only bounds the payload), so the counters the app displays stay exact
+    whichever language filter is on.
+    """
+
+    __slots__ = ("rows", "cap", "totals", "kept")
+
+    def __init__(self, cap: int) -> None:
+        self.rows: list[list] = []
+        self.cap = cap
+        self.totals: Counter = Counter()
+        self.kept: Counter = Counter()
+
+    def add(self, lang: str, make_row) -> None:
+        self.totals[lang] += 1
+        if self.kept[lang] < self.cap:
+            self.kept[lang] += 1
+            self.rows.append(make_row())
+
+    def __bool__(self) -> bool:
+        return bool(self.rows)
+
+    @property
+    def total(self) -> int:
+        return sum(self.totals.values())
+
+    def counters(self) -> dict:
+        """`total` + one `total_<lang>` per language, for the manifest."""
+        out = {"total": self.total}
+        out.update({f"total_{lang}": self.totals[lang] for lang in LANGS})
+        return out
+
+
 def _write(name: str, payload: dict) -> int:
+    """Write a bucket, but ONLY if its data actually changed.
+
+    Anti-churn: `generated_at` alone used to rewrite all ~110 files (≈4 MB) at
+    every hourly run, i.e. 4 MB of new blobs per hour in a repo already at
+    ~28 GB, while in practice a handful of buckets receive a new class. When the
+    payload is identical apart from its timestamp, the file on disk is left
+    untouched (git sees nothing) and keeps its previous `generated_at` — which
+    stays truthful: that IS when this data was computed.
+    """
     path = OUT_DIR / name
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n"
+    if path.exists():
+        try:
+            old = json.loads(path.read_text(encoding="utf-8"))
+            if {k: v for k, v in old.items() if k != "generated_at"} == \
+               {k: v for k, v in payload.items() if k != "generated_at"}:
+                return len(path.read_text(encoding="utf-8").encode("utf-8"))
+        except (OSError, ValueError, AttributeError):
+            pass  # unreadable/legacy shape — just rewrite it
     path.write_text(text, encoding="utf-8", newline="\n")
     return len(text.encode("utf-8"))
 
@@ -599,32 +672,27 @@ def build_mobile_index(all_data: list[tuple]) -> None:
     channels = [[ch["slug"], ch["podcast_author"]] for ch, _ in all_data]
 
     # Flatten newest-first so every bucket comes out pre-sorted.
-    flat: list[tuple[int, dict]] = []
-    for ch_idx, (_ch, entries) in enumerate(all_data):
+    flat: list[tuple[int, dict, str]] = []
+    for ch_idx, (ch, entries) in enumerate(all_data):
         for ep in entries:
             if not ep.get("title") or not ep.get("published") or not ep.get("audio_url"):
                 continue
-            flat.append((ch_idx, ep))
+            flat.append((ch_idx, ep, episode_lang(ep, ch)))
     flat.sort(key=lambda x: x[1].get("published", ""), reverse=True)
 
-    counts = Counter(ep["audio_url"].rpartition("/")[0] + "/" for _i, ep in flat)
+    counts = Counter(ep["audio_url"].rpartition("/")[0] + "/" for _i, ep, _l in flat)
     prefix_list = [p for p, n in counts.most_common() if n >= 5]
     prefixes = {p: i for i, p in enumerate(prefix_list)}
 
-    themes: dict[str, list] = {t: [] for t in THEMES}
-    theme_totals: dict[str, int] = {t: 0 for t in THEMES}
-    paracha: dict[str, list] = {s: [] for s in PARACHIOT}
-    paracha_totals: dict[str, int] = {s: 0 for s in PARACHIOT}
-    hiloula: dict[str, list] = {str(i): [] for i in range(len(HILOULOT))}
-    hiloula_totals = [0] * len(HILOULOT)
+    themes: dict[str, Bucket] = {t: Bucket(CAP_THEME) for t in THEMES}
+    paracha: dict[str, Bucket] = {s: Bucket(CAP_PARACHA) for s in PARACHIOT}
+    hiloula: dict[str, Bucket] = {str(i): Bucket(CAP_HILOULA) for i in range(len(HILOULOT))}
     hitat: dict[str, list] = {}
     hayomyom: dict[str, list] = {}
-    daf: list = []
-    daf_total = 0
-    durations: dict[str, list] = {slug: [] for slug, *_ in DURATIONS}
-    duration_totals: dict[str, int] = {slug: 0 for slug, *_ in DURATIONS}
+    daf = Bucket(CAP_DAF)
+    durations: dict[str, Bucket] = {slug: Bucket(CAP_DURATION) for slug, *_ in DURATIONS}
 
-    for ch_idx, ep in flat:
+    for ch_idx, ep, lang in flat:
         title = ep["title"]
         tags = ep.get("tags") or []
         row = None
@@ -632,26 +700,22 @@ def build_mobile_index(all_data: list[tuple]) -> None:
         def get_row():
             nonlocal row
             if row is None:
-                row = _row(ch_idx, ep, prefixes)
+                row = _row(ch_idx, ep, prefixes, lang)
             return row
 
         bin_slug = duration_bin(int(ep.get("duration_secs") or 0))
         if bin_slug:
-            duration_totals[bin_slug] += 1
-            if len(durations[bin_slug]) < CAP_DURATION:
-                durations[bin_slug].append(get_row())
+            durations[bin_slug].add(lang, get_row)
 
         if "Daf Hayomi" in tags:
-            daf_total += 1
-            if len(daf) < CAP_DAF:
-                daf.append(get_row())
+            daf.add(lang, get_row)
 
         for tag in tags:
             if tag in themes:
-                theme_totals[tag] += 1
-                if len(themes[tag]) < CAP_THEME:
-                    themes[tag].append(get_row())
+                themes[tag].add(lang, get_row)
 
+        # Hitat / Hayom Yom are keyed by day (a handful of classes each), so they
+        # are never capped and need no per-language filling.
         is_hitat = bool(IS_HITAT.search(title))
         if is_hitat:
             key = parse_hitat_key(title)
@@ -667,41 +731,37 @@ def build_mobile_index(all_data: list[tuple]) -> None:
         if not is_hitat:
             for slug in PARACHIOT:
                 if matches_paracha(title, slug):
-                    paracha_totals[slug] += 1
-                    if len(paracha[slug]) < CAP_PARACHA:
-                        paracha[slug].append(get_row())
+                    paracha[slug].add(lang, get_row)
 
         description = ep.get("description") or ""
         for i, _h in enumerate(HILOULOT):
             if matches_hiloula(title, description, i):
-                hiloula_totals[i] += 1
-                if len(hiloula[str(i)]) < CAP_HILOULA:
-                    hiloula[str(i)].append(get_row())
+                hiloula[str(i)].add(lang, get_row)
 
     written = 0
-    for theme, rows in themes.items():
-        if not rows:
+
+    def _bucket_payload(bucket: Bucket) -> dict:
+        return {"generated_at": generated_at, **bucket.counters(), "episodes": bucket.rows}
+
+    for theme, bucket in themes.items():
+        if not bucket:
             continue
-        written += _write(
-            f"theme-{THEME_SLUGS[theme]}.json",
-            {"generated_at": generated_at, "total": theme_totals[theme], "episodes": rows},
-        )
-    for slug, rows in paracha.items():
-        if not rows:
+        written += _write(f"theme-{THEME_SLUGS[theme]}.json", _bucket_payload(bucket))
+    for slug, bucket in paracha.items():
+        if not bucket:
             continue
-        written += _write(
-            f"paracha-{slug}.json",
-            {"generated_at": generated_at, "total": paracha_totals[slug], "episodes": rows},
-        )
-    for slug, rows in durations.items():
-        if not rows:
+        written += _write(f"paracha-{slug}.json", _bucket_payload(bucket))
+    for slug, bucket in durations.items():
+        if not bucket:
             continue
-        written += _write(
-            f"duration-{slug}.json",
-            {"generated_at": generated_at, "total": duration_totals[slug], "episodes": rows},
-        )
-    written += _write("daf.json", {"generated_at": generated_at, "total": daf_total, "episodes": daf})
-    written += _write("hiloula.json", {"generated_at": generated_at, "tsadikim": hiloula})
+        written += _write(f"duration-{slug}.json", _bucket_payload(bucket))
+    written += _write("daf.json", _bucket_payload(daf))
+    # Per-tsadik counters live in the manifest (`hiloulot[i].total*`), so the
+    # bucket file itself stays a plain index -> rows map.
+    written += _write("hiloula.json", {
+        "generated_at": generated_at,
+        "tsadikim": {k: b.rows for k, b in hiloula.items()},
+    })
 
     # Hitat and Hayom Yom are keyed by day; the app only ever needs one day, so
     # they are sharded (by Gregorian month / by Hebrew month) instead of served
@@ -742,29 +802,33 @@ def build_mobile_index(all_data: list[tuple]) -> None:
             "thumb_slugs": thumb_slugs,
         },
         "audio_prefixes": prefix_list,
-        "daf": {"file": "daf.json", "total": daf_total},
+        # `langs` advertises the values `lang` (row index 7) can take, and every
+        # `total` is doubled by `total_fr`/`total_he` so a language-filtered UI
+        # never has to display a count it cannot honour.
+        "langs": list(LANGS),
+        "daf": {"file": "daf.json", **daf.counters()},
         "themes": [
             {"name": t, "slug": THEME_SLUGS[t], "file": f"theme-{THEME_SLUGS[t]}.json",
-             "total": theme_totals[t]}
+             **themes[t].counters()}
             for t in THEMES if themes[t]
         ],
         "parachiot": [
             {"slug": s, "fr": PARACHIOT[s]["fr"], "he": PARACHIOT[s]["he"],
              "hebcal": PARACHIOT[s]["hebcal"], "book": book,
              "file": f"paracha-{s}.json" if paracha[s] else None,
-             "total": paracha_totals[s]}
+             **paracha[s].counters()}
             for book, slugs in BOOKS for s in slugs
         ],
         "durations": [
             {"slug": slug, "label": label, "min": lo, "max": hi,
-             "file": f"duration-{slug}.json", "total": duration_totals[slug]}
+             "file": f"duration-{slug}.json", **durations[slug].counters()}
             for slug, label, lo, hi in DURATIONS if durations[slug]
         ],
         "hitat_days": sorted(hitat),
         "hayomyom_days": sorted(hayomyom, key=int),
         "hiloulot": [
             {"fr": h["fr"], "he": h["he"], "extra": h["extra"], "hm": h["hm"], "hd": h["hd"],
-             "total": hiloula_totals[i]}
+             **hiloula[str(i)].counters()}
             for i, h in enumerate(HILOULOT)
         ],
     }
