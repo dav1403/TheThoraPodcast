@@ -1358,7 +1358,11 @@
         channels = (home.channels || [])
           .map(ch => Object.assign({}, ch, { count: courseLangCount(ch, 'count') }))
           .filter(ch => ch.count > 0);
-        speakers = home.speakers || [];
+        // Speakers carry count_fr/count_he too (older home.json may not: then
+        // `count` is absent and courseLangCount returns 0 — keep them rather
+        // than wrongly hiding a rav until the next regeneration).
+        speakers = (home.speakers || []).filter(sp =>
+          !courseLangFiltering() || sp.count === undefined || courseLangCount(sp, 'count') > 0);
         recents  = (home.recents || []).filter(ep => courseLangKeeps(ep));
         spotlightData = home.spotlight || null;
         if (spotlightData) {

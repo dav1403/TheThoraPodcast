@@ -66,7 +66,10 @@ def test_home_speakers_only_when_matched(
     assert "rav-invite-test" in slugs
     assert "rav-sans-episode" not in slugs
     for s in home["speakers"]:
-        assert set(s) == {"slug", "name", "img"}
+        assert set(s) == {"slug", "name", "img", "count", "count_fr", "count_he"}
+        # Same invariant as the channels: the per-language split is exhaustive,
+        # so the homepage can show a language count without re-deriving it.
+        assert s["count_fr"] + s["count_he"] == s["count"] > 0
 
 
 def test_home_channels_counts_match(gen, fixture_workdir, all_data, speakers, entries_cache):

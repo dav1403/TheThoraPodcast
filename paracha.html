@@ -1048,7 +1048,9 @@ function selectParacha(slug) {
 
   const totalEp = globalAllData.reduce((s, {entries}) => s + entries.length, 0);
   const nCh = globalAllData.filter(d => d.entries.length).length;
-  renderStats(nCh + (nCh === globalAllData.length ? speakers.length : 0), totalEp);
+  // Same as themes.html: speakers' episodes are not loaded here, so they are
+  // left out of the count as soon as a course-language filter is active.
+  renderStats(nCh + (courseLangFiltering() ? 0 : speakers.length), totalEp);
 
   const sub = document.getElementById('nav-rabbis-submenu');
   if (sub) sub.innerHTML = enabled.map(ch =>

@@ -630,7 +630,10 @@
 
     const totalEp = allEpisodes.length;
     const nCh = allData.filter(d => d.entries.length).length;
-    renderStats(nCh + (nCh === allData.length ? speakerCount : 0), totalEp);
+    // This page never loads the speakers' episodes, so under a filter it can
+    // only vouch for the channels — count those alone rather than claim ravs
+    // that may have nothing left in the selected language.
+    renderStats(nCh + (courseLangFiltering() ? 0 : speakerCount), totalEp);
 
     renderGrid();
 

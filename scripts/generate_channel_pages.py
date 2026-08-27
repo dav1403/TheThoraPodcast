@@ -1465,17 +1465,29 @@ def build_home_json(
 
     # Speakers with >=1 matched episode; repImg = most-recent matched thumbnail.
     speakers_out = []
+    by_slug = {c["slug"]: c for c, _ in all_data}
     for sp in speakers:
         matched = []
+        sp_lang = Counter()
         for ch_slug in sp.get("from_channels", []):
             for ep in entries_cache.get(ch_slug, []):
                 if speaker_matches(ep.get("title", ""), sp["title_patterns"]):
                     matched.append(ep)
+                    sp_lang[episode_lang(ep, by_slug.get(ch_slug))] += 1
         if not matched:
             continue
         matched.sort(key=lambda x: x.get("published", ""), reverse=True)
         rep_img = next((e.get("thumbnail") for e in matched if e.get("thumbnail")), "")
-        speakers_out.append({"slug": sp["slug"], "name": sp["name"], "img": rep_img})
+        # count_fr/count_he: without them the homepage cannot tell which of the
+        # 15 speakers still teach in the language the visitor selected, and its
+        # "N rabbins" would contradict rabbins.html (which loads the real
+        # entries and can count exactly).
+        speakers_out.append({
+            "slug": sp["slug"], "name": sp["name"], "img": rep_img,
+            "count": len(matched),
+            "count_fr": sp_lang["fr"],
+            "count_he": sp_lang["he"],
+        })
 
     # Spotlight "Découvrez le rav" — mirror the social "Zoom Rabbi" round-robin so
     # the homepage features the SAME rav currently promoted on Facebook/Instagram.
