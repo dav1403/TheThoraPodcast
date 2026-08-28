@@ -79,7 +79,6 @@
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
-  <script src="js/utils.js"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -500,63 +499,14 @@
     .fts-snippet mark { background: #ffe9d2; color: #b4530a; padding: 0 1px; border-radius: 2px; }
     .fts-state { color: #aaa; font-size: .82rem; padding: 6px 2px; }
 
-    /* Persistent player */
-    #player {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: #1a1a2e;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 16px;
-      box-shadow: 0 -2px 16px rgba(0,0,0,.25);
-      z-index: 200;
-      transform: translateY(0);
-      transition: transform .25s ease;
-    }
-    #player.hidden { transform: translateY(100%); }
-    #player-art {
-      width: 44px; height: 44px;
-      border-radius: 6px;
-      object-fit: cover;
-      background: #333;
-      flex-shrink: 0;
-    }
-    #player-info { min-width: 0; flex: 1; }
-    #player-title {
-      font-size: 0.82rem;
-      font-weight: 600;
-      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
-    }
-    #player-channel { font-size: 0.68rem; color: #99a; }
-    #player-audio {
-      flex: 2;
-      min-width: 120px;
-      height: 32px;
-      accent-color: #e87722;
-    }
-    #player-close {
-      background: none;
-      border: none;
-      color: #778;
-      font-size: 1.1rem;
-      cursor: pointer;
-      padding: 4px 6px;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-    #player-close:hover { color: #fff; }
+    /* The persistent bottom player (markup + CSS + controls) lives in
+       js/utils.js — single source shared by every page. */
 
     @media (max-width: 500px) {
       .episode-thumb, .episode-thumb-ph { display: none; }
-      #player-art { display: none; }
     }
     .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
     .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
     .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:#1a1a2e; color:#fff; padding:8px 18px; border-radius:20px; font-size:.82rem; z-index:500; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 14px rgba(0,0,0,.3); }
     .toast.show { opacity:1; }
     .ep-btn-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
@@ -633,18 +583,10 @@
   <div class="state loading">Chargement…</div>
 </main>
 
-<div id="player" class="hidden">
-  <img id="player-art" src="" alt="">
-  <div id="player-info">
-    <div id="player-title"></div>
-    <div id="player-channel"></div>
-  </div>
-  <audio id="player-audio" controls></audio>
-  <button id="speed-cycle-btn" title="Vitesse de lecture">1×</button>
-  <button id="player-close" title="Fermer">✕</button>
-</div>
 <div class="toast" id="toast"></div>
 
+<!-- utils.js builds the bottom player before the page script runs. -->
+<script src="js/utils.js"></script>
 <script>
   // ─── i18n ─────────────────────────────────────────────────────────────────
   const I18N = {
@@ -772,29 +714,8 @@
   let speakers = [];   // [{ slug, name, img }]  (only speakers with >=1 episode)
   let recents  = [];   // [{ slug, ch_name, title, published, thumbnail, audio_url, video_id, url, duration_secs }]
   let spotlightData = null; // { slug, name, count, description, episodes:[…] } — featured rav (mirrors social Zoom Rabbi)
-  let activeBtn = null, currentEpId = null;
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-
-  const playerEl    = document.getElementById('player');
-  const playerAudio = document.getElementById('player-audio');
-  const playerTitle = document.getElementById('player-title');
-  const playerCh    = document.getElementById('player-channel');
-  const playerArt   = document.getElementById('player-art');
-
-  const SPEEDS = [1, 1.25, 1.5, 2];
-  const speedCycleBtn = document.getElementById('speed-cycle-btn');
-  function updateSpeedBtn() {
-    speedCycleBtn.textContent = currentSpeed + '×';
-    speedCycleBtn.classList.toggle('active', currentSpeed !== 1);
-  }
-  updateSpeedBtn();
-  speedCycleBtn.addEventListener('click', () => {
-    const idx = SPEEDS.indexOf(currentSpeed);
-    currentSpeed = SPEEDS[idx === -1 ? 1 : (idx + 1) % SPEEDS.length];
-    localStorage.setItem('playbackSpeed', currentSpeed);
-    if (playerAudio) playerAudio.playbackRate = currentSpeed;
-    updateSpeedBtn();
-  });
+  // The bar itself (markup, CSS, play/pause, ±15/+30, speed, progress, resume
+  // memory, Media Session) is owned by TTPPlayer in js/utils.js.
 
   function showToast(msg) {
     const toast = document.getElementById('toast');
@@ -813,27 +734,16 @@
 
 
   function loadInPlayer(ep, chName, slug) {
-    currentEpId = ep.video_id;
-    playerTitle.textContent = ep.title;
-    playerCh.textContent    = chName;
-    // 44 px slot — never the 3000 px master. Falls back thumbnail -> PNG master
+    // 42 px slot — never the 3000 px master. Falls back thumbnail -> PNG master
     // (a brand-new channel may not have a generated thumbnail yet).
-    playerArt.onerror       = () => { playerArt.onerror = null; playerArt.src = `artwork/${slug}.png`; };
-    playerArt.src           = ep.thumbnail || `artwork/thumb/${slug}.webp`;
-    playerAudio.src         = ep.audio_url;
-    playerAudio.playbackRate = currentSpeed;
-    const saved = parseInt(localStorage.getItem('resume_' + ep.video_id) || '0');
-    if (saved > 5) {
-      playerAudio.addEventListener('loadedmetadata', () => { playerAudio.currentTime = saved; }, { once: true });
-    }
-    playerAudio.play();
-    playerEl.classList.remove('hidden');
+    const audio = TTPPlayer.load({
+      id: ep.video_id, title: ep.title, channel: chName,
+      art: ep.thumbnail || `artwork/thumb/${slug}.webp`, src: ep.audio_url
+    });
+    const art = document.getElementById('player-art');
+    if (art) art.onerror = () => { art.onerror = null; art.src = `artwork/${slug}.png`; };
+    return audio;
   }
-
-  playerAudio.addEventListener('timeupdate', () => {
-    if (currentEpId && playerAudio.currentTime > 5)
-      localStorage.setItem('resume_' + currentEpId, Math.floor(playerAudio.currentTime));
-  });
 
   // The home renders only the recents row (deep per-channel lists moved to the
   // dedicated <slug>.html pages), so a recent card plays straight from its own
@@ -865,26 +775,7 @@
     if (ep) loadInPlayer(ep, ep.ch_name, ep.slug);
   });
 
-  document.getElementById('player-close').addEventListener('click', () => {
-    playerAudio.pause();
-    playerEl.classList.add('hidden');
-    currentEpId = null;
-    if (activeBtn) {
-      activeBtn.classList.remove('playing');
-      activeBtn.innerHTML = playIcon() + ' ' + t('listen');
-      activeBtn = null;
-    }
-  });
-
-  playerAudio.addEventListener('ended', () => {
-    if (currentEpId) localStorage.removeItem('resume_' + currentEpId);
-    currentEpId = null;
-    if (activeBtn) {
-      activeBtn.classList.remove('playing');
-      activeBtn.innerHTML = playIcon() + ' ' + t('listen');
-      activeBtn = null;
-    }
-  });
+  // Closing the bar and clearing `resume_<id>` on end are handled by TTPPlayer.
 
 
 

@@ -495,19 +495,7 @@ CSS = """\
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -789,16 +777,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
     </div>
   </div>
 </div>
-<div id="player" class="hidden">
-  <img id="player-art" src="" alt="">
-  <div id="player-info">
-    <div id="player-title"></div>
-    <div id="player-channel"></div>
-  </div>
-  <audio id="player-audio" controls></audio>
-  <button id="speed-cycle-btn" title="Vitesse de lecture">1×</button>
-  <button id="player-close" title="Fermer">✕</button>
-</div>
+<!-- The bottom player is injected by utils.js (single shared source). -->
 <script src="js/utils.js"></script>
 <script>
   const I18N = {{
@@ -877,37 +856,24 @@ def render_page(ch: dict, entries: list, all_channels: list,
     const slot = document.getElementById('ch-fav-slot');
     if (slot && typeof favStarHtml === 'function') slot.innerHTML = favStarHtml(slot.dataset.slug, 'on-channel');
   }})();
-  // Floating player
-  const playerEl    = document.getElementById('player');
-  const playerAudio = document.getElementById('player-audio');
-  const playerTitle = document.getElementById('player-title');
-  const playerCh    = document.getElementById('player-channel');
-  const playerArt   = document.getElementById('player-art');
+  // Floating player — the bar itself (markup, CSS, play/pause, +-15/+30, speed,
+  // progress hairline, resume memory, Media Session) lives in js/utils.js.
+  const playerAudio = TTPPlayer.audio();
   let currentEpId   = null;
   function loadInPlayer(btn) {{
     const epId  = btn.dataset.epId;
-    const audio = btn.dataset.audio;
-    const title = btn.dataset.title;
-    const thumb = btn.dataset.thumb || '';
     document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
-    if (currentEpId === epId && !playerAudio.paused) {{
-      playerAudio.pause();
+    if (currentEpId === epId && TTPPlayer.isPlaying()) {{
+      TTPPlayer.audio().pause();
       currentEpId = null;
       return;
     }}
     currentEpId = epId;
     btn.classList.add('playing');
-    playerTitle.textContent = title;
-    playerCh.textContent    = '{esc(name)}';
-    playerArt.src           = thumb;
-    playerEl.classList.remove('hidden');
-    if (playerAudio.src !== audio) {{
-      playerAudio.src = audio;
-      const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-      if (saved > 5) playerAudio.addEventListener('loadedmetadata', () => {{ playerAudio.currentTime = saved; }}, {{once:true}});
-    }}
-    playerAudio.playbackRate = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-    playerAudio.play();
+    TTPPlayer.load({{
+      id: epId, title: btn.dataset.title, channel: '{esc(name)}',
+      art: btn.dataset.thumb || '', src: btn.dataset.audio
+    }});
   }}
   document.addEventListener('click', e => {{
     const playBtn = e.target.closest('.play-btn[data-ep-id]');
@@ -919,38 +885,18 @@ def render_page(ch: dict, entries: list, all_channels: list,
     }});
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   }});
-  // Player speed — single cycle button
-  const SPEEDS = [1, 1.25, 1.5, 2];
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  const speedCycleBtn = document.getElementById('speed-cycle-btn');
-  function updateSpeedBtn() {{
-    speedCycleBtn.textContent = currentSpeed + '×';
-    speedCycleBtn.classList.toggle('active', currentSpeed !== 1);
-  }}
-  updateSpeedBtn();
-  speedCycleBtn.addEventListener('click', () => {{
-    const idx = SPEEDS.indexOf(currentSpeed);
-    currentSpeed = SPEEDS[idx === -1 ? 1 : (idx + 1) % SPEEDS.length];
-    localStorage.setItem('playbackSpeed', currentSpeed);
-    if (playerAudio) playerAudio.playbackRate = currentSpeed;
-    updateSpeedBtn();
-  }});
-  // Resume save & ended
+  // Speed, resume position and closing are owned by TTPPlayer; the page only
+  // keeps its own list buttons in sync with the bar.
   if (playerAudio) {{
-    playerAudio.addEventListener('timeupdate', () => {{
-      if (currentEpId && playerAudio.currentTime > 5)
-        localStorage.setItem('resume_' + currentEpId, Math.floor(playerAudio.currentTime));
-    }});
-    playerAudio.addEventListener('ended', () => {{
-      if (currentEpId) localStorage.removeItem('resume_' + currentEpId);
-      document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
-      currentEpId = null;
-    }});
+    ['ended', 'pause'].forEach(ev => playerAudio.addEventListener(ev, () => {{
+      if (!TTPPlayer.isPlaying()) {{
+        document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+        if (playerAudio.ended) currentEpId = null;
+      }}
+    }}));
   }}
-  // Player close
-  document.getElementById('player-close').addEventListener('click', () => {{
-    playerAudio.pause();
-    playerEl.classList.add('hidden');
+  const playerCloseBtn = document.getElementById('player-close');
+  if (playerCloseBtn) playerCloseBtn.addEventListener('click', () => {{
     document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
     currentEpId = null;
   }});
@@ -961,13 +907,13 @@ def render_page(ch: dict, entries: list, all_channels: list,
       playerAudio.addEventListener('play', () => {{
         if (currentEpId && !ga4Played[currentEpId]) {{
           ga4Played[currentEpId] = true;
-          gtag('event', 'audio_play', {{ep_title: playerTitle.textContent, rav: '{esc(name)}'}});
+          gtag('event', 'audio_play', {{ep_title: (document.getElementById('player-title') || {{}}).textContent || '', rav: '{esc(name)}'}});
         }}
       }});
       playerAudio.addEventListener('timeupdate', () => {{
         if (currentEpId && !ga4Completed[currentEpId] && playerAudio.duration > 0 && playerAudio.currentTime / playerAudio.duration >= 0.9) {{
           ga4Completed[currentEpId] = true;
-          gtag('event', 'audio_complete', {{ep_title: playerTitle.textContent, rav: '{esc(name)}'}});
+          gtag('event', 'audio_complete', {{ep_title: (document.getElementById('player-title') || {{}}).textContent || '', rav: '{esc(name)}'}});
         }}
       }});
     }}
@@ -1391,9 +1337,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
       // toggle the panel open/closed.
       e.preventDefault(); e.stopPropagation();
       const text = Array.from(body.querySelectorAll('p'))
-        .map(p => p.textContent.trim()).join('
-
-');
+        .map(p => p.textContent.trim()).join('\n\n');
       navigator.clipboard.writeText(text).then(() => {{
         btn.textContent = t('transcript_copied');
         showToast(t('transcript_copied'));

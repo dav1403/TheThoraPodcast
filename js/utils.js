@@ -467,7 +467,9 @@ function buildShareRow(url, title, opts) {
 // The player already persists position under `resume_<epId>` (see index.html /
 // generate_channel_pages.py). These helpers read that back for a "Reprendre" UI.
 function getResumePosition(epId) {
-  var v = parseInt(localStorage.getItem('resume_' + epId) || '0', 10);
+  var raw = '0';
+  try { raw = localStorage.getItem('resume_' + epId) || '0'; } catch (_) {}
+  var v = parseInt(raw, 10);
   return (v > 5) ? v : 0;  // ignore <5s (matches the write threshold)
 }
 function formatMmSs(secs) {
@@ -857,60 +859,469 @@ function _buildMobileNav() {
   }).catch(function() {});
 })();
 
-// ─── Media Session (lock-screen / control-center controls) ───────────────────
-// Wires the shared #player-audio element to the OS Media Session API so the
-// currently-playing class shows up with artwork + title on the lock screen and
-// in the notification shade, with working play/pause/seek buttons. This is the
-// SITE-SIDE half of "background audio":
-//   • iOS (Capacitor wrapper w/ UIBackgroundModes:audio + AVAudioSession.playback):
-//     this makes playback continue and be controllable with the screen locked.
-//   • Android WebView: surfaces the media notification & metadata, but the WebView
-//     still suspends playback in the deep background — a native MediaSession
-//     foreground service is required for reliable screen-off playback there
-//     (see mobile/native-config/, tracked as a build-time task).
-// No-op when the API or the player element is absent (older browsers, pages
-// without a player). Reads metadata straight from the existing player DOM, so it
-// stays correct across index.html, generated channel pages and the other players.
-(function setupMediaSession() {
-  function init() {
-    if (!('mediaSession' in navigator)) return;
-    var audio = document.getElementById('player-audio');
-    if (!audio) return;
-    var ms = navigator.mediaSession;
+// ─── Persistent bottom player — SINGLE SOURCE for every page ─────────────────
+// Before this block the bar existed in three unsynchronised copies (index.html,
+// the generated-page template in scripts/generate_channel_pages.py, and a few
+// hand-written pages), each with its own CSS. The markup, the CSS and the
+// controls now live here only, following the same auto-injection pattern as
+// _buildCourseLangSwitch()/_injectCourseLangCSS() above.
+//
+// Two ways in:
+//   • TTPPlayer.load({id,title,channel,art,src})  → plays in the bar's own <audio>
+//   • TTPPlayer.attach(audioEl, meta)             → the bar drives an existing
+//     <audio> (episode pages), so their resume/speed/GA listeners stay live.
+//
+// Legacy pages that still ship their own `<div id="player">` are UPGRADED in
+// place: the existing #player-audio / #player-title / #player-channel /
+// #player-art / #player-close nodes are MOVED into the new layout (never
+// recreated), so every listener those pages registered keeps working. Their
+// old `#speed-cycle-btn` is kept in the DOM but hidden — the bar owns speed now.
+//
+// The native `<audio controls>` widget is gone: it looked and behaved
+// differently in every browser (Chrome's ⋮ menu vs Safari's AirPlay), ate twice
+// the width of the title, and duplicated the speed control.
+var TTP_NOW_KEY = 'ttp_now_playing';
+var TTP_NOW_MAX_AGE = 7 * 24 * 3600 * 1000;   // a restored bar older than a week is noise
 
-    function updateMetadata() {
-      var titleEl = document.getElementById('player-title');
-      var chEl    = document.getElementById('player-channel');
-      var artEl   = document.getElementById('player-art');
-      var title = (titleEl && titleEl.textContent.trim()) || 'The Torah Podcast';
-      var artist = (chEl && chEl.textContent.trim()) || 'The Torah Podcast';
-      var art = (artEl && artEl.getAttribute('src')) || '/favicon.png';
+function _ttpFmtTime(s) {
+  s = Math.max(0, Math.floor(s || 0));
+  var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
+  var mm = (h > 0 && m < 10) ? '0' + m : String(m);
+  return (h > 0 ? h + ':' : '') + mm + ':' + (x < 10 ? '0' : '') + x;
+}
+
+// Circular-arrow skip icon with the offset written inside it (±15 / +30).
+function _ttpSkipIcon(back, n) {
+  var arrow = back ? 'M12 5V2L8 6l4 4V7a5.5 5.5 0 1 1-5.5 5.5'
+                   : 'M12 5V2l4 4-4 4V7a5.5 5.5 0 1 0 5.5 5.5';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+    '<path d="' + arrow + '"/>' +
+    '<text x="12" y="16.2" text-anchor="middle" font-size="7.6" font-weight="700" ' +
+    'fill="currentColor" stroke="none">' + n + '</text></svg>';
+}
+
+window.TTPPlayer = (function () {
+  var SPEEDS = [1, 1.25, 1.5, 2];
+  var root = null, cur = null, meta = {}, built = false;
+  var elTitle, elCh, elArt, elTime, elFill, elSeek, elPlay, elSpeed, elClose;
+  var pendingSeek = 0, restoredPos = 0, lastNowWrite = 0, msBound = null;
+
+  function speed() {
+    var v = parseFloat(localStorage.getItem('playbackSpeed') || '1');
+    return (SPEEDS.indexOf(v) === -1) ? 1 : v;
+  }
+
+  function _injectCSS() {
+    if (document.getElementById('ttp-player-css')) return;
+    var s = document.createElement('style');
+    s.id = 'ttp-player-css';
+    s.textContent =
+      '#player{position:fixed;bottom:0;left:0;right:0;display:block;padding:0;gap:0;' +
+        'background:#1a1a2e;color:#fff;z-index:200;box-shadow:0 -2px 16px rgba(0,0,0,.28);' +
+        'transform:translateY(0);transition:transform .25s ease;font-family:inherit}' +
+      '#player.hidden{transform:translateY(110%)}' +
+      // 2 px hairline at the very top of the bar (mirrors the app mini-player),
+      // with an invisible taller strip around it so it stays tappable.
+      '#player-seek{position:relative;height:2px;background:rgba(255,255,255,.16);cursor:pointer;' +
+        'touch-action:none;outline:none}' +
+      '#player-seek::before{content:"";position:absolute;left:0;right:0;top:-9px;bottom:-7px}' +
+      '#player-seek:focus-visible{box-shadow:0 0 0 2px #e87722}' +
+      '#player-bar-fill{height:100%;width:0;background:#e87722;pointer-events:none}' +
+      '.ttp-pbody{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;' +
+        'padding:7px 12px;padding-bottom:calc(7px + env(safe-area-inset-bottom,0px))}' +
+      '#player-art{width:42px;height:42px;border-radius:6px;object-fit:cover;background:#333;' +
+        'flex:0 0 auto;display:block}' +
+      // The title takes what is left — the controls no longer get twice its width.
+      '#player-info{flex:1 1 auto;min-width:0}' +
+      '#player-title{font-size:.82rem;font-weight:600;line-height:1.25;white-space:normal;' +
+        'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;' +
+        'text-overflow:clip}' +
+      '#player-sub{display:flex;align-items:center;gap:6px;margin-top:2px;font-size:.68rem;' +
+        'color:#a3a3bb;line-height:1.3;min-width:0}' +
+      '#player-channel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}' +
+      '#player-time{flex:0 0 auto;font-variant-numeric:tabular-nums;white-space:nowrap}' +
+      '#player-audio{display:none!important}' +
+      '#player #speed-cycle-btn{display:none!important}' +   // legacy duplicate, kept for old page JS
+      '.ttp-ctrls{display:flex;align-items:center;gap:1px;flex:0 0 auto}' +
+      '.ttp-btn{display:inline-flex;align-items:center;justify-content:center;background:none;' +
+        'border:none;color:rgba(255,255,255,.82);font-family:inherit;cursor:pointer;padding:0;' +
+        'height:44px;border-radius:10px;-webkit-tap-highlight-color:transparent;' +
+        'transition:background .12s,color .12s}' +
+      '.ttp-btn:hover{background:rgba(255,255,255,.1);color:#fff}' +
+      '.ttp-btn:focus-visible{outline:2px solid #e87722;outline-offset:-2px}' +
+      '.ttp-skip{width:38px}.ttp-skip svg{width:22px;height:22px;display:block}' +
+      '#ttp-speed-btn{width:42px;font-size:.72rem;font-weight:700;letter-spacing:.01em}' +
+      '#ttp-speed-btn.active{color:#e87722}' +
+      '#player-close{width:34px;font-size:1.05rem;line-height:1;color:#8a8aa5}' +
+      '#player-close:hover{color:#fff}' +
+      // Round, high-contrast play/pause — the one control everybody looks for.
+      '#ttp-play-btn{width:46px;height:46px;border-radius:50%;background:#e87722;color:#fff;' +
+        'flex:0 0 auto;margin:0 2px}' +
+      '#ttp-play-btn:hover{background:#f2872f;color:#fff}' +
+      '#ttp-play-btn svg{width:15px;height:15px;display:block;margin-inline-start:1px}' +
+      '#ttp-play-btn.is-playing svg{margin-inline-start:0}' +
+      // 414 px and below: the artwork is the first thing that can go.
+      '@media(max-width:480px){#player-art{display:none}.ttp-pbody{gap:8px;padding-left:10px;padding-right:8px}}' +
+      '@media(max-width:360px){.ttp-skip{width:34px}#ttp-speed-btn{width:38px}#player-close{width:30px}}';
+    document.head.appendChild(s);
+  }
+
+  // Reuse a legacy node when the page shipped one, otherwise create it.
+  function _slot(id, tag, cls) {
+    var el = document.getElementById(id);
+    if (!el) { el = document.createElement(tag); el.id = id; }
+    if (cls) el.className = cls;
+    return el;
+  }
+
+  function ensure() {
+    if (built) return root;
+    built = true;
+    _injectCSS();
+    root = document.getElementById('player');
+    var isNew = !root;
+    if (isNew) {
+      root = document.createElement('div');
+      root.id = 'player';
+      root.className = 'hidden';
+    }
+    root.setAttribute('role', 'region');
+    root.setAttribute('aria-label', _t3('Lecteur', 'Player', 'נגן'));
+
+    elSeek = _slot('player-seek', 'div');
+    elSeek.setAttribute('role', 'slider');
+    elSeek.setAttribute('tabindex', '0');
+    elSeek.setAttribute('aria-label', _t3('Progression du cours', 'Class progress', 'התקדמות השיעור'));
+    elSeek.setAttribute('aria-valuemin', '0');
+    elSeek.setAttribute('aria-valuemax', '100');
+    elSeek.setAttribute('aria-valuenow', '0');
+    elFill = _slot('player-bar-fill', 'div');
+    elSeek.appendChild(elFill);
+
+    var body = document.createElement('div');
+    body.className = 'ttp-pbody';
+
+    elArt = _slot('player-art', 'img');
+    elArt.setAttribute('alt', '');
+    // No `src=""` placeholder: an empty src makes the browser re-request the page.
+    if (!elArt.getAttribute('src')) elArt.style.visibility = 'hidden';
+    elTitle = _slot('player-title', 'div');
+    elCh = _slot('player-channel', 'span');
+    elTime = _slot('player-time', 'span');
+    var sub = document.createElement('div');
+    sub.id = 'player-sub';
+    sub.appendChild(elCh);
+    sub.appendChild(elTime);
+    var info = _slot('player-info', 'div');
+    info.textContent = '';
+    info.appendChild(elTitle);
+    info.appendChild(sub);
+
+    var back = document.createElement('button');
+    back.type = 'button'; back.id = 'ttp-back-btn'; back.className = 'ttp-btn ttp-skip';
+    back.innerHTML = _ttpSkipIcon(true, 15);
+    var fwd = document.createElement('button');
+    fwd.type = 'button'; fwd.id = 'ttp-fwd-btn'; fwd.className = 'ttp-btn ttp-skip';
+    fwd.innerHTML = _ttpSkipIcon(false, 30);
+    elPlay = document.createElement('button');
+    elPlay.type = 'button'; elPlay.id = 'ttp-play-btn'; elPlay.className = 'ttp-btn';
+    elPlay.innerHTML = playIcon();
+    elSpeed = document.createElement('button');
+    elSpeed.type = 'button'; elSpeed.id = 'ttp-speed-btn'; elSpeed.className = 'ttp-btn';
+    elClose = _slot('player-close', 'button', 'ttp-btn');
+    elClose.type = 'button';
+    elClose.textContent = '✕';
+
+    // aria-label on every control (a title= tooltip never shows on a phone).
+    back.setAttribute('aria-label', _t3('Reculer de 15 secondes', 'Back 15 seconds', 'אחורה 15 שניות'));
+    fwd.setAttribute('aria-label', _t3('Avancer de 30 secondes', 'Forward 30 seconds', 'קדימה 30 שניות'));
+    elSpeed.setAttribute('aria-label', _t3('Vitesse de lecture', 'Playback speed', 'מהירות השמעה'));
+    elClose.setAttribute('aria-label', _t3('Fermer le lecteur', 'Close the player', 'סגירת הנגן'));
+    back.title = back.getAttribute('aria-label');
+    fwd.title = fwd.getAttribute('aria-label');
+    elSpeed.title = elSpeed.getAttribute('aria-label');
+    elClose.title = elClose.getAttribute('aria-label');
+
+    var ctrls = document.createElement('div');
+    ctrls.className = 'ttp-ctrls';
+    ctrls.appendChild(back);
+    ctrls.appendChild(elPlay);
+    ctrls.appendChild(fwd);
+    ctrls.appendChild(elSpeed);
+    ctrls.appendChild(elClose);
+
+    body.appendChild(elArt);
+    body.appendChild(info);
+    body.appendChild(ctrls);
+
+    // The bar's own <audio>, unless the page already shipped one (legacy pages
+    // hold a live reference to it, so it must be moved and never rebuilt).
+    var ownAudio = document.getElementById('player-audio');
+    if (!ownAudio) {
+      ownAudio = document.createElement('audio');
+      ownAudio.id = 'player-audio';
+      ownAudio.preload = 'none';
+    }
+    ownAudio.removeAttribute('controls');
+
+    var legacySpeed = document.getElementById('speed-cycle-btn');
+
+    root.textContent = '';
+    root.appendChild(elSeek);
+    root.appendChild(body);
+    root.appendChild(ownAudio);
+    if (legacySpeed) root.appendChild(legacySpeed);   // kept alive, hidden by CSS
+    if (isNew) document.body.appendChild(root);
+
+    // ── wiring ───────────────────────────────────────────────────────────────
+    elPlay.addEventListener('click', function () {
+      if (!cur) return;
+      if (cur.paused) { _armResume(); cur.play(); } else cur.pause();
+    });
+    back.addEventListener('click', function () { skip(-15); });
+    fwd.addEventListener('click', function () { skip(30); });
+    elSpeed.addEventListener('click', function () {
+      var i = SPEEDS.indexOf(speed());
+      setSpeed(SPEEDS[(i + 1) % SPEEDS.length]);
+    });
+    elClose.addEventListener('click', function () {
+      if (cur) cur.pause();
+      hide();
+    });
+    var seeking = false;
+    function seekAt(clientX) {
+      if (!cur || !isFinite(cur.duration) || cur.duration <= 0) return;
+      var r = elSeek.getBoundingClientRect();
+      var p = (clientX - r.left) / (r.width || 1);
+      if (document.documentElement.dir === 'rtl') p = 1 - p;
+      try { cur.currentTime = Math.min(cur.duration, Math.max(0, p * cur.duration)); } catch (_) {}
+    }
+    elSeek.addEventListener('pointerdown', function (e) {
+      seeking = true;
+      try { elSeek.setPointerCapture(e.pointerId); } catch (_) {}
+      seekAt(e.clientX); e.preventDefault();
+    });
+    elSeek.addEventListener('pointermove', function (e) { if (seeking) seekAt(e.clientX); });
+    elSeek.addEventListener('pointerup', function () { seeking = false; });
+    elSeek.addEventListener('pointercancel', function () { seeking = false; });
+    elSeek.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') { skip(15); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { skip(-15); e.preventDefault(); }
+    });
+
+    // Legacy pages toggle `#player.hidden` themselves — watch the class so the
+    // body padding stays correct whoever showed or hid the bar.
+    try {
+      new MutationObserver(_syncPad).observe(root, { attributes: true, attributeFilter: ['class'] });
+    } catch (_) {}
+    window.addEventListener('resize', _syncPad);
+
+    bind(ownAudio);
+    _renderSpeed();
+    _restore();
+    return root;
+  }
+
+  // Bind the bar to whichever <audio> is actually playing on this page.
+  function bind(audio) {
+    if (!audio || cur === audio) return;
+    cur = audio;
+    cur.playbackRate = speed();
+    ['play', 'playing', 'pause', 'ended'].forEach(function (ev) {
+      cur.addEventListener(ev, _renderPlay);
+    });
+    cur.addEventListener('loadedmetadata', function () {
+      if (pendingSeek > 0) {
+        try { cur.currentTime = pendingSeek; } catch (_) {}
+        pendingSeek = 0;
+      }
+      _renderTime();
+    });
+    cur.addEventListener('durationchange', _renderTime);
+    cur.addEventListener('timeupdate', function () {
+      restoredPos = 0;
+      _renderTime();
+      // Per-episode position (read back by getResumePosition/attachResumeBanner).
+      // Legacy pages write the same key themselves — same value, harmless.
+      if (meta.id && cur.currentTime > 5) {
+        try { localStorage.setItem('resume_' + meta.id, Math.floor(cur.currentTime)); } catch (_) {}
+      }
+      _persistNow();
+    });
+    cur.addEventListener('ended', function () {
+      restoredPos = 0;
+      if (meta.id) { try { localStorage.removeItem('resume_' + meta.id); } catch (_) {} }
+      _clearNow();
+    });
+    _bindMediaSession(cur);
+    _renderPlay();
+    _renderTime();
+  }
+
+  function skip(d) {
+    if (!cur) return;
+    _armResume();
+    var max = isFinite(cur.duration) && cur.duration > 0 ? cur.duration : Infinity;
+    try { cur.currentTime = Math.min(max, Math.max(0, cur.currentTime + d)); } catch (_) {}
+  }
+
+  // A bar restored from `ttp_now_playing` has not loaded its audio yet: the
+  // first play/skip must land on the saved position.
+  function _armResume() {
+    if (restoredPos > 0 && cur && cur.readyState < 1) pendingSeek = restoredPos;
+    restoredPos = 0;
+  }
+
+  function setSpeed(v) {
+    if (SPEEDS.indexOf(v) === -1) v = 1;
+    try { localStorage.setItem('playbackSpeed', v); } catch (_) {}
+    if (cur) cur.playbackRate = v;
+    // Episode pages also carry a `.speed-bar`; keep it in sync so there is only
+    // ever one truth for the speed.
+    document.querySelectorAll('.speed-btn[data-speed]').forEach(function (b) {
+      b.classList.toggle('active', parseFloat(b.dataset.speed) === v);
+    });
+    document.querySelectorAll('.ep-audio, #ep-audio').forEach(function (a) { a.playbackRate = v; });
+    _renderSpeed();
+    return v;
+  }
+
+  function _renderSpeed() {
+    if (!elSpeed) return;
+    var v = speed();
+    elSpeed.textContent = v + '×';
+    elSpeed.classList.toggle('active', v !== 1);
+  }
+
+  function _renderPlay() {
+    if (!elPlay) return;
+    var playing = cur && !cur.paused && !cur.ended;
+    elPlay.innerHTML = playing ? pauseIcon() : playIcon();
+    elPlay.classList.toggle('is-playing', !!playing);
+    var lbl = playing ? _t3('Pause', 'Pause', 'השהיה')
+      : (restoredPos > 0
+          ? _t3('Reprendre à ', 'Resume at ', 'המשך מ-') + _ttpFmtTime(restoredPos)
+          : _t3('Lecture', 'Play', 'נגן'));
+    elPlay.setAttribute('aria-label', lbl);
+    elPlay.title = lbl;
+  }
+
+  function _renderTime() {
+    if (!elTime) return;
+    if (restoredPos > 0) {
+      elTime.textContent = _t3('Reprendre à ', 'Resume at ', 'המשך מ-') + _ttpFmtTime(restoredPos);
+      _setFill(0);
+      return;
+    }
+    if (!cur) return;
+    var d = isFinite(cur.duration) ? cur.duration : 0;
+    elTime.textContent = _ttpFmtTime(cur.currentTime) + (d > 0 ? ' / ' + _ttpFmtTime(d) : '');
+    _setFill(d > 0 ? (cur.currentTime / d) : 0);
+  }
+
+  function _setFill(p) {
+    p = Math.min(1, Math.max(0, p || 0));
+    if (elFill) elFill.style.width = (p * 100).toFixed(2) + '%';
+    if (elSeek) elSeek.setAttribute('aria-valuenow', String(Math.round(p * 100)));
+  }
+
+  // The bar used to sit on top of the last list item (and, on an iPhone, under
+  // the gesture bar): reserve its height at the bottom of the page.
+  function _syncPad() {
+    if (!root) return;
+    var on = !root.classList.contains('hidden');
+    document.body.style.paddingBottom = on ? (root.offsetHeight + 'px') : '';
+  }
+
+  function show() { ensure(); root.classList.remove('hidden'); _syncPad(); }
+  function hide() {
+    if (!root) return;
+    root.classList.add('hidden');
+    _syncPad();
+    _clearNow();
+  }
+
+  // ── "what was playing" memory ────────────────────────────────────────────
+  // Multi-page site: navigating ALWAYS stops the sound (no SPA, no shared audio
+  // context). What survives is the STATE — the bar comes back paused on the next
+  // page with an explicit "Reprendre à mm:ss". It is not continuous playback.
+  function _persistNow() {
+    if (!cur) return;
+    var now = Date.now();
+    if (now - lastNowWrite < 4000) return;
+    lastNowWrite = now;
+    if (cur.currentTime <= 5) return;
+    // Pages that drive the bar through their own legacy code never call load(),
+    // so fall back to what the bar is actually displaying.
+    var src = meta.src || cur.currentSrc || cur.src || '';
+    if (!src) return;
+    try {
+      localStorage.setItem(TTP_NOW_KEY, JSON.stringify({
+        id: meta.id || src,
+        title: meta.title || (elTitle ? elTitle.textContent : ''),
+        ch: meta.channel || (elCh ? elCh.textContent : ''),
+        art: meta.art || (elArt ? (elArt.getAttribute('src') || '') : ''),
+        src: src, pos: Math.floor(cur.currentTime), t: now
+      }));
+    } catch (_) {}
+  }
+  function _clearNow() { try { localStorage.removeItem(TTP_NOW_KEY); } catch (_) {} }
+
+  function _restore() {
+    var rec = null;
+    try { rec = JSON.parse(localStorage.getItem(TTP_NOW_KEY) || 'null'); } catch (_) {}
+    if (!rec || !rec.src || !rec.id) return;
+    if (!rec.t || (Date.now() - rec.t) > TTP_NOW_MAX_AGE) { _clearNow(); return; }
+    if (cur && (cur.src || cur.currentSrc)) return;   // the page already loaded something
+    meta = { id: rec.id, title: rec.title, channel: rec.ch, art: rec.art, src: rec.src };
+    restoredPos = rec.pos || 0;
+    _paint();
+    cur.preload = 'none';         // restoring costs no request until the user hits play
+    cur.src = rec.src;
+    show();
+    _renderPlay();
+    _renderTime();
+  }
+
+  function _paint() {
+    if (elTitle) elTitle.textContent = meta.title || '';
+    if (elCh) elCh.textContent = meta.channel || '';
+    if (elArt) {
+      if (meta.art) { elArt.src = meta.art; elArt.style.visibility = ''; }
+      else { elArt.removeAttribute('src'); elArt.style.visibility = 'hidden'; }
+    }
+  }
+
+  // ── Media Session — follows the element actually in use ───────────────────
+  // It used to hard-target #player-audio, so it was dead on episode pages.
+  function _bindMediaSession(audio) {
+    if (!('mediaSession' in navigator) || !audio || msBound === audio) return;
+    msBound = audio;
+    var ms = navigator.mediaSession;
+    function update() {
       try {
         ms.metadata = new MediaMetadata({
-          title: title,
-          artist: artist,
+          title: (meta.title || (elTitle && elTitle.textContent) || 'The Torah Podcast'),
+          artist: (meta.channel || (elCh && elCh.textContent) || 'The Torah Podcast'),
           album: 'The Torah Podcast',
           artwork: [
-            { src: art, sizes: '512x512', type: 'image/png' },
+            { src: meta.art || (elArt && elArt.getAttribute('src')) || '/favicon.png', sizes: '512x512', type: 'image/png' },
             { src: '/favicon.png', sizes: '1024x1024', type: 'image/png' }
           ]
         });
       } catch (_) {}
     }
-
-    audio.addEventListener('play', function () { updateMetadata(); try { ms.playbackState = 'playing'; } catch (_) {} });
-    audio.addEventListener('playing', function () { updateMetadata(); try { ms.playbackState = 'playing'; } catch (_) {} });
-    audio.addEventListener('loadedmetadata', updateMetadata);
+    audio.addEventListener('play', function () { update(); try { ms.playbackState = 'playing'; } catch (_) {} });
+    audio.addEventListener('playing', function () { update(); try { ms.playbackState = 'playing'; } catch (_) {} });
+    audio.addEventListener('loadedmetadata', update);
     audio.addEventListener('pause', function () { try { ms.playbackState = 'paused'; } catch (_) {} });
-
     function set(action, fn) { try { ms.setActionHandler(action, fn); } catch (_) {} }
-    set('play',  function () { audio.play(); });
+    set('play', function () { audio.play(); });
     set('pause', function () { audio.pause(); });
-    set('seekbackward', function (d) { audio.currentTime = Math.max(0, audio.currentTime - ((d && d.seekOffset) || 10)); });
-    set('seekforward',  function (d) { audio.currentTime = Math.min(audio.duration || Infinity, audio.currentTime + ((d && d.seekOffset) || 10)); });
-    set('seekto', function (d) { if (d && d.seekTime != null) audio.currentTime = d.seekTime; });
-
-    // Keep the OS scrubber in sync when the duration/position is known.
+    set('seekbackward', function (d) { skip(-((d && d.seekOffset) || 15)); });
+    set('seekforward', function (d) { skip((d && d.seekOffset) || 30); });
+    set('seekto', function (d) { if (d && d.seekTime != null) { try { audio.currentTime = d.seekTime; } catch (_) {} } });
     audio.addEventListener('timeupdate', function () {
       if (!('setPositionState' in ms)) return;
       if (!isFinite(audio.duration) || audio.duration <= 0) return;
@@ -923,6 +1334,69 @@ function _buildMobileNav() {
       } catch (_) {}
     });
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+
+  // ── public API ───────────────────────────────────────────────────────────
+  // load(): plays `m.src` in the bar's own <audio>.
+  //   m = { id, title, channel, art, src, position }
+  function load(m) {
+    ensure();
+    var own = document.getElementById('player-audio');
+    bind(own);
+    meta = m || {};
+    restoredPos = 0;
+    _paint();
+    if (meta.src && own.src !== meta.src) {
+      own.preload = 'metadata';
+      own.src = meta.src;
+      var saved = (meta.position != null) ? meta.position : getResumePosition(meta.id);
+      pendingSeek = saved > 5 ? saved : 0;
+    }
+    own.playbackRate = speed();
+    show();
+    _renderTime();
+    var p = own.play();
+    if (p && p.catch) p.catch(function () { _renderPlay(); });
+    _renderPlay();
+    return own;
+  }
+
+  // attach(): the bar drives an <audio> that already lives in the page
+  // (episode pages), so their own listeners keep running untouched.
+  function attach(audioEl, m) {
+    ensure();
+    bind(audioEl);
+    meta = m || {};
+    restoredPos = 0;
+    _paint();
+    audioEl.playbackRate = speed();
+    show();
+    _renderTime();
+    _renderPlay();
+    return audioEl;
+  }
+
+  function toggle(audioEl, m) {
+    ensure();
+    if (cur === audioEl && !audioEl.paused) { audioEl.pause(); return false; }
+    attach(audioEl, m);
+    var p = audioEl.play();
+    if (p && p.catch) p.catch(function () { _renderPlay(); });
+    return true;
+  }
+
+  return {
+    ensure: ensure, load: load, attach: attach, toggle: toggle,
+    show: show, hide: hide, skip: skip,
+    setSpeed: setSpeed, speed: speed,
+    audio: function () { return cur; },
+    el: function () { return root; },
+    meta: function () { return meta; },
+    isPlaying: function () { return !!(cur && !cur.paused && !cur.ended); }
+  };
+})();
+
+(function initTTPPlayer() {
+  var run = function () { try { window.TTPPlayer.ensure(); } catch (_) {} };
+  if (document.body) run();
+  else document.addEventListener('DOMContentLoaded', run);
 })();
