@@ -16,6 +16,17 @@ from build_mobile_index import build_mobile_index
 from lang_detect import episode_lang
 
 BASE_URL       = "https://thetorahpodcast.net"
+
+# Brand entity shared by every generated page. The @id matches the Organization
+# node declared on the home page (index.html), so Google consolidates all pages
+# under a single "The Torah Podcast" entity instead of treating each show as an
+# unrelated site. Keep the @id in sync with index.html.
+SITE_PUBLISHER = {
+    "@type": "Organization",
+    "@id": f"{BASE_URL}/#organization",
+    "name": "The Torah Podcast",
+    "url": f"{BASE_URL}/",
+}
 CHANNELS_FILE  = Path("channels.json")
 SPEAKERS_FILE  = Path("speakers.json")
 FEEDS_DIR      = Path("feeds")
@@ -646,6 +657,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
         "image": f"{BASE_URL}/artwork/{slug}.png",
         "inLanguage": ["fr", "he"],
         "author": {"@type": "Person", "name": name},
+        "publisher": SITE_PUBLISHER,
         "episode": ep_schema,
     }
     schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
@@ -1075,6 +1087,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
             "url": f"{BASE_URL}/{pslug}.html",
         },
         "author": {"@type": "Person", "name": name},
+        "publisher": SITE_PUBLISHER,
         "description": desc[:500] if desc else f"Épisode de {name}",
     }
     if audio:
