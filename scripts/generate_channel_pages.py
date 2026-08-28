@@ -1244,7 +1244,28 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     )
     og_locale = "he_IL" if lang == "he" else "fr_FR"
     og_locale_alt = "fr_FR" if lang == "he" else "he_IL"
-    og_image = thumb if thumb else f"{BASE_URL}/artwork/{slug}.png"
+    # Same artwork/<slug>.png family as render_page: that master only exists for
+    # real channels, so the bare fallback was a latent 404 on the guest episode
+    # pages (today every one of them has a YouTube thumbnail, so nothing is
+    # broken in practice — but the first guest episode published without one
+    # would have shipped a dead og:image). Guests fall back to the site-wide
+    # social banner instead: artwork/og-banner.png is exactly the 1200x630 that
+    # og:image / summary_large_image want, it is what index.html already
+    # declares, and it is guaranteed to exist whatever the rav — unlike
+    # artwork/<slug>.png. Channels keep their own master, byte for byte.
+    og_image = (
+        thumb
+        or (f"{BASE_URL}/artwork/og-banner.png" if ch.get("speaker")
+            else f"{BASE_URL}/artwork/{slug}.png")
+    )
+    # Fourth (and last) occurrence of the artwork/<slug>.png family, on the
+    # 1 564 guest episode pages this time: they declared an apple-touch-icon
+    # that 404s. Same arbitration as render_page — apple-touch-icon is the iOS
+    # home-screen icon, square and cropped, NOT a share thumbnail, so a 16:9
+    # YouTube still would be mangled there and is deliberately not reused.
+    # Guests get the site-wide square icon (what index.html already declares),
+    # real channels keep their own 3000x3000 square master.
+    touch_icon = "/favicon.png" if ch.get("speaker") else f"/artwork/{slug}.png"
     # The native <audio controls> widget is gone: playback happens in the shared
     # bottom bar (js/utils.js), so the controls look and behave the same on every
     # page and in every browser. `preload="metadata"` — and only on this one
@@ -1339,7 +1360,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   <meta name="twitter:image" content="{esc(og_image)}">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#1a1a2e">
-  <link rel="apple-touch-icon" href="/artwork/{slug}.png">
+  <link rel="apple-touch-icon" href="{esc(touch_icon)}">
   <script type="application/ld+json">
 {schema_json}
   </script>
@@ -2092,8 +2113,17 @@ def main():
         print(f"  {pslug}.html  ({len(sp_episodes)} episodes)")
         sp_dir = Path(slug)
         sp_dir.mkdir(exist_ok=True)
+        # `speaker: True` is the flag every guard in this file keys on to know
+        # that the channel-only assets (feeds/<slug>.xml, artwork/<slug>.png)
+        # do NOT exist. It was missing here — render_speaker_page sets it on its
+        # own fake_ch, this one did not — so the guest EPISODE pages silently
+        # went down the "real channel" path while the guest SHOW page went down
+        # the right one. Set it at the source rather than growing a parallel
+        # detection in render_episode_page, so the next guard added anywhere
+        # works on guest episode pages too.
         fake_ch = {"slug": slug, "podcast_author": speaker["name"],
-                   "podcast_language": speaker.get("language", "fr"), "platforms": {}}
+                   "podcast_language": speaker.get("language", "fr"), "platforms": {},
+                   "speaker": True}
         for ep in sp_episodes:
             if not ep.get("title") or not ep.get("published"):
                 continue
