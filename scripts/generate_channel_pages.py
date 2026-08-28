@@ -868,7 +868,6 @@ def render_page(ch: dict, entries: list, all_channels: list,
   }})();
   // Floating player — the bar itself (markup, CSS, play/pause, +-15/+30, speed,
   // progress hairline, resume memory, Media Session) lives in js/utils.js.
-  const playerAudio = TTPPlayer.audio();
   let currentEpId   = null;
   function loadInPlayer(btn) {{
     const epId  = btn.dataset.epId;
@@ -896,24 +895,25 @@ def render_page(ch: dict, entries: list, all_channels: list,
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   }});
   // Speed, resume position and closing are owned by TTPPlayer; the page only
-  // keeps its own list buttons in sync with the bar.
-  if (playerAudio) {{
-    ['ended', 'pause'].forEach(ev => playerAudio.addEventListener(ev, () => {{
-      if (!TTPPlayer.isPlaying()) {{
-        document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
-        if (playerAudio.ended) currentEpId = null;
-      }}
-    }}));
-  }}
-  const playerCloseBtn = document.getElementById('player-close');
-  if (playerCloseBtn) playerCloseBtn.addEventListener('click', () => {{
-    document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
-    currentEpId = null;
-  }});
-  // GA4
-  if (typeof gtag !== 'undefined') {{
-    const ga4Played = {{}}, ga4Completed = {{}};
+  // keeps its own list buttons in sync with the bar. The bar is built on
+  // DOMContentLoaded, so nothing may reach for it before that.
+  function wirePlayerSync() {{
+    const playerAudio = TTPPlayer.audio();
     if (playerAudio) {{
+      ['ended', 'pause'].forEach(ev => playerAudio.addEventListener(ev, () => {{
+        if (!TTPPlayer.isPlaying()) {{
+          document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+          if (playerAudio.ended) currentEpId = null;
+        }}
+      }}));
+    }}
+    const playerCloseBtn = document.getElementById('player-close');
+    if (playerCloseBtn) playerCloseBtn.addEventListener('click', () => {{
+      document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
+      currentEpId = null;
+    }});
+    if (typeof gtag !== 'undefined' && playerAudio) {{
+      const ga4Played = {{}}, ga4Completed = {{}};
       playerAudio.addEventListener('play', () => {{
         if (currentEpId && !ga4Played[currentEpId]) {{
           ga4Played[currentEpId] = true;
@@ -927,6 +927,11 @@ def render_page(ch: dict, entries: list, all_channels: list,
         }}
       }});
     }}
+  }}
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wirePlayerSync);
+  else wirePlayerSync();
+  // GA4
+  if (typeof gtag !== 'undefined') {{
     document.querySelectorAll('.platform-btn').forEach(function(btn) {{
       btn.addEventListener('click', function() {{
         var cls = Array.from(btn.classList).find(function(c) {{ return c.startsWith('btn-') && c !== 'btn-rss'; }});
@@ -1396,61 +1401,6 @@ HOME_RECENTS_COUNT = 20
 _HITAT_RE = re.compile(r"HITAT DU JOUR", re.IGNORECASE)
 
 
-def _last_class_fields(ep: dict | None, suffix: str = "") -> dict:
-    """Flat `last_*` block describing ONE episode — the most recent of a rav.
-
-    A rav with no episode at all yields every field at None (never an invented
-    date or title): the consumer must be able to degrade instead of displaying
-    something false. `last_title` is copied VERBATIM and untruncated — a class
-    title is never normalised nor translated.
-
-    `last_audio_url` is carried so the app can start playback straight from the
-    rav panel without a second request, exactly like `audio_url` in recents.
-    """
-    if not ep:
-        return {
-            f"last_published{suffix}": None,
-            f"last_title{suffix}": None,
-            f"last_video_id{suffix}": None,
-            f"last_audio_url{suffix}": None,
-            f"last_duration_secs{suffix}": None,
-        }
-    return {
-        f"last_published{suffix}": ep.get("published") or None,
-        f"last_title{suffix}": ep.get("title") or "",
-        f"last_video_id{suffix}": ep.get("video_id") or "",
-        f"last_audio_url{suffix}": ep.get("audio_url") or "",
-        f"last_duration_secs{suffix}": ep.get("duration_secs") or 0,
-    }
-
-
-def _last_class_block(pairs: list[tuple[dict, str]]) -> dict:
-    """`last_*` (all languages) + `last_*_fr` / `last_*_he` for a bilingual rav.
-
-    `pairs` = (episode, course language) — the same `episode_lang()` used for
-    count_fr/count_he, so the "last class" shown under a language filter matches
-    the count shown next to it.
-
-    The per-language blocks are emitted ONLY when the rav actually teaches in
-    both languages (15 of the 22 channels are mono-language): for a mono-language
-    rav the suffixed block would be a byte-for-byte copy of the unsuffixed one,
-    and home.json is loaded at startup by the app AND the homepage. Consumer
-    rule: if `last_*_<lang>` is absent while `count_<lang> > 0`, the unsuffixed
-    `last_*` IS that language's last class.
-
-    Contrary to `recents`, HITAT DU JOUR is NOT filtered out: this mirrors
-    latestEpisode() in rabbins.html, whose "Dernier cours" sort these fields are
-    meant to feed.
-    """
-    key = lambda pair: pair[0].get("published") or ""
-    out = dict(_last_class_fields(max(pairs, key=key)[0] if pairs else None))
-    for lang in ("fr", "he"):
-        same_lang = [p for p in pairs if p[1] == lang]
-        if same_lang and len(same_lang) != len(pairs):
-            out.update(_last_class_fields(max(same_lang, key=key)[0], f"_{lang}"))
-    return out
-
-
 def build_home_json(
     all_data: list[tuple],
     speakers: list[dict],
@@ -1469,11 +1419,6 @@ def build_home_json(
         thumbnail (repImg)
       - stats.channels = channels + speakers count (matches renderStats today)
       - stats.episodes = total episodes across channels
-      - every channel AND speaker entry also carries its LAST class
-        (`last_published` / `last_title` / `last_video_id` / `last_audio_url` /
-        `last_duration_secs`, + `_fr`/`_he` variants when the rav is bilingual —
-        see _last_class_block), so the app can show it and sort by it without
-        pulling the 22 entries.json feeds
 
     Every episode also carries `lang` (the language of the CLASS, not of the
     UI — scripts/lang_detect.py) and every precomputed total is doubled by a
@@ -1486,21 +1431,14 @@ def build_home_json(
     # count, always — detect_lang() only ever returns "fr" or "he".
     channels_out = []
     for ch, entries in all_data:
-        lang_pairs = [(ep, episode_lang(ep, ch)) for ep in entries]
-        per_lang = Counter(lang for _, lang in lang_pairs)
-        entry = {
+        per_lang = Counter(episode_lang(ep, ch) for ep in entries)
+        channels_out.append({
             "slug": ch["slug"],
             "name": ch["podcast_author"],
             "count": len(entries),
             "count_fr": per_lang["fr"],
             "count_he": per_lang["he"],
-        }
-        # Last class (date/title/audio) — without it the app cannot show the
-        # rav panel nor offer the "Dernier cours" sort without pulling the 22
-        # entries.json feeds (~20 MB); `recents` covers 12 slugs out of 22 and
-        # can't stand in for it.
-        entry.update(_last_class_block(lang_pairs))
-        channels_out.append(entry)
+        })
 
     # Recents: flatten across channels, drop HITAT DU JOUR, sort newest-first.
     flat = []
@@ -1531,15 +1469,12 @@ def build_home_json(
     by_slug = {c["slug"]: c for c, _ in all_data}
     for sp in speakers:
         matched = []
-        sp_pairs = []
         sp_lang = Counter()
         for ch_slug in sp.get("from_channels", []):
             for ep in entries_cache.get(ch_slug, []):
                 if speaker_matches(ep.get("title", ""), sp["title_patterns"]):
-                    lang = episode_lang(ep, by_slug.get(ch_slug))
                     matched.append(ep)
-                    sp_pairs.append((ep, lang))
-                    sp_lang[lang] += 1
+                    sp_lang[episode_lang(ep, by_slug.get(ch_slug))] += 1
         if not matched:
             continue
         matched.sort(key=lambda x: x.get("published", ""), reverse=True)
@@ -1548,17 +1483,12 @@ def build_home_json(
         # 15 speakers still teach in the language the visitor selected, and its
         # "N rabbins" would contradict rabbins.html (which loads the real
         # entries and can count exactly).
-        sp_entry = {
+        speakers_out.append({
             "slug": sp["slug"], "name": sp["name"], "img": rep_img,
             "count": len(matched),
             "count_fr": sp_lang["fr"],
             "count_he": sp_lang["he"],
-        }
-        # Same `last_*` contract as the channels above — guests are ravs like the
-        # others in the app, and their feeds/<slug>.entries.json is derived from
-        # these very episodes (write_speaker_feed).
-        sp_entry.update(_last_class_block(sp_pairs))
-        speakers_out.append(sp_entry)
+        })
 
     # Spotlight "Découvrez le rav" — mirror the social "Zoom Rabbi" round-robin so
     # the homepage features the SAME rav currently promoted on Facebook/Instagram.

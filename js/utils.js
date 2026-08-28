@@ -1397,6 +1397,9 @@ window.TTPPlayer = (function () {
 
 (function initTTPPlayer() {
   var run = function () { try { window.TTPPlayer.ensure(); } catch (_) {} };
-  if (document.body) run();
-  else document.addEventListener('DOMContentLoaded', run);
+  // Wait for the full document, never just for <body>: several pages load
+  // utils.js ABOVE their own legacy `<div id="player">`, and building the bar
+  // mid-parse would miss it and leave the page with two bars.
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+  else run();
 })();
