@@ -749,7 +749,18 @@ def render_page(ch: dict, entries: list, all_channels: list,
         # Emitting webFeed unconditionally leaked that 404 URL into the structured
         # data of all 15 speaker pages, where aggregators and crawlers do follow it.
         **({} if ch.get("speaker") else {"webFeed": f"{BASE_URL}/feeds/{slug}.xml"}),
-        "image": f"{BASE_URL}/artwork/{slug}.png",
+        # Same story as webFeed above: artwork/<slug>.png only exists for real
+        # channels, so the 15 speaker pages were declaring a 404 image in their
+        # structured data (artwork/thumb/<speaker>.webp does not exist either).
+        # render_speaker_page already computes the right fallback — the thumbnail
+        # of their most recent episode that has one, which is what the visible
+        # header <img> uses — so reuse it. If there is none, omit the key
+        # entirely: no image beats an image URL that 404s.
+        **(
+            ({"image": ch["thumbnail"]} if ch.get("thumbnail") else {})
+            if ch.get("speaker")
+            else {"image": f"{BASE_URL}/artwork/{slug}.png"}
+        ),
         "inLanguage": ["fr", "he"],
         "author": {"@type": "Person", "name": name},
         "publisher": SITE_PUBLISHER,
