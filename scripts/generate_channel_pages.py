@@ -1854,6 +1854,13 @@ def build_search_index(all_data: list[tuple]) -> None:
 
 
 def update_sitemap(slug_entries: list[tuple]):
+    """Rewrite sitemap.xml from (slug, entries) pairs — channels AND guests.
+
+    main() passes `generated + speaker_generated`: a guest show page and its
+    episode pages are indistinguishable from a channel's here (same URL shape via
+    url_slug/ep_path, same self-canonical, same real `published` lastmod), so no
+    branch on the kind of rav is needed.
+    """
     today = datetime.utcnow().strftime("%Y-%m-%d")
     slugs = [s for s, _ in slug_entries]
     channel_entries = "\n".join(
@@ -1962,7 +1969,7 @@ def update_sitemap(slug_entries: list[tuple]):
     )
     total_eps = sum(len(e) for _, e in slug_entries)
     Path("sitemap.xml").write_text(sitemap, encoding="utf-8")
-    print(f"  sitemap.xml -> {len(slugs)} channel pages + {total_eps} episode pages added")
+    print(f"  sitemap.xml -> {len(slugs)} show pages (channels + guests) + {total_eps} episode pages added")
 
 
 def speaker_matches(title: str, patterns: list[str]) -> bool:
@@ -2090,6 +2097,11 @@ def main():
     print(f"  rabbi subdirs/  ({ep_count} channel episode pages generated)")
 
     # Speaker pages
+    # Collected for the sitemap exactly like `generated` above: the guest show
+    # page and its episode pages are real, self-canonical, HTTP 200 URLs (they
+    # were reachable only through internal links until 28/08/2026, when this
+    # list was found missing from the update_sitemap() call at the end of main).
+    speaker_generated = []
     for speaker in speakers:
         sp_episodes = []
         for ch_slug in speaker.get("from_channels", []):
@@ -2106,6 +2118,7 @@ def main():
         # Rewritten from the host channels every run — never edit it by hand, and
         # see scripts/feeds_util.py before globbing feeds/*.entries.json.
         write_speaker_feed(slug, sp_episodes)
+        speaker_generated.append((slug, sp_episodes))
         page  = render_speaker_page(speaker, sp_episodes, enabled, speakers,
                                     site_channels, site_episodes, site_hours)
         Path(f"{pslug}.html").write_text(page, encoding="utf-8")
@@ -2143,7 +2156,9 @@ def main():
     # compute in the browser, so the app doesn't have to pull ~31 MB of feeds.
     build_mobile_index(all_data)
 
-    update_sitemap(generated)
+    # Channels first, then guests: the channel URLs keep the exact order, lastmod
+    # and priority they had before guests entered the sitemap; guests are appended.
+    update_sitemap(generated + speaker_generated)
     print(f"\nDone — {len(generated)} channel + {len(speakers)} speaker pages + {ep_count} episode pages.")
 
 
