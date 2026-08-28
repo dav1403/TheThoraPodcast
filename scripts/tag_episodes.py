@@ -17,6 +17,8 @@ from pathlib import Path
 
 import anthropic
 
+from feeds_util import channel_entry_files
+
 THEMES = [
     "Chabbat",
     "Tefila",
@@ -123,7 +125,9 @@ def main():
     client = anthropic.Anthropic(api_key=api_key)
     total_tagged = 0
 
-    for entries_file in sorted(FEEDS_DIR.glob("*.entries.json")):
+    # Channel feeds only: speaker feeds are copies, tagging them would spend
+    # Claude credits twice on the same episodes (see scripts/feeds_util.py).
+    for entries_file in channel_entry_files(FEEDS_DIR):
         entries = json.loads(entries_file.read_text(encoding="utf-8"))
         untagged_idx = [i for i, e in enumerate(entries) if "tags" not in e]
 

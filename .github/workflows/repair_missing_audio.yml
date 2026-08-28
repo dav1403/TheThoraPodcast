@@ -252,10 +252,12 @@ jobs:
           # multi-MB masters, and it carries a leading-dot state file
           # (.state.json) without which every run re-encodes all the thumbnails.
           git add feeds/ processed.json backfill_state.json artwork/ artwork/thumb/ sitemap.xml *.html home.json search-index.json search-fts/ mobile/
-          # Stage every channel's episode-page directory, derived from channels.json slugs.
+          # Stage every rav's episode-page directory, derived from channels.json AND
+          # speakers.json slugs. The guest speakers get episode pages too (linked from
+          # their speaker page); staging channels only left those links 404ing.
           # Robust against slug casing/prefix (was hardcoded to rav-*/ rabbin-*/ beth-*/,
           # which silently skipped dirs like Rav-Itshak-Sitruk/, Nahal-Haim/, lev/, torah_fr/).
-          python -c "import json;[print(c['slug']) for c in json.load(open('channels.json', encoding='utf-8-sig'))]" \
+          python -c "import json;[print(r['slug']) for f in ('channels.json','speakers.json') for r in json.load(open(f, encoding='utf-8-sig'))]" \
             | while IFS= read -r s; do
                 [ -n "$s" ] && [ -d "$s" ] && git add -- "$s/"
               done

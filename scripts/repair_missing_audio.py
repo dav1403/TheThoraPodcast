@@ -22,6 +22,7 @@ PUB_BASE    = os.environ["R2_PUBLIC_URL"].rstrip("/")
 GITHUB_REPO = os.environ.get("GITHUB_REPO", "dav1403/TheThoraPodcast")
 
 sys.path.insert(0, str(Path(__file__).parent))
+from feeds_util import channel_entry_files
 from process_podcasts import (
     get_r2_client, upload_audio_to_r2, build_rss_feed,
     load_feed_entries, save_feed_entries, get_channel_info,
@@ -46,7 +47,10 @@ def key_from_url(url: str) -> str:
 def collect_broken(feeds_dir: Path) -> list[dict]:
     """Return list of broken entries: {feed_path, idx, entry, slug}"""
     broken = []
-    for feed_path in sorted(feeds_dir.glob("*.entries.json")):
+    # Channel feeds only: a speaker feed mirrors episodes that already live in
+    # a channel feed, so repairing it would re-upload the same audio to R2 and
+    # the write would be lost on the next generator run.
+    for feed_path in channel_entry_files(feeds_dir):
         slug    = feed_path.stem.replace(".entries", "")
         entries = json.loads(feed_path.read_text(encoding="utf-8"))
         for i, e in enumerate(entries):

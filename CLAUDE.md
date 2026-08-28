@@ -116,6 +116,13 @@ YouTube Data API v3
 - `backfill_state.json` — per-channel backfill cursor (`page_token`, `exhausted` flag)
 - `feeds/<slug>.entries.json` — ordered episode list; contains `platform_links` per episode
 - `feeds/<slug>.xml` — generated RSS, served via GitHub Pages
+- `speakers.json` — guest speakers (15), matched by title pattern inside a host channel's feed
+- `feeds/<speaker>.entries.json` — **derived**, rewritten from the host channels by
+  `generate_channel_pages.py` every run. Never edit by hand. It exists so anything that
+  resolves a rav by slug (the mobile app in particular) reaches the 15 guests, not only the
+  22 channels. Scripts that walk `feeds/*.entries.json` must go through
+  `scripts/feeds_util.py::channel_entry_files()` — per-episode work (AI tagging, R2 repair,
+  duration lookups) on these copies is paid for twice and overwritten on the next run.
 
 **Static site generation (`generate_channel_pages.py`):**
 - Generates `<slug>.html` (channel page) and `<slug>/<ep-slug>.html` (episode pages)

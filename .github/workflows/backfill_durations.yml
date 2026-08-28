@@ -170,7 +170,7 @@ jobs:
       - name: Générer le rapport
         run: |
           python - <<'PYEOF'
-          import json, glob, os
+          import json, glob, os, sys
           from pathlib import Path
 
           # Per-run delta from artifacts
@@ -185,8 +185,11 @@ jobs:
                   run_remaining += d.get('remaining', 0)
               except: pass
 
-          # Global state from feeds
-          feeds = sorted(glob.glob("feeds/*.entries.json"))
+          # Global state from feeds — channel feeds only, or the derived speaker
+          # feeds (copies of these same episodes) double-count the totals.
+          sys.path.insert(0, "scripts")
+          from feeds_util import channel_entry_files
+          feeds = channel_entry_files("feeds")
           total_eps = 0; total_missing = 0
           rows = []
 

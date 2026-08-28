@@ -6,6 +6,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from feeds_util import channel_entry_files
+
 ROOT = Path(__file__).resolve().parent.parent
 FEEDS = ROOT / "feeds"
 
@@ -27,7 +30,9 @@ def fetch_duration(video_id: str) -> int:
 
 
 total_updated = 0
-for entries_file in sorted(FEEDS.glob("*.entries.json")):
+# Channel feeds only: the speaker feeds duplicate these episodes, and their
+# durations come along when the generator rebuilds them.
+for entries_file in channel_entry_files(FEEDS, ROOT):
     entries = json.loads(entries_file.read_text(encoding="utf-8"))
     missing = [ep for ep in entries if not ep.get("duration_secs")]
     if not missing:

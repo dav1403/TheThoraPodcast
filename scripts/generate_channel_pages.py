@@ -1719,6 +1719,21 @@ def speaker_matches(title: str, patterns: list[str]) -> bool:
     return any(p.lower() in t for p in patterns)
 
 
+def write_speaker_feed(slug: str, episodes: list[dict]) -> None:
+    """Write feeds/<speaker>.entries.json, same format as a channel's own feed.
+
+    The episodes are the host channels' entries verbatim, so every consumer that
+    resolves a rav by slug (mobile app, social_post.py, ...) works unchanged.
+    Only rewrite on change: this runs hourly in CI and an identical rewrite would
+    churn 15 multi-MB files in git for nothing.
+    """
+    path    = FEEDS_DIR / f"{slug}.entries.json"
+    payload = json.dumps(episodes, ensure_ascii=False, indent=2)
+    if path.exists() and path.read_text(encoding="utf-8") == payload:
+        return
+    path.write_text(payload, encoding="utf-8")
+
+
 def render_speaker_page(
     speaker: dict,
     episodes: list[dict],
@@ -1835,6 +1850,11 @@ def main():
         sp_episodes.sort(key=lambda x: x.get("published", ""), reverse=True)
         slug  = speaker["slug"]
         pslug = url_slug(slug)
+        # Derived feed, same shape/name as a channel's, so anything that reads a
+        # rav by slug (the mobile app in particular) reaches the speakers too.
+        # Rewritten from the host channels every run — never edit it by hand, and
+        # see scripts/feeds_util.py before globbing feeds/*.entries.json.
+        write_speaker_feed(slug, sp_episodes)
         page  = render_speaker_page(speaker, sp_episodes, enabled, speakers,
                                     site_channels, site_episodes, site_hours)
         Path(f"{pslug}.html").write_text(page, encoding="utf-8")
