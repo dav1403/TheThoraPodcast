@@ -768,6 +768,31 @@ def render_page(ch: dict, entries: list, all_channels: list,
     }
     schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
 
+    # Third occurrence of the same family as webFeed and the JSON-LD `image`
+    # above, and the only one a human actually sees: og:image / twitter:image
+    # pointed at artwork/<slug>.png, which exists for real channels only, so
+    # sharing one of the 15 speaker pages on WhatsApp, Facebook or X produced
+    # no preview thumbnail at all. Reuse the fallback render_speaker_page
+    # already computes — the thumbnail of the speaker's most recent episode
+    # that has one, i.e. exactly what the header <img class="ch-art"> and the
+    # JSON-LD image show. Computed once so the two social tags can never drift.
+    # Difference with the JSON-LD, on purpose: when the thumbnail is empty we
+    # keep the artwork URL instead of dropping the tag. An absent og:image
+    # makes several scrapers pick a random inline image (or show nothing),
+    # which is worse than a 404 they simply skip — so a missing tag is not an
+    # option here, unlike in structured data.
+    social_image = (
+        ch["thumbnail"]
+        if ch.get("speaker") and ch.get("thumbnail")
+        else f"{BASE_URL}/artwork/{slug}.png"
+    )
+    # apple-touch-icon is NOT a share thumbnail: it is the iOS home-screen icon,
+    # square and cropped. A 16:9 YouTube still would be mangled there, so the
+    # speaker case is not aligned on social_image — it falls back to the
+    # site-wide square icon, which is exactly what index.html already declares.
+    # Real channels keep their own square 3000x3000 master.
+    touch_icon = "/favicon.png" if ch.get("speaker") else f"/artwork/{slug}.png"
+
     if page_description:
         paras = "".join(
             f"<p>{esc(p.strip())}</p>"
@@ -805,18 +830,18 @@ def render_page(ch: dict, entries: list, all_channels: list,
   <meta property="og:url" content="{BASE_URL}/{pslug}.html">
   <meta property="og:title" content="{esc(name)} — The Torah Podcast">
   <meta property="og:description" content="{esc(description)}">
-  <meta property="og:image" content="{BASE_URL}/artwork/{slug}.png">
+  <meta property="og:image" content="{esc(social_image)}">
   <meta property="og:site_name" content="The Torah Podcast">
   <meta property="og:locale" content="fr_FR">
   <meta property="og:locale:alternate" content="he_IL">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{esc(name)} — The Torah Podcast">
   <meta name="twitter:description" content="{esc(description)}">
-  <meta name="twitter:image" content="{BASE_URL}/artwork/{slug}.png">
+  <meta name="twitter:image" content="{esc(social_image)}">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#1a1a2e">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" href="/artwork/{slug}.png">
+  <link rel="apple-touch-icon" href="{esc(touch_icon)}">
   <script type="application/ld+json">
 {schema_json}
   </script>
