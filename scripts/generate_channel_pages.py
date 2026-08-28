@@ -741,7 +741,14 @@ def render_page(ch: dict, entries: list, all_channels: list,
         "name": name,
         "description": description,
         "url": f"{BASE_URL}/{pslug}.html",
-        "webFeed": f"{BASE_URL}/feeds/{slug}.xml",
+        # Only real channels have a feeds/<slug>.xml: it is written by
+        # process_podcasts.build_rss_feed(), which iterates channels.json. Speakers
+        # are derived views over their host channels' episodes — this script writes
+        # them a feeds/<slug>.entries.json (write_speaker_feed) but never an RSS
+        # file, which is why the RSS/embed buttons are already hidden for them above.
+        # Emitting webFeed unconditionally leaked that 404 URL into the structured
+        # data of all 15 speaker pages, where aggregators and crawlers do follow it.
+        **({} if ch.get("speaker") else {"webFeed": f"{BASE_URL}/feeds/{slug}.xml"}),
         "image": f"{BASE_URL}/artwork/{slug}.png",
         "inLanguage": ["fr", "he"],
         "author": {"@type": "Person", "name": name},
