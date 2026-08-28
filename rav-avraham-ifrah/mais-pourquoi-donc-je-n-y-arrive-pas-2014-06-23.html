@@ -445,9 +445,7 @@ L&#x27;obstacle principal qui nous sépare de notre réussite est la distance cr
       // toggle the panel open/closed.
       e.preventDefault(); e.stopPropagation();
       const text = Array.from(body.querySelectorAll('p'))
-        .map(p => p.textContent.trim()).join('
-
-');
+        .map(p => p.textContent.trim()).join('\n\n');
       navigator.clipboard.writeText(text).then(() => {
         btn.textContent = t('transcript_copied');
         showToast(t('transcript_copied'));

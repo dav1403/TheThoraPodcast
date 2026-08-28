@@ -474,9 +474,7 @@ Et oui, l&#x27;histoire se répète, on vous l&#x27;a dit !</p>
       // toggle the panel open/closed.
       e.preventDefault(); e.stopPropagation();
       const text = Array.from(body.querySelectorAll('p'))
-        .map(p => p.textContent.trim()).join('
-
-');
+        .map(p => p.textContent.trim()).join('\n\n');
       navigator.clipboard.writeText(text).then(() => {
         btn.textContent = t('transcript_copied');
         showToast(t('transcript_copied'));

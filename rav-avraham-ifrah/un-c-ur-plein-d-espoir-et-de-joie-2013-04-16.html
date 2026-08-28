@@ -446,9 +446,7 @@ http://www.breslev.fr/avraham-ifrah-Un-c%C5%93ur-plein-d-espoir-et-de-joie,5327.
       // toggle the panel open/closed.
       e.preventDefault(); e.stopPropagation();
       const text = Array.from(body.querySelectorAll('p'))
-        .map(p => p.textContent.trim()).join('
-
-');
+        .map(p => p.textContent.trim()).join('\n\n');
       navigator.clipboard.writeText(text).then(() => {
         btn.textContent = t('transcript_copied');
         showToast(t('transcript_copied'));

@@ -449,9 +449,7 @@ C&#x27;est là toute sa force et c&#x27;est là l&#x27;étendue et la puissance 
       // toggle the panel open/closed.
       e.preventDefault(); e.stopPropagation();
       const text = Array.from(body.querySelectorAll('p'))
-        .map(p => p.textContent.trim()).join('
-
-');
+        .map(p => p.textContent.trim()).join('\n\n');
       navigator.clipboard.writeText(text).then(() => {
         btn.textContent = t('transcript_copied');
         showToast(t('transcript_copied'));

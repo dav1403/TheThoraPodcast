@@ -447,9 +447,7 @@ Likoutey moharane 38, p17  20150813 1200.mp3</p>
       // toggle the panel open/closed.
       e.preventDefault(); e.stopPropagation();
       const text = Array.from(body.querySelectorAll('p'))
-        .map(p => p.textContent.trim()).join('
-
-');
+        .map(p => p.textContent.trim()).join('\n\n');
       navigator.clipboard.writeText(text).then(() => {
         btn.textContent = t('transcript_copied');
         showToast(t('transcript_copied'));
