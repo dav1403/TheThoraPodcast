@@ -26,19 +26,48 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "The Torah Podcast",
-    "url": "https://thetorahpodcast.net/",
-    "description": "Cours de Torah en podcast — Rav Itshak Cohen, Rav Yonathan Mergui, Rav Yaakov Sitruk et plus.",
-    "inLanguage": ["fr", "he"],
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": {
-        "@type": "EntryPoint",
-        "urlTemplate": "https://thetorahpodcast.net/?q={search_term_string}"
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://thetorahpodcast.net/#organization",
+        "name": "The Torah Podcast",
+        "alternateName": ["TheTorahPodcast", "thetorahpodcast.net", "Torah Podcast"],
+        "url": "https://thetorahpodcast.net/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://thetorahpodcast.net/artwork/og-banner.png",
+          "width": 1200,
+          "height": 630
+        },
+        "image": "https://thetorahpodcast.net/artwork/og-banner.png",
+        "email": "thetorahpodcast@gmail.com",
+        "description": "Plateforme francophone de cours de Torah en podcast, réunissant les cours de dizaines de rabbins.",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "customer support",
+          "email": "thetorahpodcast@gmail.com",
+          "availableLanguage": ["fr", "he", "en"]
+        }
       },
-      "query-input": "required name=search_term_string"
-    }
+      {
+        "@type": "WebSite",
+        "@id": "https://thetorahpodcast.net/#website",
+        "name": "The Torah Podcast",
+        "alternateName": ["TheTorahPodcast", "thetorahpodcast.net", "Torah Podcast"],
+        "url": "https://thetorahpodcast.net/",
+        "description": "Cours de Torah en podcast — Rav Itshak Cohen, Rav Yonathan Mergui, Rav Yaakov Sitruk et plus.",
+        "inLanguage": ["fr", "he"],
+        "publisher": { "@id": "https://thetorahpodcast.net/#organization" },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://thetorahpodcast.net/?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
   }
   </script>
   <link rel="manifest" href="/manifest.json">
