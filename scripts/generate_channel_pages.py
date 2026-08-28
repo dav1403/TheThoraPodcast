@@ -1381,7 +1381,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
       // toggle the panel open/closed.
       e.preventDefault(); e.stopPropagation();
       const text = Array.from(body.querySelectorAll('p'))
-        .map(p => p.textContent.trim()).join('\n\n');
+        .map(p => p.textContent.trim()).join('\\n\\n');
       navigator.clipboard.writeText(text).then(() => {{
         btn.textContent = t('transcript_copied');
         showToast(t('transcript_copied'));
