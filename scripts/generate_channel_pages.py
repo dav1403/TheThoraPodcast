@@ -738,12 +738,16 @@ def render_page(ch: dict, entries: list, all_channels: list,
     <a href="paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="themes.html" data-i18n="nav_themes">Thème</a>
     <a href="mes-favoris.html" data-i18n="nav_favorites">Mes favoris</a>
+    <!-- Language selectors live in the MENU, not in the header banner (David,
+         28/08/2026). js/utils.js wraps them in `.nav-langs` with their labels
+         and adds the course-language switch next to them; it also relocates the
+         switch on pages still generated with the old markup. -->
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" class="lang-opt" data-lang="fr" onclick="setLang('fr')">FR</button>
+      <button type="button" class="lang-opt" data-lang="en" onclick="setLang('en')">EN</button>
+      <button type="button" class="lang-opt" data-lang="he" onclick="setLang('he')">עב</button>
+    </div>
   </nav>
-  <div class="lang-switch" role="group" aria-label="Language">
-    <button type="button" class="lang-opt" data-lang="fr" onclick="setLang('fr')">FR</button>
-    <button type="button" class="lang-opt" data-lang="en" onclick="setLang('en')">EN</button>
-    <button type="button" class="lang-opt" data-lang="he" onclick="setLang('he')">עב</button>
-  </div>
 </header>
 <main>
   <div class="ch-card">
@@ -1240,12 +1244,14 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
     <a href="../mes-favoris.html" data-i18n="nav_favorites">Mes favoris</a>
+    <!-- Language selectors live in the MENU, not in the header banner (David,
+         28/08/2026) — see js/utils.js (`.nav-langs`). -->
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" class="lang-opt" data-lang="fr" onclick="setLang('fr')">FR</button>
+      <button type="button" class="lang-opt" data-lang="en" onclick="setLang('en')">EN</button>
+      <button type="button" class="lang-opt" data-lang="he" onclick="setLang('he')">עב</button>
+    </div>
   </nav>
-  <div class="lang-switch" role="group" aria-label="Language">
-    <button type="button" class="lang-opt" data-lang="fr" onclick="setLang('fr')">FR</button>
-    <button type="button" class="lang-opt" data-lang="en" onclick="setLang('en')">EN</button>
-    <button type="button" class="lang-opt" data-lang="he" onclick="setLang('he')">עב</button>
-  </div>
 </header>
 <main>
   <p class="breadcrumb"><a href="../">Accueil</a> › <a href="../{pslug}.html">{esc(name)}</a> › {esc(breadcrumb_title)}</p>

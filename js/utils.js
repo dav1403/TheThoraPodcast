@@ -244,10 +244,76 @@ function courseLangCount(rec, base) {
   return (typeof v === 'number') ? v : (rec[base] || 0);
 }
 
-// ─── Course-language control (auto-injected into every page header) ──────────
-// Sits under the existing UI-language switch. Deliberately worded so it can't
-// be read as "language of the site": it carries its own label and spells the
-// languages out ("Français"/"Hébreu"), where the site switch shows FR/EN/עב.
+// ─── Language controls live in the MENU, not in the header banner ────────────
+// Asked for by David (28/08/2026): both language selectors must sit in the site
+// menu, not in the header. Same trick as TTPPlayer: the existing `.lang-switch`
+// node is MOVED (appendChild), never re-created — so the per-page inline
+// `onclick="setLang('fr')"` handlers keep working untouched, on the ~52
+// generated pages AND on the hand-written ones, with no regeneration needed.
+//
+// Two menus exist on this site and BOTH get the controls:
+//   • desktop → `.header-nav` (a `.nav-langs` block appended at its end)
+//   • mobile  → the slide-in `.mnav-panel` (see _mnavLangSection below), which
+//     cannot host the moved node because `.header-nav` is display:none there;
+//     it gets its own buttons that simply .click() the real ones.
+function _langMenuUiLabel()     { return _t3('Langue', 'Language', 'שפת האתר'); }
+function _langMenuCourseLabel() { return _clT('label'); }
+
+function _injectLangMenuCSS() {
+  if (document.getElementById('langmenu-css')) return;
+  var s = document.createElement('style');
+  s.id = 'langmenu-css';
+  s.textContent =
+    // Own full-width row at the bottom of the (wrapping flex) desktop nav,
+    // separated by a rule so it never reads as one more navigation link.
+    '.nav-langs{flex-basis:100%;width:100%;display:flex;flex-direction:column;align-items:center;' +
+      'gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}' +
+    '.nav-lang-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px}' +
+    '.nav-lang-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;' +
+      'color:rgba(255,255,255,.5);font-weight:600}' +
+    '.nav-langs .lang-switch{margin:0}' +
+    '.nav-langs .courselang-switch{margin:0}' +
+    // The course switch carries its own label; inside the menu the shared
+    // `.nav-lang-label` provides it, so hide the duplicate.
+    '.nav-langs .courselang-label{display:none}';
+  document.head.appendChild(s);
+}
+
+// Ensures the `.nav-langs` block exists at the end of the desktop nav and that
+// the UI-language switch has been moved into it. Returns the block, or null on
+// pages without a nav (embed.html…), where callers keep the old header layout.
+function _langMenuBox() {
+  var header = document.querySelector('header');
+  var nav = header && header.querySelector('.header-nav');
+  if (!nav) return null;
+  _injectLangMenuCSS();
+  var box = nav.querySelector('.nav-langs');
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'nav-langs';
+    nav.appendChild(box);
+  }
+  var uiRow = box.querySelector('[data-lang-row="ui"]');
+  var sw = document.querySelector('.lang-switch');
+  if (!uiRow && sw) {
+    uiRow = document.createElement('div');
+    uiRow.className = 'nav-lang-row';
+    uiRow.setAttribute('data-lang-row', 'ui');
+    var lbl = document.createElement('span');
+    lbl.className = 'nav-lang-label';
+    lbl.textContent = _langMenuUiLabel();
+    uiRow.appendChild(lbl);
+    box.insertBefore(uiRow, box.firstChild);
+  }
+  // MOVE (not clone): keeps the inline handlers and any page listener alive.
+  if (uiRow && sw && sw.parentNode !== uiRow) uiRow.appendChild(sw);
+  return box;
+}
+
+// ─── Course-language control (auto-injected into every page menu) ────────────
+// Sits under the UI-language switch, inside the menu. Deliberately worded so it
+// can't be read as "language of the site": it carries its own label and spells
+// the languages out ("Français"/"Hébreu"), where the site switch shows FR/EN/עב.
 var COURSE_LANG_I18N = {
   fr: { label: 'Langue des cours', all: 'Toutes', fr: 'Français', he: 'Hébreu',
         empty: 'Aucun cours dans cette langue ici.', reset: 'Voir toutes les langues' },
@@ -305,11 +371,10 @@ function courseLangEmptyHtml() {
 // pages use it to decide between "no result" and "no result *in this language*".
 function courseLangFiltering() { return window.TTPPrefs.courseLang() !== 'all'; }
 
-function _buildCourseLangSwitch() {
-  if (document.querySelector('.courselang-switch')) return;      // idempotent
-  var anchor = document.querySelector('header .lang-switch');
-  var header = document.querySelector('header');
-  if (!anchor && !header) return;                                // e.g. embed.html
+// Factory — a fresh, fully wired course-language switch. Split out of
+// _buildCourseLangSwitch so the same control can be built more than once
+// (desktop menu + mobile slide-in panel are two separate DOM subtrees).
+function _courseLangSwitchEl() {
   _injectCourseLangCSS();
   var cur = window.TTPPrefs.courseLang();
   var box = document.createElement('div');
@@ -326,6 +391,31 @@ function _buildCourseLangSwitch() {
     var b = e.target.closest('[data-course-lang]');
     if (b) setCourseLang(b.getAttribute('data-course-lang'));
   });
+  return box;
+}
+
+function _buildCourseLangSwitch() {
+  var menu = _langMenuBox();                                     // moves .lang-switch too
+  if (menu) {
+    if (menu.querySelector('[data-lang-row="course"]')) return;   // idempotent
+    var row = document.createElement('div');
+    row.className = 'nav-lang-row';
+    row.setAttribute('data-lang-row', 'course');
+    var lbl = document.createElement('span');
+    lbl.className = 'nav-lang-label';
+    lbl.textContent = _langMenuCourseLabel();
+    row.appendChild(lbl);
+    row.appendChild(_courseLangSwitchEl());
+    menu.appendChild(row);
+    return;
+  }
+  // Fallback for pages with no nav (embed.html…): keep the historical header
+  // placement rather than dropping the control entirely.
+  if (document.querySelector('.courselang-switch')) return;      // idempotent
+  var anchor = document.querySelector('header .lang-switch');
+  var header = document.querySelector('header');
+  if (!anchor && !header) return;
+  var box = _courseLangSwitchEl();
   // `.courselang-switch` is display:flex (block-level), so inserting it right
   // after the inline-flex UI-language switch puts it on its own centered row.
   if (anchor && anchor.parentNode) anchor.insertAdjacentElement('afterend', box);
@@ -679,6 +769,15 @@ function _injectMobileNavCSS() {
     '.mnav-subitem{display:block;color:rgba(255,255,255,.66);text-decoration:none;font-size:.9rem;padding:11px 20px 11px 34px}' +
     '[dir=rtl] .mnav-subitem{padding:11px 34px 11px 20px}' +
     '.mnav-subitem:hover{background:rgba(255,255,255,.06);color:#fff}' +
+    // Language block, pinned at the bottom of the panel behind a rule
+    '.mnav-langs{margin-top:8px;padding:12px 20px 8px;border-top:1px solid rgba(255,255,255,.14)}' +
+    '.mnav-lang-label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;' +
+      'color:rgba(255,255,255,.5);font-weight:600;margin:10px 0 8px}' +
+    '.mnav-lang-row{display:flex;flex-wrap:wrap;gap:6px}' +
+    '.mnav-lang-opt{min-height:44px;padding:10px 16px;border-radius:22px;font-family:inherit;' +
+      'border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);' +
+      'color:rgba(255,255,255,.78);font-size:.85rem;font-weight:600;cursor:pointer}' +
+    '.mnav-lang-opt.active{background:#e87722;border-color:#e87722;color:#fff}' +
     // Show the mobile menu, hide the desktop nav, at tablet width and below
     '@media(max-width:768px){' +
       'header{position:relative}' +
@@ -694,6 +793,59 @@ function _injectMobileNavCSS() {
     '}' +
     'body.mnav-lock{overflow:hidden}';
   document.head.appendChild(s);
+}
+
+// Language block for the slide-in mobile menu. The real `.lang-switch` lives in
+// `.header-nav`, which is display:none on mobile, so we cannot move it here:
+// instead each button simply .click()s its original, which fires the page's own
+// `onclick="setLang(...)"` (localStorage + location.reload) unchanged.
+function _mnavLangSection() {
+  var wrap = document.createElement('div');
+  wrap.className = 'mnav-langs';
+
+  function row(labelText, ariaLabel) {
+    var lbl = document.createElement('span');
+    lbl.className = 'mnav-lang-label';
+    lbl.textContent = labelText;
+    var r = document.createElement('div');
+    r.className = 'mnav-lang-row';
+    r.setAttribute('role', 'group');
+    r.setAttribute('aria-label', ariaLabel || labelText);
+    wrap.appendChild(lbl);
+    wrap.appendChild(r);
+    return r;
+  }
+  function opt(text, isActive, ariaLabel, onClick) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mnav-lang-opt' + (isActive ? ' active' : '');
+    b.textContent = text;
+    b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    if (ariaLabel) b.setAttribute('aria-label', ariaLabel);
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  var sw = document.querySelector('.lang-switch');
+  if (sw) {
+    // Read the active language from TTPPrefs, not from the `.active` class:
+    // that class is set by each page's own applyLang(), whose timing varies.
+    var cur = window.TTPPrefs.uiLang();
+    var uiRow = row(_langMenuUiLabel(), _t3('Langue du site', 'Site language', 'שפת האתר'));
+    Array.prototype.forEach.call(sw.querySelectorAll('[data-lang]'), function (orig) {
+      var v = orig.getAttribute('data-lang');
+      uiRow.appendChild(opt(orig.textContent.trim(), v === cur, null, function () {
+        orig.click();
+      }));
+    });
+  }
+
+  var curCourse = window.TTPPrefs.courseLang();
+  var cRow = row(_langMenuCourseLabel(), _clT('label'));
+  ['all', 'fr', 'he'].forEach(function (v) {
+    cRow.appendChild(opt(_clT(v), v === curCourse, null, function () { setCourseLang(v); }));
+  });
+  return wrap;
 }
 
 function _buildMobileNav() {
@@ -800,6 +952,10 @@ function _buildMobileNav() {
       list.appendChild(lb);
     }
   });
+
+  // Language selectors last, behind a separating rule (David, 28/08/2026:
+  // they belong to the menu, not to the header banner).
+  try { list.appendChild(_mnavLangSection()); } catch (_) {}
 
   document.body.appendChild(overlay);
   document.body.appendChild(panel);
