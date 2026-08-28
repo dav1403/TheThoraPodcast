@@ -73,12 +73,18 @@
     {
       "@type": "ListItem",
       "position": 2,
+      "name": "Les Rabbins",
+      "item": "https://thetorahpodcast.net/rabbins.html"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
       "name": "Breslev - Avraham Ifrah",
       "item": "https://thetorahpodcast.net/rav-avraham-ifrah.html"
     },
     {
       "@type": "ListItem",
-      "position": 3,
+      "position": 4,
       "name": "Likoutey Halakhot Torah 61 - Breslev - 3 juillet",
       "item": "https://thetorahpodcast.net/rav-avraham-ifrah/likoutey-halakhot-torah-61-breslev-3-juillet-2025-07-04.html"
     }
@@ -169,6 +175,18 @@
     .ep-actions .ep-audio { flex:1; min-width:200px; }
     .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
     .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
+    /* Breadcrumb — secondary by design: small, grey, never competes with the h1.
+       The separator lives in CSS (::before on li + li) so the `›` is a single
+       bidi-mirrorable glyph that flips on its own when the page turns rtl (he);
+       hard-coding it in the markup would freeze it pointing left-to-right.
+       Logical properties only (padding-inline-start), same reason. */
+    .breadcrumb { font-size: .8rem; color: #888; margin-bottom: 18px; }
+    .breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; }
+    .breadcrumb li { display: flex; align-items: center; gap: 6px; }
+    .breadcrumb li + li::before { content: "\203A"; color: #bbb; }
+    .breadcrumb a { color: #888; text-decoration: none; }
+    .breadcrumb a:hover { color: #444; text-decoration: underline; }
+    .breadcrumb [aria-current="page"] { color: #666; }
     .site-footer { background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }
     .site-footer a { color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }
     .site-footer a:hover { color: #fff; }
@@ -225,9 +243,7 @@
   .ep-hero h1 { font-size:1.3rem; font-weight:700; margin-bottom:8px; line-height:1.4; }
   .ep-meta { font-size:.82rem; color:#888; margin-bottom:12px; }
   .ep-tag { display:inline-block; background:#f0f0e8; color:#666; border-radius:20px; padding:2px 10px; font-size:.72rem; margin:2px 2px 10px 0; }
-  .breadcrumb { font-size:.8rem; color:#888; margin-bottom:20px; }
-  .breadcrumb a { color:#888; text-decoration:none; }
-  .breadcrumb a:hover { text-decoration:underline; }
+  /* .breadcrumb now lives in the shared CSS block (same look on rav pages). */
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
   .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
     padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
@@ -299,15 +315,24 @@
     <a href="../paracha.html" data-i18n="nav_paracha">Paracha</a>
     <a href="../themes.html" data-i18n="nav_themes">Thème</a>
     <a href="../mes-favoris.html" data-i18n="nav_favorites">Mes favoris</a>
+    <!-- Language selectors live in the MENU, not in the header banner (David,
+         28/08/2026) — see js/utils.js (`.nav-langs`). -->
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" class="lang-opt" data-lang="fr" onclick="setLang('fr')">FR</button>
+      <button type="button" class="lang-opt" data-lang="en" onclick="setLang('en')">EN</button>
+      <button type="button" class="lang-opt" data-lang="he" onclick="setLang('he')">עב</button>
+    </div>
   </nav>
-  <div class="lang-switch" role="group" aria-label="Language">
-    <button type="button" class="lang-opt" data-lang="fr" onclick="setLang('fr')">FR</button>
-    <button type="button" class="lang-opt" data-lang="en" onclick="setLang('en')">EN</button>
-    <button type="button" class="lang-opt" data-lang="he" onclick="setLang('he')">עב</button>
-  </div>
 </header>
 <main>
-  <p class="breadcrumb"><a href="../">Accueil</a> › <a href="../rav-avraham-ifrah.html">Breslev - Avraham Ifrah</a> › Likoutey Halakhot Torah 61 - Breslev - 3 juillet</p>
+  <nav class="breadcrumb" aria-label="Fil d'Ariane">
+  <ol>
+    <li><a href="../" data-i18n="nav_home">Accueil</a></li>
+    <li><a href="../rabbins.html" data-i18n="bc_rabbis">Les Rabbins</a></li>
+    <li><a href="../rav-avraham-ifrah.html">Breslev - Avraham Ifrah</a></li>
+    <li><span aria-current="page">Likoutey Halakhot Torah 61 - Breslev - 3 juillet</span></li>
+  </ol>
+  </nav>
   <div class="ep-hero">
     <img src="https://i.ytimg.com/vi/YAmtBFSRp6Q/maxresdefault.jpg" alt="Likoutey Halakhot Torah 61 - Breslev - 3 juillet" style="width:100%;max-width:480px;border-radius:10px;margin-bottom:16px;object-fit:cover">
     <h1>Likoutey Halakhot Torah 61 - Breslev - 3 juillet</h1>
@@ -353,16 +378,19 @@ AIDEZ NOUS à finir le MISHKANE https://donate.stripe.com/28ocMU2tocpbaxWeUV Rec
   const I18N = {
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
+      bc_rabbis:'Les Rabbins',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
+      bc_rabbis:'Rabbis',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
       related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
+      bc_rabbis:'הרבנים',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
