@@ -528,6 +528,10 @@ CSS = """\
 GTAG = """\
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>"""
@@ -1091,9 +1095,11 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     og_image = thumb if thumb else f"{BASE_URL}/artwork/{slug}.png"
     # The native <audio controls> widget is gone: playback happens in the shared
     # bottom bar (js/utils.js), so the controls look and behave the same on every
-    # page and in every browser.
+    # page and in every browser. `preload="metadata"` — and only on this one
+    # element, never on the related list — lets the duration and the R2
+    # connection be ready before the first tap.
     audio_tag = (
-        f'<audio id="ep-audio" src="{esc(audio)}" preload="none" data-ep-id="{esc(video_id)}"'
+        f'<audio id="ep-audio" src="{esc(audio)}" preload="metadata" data-ep-id="{esc(video_id)}"'
         f' style="display:none"></audio>'
         f'<button type="button" id="ep-play-main" class="ep-play-main">'
         f'<svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true">'
