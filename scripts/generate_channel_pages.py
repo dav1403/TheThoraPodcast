@@ -94,6 +94,84 @@ def render_nav_submenu(href_prefix: str = "") -> str:
         )
     return "\n".join(parts)
 
+
+# --- Breadcrumbs -------------------------------------------------------------
+# One source for both the VISIBLE trail and the BreadcrumbList JSON-LD: Google
+# requires the two to describe the same path, and the only safe way to keep them
+# in step is to build them from the same list of levels.
+#
+# Hierarchy (David, 28/08/2026): a rav is NOT a child of the home page, he hangs
+# under the page that lists the rabbanim.
+#     Accueil › Les Rabbins › Rav X › <épisode>
+# Guest speakers (speakers.json) are listed in rabbins.html too — the grid there
+# merges channelData + speakerData — so they get the exact same hierarchy.
+#
+# Language: the JSON-LD `name` cannot follow the runtime language switch, so the
+# labels stay French — the language the pages are served in, the one Google
+# crawls, and the one rabbins.html already declares in its own BreadcrumbList
+# ("Accueil" / "Les Rabbins"). The VISIBLE labels carry data-i18n keys so they
+# follow the FR/EN/HE switch client-side, starting from those same FR strings.
+# A rav's name is never translated and therefore never carries a data-i18n key.
+BC_HOME_LABEL   = "Accueil"
+BC_RABBIS_LABEL = "Les Rabbins"
+
+
+def breadcrumb_levels(prefix: str, rav_name: str = "", rav_slug: str = "",
+                      leaf: str = "", leaf_url: str = "") -> list[dict]:
+    """Levels of the trail, from the home page down to the current page.
+
+    `prefix` is "" for top-level pages and "../" for episode subpages.
+    Each level: href (relative, for the markup), url (absolute, for the JSON-LD),
+    name, and i18n (data-i18n key, or "" when the label must not be translated).
+    """
+    levels = [
+        # prefix is "" on top-level pages: href must stay "./", never "".
+        {"href": prefix or "./", "url": f"{BASE_URL}/", "name": BC_HOME_LABEL, "i18n": "nav_home"},
+        {"href": f"{prefix}rabbins.html", "url": f"{BASE_URL}/rabbins.html",
+         "name": BC_RABBIS_LABEL, "i18n": "bc_rabbis"},
+    ]
+    if rav_name:
+        levels.append({
+            "href": f"{prefix}{rav_slug}.html",
+            "url": f"{BASE_URL}/{rav_slug}.html",
+            "name": rav_name,
+            "i18n": "",  # a rav's name is never translated
+        })
+    if leaf:
+        levels.append({"href": leaf_url, "url": leaf_url, "name": leaf, "i18n": ""})
+    return levels
+
+
+def render_breadcrumb_html(levels: list[dict]) -> str:
+    """Visible trail. Last level is the current page: not a link, aria-current."""
+    items = []
+    for i, lv in enumerate(levels):
+        last = i == len(levels) - 1
+        i18n = f' data-i18n="{lv["i18n"]}"' if lv["i18n"] else ""
+        if last:
+            items.append(f'    <li><span aria-current="page"{i18n}>{esc(lv["name"])}</span></li>')
+        else:
+            items.append(f'    <li><a href="{esc(lv["href"])}"{i18n}>{esc(lv["name"])}</a></li>')
+    inner = "\n".join(items)
+    return (
+        '  <nav class="breadcrumb" aria-label="Fil d\'Ariane">\n'
+        "  <ol>\n" + inner + "\n  </ol>\n"
+        "  </nav>"
+    )
+
+
+def render_breadcrumb_jsonld(levels: list[dict]) -> str:
+    """BreadcrumbList mirroring render_breadcrumb_html — absolute URLs."""
+    return json.dumps({
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": i + 1, "name": lv["name"], "item": lv["url"]}
+            for i, lv in enumerate(levels)
+        ],
+    }, ensure_ascii=False, indent=2)
+
+
 def slugify(title: str, max_len: int = 70) -> str:
     nfd = unicodedata.normalize("NFD", title)
     result = "".join(c for c in nfd if unicodedata.category(c) != "Mn")
@@ -472,6 +550,18 @@ CSS = """\
     .ep-actions .ep-audio { flex:1; min-width:200px; }
     .share-btn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid #ddd; border-radius:20px; padding:5px 10px; font-size:.72rem; color:#888; cursor:pointer; font-family:inherit; transition:background .12s,border-color .12s,color .12s; }
     .share-btn:hover { background:#f5f5f0; border-color:#bbb; color:#444; }
+    /* Breadcrumb — secondary by design: small, grey, never competes with the h1.
+       The separator lives in CSS (::before on li + li) so the `›` is a single
+       bidi-mirrorable glyph that flips on its own when the page turns rtl (he);
+       hard-coding it in the markup would freeze it pointing left-to-right.
+       Logical properties only (padding-inline-start), same reason. */
+    .breadcrumb { font-size: .8rem; color: #888; margin-bottom: 18px; }
+    .breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; }
+    .breadcrumb li { display: flex; align-items: center; gap: 6px; }
+    .breadcrumb li + li::before { content: "\\203A"; color: #bbb; }
+    .breadcrumb a { color: #888; text-decoration: none; }
+    .breadcrumb a:hover { color: #444; text-decoration: underline; }
+    .breadcrumb [aria-current="page"] { color: #666; }
     .site-footer { background: #1a1a2e; color: rgba(255,255,255,.5); text-align: center; padding: 20px 16px; font-size: .78rem; margin-top: 40px; }
     .site-footer a { color: rgba(255,255,255,.65); text-decoration: none; margin: 0 8px; }
     .site-footer a:hover { color: #fff; }
@@ -675,6 +765,12 @@ def render_page(ch: dict, entries: list, all_channels: list,
 
     submenu_links = render_nav_submenu("")
 
+    # Accueil › Les Rabbins › <ce rav>. Same list feeds the visible trail and
+    # the JSON-LD, so the two can never drift apart.
+    bc_levels       = breadcrumb_levels("", rav_name=name, rav_slug=pslug)
+    breadcrumb_html = render_breadcrumb_html(bc_levels)
+    breadcrumb_json = render_breadcrumb_jsonld(bc_levels)
+
     return f"""<!DOCTYPE html>
 <html lang="{default_lang}">
 <head>
@@ -705,6 +801,9 @@ def render_page(ch: dict, entries: list, all_channels: list,
   <link rel="apple-touch-icon" href="/artwork/{slug}.png">
   <script type="application/ld+json">
 {schema_json}
+  </script>
+  <script type="application/ld+json">
+{breadcrumb_json}
   </script>
 {GTAG}
   <style>
@@ -750,6 +849,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
   </nav>
 </header>
 <main>
+{breadcrumb_html}
   <div class="ch-card">
     <!-- 80 px header slot: the 256 px thumbnail, never the 3000x3000 master
          (which stays reserved for the RSS itunes:image). See img_chain(). -->
@@ -797,6 +897,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
   const I18N = {{
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
+      bc_rabbis:'Les Rabbins',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       all_episodes:'Tous les épisodes',
       ep_count: n => `${{n}} épisode${{n !== 1 ? 's' : ''}}`,
@@ -804,6 +905,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
     }},
     en: {{
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
+      bc_rabbis:'Rabbis',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
       all_episodes:'All episodes',
       ep_count: n => `${{n}} episode${{n !== 1 ? 's' : ''}}`,
@@ -811,6 +913,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
+      bc_rabbis:'הרבנים',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       all_episodes:'כל הפרקים',
       ep_count: n => `${{n}} פרקים`,
@@ -1068,16 +1171,13 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     if _dur_iso:
         schema["duration"] = _dur_iso
 
-    breadcrumb_schema = {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-            {"@type": "ListItem", "position": 1, "name": "Accueil", "item": f"{BASE_URL}/"},
-            {"@type": "ListItem", "position": 2, "name": name, "item": f"{BASE_URL}/{pslug}.html"},
-            {"@type": "ListItem", "position": 3, "name": title, "item": f"{BASE_URL}/{ep_path(slug, ep)}"},
-        ],
-    }
-    breadcrumb_json = json.dumps(breadcrumb_schema, ensure_ascii=False, indent=2)
+    # Accueil › Les Rabbins › <rav> › <épisode>. The `Les Rabbins` level was
+    # missing (the rav hung straight off the home page) — David, 28/08/2026.
+    bc_levels = breadcrumb_levels(
+        "../", rav_name=name, rav_slug=pslug,
+        leaf=title, leaf_url=f"{BASE_URL}/{ep_path(slug, ep)}",
+    )
+    breadcrumb_json = render_breadcrumb_jsonld(bc_levels)
 
     submenu_links = render_nav_submenu("../")
 
@@ -1161,6 +1261,10 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 
     desc_tag  = f'<p style="font-size:.9rem;color:#444;line-height:1.7;white-space:pre-line;margin-top:16px">{esc(desc)}</p>' if desc else ""
     breadcrumb_title = (title[:60] + "…") if len(title) > 60 else title
+    # Same levels as the JSON-LD, only the leaf label is shortened for the eye.
+    _bc_visible = [dict(lv) for lv in bc_levels]
+    _bc_visible[-1]["name"] = breadcrumb_title
+    breadcrumb_html = render_breadcrumb_html(_bc_visible)
     # JS string literals for the metadata handed to the shared bottom player.
     title_js = js_str(title)
     name_js  = js_str(name)
@@ -1206,9 +1310,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   .ep-hero h1 {{ font-size:1.3rem; font-weight:700; margin-bottom:8px; line-height:1.4; }}
   .ep-meta {{ font-size:.82rem; color:#888; margin-bottom:12px; }}
   .ep-tag {{ display:inline-block; background:#f0f0e8; color:#666; border-radius:20px; padding:2px 10px; font-size:.72rem; margin:2px 2px 10px 0; }}
-  .breadcrumb {{ font-size:.8rem; color:#888; margin-bottom:20px; }}
-  .breadcrumb a {{ color:#888; text-decoration:none; }}
-  .breadcrumb a:hover {{ text-decoration:underline; }}
+  /* .breadcrumb now lives in the shared CSS block (same look on rav pages). */
   .related-label {{ font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }}
   .ep-play-main {{ display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
     padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
@@ -1254,7 +1356,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   </nav>
 </header>
 <main>
-  <p class="breadcrumb"><a href="../">Accueil</a> › <a href="../{pslug}.html">{esc(name)}</a> › {esc(breadcrumb_title)}</p>
+{breadcrumb_html}
   <div class="ep-hero">
     {thumb_tag}
     <h1>{esc(title)}</h1>
@@ -1284,16 +1386,19 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   const I18N = {{
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
+      bc_rabbis:'Les Rabbins',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
       related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     }},
     en: {{
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
+      bc_rabbis:'Rabbis',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
       related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
+      bc_rabbis:'הרבנים',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
       related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     }},
