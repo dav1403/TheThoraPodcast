@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Yaakov Sitruk"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "alors hier vous avez changé vu avec leurs habits lausanne le 1e de se laver les mains au milieu du roppa donc je reprends un jeu c'est patrice cousin est…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Rav Yakov Sitruk - hilkhot brakhot - 30/11/2018</h1>
     <p class="ep-meta"><a href="../rav-yaakov-sitruk.html" style="color:#888;text-decoration:none">Rav Yaakov Sitruk</a> · <time datetime="2018-12-02">2 décembre 2018 · 9 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Halakha</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/RZOLWpLS8uI_Rav_Yakov_Sitruk_-_hilkhot_brakhot_-_30_11_2018.mp3" preload="none" data-ep-id="RZOLWpLS8uI" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/RZOLWpLS8uI_Rav_Yakov_Sitruk_-_hilkhot_brakhot_-_30_11_2018.mp3" preload="metadata" data-ep-id="RZOLWpLS8uI" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -325,11 +329,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>alors hier vous avez changé vu avec leurs habits lausanne le 1e de se laver les mains au milieu du roppa donc je reprends un jeu c&#x27;est patrice cousin est allée des justes très rapidement quand on mange quand mon pagne du poisson et la viande ou de la viande poisson alors on a earvin convoi se laver les mains pour passer de l&#x27;un à l&#x27;autre et je dîne l&#x27;âme il est ramené méchoui saint cannat les familles à l&#x27;insa khatami choura ça veut dire que en fait c&#x27;est pas</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1422 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>alors hier vous avez changé vu avec leurs habits lausanne le 1e de se laver les mains au milieu du roppa donc je reprends un jeu c&#x27;est patrice cousin est allée des justes très rapidement quand on mange quand mon pagne du poisson et la viande ou de la viande poisson alors on a earvin convoi se laver les mains pour passer de l&#x27;un à l&#x27;autre et je dîne l&#x27;âme il est ramené méchoui saint cannat les familles à l&#x27;insa khatami choura ça veut dire que en fait c&#x27;est pas</p><p>c&#x27;est pas que vient il faire un tour à bord j&#x27;étudie du rayon du proton ensemble mais c&#x27;est tous des familles ils vont ils ont trouvé que ça présenter une certaine cinq nacelles c&#x27;était pas bon pour la santé et on a un clanwar à la trappe c&#x27;est que la sac à main c&#x27;est encore pire que il faut que la vérité on va vers le moment où il ya une sac à main le four à coin de la canaille donc au programme 15 jours parce que alors parce</p><p>que c&#x27;est dans la salle que ses agents bref on apprend à parler de burqa enfin il ramène ici plus de retard s&#x27;il a mangé des fourchettes si la barre des 100% mais qui feront de nos jours on avait pour fait pas tellement donjon à sa défense a fallu entre le pensions et la viande et la veille en seconde touche pas d&#x27;aliment avec clément d&#x27;accord donc si on touche alors évidemment on devrait lui cela m&#x27;aidait mme hamelin de ste croix celle que quelqu&#x27;un qui a bu chez</p><p>dupont ne peut pas toucher la viande d&#x27;accord j&#x27;habite à toucher la viande à leurs aînés par action à la finale mais il faut nettoyer endroit où il est en contact avec avec le poisson a tendance à la fois ci par exemple d&#x27;abriter un liquide rouge et que vous mangez un canapé sur lequel il ya des anchois aller pour votre main elle tous ses emplois ok car on n&#x27;y vont pas après prendre notre but est déjà accusée devant enfin bon je tiens ces assassinats évidemment si est</p><p>un mange avec quelqu&#x27;un d&#x27;autre il est peu oublié de faire de faire un différenciateur cela n&#x27;a malheureusement rien je sais que c&#x27;est sur cette note il allait s&#x27;appelle main creed union et à l&#x27;épaule mais ça y est par contre l&#x27;autre milieu yaya diallo d&#x27;avant le repas l&#x27;eau ou mieux vaut parfois des soucis et l&#x27;eau à la fin de non pas au moment de me bellemare alors maintenant faut savoir qu&#x27;à l&#x27;origine un delà de la collecte sera il y avait l&#x27;idée même de 10 années j&#x27;avais les</p><p>mains et fanni 6 juillet il fait des passes de sciarra dalle parfaite fenêtre sur vous quand j&#x27;arrive à la viande mais mike touche d&#x27;avion suis sûr qu&#x27;elles vont pas toucher à aucun moment et le budget du projet ont des rues saint point que certains l&#x27;amener au niveau de nos jours on appâte avance yeux le minage de suivre certains arabes alors après on va brûler les alafoti concerne la brasse à 1 sur le vin par rapport aux autres affrontant quand vous le savez la battra sur le</p><p>vin elle est peut-être toutes les animations tout notre projet explique ainsi je fais mon esprit à l&#x27;hygiène d&#x27;accord et qu&#x27;après je bois du voka demande la bière foulayronnes d&#x27;amour à gens pouvaient pas chien comme ça c&#x27;est à dire que la brasse rahme à la dernière brûler des verts elle est peut-être l laurentides où toutes les zones barotte concernant la boisson devant alsace et l&#x27;art [Musique] je suis pas le travail de figure soit jeunes en europe 1 et alors quoi donc bon de toute façon c&#x27;est pas</p><p>un passage des chevaux des chevaux large de la boisson je veux n&#x27;auront pas leur nouveau coach concarnois d&#x27;alcool à part du mans je vais pas la seule brasles que le mode si il n&#x27;est pas peut-être c&#x27;est pour étayer fait parce que si on milieu d&#x27;où mon repas je bois du vin début j&#x27;ai pas fait la parade du vin avant alors je fais aurait permis d&#x27;enlever du salaire comme ça moi aussi c&#x27;est pointer à quoi sauf yay yay c&#x27;est peut-être tout notre moisson mais ses partenaires le</p><p>oui d&#x27;accord manon thériault jean si je n&#x27;assistais qui touche je sais pas je suis pas dans une saison d&#x27;hannah je sais pas vous mais si on fait il rouge dont le père était fait et après je vous engage à dos en verre de l&#x27;ubs en dessous dans les boissons que moi confié leur aval fait mouche il faut pas rovetto tout dépend si j&#x27;ai goûté l&#x27;eau qui louche g20 goutte de liquide rouge faut savoir une chose vraiment le bon de rappeler qu&#x27; à aucun young ou deux</p><p>touches c&#x27;est une quelqu&#x27;un qui fait qu&#x27;il touche lui bois vous vous écoutez n&#x27;est pas lui qui bouche vous avez la conjointe de cellules avant novembre guide vous êtes you&#x27;ll see somme d 1 damas avons choisi lui qui touche j&#x27;ai fait mon petit douches dont le temps à table que gm en génération les enfants ni si quelqu&#x27;un le père d&#x27;amy celui qui nous si on veut pas que les autres nouvelle phase c&#x27;est pas grave imaginons keita qui l&#x27;accueille invite demain fait bouger parce qu&#x27;on évite il a</p><p>été aux yeux de m avant moi remove mise à la ville va mais qui longe ca suivant marc chemin le chemin du doigt a ni boire alors si la paire lionel halloween ou rouge alors on fait pas là bravo les embauches ont léché la pédagogie on paye à parle d&#x27;un point on va vous n&#x27;arrivez pas marbre durant comme le vélo ou fait nouvelle école c&#x27;est compris ça dépend si la vidéo j non non bravo bonne question je sais pas comme j&#x27;ai pas goûté je suis petite</p><p>sarah toussaint et vous et ça c&#x27;est une honte c&#x27;est une question à moi ce qui m&#x27;intéresse il voulait goûter le vin il ya eu apparemment aucun des fêtes à l&#x27;usma et fort maintenant est ce que quand je vois le vab ont bondi vers un qui a pas eu qui n&#x27;a rien à voir avec l&#x27;univers de gosse est-ce que ça s&#x27;appelle mon problème si vous me voir on espère les gens ce qu&#x27;ils commenceraient ils à vue du cause il n&#x27;a pas vu du feu c&#x27;est la mi</p><p>juin il dit aussi que c&#x27;est lui qui nous réjouit xvi qui touche cette fois il y avait aussi la barra do brasil et bondues vient de s&#x27;ouvrir à lui enfin si vous voulez vraiment un visa au buffet du verre du vin du verre de jus et café qui nous manque on y voit c&#x27;est pas la peine n&#x27;a pas le sourire au milieu de ses 105 et si on le fait c&#x27;est uniquement pour faire ce qu&#x27;on appelle très mou 2020 jérôme fait pas non ferme où les</p><p>plus goûtés mais si vous avez goûté il dit n&#x27;importe quel vin même si lui fait sur sur un vin doux c&#x27;est et la bouteille et moi j&#x27;ai à anvers en cachette un verre à 200 sécurité d&#x27;accord je fais pas que je vais pas avoir à y joue on fait pas prier chez acqua d&#x27;accord alors maintenant donc on dit tout à l&#x27;heure maintenant si par exemple je suis au mieux de mon repas j&#x27;ai vu le mode si ea vient en flottilles jeu le monument qu&#x27;est ce que</p><p>je fais ton bras même si j&#x27;avais beauty comme on l&#x27;a dit et après le gros de vaud a changé plutôt de jouer ici aussi ça change toute façon on n&#x27;est pas d&#x27;accord ap le géant j&#x27;ai dit non non ça soit fait dubois paroisse si apple budget compte épargne sociale d&#x27;ici là même le même le même repas courbes ou alors oui non il faut que je bouge faut qu&#x27;il y en ait au moins un qui pourrait vite c&#x27;est intéressant parce que non c&#x27;est pas le besoin là</p><p>je pense pas parce que si par exemple quelqu&#x27;un à bulle il fait kiffer mme hivon une coupe de vendée n&#x27;a pas vu leur évite d&#x27;abord et après moi un rêve et de coquins je crois commence à l&#x27;avant en faire un média nbc bon job d&#x27;accord on verra tout ça vous rappelle que la nouvelle est à 16 heures des minera à 16h20 vous avez fait réaliser le germano plutôt rang</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ixjexOOmuHQ/hqdefault_live.jpg" alt="Rav Yakov Sitruk - Ticha Beav 5786" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html" style="color:inherit;text-decoration:none;display:block">Rav Yakov Sitruk - Ticha Beav 5786</a><time class="ep-date" datetime="2026-07-22">22 juillet 2026 · 1h32</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ixjexOOmuHQ_Rav_Yakov_Sitruk_-_Ticha_Beav_5786.mp3" preload="none" data-ep-id="ixjexOOmuHQ"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html" data-title="Rav Yakov Sitruk - Ticha Beav 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/t-wueWEaT-c/maxresdefault_live.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-20">20 juin 2026 · 1h09</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/t-wueWEaT-c_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" preload="none" data-ep-id="t-wueWEaT-c"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Xm2Z4Uk2kac/maxresdefault_live.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-07">7 juin 2026 · 1h03</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Xm2Z4Uk2kac_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" preload="none" data-ep-id="Xm2Z4Uk2kac"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/uoRZx56O1so/maxresdefault.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-07">7 juin 2026 · 0 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uoRZx56O1so_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" preload="none" data-ep-id="uoRZx56O1so"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="veille-de-shavouoth-5786-2026-05-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/JBU2tXbowDI/maxresdefault.jpg" alt="Veille de Shavouoth 5786" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="veille-de-shavouoth-5786-2026-05-21.html" style="color:inherit;text-decoration:none;display:block">Veille de Shavouoth 5786</a><time class="ep-date" datetime="2026-05-21">21 mai 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JBU2tXbowDI_Veille_de_Shavouoth_5786.mp3" preload="none" data-ep-id="JBU2tXbowDI"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/veille-de-shavouoth-5786-2026-05-21.html" data-title="Veille de Shavouoth 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ixjexOOmuHQ/hqdefault_live.jpg" alt="Rav Yakov Sitruk - Ticha Beav 5786" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html" style="color:inherit;text-decoration:none;display:block">Rav Yakov Sitruk - Ticha Beav 5786</a><time class="ep-date" datetime="2026-07-22">22 juillet 2026 · 1h32</time><div class="ep-actions"><button class="play-btn" data-ep-id="ixjexOOmuHQ" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ixjexOOmuHQ_Rav_Yakov_Sitruk_-_Ticha_Beav_5786.mp3" data-title="Rav Yakov Sitruk - Ticha Beav 5786" data-thumb="https://i.ytimg.com/vi/ixjexOOmuHQ/hqdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html" data-title="Rav Yakov Sitruk - Ticha Beav 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/t-wueWEaT-c/maxresdefault_live.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-20">20 juin 2026 · 1h09</time><div class="ep-actions"><button class="play-btn" data-ep-id="t-wueWEaT-c" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/t-wueWEaT-c_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !" data-thumb="https://i.ytimg.com/vi/t-wueWEaT-c/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Xm2Z4Uk2kac/maxresdefault_live.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-07">7 juin 2026 · 1h03</time><div class="ep-actions"><button class="play-btn" data-ep-id="Xm2Z4Uk2kac" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Xm2Z4Uk2kac_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !" data-thumb="https://i.ytimg.com/vi/Xm2Z4Uk2kac/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/uoRZx56O1so/maxresdefault.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-07">7 juin 2026 · 0 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="uoRZx56O1so" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uoRZx56O1so_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !" data-thumb="https://i.ytimg.com/vi/uoRZx56O1so/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="veille-de-shavouoth-5786-2026-05-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/JBU2tXbowDI/maxresdefault.jpg" alt="Veille de Shavouoth 5786" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="veille-de-shavouoth-5786-2026-05-21.html" style="color:inherit;text-decoration:none;display:block">Veille de Shavouoth 5786</a><time class="ep-date" datetime="2026-05-21">21 mai 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="JBU2tXbowDI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JBU2tXbowDI_Veille_de_Shavouoth_5786.mp3" data-title="Veille de Shavouoth 5786" data-thumb="https://i.ytimg.com/vi/JBU2tXbowDI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/veille-de-shavouoth-5786-2026-05-21.html" data-title="Veille de Shavouoth 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -338,17 +342,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -369,27 +373,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'RZOLWpLS8uI', title: "Rav Yakov Sitruk - hilkhot brakhot - 30/11/2018", channel: "Rav Yaakov Sitruk", art: "https://i.ytimg.com/vi/RZOLWpLS8uI/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_RZOLWpLS8uI', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_RZOLWpLS8uI'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'RZOLWpLS8uI');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Yaakov Sitruk",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -403,16 +423,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

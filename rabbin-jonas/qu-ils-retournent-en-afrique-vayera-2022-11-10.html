@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Jonas"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Qui a prononcé la phrase raciste \"Qu'ils retournent en Afrique!\"? Non, ce n'est pas un député du Rassemblement National, cette semaine. C'est un habitant…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Qu&#x27;ils retournent en Afrique!- Vayéra</h1>
     <p class="ep-meta"><a href="../rabbin-jonas.html" style="color:#888;text-decoration:none">Rav Jonas</a> · <time datetime="2022-11-10">10 novembre 2022 · 8 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Paracha</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Av2efPv0KIo_Qu_ils_retournent_en_Afrique_-_Vayéra.mp3" preload="none" data-ep-id="Av2efPv0KIo" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Av2efPv0KIo_Qu_ils_retournent_en_Afrique_-_Vayéra.mp3" preload="metadata" data-ep-id="Av2efPv0KIo" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -329,11 +333,11 @@ Chabbat chalom!</p>
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>qu&#x27;il retourne en Afrique ces propos tenus par un député à l&#x27;Assemblée nationale au sujet des migrants africains secourus en mer ont valu à son auteur d&#x27;être sanctionné et suspendu 15 jours de l&#x27;émission et même si le caractère raciste de ses paroles n&#x27;a pas été retenu dans le jugement rendu néanmoins le manque d&#x27;humanité flagrant envers ses pauvres airs rêvant d&#x27;un avenir meilleur et indéniable et justement cette semaine notre paracha devait RAM va braquer ses projecteurs sous la ville de Sodome qui a été détruite par l&#x27;Éternel précisément</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1321 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>qu&#x27;il retourne en Afrique ces propos tenus par un député à l&#x27;Assemblée nationale au sujet des migrants africains secourus en mer ont valu à son auteur d&#x27;être sanctionné et suspendu 15 jours de l&#x27;émission et même si le caractère raciste de ses paroles n&#x27;a pas été retenu dans le jugement rendu néanmoins le manque d&#x27;humanité flagrant envers ses pauvres airs rêvant d&#x27;un avenir meilleur et indéniable et justement cette semaine notre paracha devait RAM va braquer ses projecteurs sous la ville de Sodome qui a été détruite par l&#x27;Éternel précisément</p><p>pour son manque d&#x27;humanité en effet le timide raconte qu&#x27;à ce dôme il était interdit selon la loi d&#x27;aider un pauvres ou d&#x27;accueillir des invités extérieurs à la ville et un jour une jeune fille a été surprise en train d&#x27;offrir un peu de pain à mendiant elle fut attachée et recouverte de miel et les guêpes sont et l&#x27;ont piqué jusqu&#x27;à la tuer la complainte de cette malheureuse s&#x27;est élevé jusqu&#x27;à l&#x27;Éternel qui a décidé de détruire ce dôme et donner informer avoir lui le futur héritier depuis des</p><p>cananes et les combien de comprendre comment des hommes de sang créé à l&#x27;image de Dieu bienveillant et généreux ont-ils pu promulguer des lois aussi cruelles le début de rajoute à notre étonnement en citant job décrivant ce dôme comme étant la terre la plus riche du monde oh sous-sol gorgé d&#x27;or et de sa fille et de chants débordant de blé explications nous est fourni par le timide lui-même qui rajoute que devant tant de richesse les habitants de ce dôme sont alors dit si des étrangers affluent notre</p><p>ville ou des pauvres nous sollicitent ils vont nous faire perdre notre argent alors pour éviter cela on interdira l&#x27;accès de ce dôme à tout étranger et on prolibra toutement des cités car comme là si Jol écrit Honoré de Balzac l&#x27;avarice commence au moment où la pauvreté cesse mais impossible de légiférer et de promulguer une telle loi en reconnaissant la vérité c&#x27;est pas avarice et pas égoïsme qu&#x27;on a peur de l&#x27;étranger et c&#x27;est là que nos Sages nous révèlent dans le Maxime de père et enseigne qu&#x27;à</p><p>Sodome les habitants ont bâti une idéologie de l&#x27;égoïsme et affirmer ainsi chez lui chez lui j&#x27;ai le Raja ce qui est à moi est à moi et ce qui est à toi est à toi signifiant que ce dôme résonnait ainsi nous sommes des hommes profondément justes et nous respectons la propriété de chacun ce qui est à toi est à toi je n&#x27;y toucherai jamais je te soliterai je te solliciterai jamais je te demanderai jamais rien ni aucun soutien new kiene aide mais inversement ce qui m&#x27;appartient</p><p>est à moi et qu&#x27;à moi et jamais je ne le partagerai avec quic un mot nous allons construire une société où chacun vivra de manière entièrement autonome sans se soucier de l&#x27;autre et dans cette perspective idée le pauvre ou accueillir un étranger contrevient à cette idéologie puisque si c&#x27;est à moi est à moi et que notre étranger ou un pauvre non plus leur place à ce dôme puisque forcément ils ont besoin de notre aide ce qui de nouveau s&#x27;oppose à la doctrine Sodome sauf que comme</p><p>l&#x27;explique rabbitzakarama sage Espagne sage espagnol s&#x27;il est possible pour un individu d&#x27;être égoïste et de penser ce qui est à moi est à moi et ce qui est à toi est à toi et c&#x27;est même ceux qui reconnaissent les maximes des pères en affirmant que ce sont les personnes moyennes qui pensent ainsi ce qui est à moi est à moi ce qui est à toi est à toi contrairement au juste le tsadique qui pense ce qui est à toi et à toi et ce qui est</p><p>à moi est aussi à toi c&#x27;est mieux que le rachat le méchant qui pense ce qui est à moi est à moi ce qui est à toi est aussi à moi mais explique rabbit sa gramma ceci est possible pour un individu mais une nation entière ne peut pas raisonner ainsi car Dieu a créé un monde on a obligatoire obligatoirement besoin de l&#x27;autre comme le Béa sa naissance l&#x27;épouvant survivre sans les soins de ses parents et un jour viendra ou ce bébé ayant grandi soutiendra ses parents</p><p>devenus vieux âgés et souvent dépendant et quel que soit le système politique mis en place il y aura toujours des pauvres et des riches et que c&#x27;est les plus fortunés n&#x27;est pas les moins fortunés le déséquilibre et la justice sont les ferments de manifestations violentes de désespoir voire deux révolutions conduisant le pays le pays à sa père or même s&#x27;il est vrai que la nation du monde parmi les sept commandements noirs n&#x27;ont pas l&#x27;obligation de sedaka de charité mais les non juifs aussi sont tenus de</p><p>participer au développement de la terre à sa prospérité les chevets de Sarah Dieu a créé le monde pour qu&#x27;il soit habité et interdire collectivement tout aide à autrui se menait le la terre à sa père ce qui est contraire au projet divin raison pour laquelle Sodome a été détruite il ne sage s&#x27;interroge sur le réseau qui a poussé Dieu informer du sort de Sodome un wraham puisque son intervention en faveur des gens de Sodome d&#x27;un service strictement à rien et l&#x27;heure à safoune le symbole slow</p><p>vodka répond que ce qu&#x27;il faut retenir de l&#x27;intervention d&#x27;Abraham ce n&#x27;est pas son résultat mais bien l&#x27;intervention elle-même c&#x27;est-à-dire qu&#x27;Avraham aurait pu se contenter de hausser les épaules en apprenant que ce dôme allait être anéanti Sodome si loin des valeurs d&#x27;Abraham et bien non Abraham a voulu démontrer que l&#x27;homme a un devoir de solidarité envers le monde entier même en vert les mécréants et qu&#x27;on ne peut pas être indifférent à la souffrance d&#x27;autrui et nos Sages nous enseignent c&#x27;est la raison pour laquelle nous sommes toujours</p><p>appelés fils d&#x27;avra âme et non blé noir enfant de noir bien que Noé était le véritable père de l&#x27;humanité tout entière car noir lui s&#x27;est borné à construire une arche pour lui et ses enfants pour survivre au déluge sans se soucier de ses congénères contrairement à Abraham qui s&#x27;est inquiété l&#x27;histoire de ce dôme et il existe même une alarme une loi extraordinaire que si un homme voudrait se comporter comme un habitant de ce dôme comme un égoïste on peut légalement l&#x27;obliger et le contraindre selon la</p><p>RAM à se conduire généreusement dans le cas où ça ne lui cause aucun préjudice financier ou matériel en un mot si ça ne lui coûte rien d&#x27;être bon par exemple deux enfants réouvert des Shimon on hérité d&#x27;un grand terrain de leurs parents et l&#x27;une des deux moites du terrain juste la maison ou le chant des réouverts et donc naturellement intéressé par cette moitié située à côté de chez lui et Simone refuse et d&#x27;ici et désire justement cette moitié alors que Shimon il n&#x27;y a pas d&#x27;intérêt</p><p>particulier dans un tel cas on obligera Shimon à céder cette moitié de terrain à Rover et apprendre l&#x27;autre moitié puisque lui ça ne changera rien de recevoir telle ou telle moitié pourquoi car la générosité et la bonté son gravés au plus profond de nous-même et même s&#x27;il faut parfois utiliser le Forbes forceps pour la faire ressortir qu&#x27;au final sedum en hébreu en conclusion pour revenir à la politique migratoire de la France je n&#x27;ai évidemment ni le droit ni la sagesse pour donner un avis que la</p><p>charité la bonté ont aussi leur règle et leur préceptes mais souvenons-nous quand même que c&#x27;est Dakar charité en hébreu tire sa racine de Sadek la justice faire pratiquer la charité donner au plus démunis de l&#x27;argent c&#x27;est s&#x27;attacher à la justice à la vérité à Dieu et qu&#x27;en donnant on s&#x27;associe directement à Dieu shabbat chez l&#x27;homme à vous tous</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="les-marches-de-provence-ki-tavo-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg" alt="Les marchés de Provence - Ki Tavo" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="les-marches-de-provence-ki-tavo-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Les marchés de Provence - Ki Tavo</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G2_3iMaX3OM_Les_marchés_de_Provence_-_Ki_Tavo.mp3" preload="none" data-ep-id="G2_3iMaX3OM"></audio><button class="share-btn" data-epfile="rabbin-jonas/les-marches-de-provence-ki-tavo-2026-08-28.html" data-title="Les marchés de Provence - Ki Tavo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-maladie-d-amour-ki-tetse-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg" alt="La maladie d&#x27;amour - Ki Tétsé" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-maladie-d-amour-ki-tetse-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">La maladie d&#x27;amour - Ki Tétsé</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/y4s7ezuFk58_La_maladie_d_amour_-_Ki_Tétsé.mp3" preload="none" data-ep-id="y4s7ezuFk58"></audio><button class="share-btn" data-epfile="rabbin-jonas/la-maladie-d-amour-ki-tetse-2026-08-21.html" data-title="La maladie d&#x27;amour - Ki Tétsé"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-eclipse-du-soleil-choftim-2026-08-14.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg" alt="L&#x27;éclipse du soleil - Choftim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-eclipse-du-soleil-choftim-2026-08-14.html" style="color:inherit;text-decoration:none;display:block">L&#x27;éclipse du soleil - Choftim</a><time class="ep-date" datetime="2026-08-14">14 août 2026 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/flDcQYqGQZo_L_éclipse_du_soleil_-_Choftim.mp3" preload="none" data-ep-id="flDcQYqGQZo"></audio><button class="share-btn" data-epfile="rabbin-jonas/l-eclipse-du-soleil-choftim-2026-08-14.html" data-title="L&#x27;éclipse du soleil - Choftim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-france-en-feu-ekev-2026-07-31.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg" alt="La France en feu - Ékev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-france-en-feu-ekev-2026-07-31.html" style="color:inherit;text-decoration:none;display:block">La France en feu - Ékev</a><time class="ep-date" datetime="2026-07-31">31 juillet 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SazSsoMSYm4_La_France_en_feu_-_Ékev.mp3" preload="none" data-ep-id="SazSsoMSYm4"></audio><button class="share-btn" data-epfile="rabbin-jonas/la-france-en-feu-ekev-2026-07-31.html" data-title="La France en feu - Ékev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-espagne-par-k-o-devarim-2026-07-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg" alt="L&#x27;Espagne par K.O - Dévarim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espagne-par-k-o-devarim-2026-07-17.html" style="color:inherit;text-decoration:none;display:block">L&#x27;Espagne par K.O - Dévarim</a><time class="ep-date" datetime="2026-07-17">17 juillet 2026 · 8 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GVuOtTQAqTw_L_Espagne_par_K_O_-_Dévarim.mp3" preload="none" data-ep-id="GVuOtTQAqTw"></audio><button class="share-btn" data-epfile="rabbin-jonas/l-espagne-par-k-o-devarim-2026-07-17.html" data-title="L&#x27;Espagne par K.O - Dévarim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="les-marches-de-provence-ki-tavo-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg" alt="Les marchés de Provence - Ki Tavo" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="les-marches-de-provence-ki-tavo-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Les marchés de Provence - Ki Tavo</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="G2_3iMaX3OM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G2_3iMaX3OM_Les_marchés_de_Provence_-_Ki_Tavo.mp3" data-title="Les marchés de Provence - Ki Tavo" data-thumb="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/les-marches-de-provence-ki-tavo-2026-08-28.html" data-title="Les marchés de Provence - Ki Tavo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-maladie-d-amour-ki-tetse-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg" alt="La maladie d&#x27;amour - Ki Tétsé" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-maladie-d-amour-ki-tetse-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">La maladie d&#x27;amour - Ki Tétsé</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="y4s7ezuFk58" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/y4s7ezuFk58_La_maladie_d_amour_-_Ki_Tétsé.mp3" data-title="La maladie d&#x27;amour - Ki Tétsé" data-thumb="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/la-maladie-d-amour-ki-tetse-2026-08-21.html" data-title="La maladie d&#x27;amour - Ki Tétsé"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-eclipse-du-soleil-choftim-2026-08-14.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg" alt="L&#x27;éclipse du soleil - Choftim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-eclipse-du-soleil-choftim-2026-08-14.html" style="color:inherit;text-decoration:none;display:block">L&#x27;éclipse du soleil - Choftim</a><time class="ep-date" datetime="2026-08-14">14 août 2026 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="flDcQYqGQZo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/flDcQYqGQZo_L_éclipse_du_soleil_-_Choftim.mp3" data-title="L&#x27;éclipse du soleil - Choftim" data-thumb="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/l-eclipse-du-soleil-choftim-2026-08-14.html" data-title="L&#x27;éclipse du soleil - Choftim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-france-en-feu-ekev-2026-07-31.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg" alt="La France en feu - Ékev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-france-en-feu-ekev-2026-07-31.html" style="color:inherit;text-decoration:none;display:block">La France en feu - Ékev</a><time class="ep-date" datetime="2026-07-31">31 juillet 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="SazSsoMSYm4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SazSsoMSYm4_La_France_en_feu_-_Ékev.mp3" data-title="La France en feu - Ékev" data-thumb="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/la-france-en-feu-ekev-2026-07-31.html" data-title="La France en feu - Ékev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-espagne-par-k-o-devarim-2026-07-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg" alt="L&#x27;Espagne par K.O - Dévarim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espagne-par-k-o-devarim-2026-07-17.html" style="color:inherit;text-decoration:none;display:block">L&#x27;Espagne par K.O - Dévarim</a><time class="ep-date" datetime="2026-07-17">17 juillet 2026 · 8 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="GVuOtTQAqTw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GVuOtTQAqTw_L_Espagne_par_K_O_-_Dévarim.mp3" data-title="L&#x27;Espagne par K.O - Dévarim" data-thumb="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/l-espagne-par-k-o-devarim-2026-07-17.html" data-title="L&#x27;Espagne par K.O - Dévarim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -342,17 +346,17 @@ Chabbat chalom!</p>
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -373,27 +377,43 @@ Chabbat chalom!</p>
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'Av2efPv0KIo', title: "Qu'ils retournent en Afrique!- Vayéra", channel: "Rav Jonas", art: "https://i.ytimg.com/vi/Av2efPv0KIo/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_Av2efPv0KIo', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_Av2efPv0KIo'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'Av2efPv0KIo');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Jonas",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -407,16 +427,6 @@ Chabbat chalom!</p>
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

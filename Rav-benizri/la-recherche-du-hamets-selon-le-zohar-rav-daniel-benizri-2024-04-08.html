@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Benizri"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "on va voir un une allusion très très sympa très belle allusion de de la Michna de la Michna dansim la première Michna comme ça la mich dit bon leat c'est…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>La recherche du Hamets selon le Zohar/Rav Daniel Benizri</h1>
     <p class="ep-meta"><a href="../rav-benizri.html" style="color:#888;text-decoration:none">Rav Benizri</a> · <time datetime="2024-04-08">8 avril 2024 · 6 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Pessa&#x27;h</span> <span class="ep-tag">Kabbala &amp; Spiritualité</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/9BFAYl5LdFk_La_recherche_du_Hamets_selon_le_Zohar_Rav_Daniel_Benizri.mp3" preload="none" data-ep-id="9BFAYl5LdFk" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/9BFAYl5LdFk_La_recherche_du_Hamets_selon_le_Zohar_Rav_Daniel_Benizri.mp3" preload="metadata" data-ep-id="9BFAYl5LdFk" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -325,11 +329,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>on va voir un une allusion très très sympa très belle allusion de de la Michna de la Michna dansim la première Michna comme ça la mich dit bon leat c&#x27;est que la veille la veille du 15 qui est la nuit du 14 qui est la veille du 15 on va on va on va faiream on va vérifier leam à la maison là maintenant je vais juste lire un petit passage du Z Kad et et voir le REM incroyable il dit donc la veille du 15 qui</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">975 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>on va voir un une allusion très très sympa très belle allusion de de la Michna de la Michna dansim la première Michna comme ça la mich dit bon leat c&#x27;est que la veille la veille du 15 qui est la nuit du 14 qui est la veille du 15 on va on va on va faiream on va vérifier leam à la maison là maintenant je vais juste lire un petit passage du Z Kad et et voir le REM incroyable il dit donc la veille du 15 qui</p><p>est le 14 au soir c&#x27;est dire on est maintenant le le le 14 au soir Nissan le 14 Nissan le soir donc c&#x27;est la veille du 15 Nissan on doit on doit prendre une air une bougie c&#x27;est le Pchat ou le Pchat et on doit V la maison c&#x27;est quoi c&#x27;est quoi le N c&#x27;est quoi le or le de mich dans le 6e chapitre qui alors n c&#x27;est la et la T c&#x27;est le or alors ça veut dire quoi dire que quoi dire que maintenant tu</p><p>veux vérifier le c&#x27;est quoi le le c&#x27;est la c&#x27;est le yerara la Mata c&#x27;est le yer donc maintenant tu es la veille de pessar avant de rentrer dans la fête de pessar tu dois vérifier le khamet donc c&#x27;est quoi vérifier le khamet vérifier le khamet et vérifier le yserara tu veux arrêter le yserara pour rentrer dans la fête avec le yseratov qui est la mats parce que on sait que la matsa c&#x27;est c&#x27;est c&#x27;est yseratov et le khamet c&#x27;est parce que c&#x27;est quoi la différence entre</p><p>mat c&#x27;est le le qui est devenu le devient alors c&#x27;est quoi le qui devient r le ha il a un pétard ouvert en haut entre le pied et le toit de la lettre ok entre le pied et le toit il y a il y a un pétard une ouverture pour faire tuouva pour rentrer pour rentrer dans le caviaol qui qui représente la divinité le r tu as fermé la porte le pied il va jusqu&#x27;au toit de la lettre donc tu as fermé la porte il y</p><p>a plus de pétard c&#x27;est pour ça que c&#x27;est pour ça que dans le dans les SL qu&#x27;est-ce que tu dis DAF la on a tapé à ta porte c&#x27;est quoi on a tapé à la porte parce que le c&#x27;est ferm la porte pour ouvrir la porte tu tapes à la porte tu dois taper à la porte pour qu&#x27;il l&#x27;ouvre pour que le devient qui devient la mat donc comment tu vérifies le qui pour avoir la mat qui il te dit les or c&#x27;est quoi les or</p><p>il te dit or c&#x27;est la T le ner c&#x27;est la qui à travers la et à travers la T tu vas réussir à annuler le donc seulement grâce à la tor et les tu vas réussir à annuler le et donc c&#x27;est un c&#x27;est une allusion extraordinaire mainant ce qu&#x27;il te dit c&#x27;est que c&#x27;est la suite du là maintenant on va comprendre comment ça marche dans la suite du il te dit bi c&#x27;est le cœur ner c&#x27;est on a dit que c&#x27;est la mitva donc le ner</p><p>c&#x27;est la mitva or le le or qui est la Torah c&#x27;est les yeux dou or à donc ça devient or ça veut dire quoi et là le Pirou c&#x27;est le suivant c&#x27;est qu&#x27;en fait le que la mitzva va réveiller le cœur de l&#x27;homme à l&#x27;amour d&#x27;AK parce que le nerf qui représente la mitva dans la gmara de Shabbat dans tout endroit de la gmara qui ramène le monoter en fait c&#x27;est le récipient le récipient où il mettait l&#x27;huile c&#x27;est comme une fiole comme une fiole où</p><p>il mettait l&#x27;huile et après il mettait la mèche pour allumer ce récipient il s&#x27;appelle le ner donc en fait il représente la mitva la mitzva va être ton récipient c&#x27;est celui-là que qui va être comme comme le cœur qui va qui va recevoir l&#x27;amour d&#x27;ashem c&#x27;est dire en faisant la mzva tu vas avoir l&#x27;amour d&#x27;ashem et en faisant la T tu auras la la crainte d&#x27;EM parce que sans la crainte d&#x27;ashemalom il y a pas de limite on peut transgresser la Torah donc ça ça fa</p><p>av donc à travers la à travers la mitva on va on va on va on va avoir le cœur l&#x27;amour dans le cœur pour Hashem c&#x27;est ça qui veut dire ner ner qui est lav va si la conséquence c&#x27;est l&#x27;amour dans le cœur c&#x27;est le récipient donc le récipient c&#x27;est le cœur qui va recevoir l&#x27;amour de la em et à travers le Limou t on va réveiller en l&#x27;homme la crainte d&#x27;ashem parce que seulement avec la crainte d&#x27;ashem il pourraem garder la Torah et là il</p><p>te dit donc avec la crainte et l&#x27;amour d&#x27;ashem on peut vérifier le yerara donc on peut annuler le yzera grâce à la crainte et à l&#x27;amour il ramène beror c&#x27;est c&#x27;est un livre qui a été qui est écrit sur le Z kadbas dit tu peux atteindre le niveau de un niveau très très élevé que tu peux atteindre à travers la crainte et d&#x27; encore une fois c&#x27;est la T et les donc c&#x27;est un très beau REM magnifique les tu veux vérifier le qui le pour avoir</p><p>la mat le tu as besoin de or or c&#x27;est la Torah ner c&#x27;est la mitzva et donc tu vas te remplir de Ahava d&#x27;amour envers Hashem et de crainte envers Hashem c&#x27;est Guilou birada Guilou c&#x27;est la SIM birada avec la crainte donc tu auras le mélange des deux et le mélange des deux va annuler le yserara pour que tu puissesem avoir le yer donc voilà le Remz de la Michna amen amen</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/hQFCXyZv4DM/maxresdefault.jpg" alt="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/hQFCXyZv4DM_הלכה_יומית_כשאינו_יכול_לחזיר_את_הגזל_רב_דניאל_בניזרי.mp3" preload="none" data-ep-id="hQFCXyZv4DM"></audio><button class="share-btn" data-epfile="Rav-benizri/הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html" data-title="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/NYefiaZ5izU/hqdefault.jpg" alt="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי </a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 13 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NYefiaZ5izU_אין_בית_המקדש_בלי_מחיית_עמלק_רב_דניאל_בניזרי.mp3" preload="none" data-ep-id="NYefiaZ5izU"></audio><button class="share-btn" data-epfile="Rav-benizri/אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html" data-title="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/dInwRnDTWqc/maxresdefault.jpg" alt="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/dInwRnDTWqc_הלכה_יומית_התוכחות_פרשת_כי_תבוא_רב_דניאל_בניזרי.mp3" preload="none" data-ep-id="dInwRnDTWqc"></audio><button class="share-btn" data-epfile="Rav-benizri/הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html" data-title="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/j65mlOQzcAc/hqdefault.jpg" alt="Hiloula Ben Ich Haï/Rav Daniel Benizri " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Hiloula Ben Ich Haï/Rav Daniel Benizri </a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 22 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/j65mlOQzcAc_Hiloula_Ben_Ich_Haï_Rav_Daniel_Benizri.mp3" preload="none" data-ep-id="j65mlOQzcAc"></audio><button class="share-btn" data-epfile="Rav-benizri/hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html" data-title="Hiloula Ben Ich Haï/Rav Daniel Benizri "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QkSHLiIxvW0/hqdefault.jpg" alt="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי </a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 14 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QkSHLiIxvW0_לכבוד_הילולת_הבן_איש_חי_זיע_א_רב_דניאל_בניזרי.mp3" preload="none" data-ep-id="QkSHLiIxvW0"></audio><button class="share-btn" data-epfile="Rav-benizri/לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html" data-title="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/hQFCXyZv4DM/maxresdefault.jpg" alt="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="hQFCXyZv4DM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/hQFCXyZv4DM_הלכה_יומית_כשאינו_יכול_לחזיר_את_הגזל_רב_דניאל_בניזרי.mp3" data-title="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי" data-thumb="https://i.ytimg.com/vi/hQFCXyZv4DM/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html" data-title="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/NYefiaZ5izU/hqdefault.jpg" alt="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי </a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 13 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="NYefiaZ5izU" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NYefiaZ5izU_אין_בית_המקדש_בלי_מחיית_עמלק_רב_דניאל_בניזרי.mp3" data-title="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי " data-thumb="https://i.ytimg.com/vi/NYefiaZ5izU/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html" data-title="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/dInwRnDTWqc/maxresdefault.jpg" alt="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="dInwRnDTWqc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/dInwRnDTWqc_הלכה_יומית_התוכחות_פרשת_כי_תבוא_רב_דניאל_בניזרי.mp3" data-title="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי" data-thumb="https://i.ytimg.com/vi/dInwRnDTWqc/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html" data-title="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/j65mlOQzcAc/hqdefault.jpg" alt="Hiloula Ben Ich Haï/Rav Daniel Benizri " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Hiloula Ben Ich Haï/Rav Daniel Benizri </a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 22 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="j65mlOQzcAc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/j65mlOQzcAc_Hiloula_Ben_Ich_Haï_Rav_Daniel_Benizri.mp3" data-title="Hiloula Ben Ich Haï/Rav Daniel Benizri " data-thumb="https://i.ytimg.com/vi/j65mlOQzcAc/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html" data-title="Hiloula Ben Ich Haï/Rav Daniel Benizri "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QkSHLiIxvW0/hqdefault.jpg" alt="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי </a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 14 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="QkSHLiIxvW0" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QkSHLiIxvW0_לכבוד_הילולת_הבן_איש_חי_זיע_א_רב_דניאל_בניזרי.mp3" data-title="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי " data-thumb="https://i.ytimg.com/vi/QkSHLiIxvW0/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html" data-title="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -338,17 +342,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -369,27 +373,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: '9BFAYl5LdFk', title: "La recherche du Hamets selon le Zohar/Rav Daniel Benizri", channel: "Rav Benizri", art: "https://i.ytimg.com/vi/9BFAYl5LdFk/hqdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_9BFAYl5LdFk', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_9BFAYl5LdFk'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '9BFAYl5LdFk');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Benizri",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -403,16 +423,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

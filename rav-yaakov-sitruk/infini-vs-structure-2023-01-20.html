@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Yaakov Sitruk"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "mes chers amis bonjour alors avec ce magnifique soleil social de Jérusalem et l'entrée du chat bâti Milan on est vraiment dans une atmosphère particulière…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>INFINI vs STRUCTURÉ</h1>
     <p class="ep-meta"><a href="../rav-yaakov-sitruk.html" style="color:#888;text-decoration:none">Rav Yaakov Sitruk</a> · <time datetime="2023-01-20">20 janvier 2023 · 7 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Moussar</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/avQeWJJrkAk_INFINI_vs_STRUCTURÉ.mp3" preload="none" data-ep-id="avQeWJJrkAk" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/avQeWJJrkAk_INFINI_vs_STRUCTURÉ.mp3" preload="metadata" data-ep-id="avQeWJJrkAk" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -325,11 +329,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>mes chers amis bonjour alors avec ce magnifique soleil social de Jérusalem et l&#x27;entrée du chat bâti Milan on est vraiment dans une atmosphère particulière donc je voulais partager avec vous une petite idée sur le début de la paracha de on va dire demain en effet la tour raconte que Dieu dit à mocher va dire aux enfants d&#x27;Israël que je vais les faire sortir et puis a priori ça se passe pas comme il était prévu puisque mocher en allant par là pharaon pharaon va se venger sur</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1135 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>mes chers amis bonjour alors avec ce magnifique soleil social de Jérusalem et l&#x27;entrée du chat bâti Milan on est vraiment dans une atmosphère particulière donc je voulais partager avec vous une petite idée sur le début de la paracha de on va dire demain en effet la tour raconte que Dieu dit à mocher va dire aux enfants d&#x27;Israël que je vais les faire sortir et puis a priori ça se passe pas comme il était prévu puisque mocher en allant par là pharaon pharaon va se venger sur</p><p>les Juifs en disant ah ils ont le temps de penser à se libérer il aura ajouté du travail et donc les Juifs se plaignent ils disent tu nous as promis la liberté la libération pour l&#x27;instant c&#x27;est le contraire qui se passe voilà jusqu&#x27;à présent j&#x27;étais connu sous un nom le nom de quel chakai par rapport à elle chadai à partir de maintenant je vais me dévoiler sous un autre nom celui de Dieu de la havailla le Dieu de l&#x27;existence le Dieu par lequel on exprime le</p><p>nom par le cœur on exprime que Dieu et l&#x27;existence de chaque chose et que l&#x27;existence de chaque chose est une partie de Dieu le nom qui était connu jusqu&#x27;à présent et ce que Dieu aime dit à mocher voilà comment je me suis connaître par Abraham israkiyakov c&#x27;était ce nom donc qui écrit qui s&#x27;écrit Chine d&#x27;allaite la gamemar demande quelle est l&#x27;origine de ce nom il explique que H&amp;amp;M s&#x27;appelle comme ça parce que chez Amar die au labo alors c&#x27;est un petit peu un jeu de mots</p><p>le nom c&#x27;est chat et puis d&#x27;ail châssis chez Amar qui a dit die ça veut dire STOP ça suffit de la mot dans son monde nous font remarquer que Dieu crée le et le monde que Dieu créé il est structuré par exemple dans quelques heures quelques quelques heures ça va être shabbat shabbat va rentrer une heure précise à Jérusalem ça va rentrer à 16h17 alors nos maîtres beaucoup de gens demandent mais pourquoi 17 et pas 18 pas bon excusez-moi 27 donc maintenant mais pourquoi 27 et</p><p>pas 28 beaucoup de gens estiment que humide de plus humide de moi qu&#x27;est-ce que ça change pour Dieu il y a beaucoup beaucoup de lois dans la Torah qui sont liées à des chiffres à des moments extrêmement précis ça répond à la même règle que par exemple les lois de la géographie ou de la physique qui sont le résultat de chiffres ou de chiffrement extrêmement précis vous bougez une virgule à l&#x27;origine d&#x27;un problème d&#x27;une notion et puis les répercussions sont immenses donc la terre elle a</p><p>une taille très précise on la connaît on la connaît pas il y a une telle une certaine quantité d&#x27;eau il y a une certaine température dans l&#x27;atmosphère un peu plus un peu moins ça va avoir des conséquences qui sont absolument incalculables donc le monde de Dieu c&#x27;est un monde limité c&#x27;est un monde défini ou un monde structuré pourtant Dieu est infini alors nous mettre nous font remarquer que en fait la force de Dieu c&#x27;est pas d&#x27;avoir créé le monde c&#x27;est d&#x27;abord je suis s&#x27;arrêter dans la</p><p>création vous savez quand on est doué quelque chose on a abusé de notre don vous avez des facultés vous avez des capacités vous aimez ceci vous aimez cela ont même toujours aller au maximum de ce qu&#x27;on peut faire la sagesse l&#x27;intelligence c&#x27;est souvent de savoir s&#x27;arrêter commencer c&#x27;est difficile s&#x27;arrêter c&#x27;est encore plus difficile la grandeur de Dieu c&#x27;est qu&#x27;au moment où Dieu crée le monde il dit die dans sa création il s&#x27;est arrêté il s&#x27;est limitait les choses résultat le mot l&#x27;homme il se retrouve dans</p><p>un monde dans lequel il arrive à se repérer parce que justement le monde fonctionne selon des chiffres et il y a une limite l&#x27;infini n&#x27;existe pas dans ce monde ça va représenter un certain nombre de dangers par exemple le chiffre minimum par rapport à l&#x27;infini il est il est ridicule on ne le prend on ne le prendra pas en compte ça veut dire que le minimum n&#x27;a pas de valeur ça c&#x27;est par rapport à l&#x27;infini dans un monde qui n&#x27;est pas infini même le minimum à</p><p>une valeur si par exemple je vous dis je sais pas moi tel objet ou tel ou telle plaisir il est ridicule parce que finalement quand on lui donne sa vraie place dans la vie c&#x27;est pas si important alors vous pouvez me répondre mais non c&#x27;est très important c&#x27;est très important parce qu&#x27;on est dans un monde limité donc même le plus petit des chiffres à une importance mais dans l&#x27;infini le minimum se perd et en fait si on voit Dieu dans sa dimension infinie on va relativiser</p><p>sur l&#x27;importance de certaines choses nous dans notre monde on a tendance à exagérer la valeur et l&#x27;importance des choses ça on le sait grâce à ce nom de Dieu qui s&#x27;appelle die die chat d&#x27;ail m&#x27;apprend la grandeur de Dieu parce qu&#x27;il a su s&#x27;arrêter donc je demande inspirer il va prendre la valeur des choses parce que des choses sont à mesurer par rapport à l&#x27;infini et non pas par rapport au monde tel que Dieu l&#x27;a créé pour l&#x27;homme et ce qui est très beau c&#x27;est que</p><p>lorsque la Torah m&#x27;a demandé il me la demande à l&#x27;intérieur de l&#x27;infini c&#x27;est à dire qu&#x27;il lui donne une importance même dans l&#x27;infini lorsque la Torah me demande de m&#x27;abstenir de quelque chose moi je lui donne de cette chose de l&#x27;importance quand je n&#x27;arrive pas à me retenir une importance dans un monde qui est limitée alors que finalement dans un monde qui est illimité elle aurait aucune importance et finalement un jour on comprendra que les choses on a donné de l&#x27;importance auquel on n&#x27;a pas pu</p><p>résister par exemple en fait c&#x27;était beaucoup moins importante et à considérer avec beaucoup plus de on servir de petits s que l&#x27;importance qu&#x27;on leur a donné alors voilà c&#x27;était un tout petit de voir ton arme sur cette parache à magnifique dans laquelle on va assister à la première série des plaies que Dieu envoie en Égypte et la révélation tout doucement de Dieu dans le monde dans un monde qui n&#x27;est pas forcément un monde juif dans lequel Dieu n&#x27;ont pas s&#x27;impose mais il se dévoilent et ce</p><p>dévoilement de Dieu c&#x27;est l&#x27;histoire de cette paracha c&#x27;est l&#x27;histoire de la sortie d&#x27;Égypte qu&#x27;on entame qu&#x27;on lit en ce moment dans la Torah et qu&#x27;on aura le plaisir de découvrir et de redécouvrir jusqu&#x27;à la fête de Pessah mais d&#x27;ici là nous avons le temps d&#x27;en reparler je vous souhaite à tous shabbat shalom</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ixjexOOmuHQ/hqdefault_live.jpg" alt="Rav Yakov Sitruk - Ticha Beav 5786" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html" style="color:inherit;text-decoration:none;display:block">Rav Yakov Sitruk - Ticha Beav 5786</a><time class="ep-date" datetime="2026-07-22">22 juillet 2026 · 1h32</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ixjexOOmuHQ_Rav_Yakov_Sitruk_-_Ticha_Beav_5786.mp3" preload="none" data-ep-id="ixjexOOmuHQ"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html" data-title="Rav Yakov Sitruk - Ticha Beav 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/t-wueWEaT-c/maxresdefault_live.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-20">20 juin 2026 · 1h09</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/t-wueWEaT-c_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" preload="none" data-ep-id="t-wueWEaT-c"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Xm2Z4Uk2kac/maxresdefault_live.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-07">7 juin 2026 · 1h03</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Xm2Z4Uk2kac_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" preload="none" data-ep-id="Xm2Z4Uk2kac"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/uoRZx56O1so/maxresdefault.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-07">7 juin 2026 · 0 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uoRZx56O1so_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" preload="none" data-ep-id="uoRZx56O1so"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="veille-de-shavouoth-5786-2026-05-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/JBU2tXbowDI/maxresdefault.jpg" alt="Veille de Shavouoth 5786" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="veille-de-shavouoth-5786-2026-05-21.html" style="color:inherit;text-decoration:none;display:block">Veille de Shavouoth 5786</a><time class="ep-date" datetime="2026-05-21">21 mai 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JBU2tXbowDI_Veille_de_Shavouoth_5786.mp3" preload="none" data-ep-id="JBU2tXbowDI"></audio><button class="share-btn" data-epfile="rav-yaakov-sitruk/veille-de-shavouoth-5786-2026-05-21.html" data-title="Veille de Shavouoth 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ixjexOOmuHQ/hqdefault_live.jpg" alt="Rav Yakov Sitruk - Ticha Beav 5786" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html" style="color:inherit;text-decoration:none;display:block">Rav Yakov Sitruk - Ticha Beav 5786</a><time class="ep-date" datetime="2026-07-22">22 juillet 2026 · 1h32</time><div class="ep-actions"><button class="play-btn" data-ep-id="ixjexOOmuHQ" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ixjexOOmuHQ_Rav_Yakov_Sitruk_-_Ticha_Beav_5786.mp3" data-title="Rav Yakov Sitruk - Ticha Beav 5786" data-thumb="https://i.ytimg.com/vi/ixjexOOmuHQ/hqdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/rav-yakov-sitruk-ticha-beav-5786-2026-07-22.html" data-title="Rav Yakov Sitruk - Ticha Beav 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/t-wueWEaT-c/maxresdefault_live.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-20">20 juin 2026 · 1h09</time><div class="ep-actions"><button class="play-btn" data-ep-id="t-wueWEaT-c" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/t-wueWEaT-c_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !" data-thumb="https://i.ytimg.com/vi/t-wueWEaT-c/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-20.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Xm2Z4Uk2kac/maxresdefault_live.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-07">7 juin 2026 · 1h03</time><div class="ep-actions"><button class="play-btn" data-ep-id="Xm2Z4Uk2kac" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Xm2Z4Uk2kac_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !" data-thumb="https://i.ytimg.com/vi/Xm2Z4Uk2kac/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/uoRZx56O1so/maxresdefault.jpg" alt="Alef Ledoroth - Rav Yakov Sitruk est en direct !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" style="color:inherit;text-decoration:none;display:block">Alef Ledoroth - Rav Yakov Sitruk est en direct !</a><time class="ep-date" datetime="2026-06-07">7 juin 2026 · 0 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="uoRZx56O1so" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/uoRZx56O1so_Alef_Ledoroth_-_Rav_Yakov_Sitruk_est_en_direct.mp3" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !" data-thumb="https://i.ytimg.com/vi/uoRZx56O1so/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/alef-ledoroth-rav-yakov-sitruk-est-en-direct-2026-06-07.html" data-title="Alef Ledoroth - Rav Yakov Sitruk est en direct !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="veille-de-shavouoth-5786-2026-05-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/JBU2tXbowDI/maxresdefault.jpg" alt="Veille de Shavouoth 5786" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="veille-de-shavouoth-5786-2026-05-21.html" style="color:inherit;text-decoration:none;display:block">Veille de Shavouoth 5786</a><time class="ep-date" datetime="2026-05-21">21 mai 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="JBU2tXbowDI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JBU2tXbowDI_Veille_de_Shavouoth_5786.mp3" data-title="Veille de Shavouoth 5786" data-thumb="https://i.ytimg.com/vi/JBU2tXbowDI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-yaakov-sitruk/veille-de-shavouoth-5786-2026-05-21.html" data-title="Veille de Shavouoth 5786"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -338,17 +342,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -369,27 +373,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'avQeWJJrkAk', title: "INFINI vs STRUCTURÉ", channel: "Rav Yaakov Sitruk", art: "https://i.ytimg.com/vi/avQeWJJrkAk/hqdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_avQeWJJrkAk', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_avQeWJJrkAk'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'avQeWJJrkAk');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Yaakov Sitruk",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -403,16 +423,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

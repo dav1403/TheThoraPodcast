@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Chemouny Benyamin"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "au hasard au maroc rabat a aujourd'hui deux lots le premier jour des slips faute et on reprend notre bonne habitude que l'année dernière à la fin des…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>13/8/18 3mn du rav Chemouny du centre rachi Netanya 2 eloul</h1>
     <p class="ep-meta"><a href="../rav-chemouny-benyamin.html" style="color:#888;text-decoration:none">Rav Chemouny Benyamin</a> · <time datetime="2018-08-13">13 août 2018 · 3 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Moussar</span> <span class="ep-tag">Roch Hachana &amp; Yom Kippour</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NxJVitlNBrk_13_8_18_3mn_du_rav_Chemouny_du_centre_rachi_Netanya_2_eloul.mp3" preload="none" data-ep-id="NxJVitlNBrk" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NxJVitlNBrk_13_8_18_3mn_du_rav_Chemouny_du_centre_rachi_Netanya_2_eloul.mp3" preload="metadata" data-ep-id="NxJVitlNBrk" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -325,11 +329,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>au hasard au maroc rabat a aujourd&#x27;hui deux lots le premier jour des slips faute et on reprend notre bonne habitude que l&#x27;année dernière à la fin des trois minutes de partager également le chauffard pour tous ceux là qui n&#x27;ont pas écouter ici à la synagogue qui le reçoit à peut-être dans certains endroits aux le chauffard peut nous aider à faire quoi à se réveiller pour cela je pense qu&#x27;on a partagé ce qu&#x27;on a parlé la semaine dernière dans l&#x27;apparat chars et le midrash commence tout de</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">680 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>au hasard au maroc rabat a aujourd&#x27;hui deux lots le premier jour des slips faute et on reprend notre bonne habitude que l&#x27;année dernière à la fin des trois minutes de partager également le chauffard pour tous ceux là qui n&#x27;ont pas écouter ici à la synagogue qui le reçoit à peut-être dans certains endroits aux le chauffard peut nous aider à faire quoi à se réveiller pour cela je pense qu&#x27;on a partagé ce qu&#x27;on a parlé la semaine dernière dans l&#x27;apparat chars et le midrash commence tout de</p><p>suite par une métaphore quelqu&#x27;un qu&#x27;il est assis sur des chemins un chemin qui est bon et moins bon napa rachète cette semaine chauffe team joest rime donc des policiers des juges tout de suite vous allez voir que les sages il donne une métaphore à les juges c&#x27;est les élèves et les policiers c&#x27;est les dents donc on doit contrôler ce qu&#x27;on sort de la bouche mais à chaque fois quand il ya un message à passer il ya une métaphore est ce que c&#x27;est important oui parce que</p><p>l&#x27;hébreu métaphore j&#x27;ai passé le mot à moi je vous fais confiance je prenais pas très bien le français mois mashal en hébreu mashal c&#x27;est une exemple une métaphore ça vient de la même racine de mochel gouverner ça veut dire si tu arrives à faire une métaphore dans ta tête sur quelque chose je le tiens dans la main tu vas le comprendre mieux pour cela on va repartent à g cela qu&#x27;ils n&#x27;étaient pas là shabbat ils n&#x27;ont pas écouté un des raisons pourquoi on va sonner le</p><p>chauffard tout de suite et maintenant jusqu&#x27;à kippour pendant ces quarante jours et ben c&#x27;était à une personne de kenya on a dit kenya je crois pas que les cours il arrive là bas donc on peut y a pas de problème il y avait 1 personne de kenya il a gagné un ticket pour new york première fois de sa vie en y connais rien je vous le raconte dit fait l&#x27;histoire pour comprendre de la métaphore ils arrivent ils voient une première fois de sa vie c&#x27;était quoi</p><p>un stylo waouh il avait l&#x27;habitude de plume il achète pour tout le village après il avoir une appareil de photo caméra y avait pas les iphones combien aujourd&#x27;hui mais n&#x27;a jamais vu ça et à la fin il a vu qu&#x27;il ya du feu et là il a dit ça c&#x27;est intéressant commun à new york qu&#x27;ils étendent le feu parce que chez nous dans le village chaque fois qu&#x27;il ya le feu trois quarts du village y brûle et il attend les pompiers la sirène oui oh oui</p><p>oh oui oh il court vers le feu le temps qu&#x27;il arrive le feu il est temps il a dit tiens il faut que une sirène d&#x27;urgence la sirène c&#x27;est ça marche il arrive chez lui dans le village et bien sûr qu&#x27;il donne et stylos à ses amis il devant les caméras à sa famille et il dit aux chefs de village le dif 1 la prochaine fois qu&#x27;il ya le feu ça y est on a pris deux problèmes le lendemain je crois qu&#x27;il a mis le feu</p><p>exprès le chief 1 et tout le monde ils ont couru dans sa maison voir comment ça marche il allume la sirène seulement on regarde oui oui on est tout le village a cramé c&#x27;est quoi le message le chauffard c&#x27;est la sirène chers amis mais il faut faire un travail en plus sûrs non ça suffit pas de l&#x27;écouter maintenant ou de l&#x27;écouter ap et croire que ça y est j&#x27;ai écouté le feu mais pêché ils sont éteints non les pompiers c&#x27;est nous faut faire un travail alors</p><p>j&#x27;espère que ce réveil cette sonnette la baisse rattaché mou va nous permettait à tous de bien travailler la première des petites décisions sur nous et quand ça baisse atteint très très vite machar a sonné le vrais chauffards il va nous amener la délivrance [Rires] m oui [Musique] lazar</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/4oYsWdbxOkk/hqdefault.jpg" alt="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/4oYsWdbxOkk_3MN_DE_TORAH_POUR_COMMENCER_LA_JOURNÉE_-____ZIKARON.mp3" preload="none" data-ep-id="4oYsWdbxOkk"></audio><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-27.html" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/3xA_Q8R_pUE/hqdefault.jpg" alt="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON</a><time class="ep-date" datetime="2026-08-25">25 août 2026 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3xA_Q8R_pUE_3MN_DE_TORAH_POUR_COMMENCER_LA_JOURNÉE_-____ZIKARON.mp3" preload="none" data-ep-id="3xA_Q8R_pUE"></audio><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-25.html" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/DkGXUwrsU88/hqdefault.jpg" alt="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html" style="color:inherit;text-decoration:none;display:block">3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS</a><time class="ep-date" datetime="2026-08-24">24 août 2026 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/DkGXUwrsU88_3MN_DE_TORAH_POUR_COMMENCER_LA_JOURNÉE_-___LA_PORTE_QUI_NE_BOUGE_PAS.mp3" preload="none" data-ep-id="DkGXUwrsU88"></audio><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/B9TbSctneK8/hqdefault.jpg" alt="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html" style="color:inherit;text-decoration:none;display:block">3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS</a><time class="ep-date" datetime="2026-08-24">24 août 2026 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/B9TbSctneK8_3MN_DE_TORAH_POUR_COMMENCER_LA_JOURNÉE_-___LA_PORTE_QUI_NE_BOUGE_PAS.mp3" preload="none" data-ep-id="B9TbSctneK8"></audio><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="daf-hayomi-houlin-page-112-2026-08-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/H8zJIE0sDVE/maxresdefault.jpg" alt="Daf hayomi HOULIN page 112" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-houlin-page-112-2026-08-24.html" style="color:inherit;text-decoration:none;display:block">Daf hayomi HOULIN page 112</a><time class="ep-date" datetime="2026-08-24">24 août 2026 · 18 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/H8zJIE0sDVE_Daf_hayomi_HOULIN_page_112.mp3" preload="none" data-ep-id="H8zJIE0sDVE"></audio><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/daf-hayomi-houlin-page-112-2026-08-24.html" data-title="Daf hayomi HOULIN page 112"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/4oYsWdbxOkk/hqdefault.jpg" alt="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="4oYsWdbxOkk" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/4oYsWdbxOkk_3MN_DE_TORAH_POUR_COMMENCER_LA_JOURNÉE_-____ZIKARON.mp3" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON" data-thumb="https://i.ytimg.com/vi/4oYsWdbxOkk/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-27.html" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/3xA_Q8R_pUE/hqdefault.jpg" alt="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON</a><time class="ep-date" datetime="2026-08-25">25 août 2026 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="3xA_Q8R_pUE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3xA_Q8R_pUE_3MN_DE_TORAH_POUR_COMMENCER_LA_JOURNÉE_-____ZIKARON.mp3" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON" data-thumb="https://i.ytimg.com/vi/3xA_Q8R_pUE/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/3mn-de-torah-pour-commencer-la-journee-zikaron-2026-08-25.html" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🕯️ ZIKARON"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/DkGXUwrsU88/hqdefault.jpg" alt="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html" style="color:inherit;text-decoration:none;display:block">3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS</a><time class="ep-date" datetime="2026-08-24">24 août 2026 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="DkGXUwrsU88" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/DkGXUwrsU88_3MN_DE_TORAH_POUR_COMMENCER_LA_JOURNÉE_-___LA_PORTE_QUI_NE_BOUGE_PAS.mp3" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS" data-thumb="https://i.ytimg.com/vi/DkGXUwrsU88/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/B9TbSctneK8/hqdefault.jpg" alt="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html" style="color:inherit;text-decoration:none;display:block">3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS</a><time class="ep-date" datetime="2026-08-24">24 août 2026 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="B9TbSctneK8" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/B9TbSctneK8_3MN_DE_TORAH_POUR_COMMENCER_LA_JOURNÉE_-___LA_PORTE_QUI_NE_BOUGE_PAS.mp3" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS" data-thumb="https://i.ytimg.com/vi/B9TbSctneK8/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/3mn-de-torah-pour-commencer-la-journee-la-porte-qui-ne-bouge-pas-2026-08-24.html" data-title="3MN DE TORAH POUR COMMENCER LA JOURNÉE - 🚪 LA PORTE QUI NE BOUGE PAS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="daf-hayomi-houlin-page-112-2026-08-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/H8zJIE0sDVE/maxresdefault.jpg" alt="Daf hayomi HOULIN page 112" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-houlin-page-112-2026-08-24.html" style="color:inherit;text-decoration:none;display:block">Daf hayomi HOULIN page 112</a><time class="ep-date" datetime="2026-08-24">24 août 2026 · 18 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="H8zJIE0sDVE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/H8zJIE0sDVE_Daf_hayomi_HOULIN_page_112.mp3" data-title="Daf hayomi HOULIN page 112" data-thumb="https://i.ytimg.com/vi/H8zJIE0sDVE/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-Chemouny-Benyamin/daf-hayomi-houlin-page-112-2026-08-24.html" data-title="Daf hayomi HOULIN page 112"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -338,17 +342,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -369,27 +373,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'NxJVitlNBrk', title: "13/8/18 3mn du rav Chemouny du centre rachi Netanya 2 eloul", channel: "Rav Chemouny Benyamin", art: "https://i.ytimg.com/vi/NxJVitlNBrk/hqdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_NxJVitlNBrk', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_NxJVitlNBrk'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'NxJVitlNBrk');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Chemouny Benyamin",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -403,16 +423,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

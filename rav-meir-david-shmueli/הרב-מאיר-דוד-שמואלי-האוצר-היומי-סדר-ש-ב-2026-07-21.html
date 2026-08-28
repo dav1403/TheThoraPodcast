@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "הרב מאיר דוד שמואלי"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "הרב מאיר דוד שמואלי שליט\"א השיעור המרכזי של הרב מאיר דוד שמואלי שליט\"א, הנמסר במוסדות התורה \"חזון מרדכי\" בהרצליה, ע\"ש המקובל האלקי רבינו מרדכי שרעבי…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>הרב מאיר דוד שמואלי - האוצר היומי סדר ש&quot;ב</h1>
     <p class="ep-meta"><a href="../rav-meir-david-shmueli.html" style="color:#888;text-decoration:none">הרב מאיר דוד שמואלי</a> · <time datetime="2026-07-21">21.07.2026 · 15 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Etude de Torah</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/R7Nt6QBaMc8_הרב_מאיר_דוד_שמואלי_-_האוצר_היומי_סדר_ש_ב.mp3" preload="none" data-ep-id="R7Nt6QBaMc8" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/R7Nt6QBaMc8_הרב_מאיר_דוד_שמואלי_-_האוצר_היומי_סדר_ש_ב.mp3" preload="metadata" data-ep-id="R7Nt6QBaMc8" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -337,11 +341,11 @@ https://nedar.im/aDPy
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p dir="rtl" lang="he">בסוף התברר שהרב עמוס הוא היה משלם את השכירות. מה זה &amp;gt;&amp;gt; מלא מלא משפחות משלים למסורות הכל יתומים ראיתי אותם שהוא הם שלם על האוכל הם מזלים עלם הבית מי יתן לו חליפתות השם יוריד את הכוח הזה אבל צדיק צדיק יסוד &amp;gt;&amp;gt; בסף גיזה בחור בעייתי שבא אליו לקח לו 300,000 שק אחרי שעה יעברו בבחור הזה זה שעלו נהרג והבחור לא קרה לו כלום 300,000 שק בדיוק &amp;gt;&amp;gt; כן ככה דני מספר ש &amp;gt;&amp;gt; רב שהוא המין לרב ונתן מבטרים חזר &amp;gt;&amp;gt; ב ידע בדיוק בוא רואה</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1397 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body" dir="rtl" lang="he"><p>אלוהינו עלינו היום יח בתמוז תשפו היום אנחנו בדף פד מסכת יהובין סדר שב הוא יבטח ושמו לבן וירוץ לבן אל האיש החוצה אל העין למה ראה שהביאה תכשיטים ויכר אותם הצמידים על ידי אחותו שומ דבר קח אותו למק דיבר אלי עומד על הגמלים על העין שמואל ויאמר שמואל כל ישראל שמעתי כלכם אמרתם לי מליך לכם מלך ואתה מלך אני זקתי ושבתי אינם איתכם ואני לכת פניכם היום מעשה הנה ניענו בנגד שחשוב מי לקחתי חמור מי לקחתי מי עשקתי מי רצותי לקחתי כופר ואני מני בוא נשיב</p><p>לכם אמרו לו השקתנו לא רצות תמיד איש מאומה יאמ אומר עליהם את אדוני בכם ואת משיחו היום הזה כי לא מצטם בדי מאומה יא אומר עת רב זה לא לקח מהם כלום אבל לא היה לו פרקליטות שצריך כסף עזרו לו 20 אלף שק ויאמר שמו אלנלהם אדוני אשר עשה את משה אהרון אשר אלי את עבודכם מארץ מצרים מסכת תרומות שנה דבר תם מרים מה הולך פה &amp;gt;&amp;gt; ככה ואז שמרים בעין תפוחים חומץ סיטבניות שר מפירות שתרום רבזם החיים קרב וחומש יהושע פותר בזמים שהוא משקה אמר</p><p>רבי יהושע בנו חכמי שמשקים כמני פטמים הפתם הזה הוא בודק כל דבר בדובר אלא אמרו שבעה משקיעים טמאים שאר כל המשקיעים טהורים חברים גמרא בני העלייה ומה יקרון אנשי מרפסת סלקי במרפסת עונים תך מרפסת על מה כל ששימו זה לבני עליות הוא במדרגות ולבני חצר בזריקה לזה שמדרגות קורא לזה שלשול הכוונה מדרגות משתלשלות ללמטה וכיוון שכן תקשה לרב דמר שניהם אסורים אומרת הגמרא דאמר רב הונה לאותם בני עליות הדרים מקומה שמרפסת עצמה שפתחהם בשווה למרפסת כותם דרים במרפסת ואין העליות גבוהות מן העמוד 10ה טפחים שבני</p><p>עליות פתח יהיה עם הספע פחות מכאן נותנים אותו לחצר המיזה בפתח ולזה בפתח הוא מה לחצר אף לחצר שניהם אסורים ווא ווא ווא בא קטן סבבה מדברים בסמוכה נגד פה עשרה טבחים לחצר מה לחצר חצר ושר המי שתרביו מה לךצר לחצר שניהם אסורים חנמה לךצר לחצר שניהם אסורים שמאמינה ולית הבור ועשרת שניהם שם גבוהים עשרת מרפסת חות מכאן לחצ אמר רב הונה אותם הדרים שווה למרפסת אומרת הגמרא תנחס אלבור צריך לזה מדרגות אם להם לא לפני החצר מה יקמאמר אמר יצחק בדרב בבור מלאה מים מסכינה</p><p>חסרה דכימליה ושריה כי חסרה למי שריה גמרא אדרבה חסרה עשירה עשירה רב אה בני פירות ככה 11 לה קנה מסלה שם מאמינה אומרת הגמרא למד בור ולמסלה צריך יש בנסלה לקה למגזר אבל בור פעם מלא פעם ריק פעם פירות מתוקנים צריכה תה שמה אשר חצר ששכו ולא ירבו אנשיך חצר משמשים עשה דברים תחתונים שניה משמשים עשה עליון כצד זיז יוצא מן הכותן למדת מעשרה למדו לחצר למד מעשרה לעניה אז בני בני אסור אמר רב נחמן נח בקודש עשה תפחין עסרינ זיז יוצא מתשרה מה למהשרה אנחנו</p><p>בדף פד עמוד ב חברים תכוונו שיהיה לכם כוח לעבודת השם מה היה עושה עכשיו הרמוס חמוס זה הכל עבודת השם ת שמה שתי גזוות זו למעלה מזו ואסור מחיצה תלויה זאת העליונה ולא עשו להת זאת שלמטה שתיהם אסורות אסורות עד שרבו אמרבדה ורבה באים בני שלמעלה יורדים ועולים אלה שלמטה ועולים לזות שלמעלה בסולמות למלות אמר רבי גודקיימים בתוך עשרה דדה יהיה כמר לא מבעיה אז הוא מחיציונה אסורים כד בגושרה תדדקים שרה נהדה אפילו עשו לעוליונה ולא עשו לזאת שלמטה הייתי אומר כיוון זה בנחת לדקשה תן</p><p>את זה של בנחת כמה שמח כיוון שבתוך העשרה שתי מסורות גדמ רב נחמן שמואל גג הסמוך ברשות הרבים צריך להצים סולם כמו תירו סולם כבועין סולם הרי לא מה טעמם ש בתוך הסת ידעת כאלה מה תקפלה רב פפה במחפים בחותמה סודרה אמר תלמוד ירושלמי כל מיני זרעים שדרך לזרוע מהם חלקות צדיק גדולות ולא קטנות מולכותה ושעורה אין זורעים בארוגה סו בארוגה שישה שכה כל מיני ירקות שתר אותם זרע קטן זורעים אותם בהרוגה כגון חרדל אפונה שופין מצרועין אפוני לגבל מניירק מושג גובה טפח ונתמע כשר ששר</p><p>מתחילתו מת המים הטל במת המים שם עמוקים תפח זוכרים תוכם שלושה זירונים כל מיני זרעים שפינו זר לפי זרק אותם לגבי הרוגה האפונין הגמלונין הור המצרי אין נותנים אותם לגבי הרוגה זרה לירק תנים אותם שאר מיני זגינה שאינן נאכל פיזרה נזר אותה לגבי ארוגה אם נתמעד כשר אמר רבי אמן דתמר זרעים שלו עלזרוע בו בתחילה הבה אחר שאלו מותרים אב אלו מותרים ירמיה שני חניקו שונים מותרים שניים מים יש מן אדם תהנו שתי החקובות שלה שמת חדשות נקבים קבוע חדשות שנות טהורה דמרה אני אקרו השנים</p><p>אל הראשונים נותרים רבי יונה אמר רבי זרא ואמר רבי אב רבי עמת מתרב יום שם רבי יוחנן אח סוברכים לגדר סופרים לגובן ארוגה לה אמר גובה שמה התקשר דר פסוק הגמרא לא ידע מה מנה מנדה או מנדה מי אמר הלכה זו מי אמר זו מנהב דמר רבי יוסף הזרב ש רבי יוחנן נגד וואו אמר וב שנתמעד כשרקדמד פסוק אמר רבי יוסף בתנ שמעד כשר פסוק יכולים לגדל לבוא לניר לגפה לדרך לגדר אפל חד אומר אמר אין לךבריה פותר אמר לו אם כן וסף חוסם את הפרה</p><p>זווה כילאים פטור אלא הנוהלגנים צמח גימני ורחני או בן הגימנים מותר זה חלוק תשמ רמבם חבש בגדים תודת מן הבן וחייו סוחט חבש זחיתה צוחי חיבוס כמו הגסה אין זחיטה בשיער הדין הפץ הצמר חייב כמה שירו חוט ארבעה תפחים הצובע חוט שורכו ארבעה תפחים חייב צובע חייו שהצבע מתקיים לא מתקיים פטור שהם מלאכתו מתקיים בשבת פטור עושה ענה הצבע ד צובע גטון חפצה כמה שיעורו טובה אורך ארבעה תפחים מכל דבר חייב טוב צמר פשתן נוצר עושה את הלבת עושה שתי בתי נרין חייב עושה נפה ארבעתים</p><p>בניין לימוד וד הלילה יותר של יום בני להיזהר אלרנה שתורה אלא בלילה תבי שקשת עניין לגרסה כל בית שנשמעים בו דברי תורה ברנ חרב שעות נוכים צריכים ללמוד בתנשום מרובה שלא למד ביום שתלמד בלילה שולחן ערוך מפטירים בנביא מנינ של פרשה מתחים כפה לפסוקים שמחל ראש חודש בשבת אין פיר שלוש חודש כ צריך לכוון ברכות הקוראים שמעתם מי שעונה אמן משלים לו ל-100 ברכות שמעתם קטן יכול להפטיר אם שתתק המפטיר הבא אחריו סמה לא יתחיל במקום של פסק צריך להתחיל מהתחלה שבת שפרשות מחוברות שים בשני</p><p>ראש חומה וכל מני סולם מוצב אר רצה אמר בשואל בר נחמן שרי האומות העולם ראה לו מלך בבל מלך מדי מחימו מלך יוון מלך טורקיה מחימו בזכרו מלכי דום ירה אמר לו אל תיר עבדי יעקב שמה אני מורידו תרבע כנשר לכן לכן האמריקאים הסמל שלהם זה נשר זה אומר אם תגביע כנשר ינו אדום אישה מורידיך מטרמפלה צו לך טרמפלה למטה יא טראמפ טראמפולינה קופצים בזה עולים יורדים שלזה לא ך לטותה וזה אשר תעשה אותם רבי יהודה אורך העמוד במידה דה הראשונה 300 אורך התיבע ספר הזוהר</p><p>מן השלישים הכי נכבד מן השלושים דלתין צדיקים אומר תמיד חייבים להיות בדור 30 צדיקים שהעולם עומד עליהם שלושה לא בא חלק צעקה סדום ואמרה כי רבה רץ אומר אם אדם היה בא לסדום זורקים אותו לתוך הנהר אם אדם בא לרבי עמוס מה נותן לו ווא ווא ווא כמה מפנק אותו אמר לי היום הנהג שלי הוא הלך בשליחות מיץ של רבי עמוס לא משם לעזכירות. בסוף התברר שהרב עמוס הוא היה משלם את השכירות. מה זה &amp;gt;&amp;gt; מלא מלא משפחות משלים למסורות הכל יתומים ראיתי אותם שהוא הם</p><p>שלם על האוכל הם מזלים עלם הבית מי יתן לו חליפתות השם יוריד את הכוח הזה אבל צדיק צדיק יסוד &amp;gt;&amp;gt; בסף גיזה בחור בעייתי שבא אליו לקח לו 300,000 שק אחרי שעה יעברו בבחור הזה זה שעלו נהרג והבחור לא קרה לו כלום 300,000 שק בדיוק &amp;gt;&amp;gt; כן ככה דני מספר ש &amp;gt;&amp;gt; רב שהוא המין לרב ונתן מבטרים חזר &amp;gt;&amp;gt; ב ידע בדיוק בוא רואה מצד אבן הברד שעולה מלמטה רק כצעקתה תיקוני הזוהר מי הוא אדם העמוד הממצעי עלי נאמר תפילתו של אדם נשמת בית הכנסת מי</p><p>ששומר ברי נקרא אשתמים &amp;gt;&amp;gt; תרן צג לא להביא שעים מקשוב בא תן תפילות רחם עלינו כל מאכלות אסורות את הבר בר הזה הבר בר האלכוהול הזה לו ברה ברה בר מפה כל מי שעובר יגיד פרק תהילים ם תעשו פה פיתום הקטורת חזק בשבת תכבנו על זה כל הדברים הנו עליהם שלכו מאיתנו מה אין לחוך היום? איפה לחוך?</p><p>&amp;gt;&amp;gt; מה? לא שמת לחתמידים? &amp;gt;&amp;gt; אה, לא קנו היום. &amp;gt;&amp;gt; לא צריך הרבה.</p><p>&amp;gt;&amp;gt; הרב הוא סגר בשבת החולה. הוא לא &amp;gt;&amp;gt; כן כן הוא אדם טוב. &amp;gt;&amp;gt; הוא גם נהיה יותר שקף. &amp;gt;&amp;gt; כן &amp;gt;&amp;gt; כן.</p><p>לא שואלים אותה כמו פעם &amp;gt;&amp;gt; מוזיקה ולא חזקה רג שהיה אדם מרגיל לעצמו מסילת ישרים מתנהג בשפלות חנס הענווה בליבו אומר אדם הולך עם בגדים חשובים לאט לאט נהיה לו גאווה סרוחה הרב אביה כן, &amp;gt;&amp;gt; תודה רבה.</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="הרב-מאיר-דוד-שמואלי-שליט-א-שידור-חי-יום-ד-פרשת-כי-תבוא-תשפ-ו-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/XxmyCkYCGQg/maxresdefault_live.jpg" alt="הרב מאיר דוד שמואלי שליט&quot;א - שידור חי יום ד&#x27; - פרשת כי תבוא תשפ&quot;ו" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-שליט-א-שידור-חי-יום-ד-פרשת-כי-תבוא-תשפ-ו-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי שליט&quot;א - שידור חי יום ד&#x27; - פרשת כי תבוא תשפ&quot;ו</a><time class="ep-date" datetime="2026-08-26">26.08.2026 · 1h50</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/XxmyCkYCGQg_הרב_מאיר_דוד_שמואלי_שליט_א_-_שידור_חי_יום_ד__-_פרשת_כי_תבוא_תשפ_ו.mp3" preload="none" data-ep-id="XxmyCkYCGQg"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-שליט-א-שידור-חי-יום-ד-פרשת-כי-תבוא-תשפ-ו-2026-08-26.html" data-title="הרב מאיר דוד שמואלי שליט&quot;א - שידור חי יום ד&#x27; - פרשת כי תבוא תשפ&quot;ו"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ה-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/THYzANUYxxM/hqdefault.jpg" alt="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ה" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ה-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ה</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 52 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/THYzANUYxxM_הרב_מאיר_דוד_שמואלי_-_האוצר_היומי_סדר_של_ה.mp3" preload="none" data-ep-id="THYzANUYxxM"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ה-2026-08-25.html" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ג-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/zhICKHR8qkk/maxresdefault.jpg" alt="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ג" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ג-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ג</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 53 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/zhICKHR8qkk_הרב_מאיר_דוד_שמואלי_-_האוצר_היומי_סדר_של_ג.mp3" preload="none" data-ep-id="zhICKHR8qkk"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ג-2026-08-25.html" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ג"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ב-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/nqKHYHwexZU/maxresdefault.jpg" alt="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ב" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ב-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ב</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 41 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/nqKHYHwexZU_הרב_מאיר_דוד_שמואלי_-_האוצר_היומי_סדר_של_ב.mp3" preload="none" data-ep-id="nqKHYHwexZU"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ב-2026-08-25.html" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ב"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="הרב-מאיר-דוד-שמואלי-שליט-א-הלכות-שבת-שולחן-ערוך-סימן-ש-ח-סעיף-כ-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QiU_G2vUlIk/maxresdefault.jpg" alt="הרב מאיר דוד שמואלי שליט&quot;א - הלכות שבת שולחן ערוך סימן ש&quot;ח סעיף כ&#x27;" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-שליט-א-הלכות-שבת-שולחן-ערוך-סימן-ש-ח-סעיף-כ-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי שליט&quot;א - הלכות שבת שולחן ערוך סימן ש&quot;ח סעיף כ&#x27;</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 52 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QiU_G2vUlIk_הרב_מאיר_דוד_שמואלי_שליט_א_-_הלכות_שבת_שולחן_ערוך_סימן_ש_ח_סעיף_כ.mp3" preload="none" data-ep-id="QiU_G2vUlIk"></audio><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-שליט-א-הלכות-שבת-שולחן-ערוך-סימן-ש-ח-סעיף-כ-2026-08-25.html" data-title="הרב מאיר דוד שמואלי שליט&quot;א - הלכות שבת שולחן ערוך סימן ש&quot;ח סעיף כ&#x27;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="הרב-מאיר-דוד-שמואלי-שליט-א-שידור-חי-יום-ד-פרשת-כי-תבוא-תשפ-ו-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/XxmyCkYCGQg/maxresdefault_live.jpg" alt="הרב מאיר דוד שמואלי שליט&quot;א - שידור חי יום ד&#x27; - פרשת כי תבוא תשפ&quot;ו" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-שליט-א-שידור-חי-יום-ד-פרשת-כי-תבוא-תשפ-ו-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי שליט&quot;א - שידור חי יום ד&#x27; - פרשת כי תבוא תשפ&quot;ו</a><time class="ep-date" datetime="2026-08-26">26.08.2026 · 1h50</time><div class="ep-actions"><button class="play-btn" data-ep-id="XxmyCkYCGQg" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/XxmyCkYCGQg_הרב_מאיר_דוד_שמואלי_שליט_א_-_שידור_חי_יום_ד__-_פרשת_כי_תבוא_תשפ_ו.mp3" data-title="הרב מאיר דוד שמואלי שליט&quot;א - שידור חי יום ד&#x27; - פרשת כי תבוא תשפ&quot;ו" data-thumb="https://i.ytimg.com/vi/XxmyCkYCGQg/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-שליט-א-שידור-חי-יום-ד-פרשת-כי-תבוא-תשפ-ו-2026-08-26.html" data-title="הרב מאיר דוד שמואלי שליט&quot;א - שידור חי יום ד&#x27; - פרשת כי תבוא תשפ&quot;ו"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ה-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/THYzANUYxxM/hqdefault.jpg" alt="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ה" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ה-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ה</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 52 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="THYzANUYxxM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/THYzANUYxxM_הרב_מאיר_דוד_שמואלי_-_האוצר_היומי_סדר_של_ה.mp3" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ה" data-thumb="https://i.ytimg.com/vi/THYzANUYxxM/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ה-2026-08-25.html" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ג-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/zhICKHR8qkk/maxresdefault.jpg" alt="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ג" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ג-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ג</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 53 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="zhICKHR8qkk" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/zhICKHR8qkk_הרב_מאיר_דוד_שמואלי_-_האוצר_היומי_סדר_של_ג.mp3" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ג" data-thumb="https://i.ytimg.com/vi/zhICKHR8qkk/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ג-2026-08-25.html" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ג"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ב-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/nqKHYHwexZU/maxresdefault.jpg" alt="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ב" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ב-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ב</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 41 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="nqKHYHwexZU" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/nqKHYHwexZU_הרב_מאיר_דוד_שמואלי_-_האוצר_היומי_סדר_של_ב.mp3" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ב" data-thumb="https://i.ytimg.com/vi/nqKHYHwexZU/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-האוצר-היומי-סדר-של-ב-2026-08-25.html" data-title="הרב מאיר דוד שמואלי - האוצר היומי סדר של&quot;ב"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="הרב-מאיר-דוד-שמואלי-שליט-א-הלכות-שבת-שולחן-ערוך-סימן-ש-ח-סעיף-כ-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QiU_G2vUlIk/maxresdefault.jpg" alt="הרב מאיר דוד שמואלי שליט&quot;א - הלכות שבת שולחן ערוך סימן ש&quot;ח סעיף כ&#x27;" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הרב-מאיר-דוד-שמואלי-שליט-א-הלכות-שבת-שולחן-ערוך-סימן-ש-ח-סעיף-כ-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">הרב מאיר דוד שמואלי שליט&quot;א - הלכות שבת שולחן ערוך סימן ש&quot;ח סעיף כ&#x27;</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 52 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="QiU_G2vUlIk" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QiU_G2vUlIk_הרב_מאיר_דוד_שמואלי_שליט_א_-_הלכות_שבת_שולחן_ערוך_סימן_ש_ח_סעיף_כ.mp3" data-title="הרב מאיר דוד שמואלי שליט&quot;א - הלכות שבת שולחן ערוך סימן ש&quot;ח סעיף כ&#x27;" data-thumb="https://i.ytimg.com/vi/QiU_G2vUlIk/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-meir-david-shmueli/הרב-מאיר-דוד-שמואלי-שליט-א-הלכות-שבת-שולחן-ערוך-סימן-ש-ח-סעיף-כ-2026-08-25.html" data-title="הרב מאיר דוד שמואלי שליט&quot;א - הלכות שבת שולחן ערוך סימן ש&quot;ח סעיף כ&#x27;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -350,17 +354,17 @@ https://nedar.im/aDPy
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'he';
@@ -381,27 +385,43 @@ https://nedar.im/aDPy
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'R7Nt6QBaMc8', title: "הרב מאיר דוד שמואלי - האוצר היומי סדר ש\"ב", channel: "הרב מאיר דוד שמואלי", art: "https://i.ytimg.com/vi/R7Nt6QBaMc8/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_R7Nt6QBaMc8', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_R7Nt6QBaMc8'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'R7Nt6QBaMc8');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "הרב מאיר דוד שמואלי",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -415,16 +435,6 @@ https://nedar.im/aDPy
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

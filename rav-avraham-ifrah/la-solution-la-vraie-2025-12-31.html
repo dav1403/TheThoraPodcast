@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Breslev - Avraham Ifrah"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Rejoins-nous sur nos plateformes ! 🌐 Site - breslev.fr 🔴 Youtube https://www.youtube.com/breslev 🔵Facebook - facebook.com/breslev.fr 🟠Tiktok…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>LA SOLUTION (LA VRAIE)</h1>
     <p class="ep-meta"><a href="../rav-avraham-ifrah.html" style="color:#888;text-decoration:none">Breslev - Avraham Ifrah</a> · <time datetime="2025-12-31">31 décembre 2025 · 5 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Moussar</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/h-KRDUojLkA_LA_SOLUTION__LA_VRAIE.mp3" preload="none" data-ep-id="h-KRDUojLkA" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/h-KRDUojLkA_LA_SOLUTION__LA_VRAIE.mp3" preload="metadata" data-ep-id="h-KRDUojLkA" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -334,11 +338,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>Le sad quelqu&#x27;un qui vient le voir plus jamais il le laisse. Donc le sadic il cherche des formules sans arrêt sans arrêt sans arrêt pour pouvoir intégrer des des nouvelles néchamotes qui sont comme il dit ici qui sont roki meod meod chez kimat kimat avbatam. Ce sont des gens qui sont à la limite de la disparition, c&#x27;està dire qu&#x27;ils sont à la limite de ne plus exister. Tellement ils ont ils sont à l&#x27;envers, tellement ils ont fauté.</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1400 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>Le sad quelqu&#x27;un qui vient le voir plus jamais il le laisse. Donc le sadic il cherche des formules sans arrêt sans arrêt sans arrêt pour pouvoir intégrer des des nouvelles néchamotes qui sont comme il dit ici qui sont roki meod meod chez kimat kimat avbatam. Ce sont des gens qui sont à la limite de la disparition, c&#x27;està dire qu&#x27;ils sont à la limite de ne plus exister. Tellement ils ont ils sont à l&#x27;envers, tellement ils ont fauté.</p><p>Et le sad, il se bat et il récupère sans arrêt sans arrêt des âmes. Il s&#x27;arrête pas une seconde, il s&#x27;arrête pas une seconde de chercher une nouvelle miséricorde d&#x27;ach pour permettre à des gens éloignés de se rapprocher. C&#x27;estàdire, on est tellement atteint par le par le désespoir profondément. C&#x27;est pas un désespoir juste extérieur.</p><p>C&#x27;est c&#x27;est un désespoir qui est qui est en nous avec toutes les réincarnations qu&#x27;on a passé, les les échecs qu&#x27;on a eu dans dans plusieurs vies. Ça rentrait en nous à Youche comme ça un désespoir où on même si on nous dit non mais tu sais ça va s&#x27;arranger et tout. Bon ok c&#x27;est c&#x27;est les gens ils parlent comme ça il disent ouais non mais tu verras tu vas t&#x27;en sortir. Bon les gens ils disent des choses comme ça c&#x27;est pas ça nous touche pas c&#x27;est pas ça qui va nous aider.</p><p>Donc pour nous sortir de là, le sad il doit avoir une imagination extraordinaire pour nous pour nous amener dans des dans des situations qui vont nous reprendre qui vont nous permettre de reprendre goût à la vie, de reprendre goût à l&#x27;envie à l&#x27;envie. Parce que la plupart des gens, ils ont de la rage de vivre. Ils ont pas ils sont pas ils sont pas heureux de de vivre. Même si ils ont découvert la Torah, ils étudient la Torah et tout, mais au fond ils sont pas ils sont pas contents de ça parce que ils sont pas ils sont pas vraiment à leur place.</p><p>Ils ont pas vraiment découvert leur place. Ils sont pas dans leur véritable identité. Donc bien que ils aient une vie qui soit plus ou moins correcte, ça les ça les ils sont frustration permanente. Ils sont ils sont frustrés, ils ont une rage intérieure.</p><p>Maintenant le Sau qui vient, il va s&#x27;occuper de ces gens-là. Ces gens-là, il va leur donner l&#x27;espoir. Il va leur prouver que oui, ils peuvent changer et que oui, ils peuvent arriver et qu&#x27;il a tout ce qu&#x27;il faut pour les aider à changer, pour les amener. Et il est garant.</p><p>Il est garant d&#x27;Hem et il est prê garantes les âmes queil va les réparer. Donc maintenant le le plus dur pour lui c&#x27;est de lutter contreouche. C&#x27;estàd comme Rabin Rabou combien de fois il le reprenait lui disait mais comment pourquoi tu es tellement triste pourquoi tu es tellement tu es pas content de te rapprocher de moi et dit non R très content dit mais pourquoi tu es pas content qu&#x27;est-ce que parce que c&#x27;est des âmes qui ont énormément souffert donc c&#x27;est très difficile pour eux de</p><p>leur dire bon ça va aller et tout c&#x27;est pas ça qu&#x27;ils ont besoin ils ont pas besoin de de la pommade ils ont besoin d&#x27;une d&#x27;une assistance véritable de quelqu&#x27;un qui va les sécuriser en qui ils vont avoir confiance et qui va jamais les décevoir. Parce que sinon c&#x27;est c&#x27;est extrêmement dangereux.</p><p>C&#x27;est c&#x27;est parce que c&#x27;est des gens qui disent Rabi Nathanam, c&#x27;est des gens qui sont à la limite de la destruction. Ils sont limite limite. Donc c&#x27;est pas des gens tu vas venir leur faire des guilis et tu vas leur dire &quot;Allez mon ami, ça va aller et tout, fais pas la tête, viens boire un café tout.&quot; C&#x27;est pas c&#x27;est pas ça va pas le calmer ça. Il faut il faut il faut venir avec des éléments qui qui lui parlent profondément, qui éveillent en lui l&#x27;amour, la confiance et qu&#x27;il soit d&#x27;accord de continuer avec un espoir que oui, il va réussir.</p><p>C&#x27;est çaamim. C&#x27;est ça launhamim. Imim c&#x27;est pas de croire que il y a un rabi qui est grand qui fait des miracles et tout. C&#x27;est pas ça laamim.</p><p>Lahamim c&#x27;est pas qu&#x27;il y a un rab qui va te faire une bénédiction et et tu vas avoir une bonne parle à ça. Tu gagner au rappel [rires] à peu près. C&#x27;est pas on va voir peut-être si Dieu veut. Non non s&#x27;il te dit quelque chose c&#x27;est réglé.</p><p>Quand il te dit je m&#x27;occupe de toi ça ça veut dire tu peux être tranquille. Il va s&#x27;occuper de toi jusqu&#x27;au bout. Il y a il y a pas de des on va voir si le traitement il marche. C&#x27;est sûr qu&#x27;il marche.</p><p>C&#x27;est çaamim. C&#x27;est quoiim ? De croire que que que un rab il connaît de la Torah et tout. C&#x27;est pas çaamim.</p><p>Et monim ça veut dire que tu trouves un maître que quand tu le vois tu as terminé ça y est gamm tu as terminé ça y est ça y est tu es tranquille c&#x27;est fini tu as plus d&#x27;angoisse tu as plus de de de rage tu as plus de frustration et bien c&#x27;est tout c&#x27;est comme ça qu&#x27;il fait le sad il cherche sans arrêt sans arrêt. Allez de la miséricorde. Celui-là aussi, celle-là aussi. Allez, tac, il décroche et voilà.</p><p>La personne elle s&#x27;approche, elle fait tchva, elle vient au man, elle fait et tu vois des gens qui se rapprochent qui ils savent même pas comment ils sont arrivés là. Il savent pas du tout comment ils sont arrivés là. C&#x27;est lui qui qui paye les caution pour pour libérer les gens. C&#x27;est lui qui paye ses cautions.</p><p>Pour ça qu&#x27;on lui doit tout. Des discours rationnels, ils en ont entendu plein. Les gens, ça va pas les aider. Il veut quelqu&#x27;un qui il veut quelqu&#x27;un qui les connaît, quelqu&#x27;un qui les aime et quelqu&#x27;un qui leur garantit qu&#x27;il les sauve.</p><p>Voilà. Maintenant, si tu as ça, alors on est prêt à t&#x27;écouter. Si tu as pas ça, circule parce qu&#x27;on en a vu d&#x27;autres. On a pas besoin, on est là, on en a vu des des vertes et des pamurs avant de revenir en en réincarnation.</p><p>Donc des gens qui nous racontent des trucs, qui nous font des qui des des bisous nours et des trucs. On a pas besoin de ça. On a besoin quelqu&#x27;un qui s&#x27;occupe de nous vraiment, qui a une solution pour nous. Et le tadic, il fait que ça [rires] toute la journée, il fait que ça.</p><p>Et là, et là le tadic, il opère sans arrêt, sans arrêt, sans arrêt. Chaque seconde, il sauve des gens. Chaque seconde, il sauve des gens de la de de de la de la regard. C&#x27;estàd que si tu vas dans la logique, tu es perdu.</p><p>Tu es perdu. La seule chance que tu as, c&#x27;est quelqu&#x27;un qui vient et te dit &quot;Regarde, fais-moi confiance, je je vais te sauver.&quot; Mais c&#x27;est tout. C&#x27;est tout. C&#x27;està dire logiquement ta vie dans ta vie, tu es perdu.</p><p>C&#x27;estàd si tu fais les comptes, tu vois qui tu es, dans quel état, dans quoi tu te trouves, c&#x27;est terminé. Il y a pas de il y a pas de ch il y a aucune solution logique. Tu peux défier n&#x27;importe qui, tu dis voilà, viens m&#x27;amener, viens me ve me sortir de là où je suis. Tu peux me sortir, tu peux faire quelque chose pour moi.</p><p>Les gens, ils parlent de de l&#x27;Ukraine, il y a la guerre en Ukraine, il y a les trucs. Comment les gens ils vont là-bas ? Chabbatranou ou un voyage ou combien des dames elles sont venues avec leurs enfants les trucs alors que c&#x27;est un payang mais tu sais pas que ces gens-là ils ont logiquement c&#x27;est terminé pour eux tu comprends pas que tu crois que ces gensl ils sont venus faire un voyage d&#x27;agrément ils sont venus pour voir pour faire un séminaire de découverte des des des nouvelles des nouvelles compréhensions du talmud ou du mrache des gens [rires] sont ils savent pas combien de jours ils vont vivre il savent pas combien de temps ils vont tenir [musique]</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg" alt="Tikoun Haclali LIVE 15 ELOUL Breslev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali LIVE 15 ELOUL Breslev</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 47 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LH4ZWboSrfc_Tikoun_Haclali_LIVE_15_ELOUL_Breslev.mp3" preload="none" data-ep-id="LH4ZWboSrfc"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg" alt="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Wp8ARPbkoJA_TU_SOUFFRES___DIEU_NE_VEUT_QUE_TON_BIEN____5MIN30.mp3" preload="none" data-ep-id="Wp8ARPbkoJA"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg" alt="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1h05</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/D4W3apslDes_HATSOT_Attitude_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" preload="none" data-ep-id="D4W3apslDes"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg" alt="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 38 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/q-egujfm68I_Tikoun_Haclali_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" preload="none" data-ep-id="q-egujfm68I"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="rayonne-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg" alt="Rayonne!" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rayonne-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Rayonne!</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 0 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/MAv-386bmTA_Rayonne.mp3" preload="none" data-ep-id="MAv-386bmTA"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/rayonne-2026-08-27.html" data-title="Rayonne!"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg" alt="Tikoun Haclali LIVE 15 ELOUL Breslev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali LIVE 15 ELOUL Breslev</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 47 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="LH4ZWboSrfc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LH4ZWboSrfc_Tikoun_Haclali_LIVE_15_ELOUL_Breslev.mp3" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev" data-thumb="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg" alt="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="Wp8ARPbkoJA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Wp8ARPbkoJA_TU_SOUFFRES___DIEU_NE_VEUT_QUE_TON_BIEN____5MIN30.mp3" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" data-thumb="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg" alt="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1h05</time><div class="ep-actions"><button class="play-btn" data-ep-id="D4W3apslDes" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/D4W3apslDes_HATSOT_Attitude_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" data-thumb="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg" alt="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 38 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="q-egujfm68I" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/q-egujfm68I_Tikoun_Haclali_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" data-thumb="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="rayonne-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg" alt="Rayonne!" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rayonne-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Rayonne!</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 0 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="MAv-386bmTA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/MAv-386bmTA_Rayonne.mp3" data-title="Rayonne!" data-thumb="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/rayonne-2026-08-27.html" data-title="Rayonne!"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -347,17 +351,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -378,27 +382,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'h-KRDUojLkA', title: "LA SOLUTION (LA VRAIE)", channel: "Breslev - Avraham Ifrah", art: "https://i.ytimg.com/vi/h-KRDUojLkA/hqdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_h-KRDUojLkA', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_h-KRDUojLkA'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'h-KRDUojLkA');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Breslev - Avraham Ifrah",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -412,16 +432,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Breslev - Avraham Ifrah"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "http://www.breslev.fr/ Etude des conseils de Rabbi Nahman de Breslev .Tirés de ses principaux livres(Likoutey Moharan, les Contes, Sefer Hamidot, sirhot…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Ne laissez pas l&#x27;enfant se perdre : 5 minutes de Thora avec Breslev :)</h1>
     <p class="ep-meta"><a href="../rav-avraham-ifrah.html" style="color:#888;text-decoration:none">Breslev - Avraham Ifrah</a> · <time datetime="2016-02-16">16 février 2016 · 8 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Mariage &amp; Famille</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/_LZwB4TZwfg_Ne_laissez_pas_l_enfant_se_perdre___5_minutes_de_Thora_avec_Breslev.mp3" preload="none" data-ep-id="_LZwB4TZwfg" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/_LZwB4TZwfg_Ne_laissez_pas_l_enfant_se_perdre___5_minutes_de_Thora_avec_Breslev.mp3" preload="metadata" data-ep-id="_LZwB4TZwfg" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -329,11 +333,11 @@ Des conseils simples et si efficaces qu&#x27;ils changent la vie ...EN BIEN !</p
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>bonjour et à toutes depuis posé une question une personne qui m&#x27;a posé une question qui m&#x27;a dit que toute son enfance elle ressentait le vendredi quelque chose de spécial maintenant comprend que c&#x27;était l&#x27;approche du shabbat dit dans le SI pourot dans le Mondi dit que maintenant il y avait il y avait unmendiant qui é et qui a dit qu&#x27;il était en même temps un enfant en même temps un homme très âgé qui avait pas commencé encore à vivre et en même temps un enfant en</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1325 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] bonjour et à toutes depuis posé une question une personne qui m&#x27;a posé une question qui m&#x27;a dit que toute son enfance elle ressentait le vendredi quelque chose de spécial maintenant comprend que c&#x27;était l&#x27;approche du shabbat dit dans le SI pourot dans le Mondi dit que maintenant il y avait il y avait unmendiant qui é et qui a dit qu&#x27;il était en même temps un enfant en même temps un homme très âgé qui avait pas commencé encore à vivre et en même temps un enfant en</p><p>même temps un homme très âgé avait beaucoup vécu en même temps il était un enfant c&#x27;est il avait pas du tout commencé encore et il y avait là-bas ils étaient dans une tour et il y avait un aigle et l&#x27;aigle C ce grand aigle là il lui a dit toi et moi on est pareil c&#x27;estàd toi tu es en même temps un enfant un bébé qui a pas commencé à vivre et en même temps tu es très ancien cette semaine il m&#x27;a quelqu&#x27;un m&#x27;a demandé au</p><p>sujet du Phénix et j&#x27;ai regardé le phénix dans la Torah c&#x27;est à l&#x27;époque de noir il y avait donc un phénix dans le dans la tvate noire et ce Phénix là il a pas voulu déranger noir il voyz que no il était très occupé avec tous les animaux il cétait très dur pour lui alors il a pas il a il a pas osé le déranger il lui demandait pas à manger le phénix dans cette aigle demandait pas à manger à noir maintenant par le sar par</p><p>le salaire qu&#x27;il a pas dérangé noir alors il a reçu il a reçu une Brach une bénédiction qu&#x27; allait vivre éternellement Rachi dit que le phénix c&#x27;est un aigle qui vit éternellement alors on voit on voit aussi dans dans les comptes on VO dans dans balfila on voit que dans le balfila on voit que que Rabenou dit qu&#x27;il y a une tempête qui est rentrée dans la maison du roi dans le palais du roi et cette tempête là elle a qu&#x27;est-ce qu&#x27;elle a fait elle a</p><p>pris le elle a pris le bébé dans la maison du roi dire le bébé est le fils de la princesse dit qu&#x27;elle a fait aucun dégât la seule chose qu&#x27;elle a fait c&#x27;est qu&#x27;elle a pris le le bébé de la princesse on voit de de de ces enseignements de Rabenou j&#x27;ai entendu aussi des bre lever que maintenant ce que chacun il se fait voler bemet c&#x27;est l&#x27;enfant qui est en lui parce que l&#x27;enfance c&#x27;est là où on a le plus de de pureté c&#x27;està-d on n</p><p>pas commencé à être manipulé encore par par le monde donc on n pas on sait pas trop encore et on joue pas encore le rôle d&#x27;un adulte le problème c&#x27;est qu&#x27;après on devient soi-disant adulte entre guillemets mais c&#x27;est si on veut dire le le vrai mot c&#x27;est on devient un idiot plutôt queun adulte c&#x27;està dire qu&#x27;il faut arriver dans ce monde c&#x27;est à faire semblant d&#x27;être un adulte et rester un enfant c&#x27;est ça le c&#x27;est ça la perfection perfection c&#x27;est d&#x27;arriver à vivre avec l&#x27;émerveillement avec</p><p>la simplicité avec la douceur d&#x27;un enfant et faire semblant d&#x27;être un adulte pour fonctionner dans le monde il y a pas besoin d&#x27;être un vrai adulte idiot pour fonctionner dans le monde c&#x27;està dire on peut être un un enfant et fonctionnerous dit que Ben ce qu&#x27;il faut faire attention c&#x27;est qu&#x27;on n vole pas l&#x27;enfant qui est en nous un enfant que BEM il fait des choses merveilleuses dans ce monde et il rêve de choses merveilleuses et c&#x27;est lui qui qui a raison en nous parce que</p><p>c&#x27;est lui le point de départ c&#x27;est la première approche du monde après il y a des manipulations soit-disant éducation tout ce que vous voulez tous ces tous ces mots là tous c tous ces termes là de qui sont là pour pour pour essayer de faire oublier les gens les rêves qu&#x27;ils ont mais les repères de notre enfance c&#x27;est ça c&#x27;est ça le principal qu&#x27;il a dans notre vie d&#x27;ailleurs vous voyez que les gens quand ils deviennent très âgés ils retombent en enfance ça veut dire que</p><p>parce que les M retourn il retourne à la case départ c&#x27;est là où ils étaient avant et c&#x27;est là où il retourne maintenant luiême il a dit sur lui que il est un enfant que il a pas commencé à vivre du tout il est comme il est comme l&#x27;igle en même temps il est très ancien pourquoi il est très ancien parce que parce que quand on arrive dans le monde en tant que enfant alors on se rappelle des choses d&#x27;en haut ces choses s&#x27;appellent très anciennes</p><p>parce qu&#x27;elles sont en avance sur le monde son en avance sur l&#x27;humanité dire c&#x27;est c&#x27;est l&#x27;origine de notre vie c&#x27;est là où on a commencé à c&#x27;est la racine de tout ce qu&#x27;on est alors c&#x27;est très très ancien c&#x27;est sûr que c&#x27;est ancien et d&#x27;un autre côté il y a soi-disant la vie des adultes alors B ce qu&#x27;il fautime beaucoup prier c&#x27;est que l&#x27;enfant qui a en nous il se perde pas tout parce que si l&#x27;enfant qui est en nous il se perd pas alors on</p><p>va arriver à des choses très très élevées dans notre vie il faut avoir confiance dans cet enfant là et dans les rêves qu&#x27;il a parce que c&#x27;est ça qui est vrai le reste c&#x27;est c&#x27;est un des vêtements que la société elle a voulu nous mettre pour que pour pour soi-disant faire de nous des fonctionnaires c&#x27;estàdire des gens des agents de fonction des gens qui vont fonctionner pour le bien d&#x27;autrui mais pour le bien de nous-mêmes ce qui compte c&#x27;est notre enfance quand on est enfant on</p><p>rêve de tout on n pas de limite on peut tout se permettre on a on a aucun problème c&#x27;est la même chose quand on est grand reste un enfant c&#x27;est la même chose on peut oser se déplacer voyager aller vivre dans un autre pays faire d&#x27;autres choses parce que on est comme un enfant alors c&#x27;est à ça qu&#x27;il faut arriver bashem alors comme le mondant il a fait la BRA BEM par sout con queabman il il inclut les SEP mendiantsésenteem par son route que que que</p><p>chacun il soit comme ce Mondi mamach qui était en même temps très ancien très âgé et en même temps tu pas commencer à vivre du tout alors pour tous pour toutes dans tout ce que vous avez besoin et que vous vous laissez pas vieillir cet enfant comme rab il a dit à c&#x27;est interdit d&#x27;être vieux interdit d&#x27;être vieux c&#x27;est dire qu&#x27;il y a pas on vieillit pas on reste un enfant et cet enfantl il aura aucun problème à vivre dans le monde ne croyez pas que</p><p>la société ce qu&#x27;elle dit c&#x27;est c&#x27;est c&#x27;est quelque chose de vrai la société elle veut vous exploiter c&#x27;est tout elle veut faire de vous quelqu&#x27;un qui soi-disant sérieux il y a rien de sérieux c&#x27;est les seules personnes qui sont sérieuses c&#x27;est les les gens qui sont de l&#x27;autre côté parce que ils sont sérieusement là-bas mais ici tous les gens ils vont finir dans un trou qu&#x27;est-ce qu&#x27;ils ont de sérieux il y a rien de sérieux ça prenez les gens soi-disant qui parlent beaucoup la politique tout</p><p>ça après il finissent tous dans un trou là c&#x27;est c&#x27;est là où tout le monde finit on bais ta ch la joie il faut pas avoir peur d&#x27;être un enfant de rester un enfant de continuer à être un enfant et on peut fonctionner comme un adulte avec toutes les responsabilité d&#x27;un adulte sans aucun problème du tout vraiment sans aucun problème du tout</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg" alt="Tikoun Haclali LIVE 15 ELOUL Breslev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali LIVE 15 ELOUL Breslev</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 47 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LH4ZWboSrfc_Tikoun_Haclali_LIVE_15_ELOUL_Breslev.mp3" preload="none" data-ep-id="LH4ZWboSrfc"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg" alt="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Wp8ARPbkoJA_TU_SOUFFRES___DIEU_NE_VEUT_QUE_TON_BIEN____5MIN30.mp3" preload="none" data-ep-id="Wp8ARPbkoJA"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg" alt="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1h05</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/D4W3apslDes_HATSOT_Attitude_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" preload="none" data-ep-id="D4W3apslDes"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg" alt="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 38 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/q-egujfm68I_Tikoun_Haclali_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" preload="none" data-ep-id="q-egujfm68I"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="rayonne-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg" alt="Rayonne!" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rayonne-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Rayonne!</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 0 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/MAv-386bmTA_Rayonne.mp3" preload="none" data-ep-id="MAv-386bmTA"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/rayonne-2026-08-27.html" data-title="Rayonne!"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg" alt="Tikoun Haclali LIVE 15 ELOUL Breslev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali LIVE 15 ELOUL Breslev</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 47 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="LH4ZWboSrfc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LH4ZWboSrfc_Tikoun_Haclali_LIVE_15_ELOUL_Breslev.mp3" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev" data-thumb="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg" alt="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="Wp8ARPbkoJA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Wp8ARPbkoJA_TU_SOUFFRES___DIEU_NE_VEUT_QUE_TON_BIEN____5MIN30.mp3" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" data-thumb="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg" alt="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1h05</time><div class="ep-actions"><button class="play-btn" data-ep-id="D4W3apslDes" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/D4W3apslDes_HATSOT_Attitude_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" data-thumb="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg" alt="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 38 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="q-egujfm68I" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/q-egujfm68I_Tikoun_Haclali_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" data-thumb="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="rayonne-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg" alt="Rayonne!" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rayonne-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Rayonne!</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 0 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="MAv-386bmTA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/MAv-386bmTA_Rayonne.mp3" data-title="Rayonne!" data-thumb="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/rayonne-2026-08-27.html" data-title="Rayonne!"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -342,17 +346,17 @@ Des conseils simples et si efficaces qu&#x27;ils changent la vie ...EN BIEN !</p
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -373,27 +377,43 @@ Des conseils simples et si efficaces qu&#x27;ils changent la vie ...EN BIEN !</p
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: '_LZwB4TZwfg', title: "Ne laissez pas l'enfant se perdre : 5 minutes de Thora avec Breslev :)", channel: "Breslev - Avraham Ifrah", art: "https://i.ytimg.com/vi/_LZwB4TZwfg/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume__LZwB4TZwfg', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume__LZwB4TZwfg'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '_LZwB4TZwfg');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Breslev - Avraham Ifrah",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -407,16 +427,6 @@ Des conseils simples et si efficaces qu&#x27;ils changent la vie ...EN BIEN !</p
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

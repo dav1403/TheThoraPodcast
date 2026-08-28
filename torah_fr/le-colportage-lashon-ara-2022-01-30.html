@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "torah.fr"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "et bonjour à tous aujourd'hui je voudrais parler avec vous de l'interdît de médisance la torah au xixème chapitres de livres de wailly cra vous dit l'opt…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Le colportage (Lashon Ara)</h1>
     <p class="ep-meta"><a href="../torah_fr.html" style="color:#888;text-decoration:none">torah.fr</a> · <time datetime="2022-01-30">30 janvier 2022 · 5 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Moussar</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/TI19XcdZGxM_Le_colportage__Lashon_Ara.mp3" preload="none" data-ep-id="TI19XcdZGxM" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/TI19XcdZGxM_Le_colportage__Lashon_Ara.mp3" preload="metadata" data-ep-id="TI19XcdZGxM" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -325,11 +329,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>et bonjour à tous aujourd&#x27;hui je voudrais parler avec vous de l&#x27;interdît de médisance la torah au xixème chapitres de livres de wailly cra vous dit l&#x27;opt et l&#x27;air hagard il met à maera tu n&#x27;iras pas colporter au sein de ton peuple qu&#x27;est ce que ça veut dire cole porter on va parler aujourd&#x27;hui de deux interdits l&#x27;interdît de la sonara et dorée l&#x27;hôte du colportage et de la médisance la médisance c&#x27;est de créer un dommage à quelqu&#x27;un par mes actions ou par ma parole alors un</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1118 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] et bonjour à tous aujourd&#x27;hui je voudrais parler avec vous de l&#x27;interdît de médisance la torah au xixème chapitres de livres de wailly cra vous dit l&#x27;opt et l&#x27;air hagard il met à maera tu n&#x27;iras pas colporter au sein de ton peuple qu&#x27;est ce que ça veut dire cole porter on va parler aujourd&#x27;hui de deux interdits l&#x27;interdît de la sonara et dorée l&#x27;hôte du colportage et de la médisance la médisance c&#x27;est de créer un dommage à quelqu&#x27;un par mes actions ou par ma parole alors un</p><p>dommage c&#x27;est quoi ces ou de dire quelque chose qui va être dénigrants sur quelqu&#x27;un même si au fond ça ne va pas lui faire de dommages physiques ou financiers ou de dire quelque chose qui lui fera un dommage même si au fond il n&#x27;y a rien de dénigrement par exemple si je suis en train de me garer et il ya derrière moi quelqu&#x27;un qui est un peu en train de me 2 me me dérange et lorsque je conduis et je dis à mon ami mais regarde</p><p>quel idiot cela il sait pas conduire mais qu&#x27;est-ce qu&#x27;il est bête au fond je ne crée pas de dommages la personne qui avec moi dans la voiture ne va pas sortie avait commencé à l&#x27;embêter ou à lui faire des problèmes parce qu&#x27;il sait pas bien conduire mais je voulais quelque chose donné grand et j&#x27;aurais transgresser l&#x27;interdît de la chaux nara ou bien par exemple je peux dire quelque chose qui au fond est très bien par exemple une personne à monsieur donne beaucoup d&#x27;argent pour la synagogue</p><p>je rencontre sa femme et je lui dis on vous savez madame quelle chance vous avez votre mari est un grande sadique il donne beaucoup d&#x27;argent à la synagogue alors que je sais que vous n&#x27;êtes pas très riche et bien cette femme là peut-être rentrer chez elle et commencé à se disputer avec son mari comment ça tu donnes de l&#x27;argent aux autres et nous qu&#x27;en est il de nous il ya malheureusement une fausse idée qui circule parfois c&#x27;est beaucoup d&#x27;entre nous qui constituerait à dire que le</p><p>lâche honnart asselah différencions d&#x27;inventer des choses fausses sur les gens et bien même si ce que je dis est 100% vrai 6 et dénigrant donc négatif ou que cela va entraîner un dommage et bien cela est complètement interdite par les lois du lashawna alors me direz-vous dans ce cas là on peut plus ouvrir la bouche si des choses très belles pour dire des compliments et même parfois nous avons nous aurons le droit de dire quelque chose qui est négatif si c&#x27;est dans un but constructif mais</p><p>avant de faire ça il faudra aller bien demande de poser la question à son grave parce qu&#x27;au fond on peut avoir tendance à se jeter un petit peu tout de suite dans l&#x27;eau en pensions que ça y est je vais sauver le monde en disant que celui là est un voleur et se comporte mal alors qu&#x27;en fait tout vent là contre la situation est un peu plus complexe que ça alors qu&#x27;est ce que c&#x27;est un dommage un dommage tant de dommages financiers un dommage de réputation</p><p>mais aussi de faire peur à quelqu&#x27;un ou de lui faire de la peine en cas qui arrive très souvent je suis au travail et le patron vient me voir et me dit ethan qui est-ce qui a écrit ce rapport c&#x27;est vraiment n&#x27;importe quoi alors moi pour me dédouaner parce que je vois bien que mon patron parce que c&#x27;est moi qui écrit le rapport j&#x27;ai envie de dire non non c&#x27;est pas moi c&#x27;est maurice est ce que j&#x27;ai le droit de faire ça le talmud nous raconte</p><p>une histoire qui s&#x27;est passé avec rabbi ou d&#x27;anna ci et son fils rabbi shimon il avait un document qui était mal écrit rabhi yudan à 6% que son fils a écrit ce document le regarde et lui dit écoute ce n&#x27;est pas une façon d&#x27;écrire un document hélas son fils va lui dire ça n&#x27;est pas moi c&#x27;est rabin yehuda rail atteint le pape a invité son fils mais monfils cdu lashawna bien leur âge bas mais la chose suivante pourquoi séduit la chaux nara au fond il n&#x27;a</p><p>pas fait ça pour dire du mal de l&#x27;autre il a fait ça pour se protéger et bien parce qu&#x27;il aurait tout simplement pu dire ça n&#x27;est pas moi sans être obligé de nommer le coupable de la prend leurs fesses rain que si j&#x27;ai une possibilité de me laver ma réputation ou d&#x27;éloigner du problème sans accuser qui que ce soit et bien je suis obligé de le faire et si jeune homme le responsable j&#x27;aurais transgresser l&#x27;interdît du lashawna mais il ya des situations dans laquelle je ne</p><p>peux pas faire autrement par exemple il n&#x27;ya que deux suspects c&#x27;est moi ou lui en disant ce n&#x27;est pas moi je suis en train en fait de dire c&#x27;est lui et bien leur à fait sereine nous dit dans ce cas là ça sera perdre mais attention seulement si ce que l&#x27;on nous reproche est une faute réelle et grave quelqu&#x27;un a transgressé une faute de la torah quelqu&#x27;un a fait quelque chose qui était vraiment répréhensible et une faute grave dans ce cas là on aura le droit</p><p>de dire ça n&#x27;est pas moi même si en fait on en train d&#x27;accuser l&#x27;autre par contre si au fond mon boss est en train de me dire j&#x27;aime pas la couleur je suis pas très content de ce travail il ya rien de grave vient leur avis ce serait me lance un cas comme ça on a ça vaut pas le coup de venir commençait à utiliser l&#x27;art de la chine a ramené chose juste pour que se dédouaner de quelque chose d&#x27;aussi petit donc dans un cas comme</p><p>ça nous n&#x27;aurons pas le droit de dire ce n&#x27;est pas nous on se taira et h&amp;amp;m ya adore dieu d&#x27;où viendra en aide quoi qu&#x27;il en soit si une personne de faire au delà de la loi stricte et même dans un cas on l&#x27;accuse de quelque chose de grave préféra se taire pour ne pas accuser son prochain il sera digne de louanges mais encore une fois il devra bien voir si les conséquences ne vont pas attaquer attaquer les autres comme par exemple sa femme ses enfants</p><p>d&#x27;autres employés de personnes parce que évidemment il n&#x27;aura pas le droit de faire une roue moi de faire plus que la loi stricte si cela est sur le compte les autres ex en journée et beaucoup bénédiction</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/dakBbwv_DFU/hqdefault.jpg" alt="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html" style="color:inherit;text-decoration:none;display:block">Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?</a><time class="ep-date" datetime="2024-06-26">26 juin 2024 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/dakBbwv_DFU_Qu__39_est_ce_qui_rend_la_communauté_du_7_Clay_si_spéciale.mp3" preload="none" data-ep-id="dakBbwv_DFU"></audio><button class="share-btn" data-epfile="torah_fr/qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html" data-title="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-parasha-et-moi-vayeshev-2023-12-09.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/NqXdrOt4SHw/hqdefault.jpg" alt="La Parasha et moi - Vayeshev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-parasha-et-moi-vayeshev-2023-12-09.html" style="color:inherit;text-decoration:none;display:block">La Parasha et moi - Vayeshev</a><time class="ep-date" datetime="2023-12-09">9 décembre 2023 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NqXdrOt4SHw_La_Parasha_et_moi_-_Vayeshev.mp3" preload="none" data-ep-id="NqXdrOt4SHw"></audio><button class="share-btn" data-epfile="torah_fr/la-parasha-et-moi-vayeshev-2023-12-09.html" data-title="La Parasha et moi - Vayeshev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="il-suffit-de-croire-en-soi-2023-07-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/bz5B1-y4Vew/hqdefault.jpg" alt="Il suffit de croire en soi ..." loading="lazy"></a><div class="ep-body"><a class="ep-title" href="il-suffit-de-croire-en-soi-2023-07-28.html" style="color:inherit;text-decoration:none;display:block">Il suffit de croire en soi ...</a><time class="ep-date" datetime="2023-07-28">28 juillet 2023 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bz5B1-y4Vew_Il_suffit_de_croire_en_soi.mp3" preload="none" data-ep-id="bz5B1-y4Vew"></audio><button class="share-btn" data-epfile="torah_fr/il-suffit-de-croire-en-soi-2023-07-28.html" data-title="Il suffit de croire en soi ..."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-parasha-emor-2023-05-05.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/bFMXmzGMRes/hqdefault.jpg" alt="La parasha Emor" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-parasha-emor-2023-05-05.html" style="color:inherit;text-decoration:none;display:block">La parasha Emor</a><time class="ep-date" datetime="2023-05-05">5 mai 2023 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bFMXmzGMRes_La_parasha_Emor.mp3" preload="none" data-ep-id="bFMXmzGMRes"></audio><button class="share-btn" data-epfile="torah_fr/la-parasha-emor-2023-05-05.html" data-title="La parasha Emor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="kedochim-2023-04-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/lUVgxqnewFM/hqdefault.jpg" alt="Kedochim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="kedochim-2023-04-28.html" style="color:inherit;text-decoration:none;display:block">Kedochim</a><time class="ep-date" datetime="2023-04-28">28 avril 2023 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/lUVgxqnewFM_Kedochim.mp3" preload="none" data-ep-id="lUVgxqnewFM"></audio><button class="share-btn" data-epfile="torah_fr/kedochim-2023-04-28.html" data-title="Kedochim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/dakBbwv_DFU/hqdefault.jpg" alt="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html" style="color:inherit;text-decoration:none;display:block">Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?</a><time class="ep-date" datetime="2024-06-26">26 juin 2024 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="dakBbwv_DFU" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/dakBbwv_DFU_Qu__39_est_ce_qui_rend_la_communauté_du_7_Clay_si_spéciale.mp3" data-title="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?" data-thumb="https://i.ytimg.com/vi/dakBbwv_DFU/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/qu-39-est-ce-qui-rend-la-communaute-du-7-clay-si-speciale-2024-06-26.html" data-title="Qu&amp;#39;est ce qui rend la communauté du 7 Clay si spéciale?"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-parasha-et-moi-vayeshev-2023-12-09.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/NqXdrOt4SHw/hqdefault.jpg" alt="La Parasha et moi - Vayeshev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-parasha-et-moi-vayeshev-2023-12-09.html" style="color:inherit;text-decoration:none;display:block">La Parasha et moi - Vayeshev</a><time class="ep-date" datetime="2023-12-09">9 décembre 2023 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="NqXdrOt4SHw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NqXdrOt4SHw_La_Parasha_et_moi_-_Vayeshev.mp3" data-title="La Parasha et moi - Vayeshev" data-thumb="https://i.ytimg.com/vi/NqXdrOt4SHw/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/la-parasha-et-moi-vayeshev-2023-12-09.html" data-title="La Parasha et moi - Vayeshev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="il-suffit-de-croire-en-soi-2023-07-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/bz5B1-y4Vew/hqdefault.jpg" alt="Il suffit de croire en soi ..." loading="lazy"></a><div class="ep-body"><a class="ep-title" href="il-suffit-de-croire-en-soi-2023-07-28.html" style="color:inherit;text-decoration:none;display:block">Il suffit de croire en soi ...</a><time class="ep-date" datetime="2023-07-28">28 juillet 2023 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="bz5B1-y4Vew" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bz5B1-y4Vew_Il_suffit_de_croire_en_soi.mp3" data-title="Il suffit de croire en soi ..." data-thumb="https://i.ytimg.com/vi/bz5B1-y4Vew/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/il-suffit-de-croire-en-soi-2023-07-28.html" data-title="Il suffit de croire en soi ..."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-parasha-emor-2023-05-05.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/bFMXmzGMRes/hqdefault.jpg" alt="La parasha Emor" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-parasha-emor-2023-05-05.html" style="color:inherit;text-decoration:none;display:block">La parasha Emor</a><time class="ep-date" datetime="2023-05-05">5 mai 2023 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="bFMXmzGMRes" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/bFMXmzGMRes_La_parasha_Emor.mp3" data-title="La parasha Emor" data-thumb="https://i.ytimg.com/vi/bFMXmzGMRes/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/la-parasha-emor-2023-05-05.html" data-title="La parasha Emor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="kedochim-2023-04-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/lUVgxqnewFM/hqdefault.jpg" alt="Kedochim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="kedochim-2023-04-28.html" style="color:inherit;text-decoration:none;display:block">Kedochim</a><time class="ep-date" datetime="2023-04-28">28 avril 2023 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="lUVgxqnewFM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/lUVgxqnewFM_Kedochim.mp3" data-title="Kedochim" data-thumb="https://i.ytimg.com/vi/lUVgxqnewFM/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="torah_fr/kedochim-2023-04-28.html" data-title="Kedochim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -338,17 +342,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -369,27 +373,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'TI19XcdZGxM', title: "Le colportage (Lashon Ara)", channel: "torah.fr", art: "https://i.ytimg.com/vi/TI19XcdZGxM/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_TI19XcdZGxM', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_TI19XcdZGxM'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'TI19XcdZGxM');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "torah.fr",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -403,16 +423,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

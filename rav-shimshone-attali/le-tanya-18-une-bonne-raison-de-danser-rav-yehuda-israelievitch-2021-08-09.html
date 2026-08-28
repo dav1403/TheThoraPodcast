@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Shimshone Attali"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Rav Yehuda Israelievitch Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv Merci de vous abonner à nos…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>LE TANYA 18 - Une bonne raison de danser ! - Rav Yehuda Israelievitch</h1>
     <p class="ep-meta"><a href="../rav-shimshone-attali.html" style="color:#888;text-decoration:none">Rav Shimshone Attali</a> · <time datetime="2021-08-09">9 août 2021 · 6 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Likoutei Moharan</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SG7BJf7pFYM_LE_TANYA_18_-_Une_bonne_raison_de_danser___-_Rav_Yehuda_Israelievitch.mp3" preload="none" data-ep-id="SG7BJf7pFYM" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SG7BJf7pFYM_LE_TANYA_18_-_Une_bonne_raison_de_danser___-_Rav_Yehuda_Israelievitch.mp3" preload="metadata" data-ep-id="SG7BJf7pFYM" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -332,11 +336,11 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>non où il rav shlomo à yucca selman un très grave un match clients des dates israël qui influençait d&#x27;innombrables élèves à se rapprocher d&#x27;ayem ajouté dans leurs contacts dans l&#x27;authenticité de leur étude des pratiques de mise autres au delà tequila avant d&#x27;arriver renard et israël étaient emprisonnées en russie parce qu&#x27;il avait diffusé la torah il était marié ils avaient des enfants deux petits jumeaux bérelles et velvet ces joueurs-là ont grandi ils sont arrivés à 7 cet âge là où on coupe les cheveux à l&#x27;âge</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1019 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] non où il rav shlomo à yucca selman un très grave un match clients des dates israël qui influençait d&#x27;innombrables élèves à se rapprocher d&#x27;ayem ajouté dans leurs contacts dans l&#x27;authenticité de leur étude des pratiques de mise autres au delà tequila avant d&#x27;arriver renard et israël étaient emprisonnées en russie parce qu&#x27;il avait diffusé la torah il était marié ils avaient des enfants deux petits jumeaux bérelles et velvet ces joueurs-là ont grandi ils sont arrivés à 7 cet âge là où on coupe les cheveux à l&#x27;âge</p><p>de trois ans et lui étaient encore en prison son épouse a donc célébré cela toute seule avec ses enfants là après cette célébration la halle a décidé de lui envoyer une photo de cet événement là et elle a mis quelques petits cheveux de ses enfants dans un petit sac et est lui renvoyé ça lorsqu&#x27;il est sorti de prison il a dit à son épouse ce qui m&#x27;a fait le plus de bien ça n&#x27;est pas la photo mais ce sont les cheveux pourquoi de cheveux parce que</p><p>à travers ces petits cheveux là j&#x27;avais un contact physique réel avec mes enfants qui me manquait tant nous l&#x27;avons dit lorsqu&#x27;on accompli ta torts et les mises aux accueils de jour où nous en lace vini notaire à bikini lorsqu&#x27;un juif et une mise à dieu dans l&#x27;asthme et julien roy un roi qui enlace une personne parce que là ça changerait si cet homme là est dans l&#x27;acier en hiver ou en été parfois le roi rapporté de plusieurs vêtements parfois il emporte quelques-uns parfois de nous s&#x27;en</p><p>lasse de plusieurs couches et parfois de quelques gauche les mises autre que nous accomplissons c7 enlacements ladureau attaque à deux morts ou de dieu prenons les mythes vote tel que place tout cas le tell it is it it lorsqu&#x27;un homme est sous la soucca le zohar nous lie vimy notaire avec amy il y à la droite qu&#x27;à gauche bobo la bonté de dieu qu il enlace il n&#x27;a rien fait il est juste dans la cité le fait d&#x27;être dans la soupe la c&#x27;est déjà être entouré</p><p>des deux côtés là vous savez au moins un côté droit un côté gauche et encore un petit côté encore qui sont ouvert vers l&#x27;extérieur mais c&#x27;est déjà être saoul cette beauté céleste luminothérapie qui pourtant on le sait on en est conscient puisque c&#x27;est dehors qui ne le dit mais quand on ouvre les yeux on ne voit pas cette lumière de dieu a priori parce que l&#x27;on va mettre l&#x27;état limite le zohar nous dit qu&#x27;on est complètement entouré du coin du maquis fz1 qu&#x27;à deux chevaux aux</p><p>roues de sa grâce nous entourent complètement lorsque l&#x27;on met les titille il ya la lumière de dieu qui nous qui nous entoure de tous les côtés pourtant lorsqu&#x27;on ouvre les yeux endroit pas cette lumière mais on nous le dit il y à la présence de dieu il faut le croire battant ce talent et l effet de quoi il fait de laine on l&#x27;a travaillé on a mis des fils ni a ajouté c&#x27;est petit si tu cites mais en étant lassé de cette lumière dacca de cheveux</p><p>roux c&#x27;est un petit peu comme quand on on serre la main une personne mais lorsque deux mains se serrent il y avoit il ya trois éléments qui se sert ici il ya le poignet il y a le pwm de la main et puis elle s être malins qui sous ses airs et qui enlace l&#x27;autre on n&#x27;y pense pas c&#x27;est juste une poignée de maquiller dès janvier il faudra les votes de la même manière lorsqu&#x27;une femme allume les bougies de shabbat et qu&#x27;elle met ses mains devant</p><p>ses yeux qu&#x27;elle fermait lieu qu&#x27;elle fait toutes les prières qu&#x27;elle va faire à ce moment là on sent c&#x27;est pas le tablier une centaine une lumière de dieu qui est présente et pourtant lorsque l&#x27;on m&#x27;ouvre les yeux et ben y&#x27;a quoi il ya des bougies il ya un petit peu d&#x27;huile et une mèche une flamme mais la lumière on ne la perçois pas alors comment est ce qu&#x27;on peut dire qu&#x27;une mitzvah physique matérielle concrète elle est considérée comme cet entassement la de lieux comment la réponse</p><p>elle est là le roi est peut-être en train de nous en lacets peu importe le nom breux de vêtements qu&#x27;ils portent ça restera toujours ce droit là qui nous menacent on ne voit pas tout on ne voit pas toutes les dimensions de l&#x27;implication ne voit pas tout l&#x27;important c&#x27;est la profondeur qui lia dans chaque mitsva on n&#x27;aime pas toujours conscients mais on le sait c&#x27;est dieu qui se révèle qui ce qui brille à travers chaque miss va que nous sommes en train d&#x27;accomplir il faut le</p><p>vivre de cette façon là un jour le bal shem tov s&#x27;est mis à danser ses élèves quittent héros de lui on dit mais pourquoi est-ce que vous dansez et voilà j&#x27;ai reçu une nouvelle on m&#x27;a dit que j&#x27;avais perdu l&#x27;a priori une part de moments du futur une part de bongani den pourquoi est-ce que vous dansez pourquoi est-ce que vous chantez et voilà un homme tout ça je peux faire des mythes vote en étant persuadé qu&#x27;il le fait pour recevoir une récompense moi maintenant je suis</p><p>persuadé que tout ce que je fais je le fais pas pour la récompense je le fais parce que dieu me l&#x27;a demandé parce que dieu me l&#x27;a demandé lehmann chez moe ba1 va je le fais parce que dieu me l&#x27;a demandé comme dieu l&#x27;a demandé à ce que je laime à rejeter ce qu&#x27;il m&#x27;a demandé à je veux recevoir une récompense tant mieux mais je vais accomplir ce qui me demande parce que dieu me demande de le faire hélas quand je le fais je sais que</p><p>dieu m&#x27;en lasse il était avec moi il me prend dans ses bras il ne recouvre lorsque je fais une miss va je suis complètement dans les à bientôt</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="parachat-ki-tavo-50-hitat-du-jour-15-eloul-5786-28-aout-2026-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/olZw9-4s7Nw/maxresdefault.jpg" alt="PARACHAT KI TAVO (50) - HITAT DU JOUR 15 ELOUL 5786 - 28 Aout 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="parachat-ki-tavo-50-hitat-du-jour-15-eloul-5786-28-aout-2026-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">PARACHAT KI TAVO (50) - HITAT DU JOUR 15 ELOUL 5786 - 28 Aout 2026</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 12 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/olZw9-4s7Nw_PARACHAT_KI_TAVO__50__-_HITAT_DU_JOUR_15_ELOUL_5786_-_28_Aout_2026.mp3" preload="none" data-ep-id="olZw9-4s7Nw"></audio><button class="share-btn" data-epfile="rav-shimshone-attali/parachat-ki-tavo-50-hitat-du-jour-15-eloul-5786-28-aout-2026-2026-08-28.html" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 15 ELOUL 5786 - 28 Aout 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="parachat-ki-tavo-50-hitat-du-jour-14-eloul-5786-27-aout-2026-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/SpwOYn6dpwo/maxresdefault.jpg" alt="PARACHAT KI TAVO (50) - HITAT DU JOUR 14 ELOUL 5786 - 27 Aout 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="parachat-ki-tavo-50-hitat-du-jour-14-eloul-5786-27-aout-2026-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">PARACHAT KI TAVO (50) - HITAT DU JOUR 14 ELOUL 5786 - 27 Aout 2026</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 12 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SpwOYn6dpwo_PARACHAT_KI_TAVO__50__-_HITAT_DU_JOUR_14_ELOUL_5786_-_27_Aout_2026.mp3" preload="none" data-ep-id="SpwOYn6dpwo"></audio><button class="share-btn" data-epfile="rav-shimshone-attali/parachat-ki-tavo-50-hitat-du-jour-14-eloul-5786-27-aout-2026-2026-08-27.html" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 14 ELOUL 5786 - 27 Aout 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="le-kif-dans-la-parachat-ki-tavo-50-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ElMn_F9e3q4/maxresdefault.jpg" alt="LE KIF DANS LA PARACHAT - KI TAVO (50)" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="le-kif-dans-la-parachat-ki-tavo-50-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">LE KIF DANS LA PARACHAT - KI TAVO (50)</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ElMn_F9e3q4_LE_KIF_DANS_LA_PARACHAT_-_KI_TAVO__50.mp3" preload="none" data-ep-id="ElMn_F9e3q4"></audio><button class="share-btn" data-epfile="rav-shimshone-attali/le-kif-dans-la-parachat-ki-tavo-50-2026-08-27.html" data-title="LE KIF DANS LA PARACHAT - KI TAVO (50)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="voyage-a-travers-la-parachat-ki-tavo-50-2eme-rav-shmouel-timestit-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/-gE7uphhGWE/maxresdefault.jpg" alt="VOYAGE à travers la Parachat (KI TAVO 50 - 2eme) - Rav Shmouel Timestit" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="voyage-a-travers-la-parachat-ki-tavo-50-2eme-rav-shmouel-timestit-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">VOYAGE à travers la Parachat (KI TAVO 50 - 2eme) - Rav Shmouel Timestit</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 9 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/-gE7uphhGWE_VOYAGE_à_travers_la_Parachat__KI_TAVO_50_-_2eme__-_Rav_Shmouel_Timestit.mp3" preload="none" data-ep-id="-gE7uphhGWE"></audio><button class="share-btn" data-epfile="rav-shimshone-attali/voyage-a-travers-la-parachat-ki-tavo-50-2eme-rav-shmouel-timestit-2026-08-26.html" data-title="VOYAGE à travers la Parachat (KI TAVO 50 - 2eme) - Rav Shmouel Timestit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="parachat-ki-tavo-50-hitat-du-jour-13-eloul-5786-26-aout-2026-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ndQ32vX9Kzc/maxresdefault.jpg" alt="PARACHAT KI TAVO (50) - HITAT DU JOUR 13 ELOUL 5786 - 26 Aout 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="parachat-ki-tavo-50-hitat-du-jour-13-eloul-5786-26-aout-2026-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">PARACHAT KI TAVO (50) - HITAT DU JOUR 13 ELOUL 5786 - 26 Aout 2026</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 9 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ndQ32vX9Kzc_PARACHAT_KI_TAVO__50__-_HITAT_DU_JOUR_13_ELOUL_5786_-_26_Aout_2026.mp3" preload="none" data-ep-id="ndQ32vX9Kzc"></audio><button class="share-btn" data-epfile="rav-shimshone-attali/parachat-ki-tavo-50-hitat-du-jour-13-eloul-5786-26-aout-2026-2026-08-26.html" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 13 ELOUL 5786 - 26 Aout 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="parachat-ki-tavo-50-hitat-du-jour-15-eloul-5786-28-aout-2026-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/olZw9-4s7Nw/maxresdefault.jpg" alt="PARACHAT KI TAVO (50) - HITAT DU JOUR 15 ELOUL 5786 - 28 Aout 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="parachat-ki-tavo-50-hitat-du-jour-15-eloul-5786-28-aout-2026-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">PARACHAT KI TAVO (50) - HITAT DU JOUR 15 ELOUL 5786 - 28 Aout 2026</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 12 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="olZw9-4s7Nw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/olZw9-4s7Nw_PARACHAT_KI_TAVO__50__-_HITAT_DU_JOUR_15_ELOUL_5786_-_28_Aout_2026.mp3" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 15 ELOUL 5786 - 28 Aout 2026" data-thumb="https://i.ytimg.com/vi/olZw9-4s7Nw/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/parachat-ki-tavo-50-hitat-du-jour-15-eloul-5786-28-aout-2026-2026-08-28.html" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 15 ELOUL 5786 - 28 Aout 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="parachat-ki-tavo-50-hitat-du-jour-14-eloul-5786-27-aout-2026-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/SpwOYn6dpwo/maxresdefault.jpg" alt="PARACHAT KI TAVO (50) - HITAT DU JOUR 14 ELOUL 5786 - 27 Aout 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="parachat-ki-tavo-50-hitat-du-jour-14-eloul-5786-27-aout-2026-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">PARACHAT KI TAVO (50) - HITAT DU JOUR 14 ELOUL 5786 - 27 Aout 2026</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 12 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="SpwOYn6dpwo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SpwOYn6dpwo_PARACHAT_KI_TAVO__50__-_HITAT_DU_JOUR_14_ELOUL_5786_-_27_Aout_2026.mp3" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 14 ELOUL 5786 - 27 Aout 2026" data-thumb="https://i.ytimg.com/vi/SpwOYn6dpwo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/parachat-ki-tavo-50-hitat-du-jour-14-eloul-5786-27-aout-2026-2026-08-27.html" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 14 ELOUL 5786 - 27 Aout 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="le-kif-dans-la-parachat-ki-tavo-50-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ElMn_F9e3q4/maxresdefault.jpg" alt="LE KIF DANS LA PARACHAT - KI TAVO (50)" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="le-kif-dans-la-parachat-ki-tavo-50-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">LE KIF DANS LA PARACHAT - KI TAVO (50)</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="ElMn_F9e3q4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ElMn_F9e3q4_LE_KIF_DANS_LA_PARACHAT_-_KI_TAVO__50.mp3" data-title="LE KIF DANS LA PARACHAT - KI TAVO (50)" data-thumb="https://i.ytimg.com/vi/ElMn_F9e3q4/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/le-kif-dans-la-parachat-ki-tavo-50-2026-08-27.html" data-title="LE KIF DANS LA PARACHAT - KI TAVO (50)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="voyage-a-travers-la-parachat-ki-tavo-50-2eme-rav-shmouel-timestit-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/-gE7uphhGWE/maxresdefault.jpg" alt="VOYAGE à travers la Parachat (KI TAVO 50 - 2eme) - Rav Shmouel Timestit" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="voyage-a-travers-la-parachat-ki-tavo-50-2eme-rav-shmouel-timestit-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">VOYAGE à travers la Parachat (KI TAVO 50 - 2eme) - Rav Shmouel Timestit</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 9 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="-gE7uphhGWE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/-gE7uphhGWE_VOYAGE_à_travers_la_Parachat__KI_TAVO_50_-_2eme__-_Rav_Shmouel_Timestit.mp3" data-title="VOYAGE à travers la Parachat (KI TAVO 50 - 2eme) - Rav Shmouel Timestit" data-thumb="https://i.ytimg.com/vi/-gE7uphhGWE/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/voyage-a-travers-la-parachat-ki-tavo-50-2eme-rav-shmouel-timestit-2026-08-26.html" data-title="VOYAGE à travers la Parachat (KI TAVO 50 - 2eme) - Rav Shmouel Timestit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="parachat-ki-tavo-50-hitat-du-jour-13-eloul-5786-26-aout-2026-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ndQ32vX9Kzc/maxresdefault.jpg" alt="PARACHAT KI TAVO (50) - HITAT DU JOUR 13 ELOUL 5786 - 26 Aout 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="parachat-ki-tavo-50-hitat-du-jour-13-eloul-5786-26-aout-2026-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">PARACHAT KI TAVO (50) - HITAT DU JOUR 13 ELOUL 5786 - 26 Aout 2026</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 9 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="ndQ32vX9Kzc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ndQ32vX9Kzc_PARACHAT_KI_TAVO__50__-_HITAT_DU_JOUR_13_ELOUL_5786_-_26_Aout_2026.mp3" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 13 ELOUL 5786 - 26 Aout 2026" data-thumb="https://i.ytimg.com/vi/ndQ32vX9Kzc/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-shimshone-attali/parachat-ki-tavo-50-hitat-du-jour-13-eloul-5786-26-aout-2026-2026-08-26.html" data-title="PARACHAT KI TAVO (50) - HITAT DU JOUR 13 ELOUL 5786 - 26 Aout 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -345,17 +349,17 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -376,27 +380,43 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'SG7BJf7pFYM', title: "LE TANYA 18 - Une bonne raison de danser ! - Rav Yehuda Israelievitch", channel: "Rav Shimshone Attali", art: "https://i.ytimg.com/vi/SG7BJf7pFYM/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_SG7BJf7pFYM', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_SG7BJf7pFYM'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'SG7BJf7pFYM');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Shimshone Attali",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -410,16 +430,6 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

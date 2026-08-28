@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Jonas"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Comment les juifs ont-ils pu survivre 40 ans de le désert? Découvrez l'histoire et les étapes de leurs pérégrinations à travers ces terres arides. Cette…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Qu&#x27;il est long, qu&#x27;il est loin ton chemin, papa - Matot Massei</h1>
     <p class="ep-meta"><a href="../rabbin-jonas.html" style="color:#888;text-decoration:none">Rav Jonas</a> · <time datetime="2022-07-29">29 juillet 2022 · 7 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Paracha</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/aOi22n-o_n8_Qu_il_est_long__qu_il_est_loin_ton_chemin__papa_-_Matot_Massei.mp3" preload="none" data-ep-id="aOi22n-o_n8" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/aOi22n-o_n8_Qu_il_est_long__qu_il_est_loin_ton_chemin__papa_-_Matot_Massei.mp3" preload="metadata" data-ep-id="aOi22n-o_n8" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -329,11 +333,11 @@ Chabbat chalom!</p>
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>tantôt j&#x27;ai des médecins tantôt dans des lieux de repos dans le monde entier et une fois guéri le papa le roi a rappelé à son fils toutes les distances parcourues sur le chemin de la guérison en un mot ces étapes soulignent à la fois la montée de l&#x27;Éternel même dans les moments d&#x27;égarement les enfants Israël mais aussi son profondes amour à notre égard et ce double message bonté amour prend tout son sens si on se souvient de l&#x27;enseignement de belfayette ce fondant sur une anomalie dans</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">903 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>tantôt j&#x27;ai des médecins tantôt dans des lieux de repos dans le monde entier et une fois guéri le papa le roi a rappelé à son fils toutes les distances parcourues sur le chemin de la guérison en un mot ces étapes soulignent à la fois la montée de l&#x27;Éternel même dans les moments d&#x27;égarement les enfants Israël mais aussi son profondes amour à notre égard et ce double message bonté amour prend tout son sens si on se souvient de l&#x27;enseignement de belfayette ce fondant sur une anomalie dans</p><p>la présentation de ces étapes pour expliquer que tous ces voyages des enfants d&#x27;Israël depuis l&#x27;Égypte jusqu&#x27;à la Terre Sainte préfigure et sert de matrice pour les pérégrinations des Juifs en exil depuis tellement longtemps et que même si parfois un juif peut douter s&#x27;interroger sur les douleurs et la peine nous avons connu depuis près de 2000 ans les derniers agit avec nous avec bonté et amour force cette similitude entre notre exil actuel les errances des enfants d&#x27;Israël dans le désert et fait remarquer que les initiales des</p><p>quatre premiers mots de la paracha masse et Aleph même bête sont aussi les initiales des quatre exiles traversés par le peuple juif le halef pour edum Rome le même pour Madame la Perse le bête pour Babel la Babylonie et yude pour Yavan la Grèce de la rabbit de côte cité par son gendre l&#x27;amour de sorochov rajoute que de la même manière il est impossible de manière naturelle surtout dans les conditions de l&#x27;époque un peuple contempler près de 3 millions de personnes de survivre 40 ans dans</p><p>le désert sans la providence divine ainsi le peuple juif telle une brebis égarée parmi les nations ne doit sa survie qu&#x27;elle est de Dieu et le s&#x27;étonne du besoin de la Torah de préciser que moi j&#x27;ai écrit toutes ces étapes or nous savons que mocher a écrit toute la Torah pas seulement ses voyages alors rien m&#x27;explique ici la Torah a voulu indiquer que mocher tenait un carnet de route ou au fur et à mesure de la progression de la progression des enfants d&#x27;Israël il notait les</p><p>différentes étapes il me semble que cette explication du Rahim renvoie à l&#x27;anecdote racontée dans le Talmud par Raban damliale une fois il était en mer sur un bateau et il a vu au loin un autre bateau brisé en train de couler ses souvenirs avec beaucoup de peine que dans ce bateau se trouvait Rabia qui va et miracle une fois arrivé à terre Raban Games a retrouvé Rabia et l&#x27;interroger mais comment tu as pu survivre parmi les flots et bien qui va répondre une planche c&#x27;est détaché</p><p>du bateau et je m&#x27;y suis accroché et chaque fois qu&#x27;une immense vague menacée de mon porter moi et ma pauvre blanche j&#x27;ai supplié l&#x27;éternel de m&#x27;épargner et ce jusqu&#x27;à atteindre les rivages de la côte qui Arabia qui va a voulu rappeler Arban camliel qu&#x27;un juif en exil doit affronter les épreuves au quotidien sans se soucier de l&#x27;issue final et c&#x27;est la raison pour laquelle Mochet écrivait régulièrement ces étapes pour souligner cette idée clé en exil à l&#x27;heure notre monde qui vient à peine de se relever</p><p>de cette épidémie du coronavirus et confronté à un risque majeur de crise économique à ou le gouvernement nous invite à économiser l&#x27;énergie le climat et ses canicules de plus en plus régulières sans le dérégler son côté l&#x27;antisémitisme sous-jacent à des déclarations évoquantes un apartheid en Israël vision grotesque de l&#x27;État hébreu pour celui qui qu&#x27;il n&#x27;y a pas ses ne plus que quelques heures plus que jamais étudier notre paracha de masse est indispensable pour renforcer notre confiance dans un avenir heureux mais plus encore tous les cavalistes</p><p>établissent un parallèle entre ces 42 voyages et un des noms divins composés de 42 lettres que le grand prêtre le coin Gadol prononçait le jour de qui pour et fort de ce parallèle le magasin nous recommande de lire d&#x27;un trait les 42 étapes pour ne pas s&#x27;interrompre et découper le nom sacré de 42 lettres symboles de la réconciliation entre Dieu et les hommes en ce jour de grands pardon à condition de se souvenir de cette dernière idée du bal symptôve et du amour de Slonim qui</p><p>s&#x27;étonne du besoin de la Torah de décrire les voyages des enfants d&#x27;Israël en citant systématiquement le lieu de départ et le lieu d&#x27;arriver alors que la Torah aurait pu se contenter d&#x27;énumérer les 42 étapes uniquement il y en aurait pu reconstituées par nous-mêmes les différents voyages et ces deux sages répondent qu&#x27;au-delà de la délivrance collective des enfants d&#x27;Israël chacun d&#x27;entre nous individuellement doit ressentir ce besoin de voyager spirituellement progresser sans cesse et considéré que le jour présent servira de points de départ pour le lendemain sans</p><p>jamais revenir en arrière monter monter sans cesse tel un alpiniste plantant au fur et à mesure de nos annonces de son ascension CPI dans la montagne pour s&#x27;assurer ne pas chuter dans le vide dans une de ces chansons Joe Dassin s&#x27;amuse d&#x27;un papa vagabond menant ses enfants aux quatre vents sans vraiment sans jamais vraiment savoir où aller heureusement pour nous notre Père qui est aussi elle connait lui le chemin et c&#x27;est où il veut nous mener à nous de le suivre ça va être chez l&#x27;homme</p><p>à vous tous</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="les-marches-de-provence-ki-tavo-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg" alt="Les marchés de Provence - Ki Tavo" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="les-marches-de-provence-ki-tavo-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Les marchés de Provence - Ki Tavo</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G2_3iMaX3OM_Les_marchés_de_Provence_-_Ki_Tavo.mp3" preload="none" data-ep-id="G2_3iMaX3OM"></audio><button class="share-btn" data-epfile="rabbin-jonas/les-marches-de-provence-ki-tavo-2026-08-28.html" data-title="Les marchés de Provence - Ki Tavo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-maladie-d-amour-ki-tetse-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg" alt="La maladie d&#x27;amour - Ki Tétsé" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-maladie-d-amour-ki-tetse-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">La maladie d&#x27;amour - Ki Tétsé</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/y4s7ezuFk58_La_maladie_d_amour_-_Ki_Tétsé.mp3" preload="none" data-ep-id="y4s7ezuFk58"></audio><button class="share-btn" data-epfile="rabbin-jonas/la-maladie-d-amour-ki-tetse-2026-08-21.html" data-title="La maladie d&#x27;amour - Ki Tétsé"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-eclipse-du-soleil-choftim-2026-08-14.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg" alt="L&#x27;éclipse du soleil - Choftim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-eclipse-du-soleil-choftim-2026-08-14.html" style="color:inherit;text-decoration:none;display:block">L&#x27;éclipse du soleil - Choftim</a><time class="ep-date" datetime="2026-08-14">14 août 2026 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/flDcQYqGQZo_L_éclipse_du_soleil_-_Choftim.mp3" preload="none" data-ep-id="flDcQYqGQZo"></audio><button class="share-btn" data-epfile="rabbin-jonas/l-eclipse-du-soleil-choftim-2026-08-14.html" data-title="L&#x27;éclipse du soleil - Choftim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-france-en-feu-ekev-2026-07-31.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg" alt="La France en feu - Ékev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-france-en-feu-ekev-2026-07-31.html" style="color:inherit;text-decoration:none;display:block">La France en feu - Ékev</a><time class="ep-date" datetime="2026-07-31">31 juillet 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SazSsoMSYm4_La_France_en_feu_-_Ékev.mp3" preload="none" data-ep-id="SazSsoMSYm4"></audio><button class="share-btn" data-epfile="rabbin-jonas/la-france-en-feu-ekev-2026-07-31.html" data-title="La France en feu - Ékev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-espagne-par-k-o-devarim-2026-07-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg" alt="L&#x27;Espagne par K.O - Dévarim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espagne-par-k-o-devarim-2026-07-17.html" style="color:inherit;text-decoration:none;display:block">L&#x27;Espagne par K.O - Dévarim</a><time class="ep-date" datetime="2026-07-17">17 juillet 2026 · 8 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GVuOtTQAqTw_L_Espagne_par_K_O_-_Dévarim.mp3" preload="none" data-ep-id="GVuOtTQAqTw"></audio><button class="share-btn" data-epfile="rabbin-jonas/l-espagne-par-k-o-devarim-2026-07-17.html" data-title="L&#x27;Espagne par K.O - Dévarim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="les-marches-de-provence-ki-tavo-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg" alt="Les marchés de Provence - Ki Tavo" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="les-marches-de-provence-ki-tavo-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Les marchés de Provence - Ki Tavo</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="G2_3iMaX3OM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G2_3iMaX3OM_Les_marchés_de_Provence_-_Ki_Tavo.mp3" data-title="Les marchés de Provence - Ki Tavo" data-thumb="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/les-marches-de-provence-ki-tavo-2026-08-28.html" data-title="Les marchés de Provence - Ki Tavo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-maladie-d-amour-ki-tetse-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg" alt="La maladie d&#x27;amour - Ki Tétsé" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-maladie-d-amour-ki-tetse-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">La maladie d&#x27;amour - Ki Tétsé</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="y4s7ezuFk58" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/y4s7ezuFk58_La_maladie_d_amour_-_Ki_Tétsé.mp3" data-title="La maladie d&#x27;amour - Ki Tétsé" data-thumb="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/la-maladie-d-amour-ki-tetse-2026-08-21.html" data-title="La maladie d&#x27;amour - Ki Tétsé"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-eclipse-du-soleil-choftim-2026-08-14.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg" alt="L&#x27;éclipse du soleil - Choftim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-eclipse-du-soleil-choftim-2026-08-14.html" style="color:inherit;text-decoration:none;display:block">L&#x27;éclipse du soleil - Choftim</a><time class="ep-date" datetime="2026-08-14">14 août 2026 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="flDcQYqGQZo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/flDcQYqGQZo_L_éclipse_du_soleil_-_Choftim.mp3" data-title="L&#x27;éclipse du soleil - Choftim" data-thumb="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/l-eclipse-du-soleil-choftim-2026-08-14.html" data-title="L&#x27;éclipse du soleil - Choftim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-france-en-feu-ekev-2026-07-31.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg" alt="La France en feu - Ékev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-france-en-feu-ekev-2026-07-31.html" style="color:inherit;text-decoration:none;display:block">La France en feu - Ékev</a><time class="ep-date" datetime="2026-07-31">31 juillet 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="SazSsoMSYm4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SazSsoMSYm4_La_France_en_feu_-_Ékev.mp3" data-title="La France en feu - Ékev" data-thumb="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/la-france-en-feu-ekev-2026-07-31.html" data-title="La France en feu - Ékev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-espagne-par-k-o-devarim-2026-07-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg" alt="L&#x27;Espagne par K.O - Dévarim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espagne-par-k-o-devarim-2026-07-17.html" style="color:inherit;text-decoration:none;display:block">L&#x27;Espagne par K.O - Dévarim</a><time class="ep-date" datetime="2026-07-17">17 juillet 2026 · 8 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="GVuOtTQAqTw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GVuOtTQAqTw_L_Espagne_par_K_O_-_Dévarim.mp3" data-title="L&#x27;Espagne par K.O - Dévarim" data-thumb="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/l-espagne-par-k-o-devarim-2026-07-17.html" data-title="L&#x27;Espagne par K.O - Dévarim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -342,17 +346,17 @@ Chabbat chalom!</p>
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -373,27 +377,43 @@ Chabbat chalom!</p>
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'aOi22n-o_n8', title: "Qu'il est long, qu'il est loin ton chemin, papa - Matot Massei", channel: "Rav Jonas", art: "https://i.ytimg.com/vi/aOi22n-o_n8/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_aOi22n-o_n8', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_aOi22n-o_n8'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'aOi22n-o_n8');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Jonas",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -407,16 +427,6 @@ Chabbat chalom!</p>
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

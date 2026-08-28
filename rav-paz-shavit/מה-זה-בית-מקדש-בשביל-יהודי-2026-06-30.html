@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "המכללה התורנית"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "שיש בו אתמול דיברנו על זה שהוא הולך להיות גדול בגודל של כל ירושלים כי הולכים להתחבר אליו כל הבית הכנסיות מכל העולם כמו שהגמרא במסכת מגילה אומרת שתידים כל…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>מה זה בית מקדש בשביל יהודי ?</h1>
     <p class="ep-meta"><a href="../rav-paz-shavit.html" style="color:#888;text-decoration:none">המכללה התורנית</a> · <time datetime="2026-06-30">30.06.2026 · 7 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Etude de Torah</span> <span class="ep-tag">Emouna</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/4n_KAgOLKJw_מה_זה_בית_מקדש_בשביל_יהודי.mp3" preload="none" data-ep-id="4n_KAgOLKJw" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/4n_KAgOLKJw_מה_זה_בית_מקדש_בשביל_יהודי.mp3" preload="metadata" data-ep-id="4n_KAgOLKJw" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -326,11 +330,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p dir="rtl" lang="he">שיש בו אתמול דיברנו על זה שהוא הולך להיות גדול בגודל של כל ירושלים כי הולכים להתחבר אליו כל הבית הכנסיות מכל העולם כמו שהגמרא במסכת מגילה אומרת שתידים כל בתי כנסיות ובתי מדרשות שיעלו שבבבל שקבו בארץ ישראל ואז ממילא הוא יהיה גדול כמו הגודל של כל ירושלים וכמו שהמרשה אומר שלפי זה זה מוסיף במעלה של המקדש מעט שכשיהודי נמצא בבית כנסת במקדש מעט הוא יודע שהוא נמצא במקום שהולך להיות חלק מבית המקדש. &amp;gt;&amp;gt; כן. עכשיו יש נקודה נוספת שבעצם מה מה המטרה של הבית המקדש? דיברנו מה זה בית המקדש. הקדוש ברוך הוא נמצא בכל מקום. אז מה מיוחד בבית המקדש? &amp;gt;&amp;gt; שבית מקדש זה מקום שהקדוש ברוך הוא נמצא בו בגלוי. בית מקדש זה מקום שהקדוש ברוך נמצא בו בגלוי.</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1352 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body" dir="rtl" lang="he"><p>שיש בו אתמול דיברנו על זה שהוא הולך להיות גדול בגודל של כל ירושלים כי הולכים להתחבר אליו כל הבית הכנסיות מכל העולם כמו שהגמרא במסכת מגילה אומרת שתידים כל בתי כנסיות ובתי מדרשות שיעלו שבבבל שקבו בארץ ישראל ואז ממילא הוא יהיה גדול כמו הגודל של כל ירושלים וכמו שהמרשה אומר שלפי זה זה מוסיף במעלה של המקדש מעט שכשיהודי נמצא בבית כנסת במקדש מעט הוא יודע שהוא נמצא במקום שהולך להיות חלק מבית המקדש. &amp;gt;&amp;gt; כן. עכשיו יש נקודה נוספת שבעצם מה מה המטרה של הבית המקדש? דיברנו מה זה בית המקדש.</p><p>הקדוש ברוך הוא נמצא בכל מקום. אז מה מיוחד בבית המקדש? &amp;gt;&amp;gt; שבית מקדש זה מקום שהקדוש ברוך הוא נמצא בו בגלוי. [כחכוח] בית מקדש זה מקום שהקדוש ברוך נמצא בו בגלוי.</p><p>בכל העולם הקדוש ברוך הוא נמצא אבל בהלם בבית המקדש גם הוא מתגלה אותו דבר מקדש מעט זה מקום שודי רוצה להרגיש את השכנה הוא מגיע לבית כנסת אדם ברוך הוא נמצא בכל מקום בעולם אז מה מיוחד בבית כנסת שאומרים שזה בית של השם כי זה מקום שהקדוש ברוך הוא יותר מתגלה פה דיר מגיע לפה יותר מרגיש את הקדוש ברוך הוא יכול לדבר אל הקדוש ברוך הוא לכן גם תפילה בבית כנסת זה הרבה יותר נעלה מתפילה בבית אפילו מי שאין לו מניין עדיף להתפלל ביחיד בבית כנסת</p><p>מנתה להתפלל ביחיד ב בבית שבית כנסת זה מקום של השכינה שהשכינה מתגלת אז בעצם אז זה העניין של בית כנסת זה העניין של בית מקדש מקום שהקדוש ברוך הוא נמצא בו בגלוי אבל מה המטרה בזה למה השם עושה מקום שבו הקדוש ברוך הוא מתגלה אז כתוב א מיד בתורה במפורש ועשו לי מקדש מה המטרה של ועשו לי מקדש ושכלתי בתוכם אז כמו שחז&quot;ל מדייקים לא כתוב ושכלתי בתוכו בתוך הבית אני לא צריך שתעשו לי מקדש אני אשכון בתוך כל המטרה שעשו לי מקדש זה בשביל שושכנתי</p><p>בתוכם. מה זה בתוכם? בתוך עם ישראל. לא בתוכו.</p><p>זאת אומרת זה לא שעשו לי מקדש ושחתי בתוכו בתוכו של הבית מקדש, אלא עשו מקדש שחתי בתוכם, בתוך עם ישראל, בתוך כל אחד ואחד עם ישראל. זאת המטרה שהקדוש ברוך הוא עושה בית מקדש זה כדי שהקדוש ברוך הוא יוכל לשכול בתוך עם ישראל. איך על איך על ידי זה שיש משכן, שיש בית מקדש, אז הקדוש ברוך הוא שוכן בתוך כל אחד ואחד מישראל. כשיהודי מגיע למקדש הוא מרגיש את הקדוש ברוך הוא מרגיש את השכינה אז זה גורם לו להתחבר עם הקדוש ברוך הוא ואז גם בוא</p><p>שוכן את עיקר שכינה אז אותו דבר זה מטרה של כל מקדש מעט למה יש מקדש מעט למה יש בית כנסת בית מדרש איזה מקדש מעט כדי שיש מקום שבו השכינה מתגלת כדי שיבואו ויתאספו שם יהודים ואז היהודים יגלו את הקשר שלהם עם הקדוש ברוך הוא ואז הקדוש ברוך הוא ישכון בהם את כל המטרה הסופית של הבית מקדש זה שהקדוש ברוך הוא ישכון בעם ישראל המטרה הסובית זה עם ישראל.</p><p>עם ישראל הם כל המטרה. כמו שכתוב בזוהר, ישראל וקודשברוך הוא כל אחד. יהודי וכל זה דבר אחד. אלא מה?</p><p>שהנשמה ירדה למטה. אז פה הזה החלק אלוקם ממל ממש בהלם. יהודי לא מרגיש את זה שהוא קשור מהקדוש ברוך הוא. ואז הוא צריך לגלות את הנשמה ידי זה תורה ומצוות.</p><p>וכדי שיהיה לו ככוח לגלות את הנשמה זה יש מקום אחד יש מקום של בית מקדש שבו הקדוש ברוך הוא מתגלה ואז שודי מגיע לאותו מקום אז הוא מגלה את ה את הנשמה שלו. וזה ההבדל בין המקדש הכללי למקדש מעט. למה מקדש מעט נקרא מעט? כי מה היה מיוחד בבית המקדש שהיה בירושלים?</p><p>שכמו שכתוב בבו כל ישראל לראות את פני אב אלוקיך. כל עם ישראל היו מגיעים לראות את עם ישראל. אז בגלל שכל עם ישראל היו שם אז הייתה שורה שם כללות השכינה של כל עם ישראל כ כי בכל המטרה של המגדש הזה עשו מקדש ושכנתי בתוכם. אז ברגע שיש את כל עם ישראל אז שורה כללות השכינה.</p><p>אבל במקדש מעט לא מגיעים למקדש מעט כל עם ישראל. מגיעים 10 יהודים. כן. אז 10 יהודים זה סוג של אה כן אי אפשר לעשות מניין בפחות מעשרה.</p><p>אין דבר שבקדשה פחות מ שיש 10 יהודים זה כמו שיש פה את כל עם ישראל בקטן. לכן כן זה נקרא קהל על פי תורה. זה בתוך זה נקרא עדה. עדה זה עשרה.</p><p>אז אפשר לעשות קדושה. אפשר לקרוא קריעת התורה. אז בגלל שיש פה 10עשרה ודים אז כמו שיש פה את עם ישראל בקטן אז ככה גם זה מקדש מעט יש פה את הבית מקדש בקטן ז כי זה לא כללות השכינה זה כאילו כמו חלק מהשכינה ששורה על חלק מהעם ישראל אבל בבית המקדש יהיו מגיעים כל עם ישראל מיוחד זה היה בעלייה לרגל זה היה בעיקר רק יראה כל זכורך את פני השם אלוקיך רק השכרים אבל פעם בשבע שנים היה מצוות הקל שאז המצוות הקל זה האנשים אנשים והתף</p><p>וגרך השם בשך כל עם ישראל היו עולים לבית בית המקדש מיליונים זאת יודע אז בית מקדש זה מקום שבו מגיעים כל עם ישראל אז שרתה שם כללות השכינה ואז ממילא העוצמה של הגילוי אלוקות שהיה בבית המקדש פעל על כל יהודי שהיה מגיע לשם ש שהשכינה תהיה בתוכו ובוא הקותל יודעים הרבה &amp;gt;&amp;gt; נכון זה היה מה שנקרא מה שיש עכשיו עד שיבוא בית המקדש השלישי נכון אבל גם בכותל נכון זה סוג של קדושה לא זזה ממקומה והשימות בכותל כן &amp;gt;&amp;gt; בטח &amp;gt;&amp;gt; יש &amp;gt;&amp;gt; כתוב א לעולם</p><p>לא זז השכינה מהכותל המערבי ש &amp;gt;&amp;gt; שאתה מנשק את האבנים זה כמו שאתה מנשק א זה תורה אותו דבר &amp;gt;&amp;gt; זה כמו שאתה מנשק אבנים של בית המקדש זה בעצם &amp;gt;&amp;gt; זה הכותל ש היחיד שנשאר מבית המקדש מהר הבית &amp;gt;&amp;gt; זה לא זה רק הזה זה לא החומה זה לא ה &amp;gt;&amp;gt; זה החומה של הר הבית זה חלק מהחומה של הר הבית של בית המקדש &amp;gt;&amp;gt; מה זה לא שזה העץ של בית המקדש בפתי &amp;gt;&amp;gt; כן אבל ההר הבית זה קדוש זה חלק מהקדושה של בית</p><p>המקדש &amp;gt;&amp;gt; נכון אז זה רק בינתיים אנחנו מחכים כמו שאתה אומר בט לשם מגיעים הרבה יותר מ-10 יהודים שמה מגיעים אלפים מיליונים כל הזמן מגיעים ובעת השכינה שורה שם יהודי מרגיש שם את השכינה יותר מבית כנסת רגיל &amp;gt;&amp;gt; כן כן שמה ישכי כ כי כי נכון כי כי כמה שיש יותר יהודים במקום אז מרגישים יותר את הגילוי אלוקות אז אז אז אפשר קצת לדמיין איזה גילוי אלוקות היו מרגישים אלה שהיו מגיעים לבית המקדש היו רואים את הגילוי שכינה מול העיניים עומדים שפופים משתחבים רווחים היו רואים</p><p>ניסים מול העיניים איך הגשמים לא מכבים את האש לא ניצחה רוח תמוד העשן אז זה מה שצריך לזכור שכל המטרה של בית המקדש והלכת כמה חמה בבית המקדש השלישי זה שעל ידי זה השכינה תשכון בנו בעם ישראל מלמעלה נכון &amp;gt;&amp;gt; נכון אבל זה גם על ידי העבודה שלנו בית המידה שן מהשמיים אבל זה בזכות העבודה של הקיום תורה ומצוות שלנו במשך כל הדורות &amp;gt;&amp;gt; אז ה אז ממילא זה אחד מהעניינים היקרים של בית המקדש השלישי שבו הולך להיות גילוי שכינה יותר מבית ראשון ויותר מבית שני</p><p>כי אז זה הולך להיות גילוי עצמות השם נגלה כבוד השם רו כל בשר אחד דו כפי השם דיבר שהולכים לראות אלוקות בגאולה יראו אלוקות כמו שיום רואים שולחן זה לא דבר מיוחד זה לא זהלא מי שזה לא שבגאולה יראו אלוקות יגידו וואו אני רואה אלוקות כאילו זה יהיה זה יהיה הטבע הרגיל זה יהיה הפשוט זאת העולם כל כך התעלה שלראות אלוקות זה זה המציאות הפשוטה והגילוי הזה ישכון בבית המקדש השלישי ומשם זה יהיר כל העולם אז שוב אז אז זה לא סתם שיש פה גילוי אלוקות</p><p>בבית מקדש כל המטרה של גילוי אלוקות בבית מקדש זה כ על ידי זה זהכון בנו כדי שהקדוש ברוך הוא יתגלה בנו ואסור למקדש ושחתי בתוכם כמו שהמטרה של המשכן ובית ראשון ובית שני זה היה ושחטתי בתוכם בתוך כל אחד ואחד מישראל שהקדוש ברוך ישכון בנו בעם ישראל כמו שהמטרה של מקדש מעל זה שהשם ישכון בנו ככה המטרה של גילוי אלוקות שיהיה בגאולה האמיתית והשלמה זה כי על ידי זה יהיה את החיבור הכי מושלם של היהודי והקדוש ברוך הוא בגאולה האמיתית והשלמה שיראו בגלוי איך ישראל והקדוש</p><p>ברוך הוא זה דבר אחד שנזכה לזה תכף פה מיד ממש &amp;gt;&amp;gt; טובות טובות &amp;gt;&amp;gt; אדונינו מורנו ורבנו &amp;gt;&amp;gt; כן &amp;rlm;Ja.</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="מה-לומדים-לחיינו-ממצוות-ביכורים-הרבי-פרשתהשבוע-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/G_0ebNauzAg/maxresdefault.jpg" alt="מה לומדים לחיינו ממצוות ביכורים? #הרבי #פרשתהשבוע" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="מה-לומדים-לחיינו-ממצוות-ביכורים-הרבי-פרשתהשבוע-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">מה לומדים לחיינו ממצוות ביכורים? #הרבי #פרשתהשבוע</a><time class="ep-date" datetime="2026-08-28">28.08.2026 · 1 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G_0ebNauzAg_מה_לומדים_לחיינו_ממצוות_ביכורים___הרבי__פרשתהשבוע.mp3" preload="none" data-ep-id="G_0ebNauzAg"></audio><button class="share-btn" data-epfile="rav-paz-shavit/מה-לומדים-לחיינו-ממצוות-ביכורים-הרבי-פרשתהשבוע-2026-08-28.html" data-title="מה לומדים לחיינו ממצוות ביכורים? #הרבי #פרשתהשבוע"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="חסד-עולם-לעומת-רב-חסד-מוגבל-מול-אינסופי-הרב-מנחם-מיידנצ-יק-י-ד-אלול-אג-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ggkQ1MOVkug/maxresdefault.jpg" alt="חסד עולם לעומת רב חסד – מוגבל מול אינסופי | הרב מנחם מיידנצ&#x27;יק, י&quot;ד אלול | אגרות הקודש סימן י&quot;ג" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="חסד-עולם-לעומת-רב-חסד-מוגבל-מול-אינסופי-הרב-מנחם-מיידנצ-יק-י-ד-אלול-אג-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">חסד עולם לעומת רב חסד – מוגבל מול אינסופי | הרב מנחם מיידנצ&#x27;יק, י&quot;ד אלול | אגרות הקודש סימן י&quot;ג</a><time class="ep-date" datetime="2026-08-27">27.08.2026 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ggkQ1MOVkug_חסד_עולם_לעומת_רב_חסד___מוגבל_מול_אינסופי___הרב_מנחם_מיידנצ_יק__י_ד_אלול___אגרות.mp3" preload="none" data-ep-id="ggkQ1MOVkug"></audio><button class="share-btn" data-epfile="rav-paz-shavit/חסד-עולם-לעומת-רב-חסד-מוגבל-מול-אינסופי-הרב-מנחם-מיידנצ-יק-י-ד-אלול-אג-2026-08-27.html" data-title="חסד עולם לעומת רב חסד – מוגבל מול אינסופי | הרב מנחם מיידנצ&#x27;יק, י&quot;ד אלול | אגרות הקודש סימן י&quot;ג"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="בית-שמאי-גבורה-בית-הלל-חסד-כלולים-זה-מזה-הרב-מנחם-מיידנצ-יק-י-ג-אלול-א-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/tqpxbg-eGzg/maxresdefault.jpg" alt="בית שמאי גבורה, בית הלל חסד – כלולים זה מזה | הרב מנחם מיידנצ&#x27;יק, י&quot;ג אלול | אגרות הקודש סימן יג" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="בית-שמאי-גבורה-בית-הלל-חסד-כלולים-זה-מזה-הרב-מנחם-מיידנצ-יק-י-ג-אלול-א-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">בית שמאי גבורה, בית הלל חסד – כלולים זה מזה | הרב מנחם מיידנצ&#x27;יק, י&quot;ג אלול | אגרות הקודש סימן יג</a><time class="ep-date" datetime="2026-08-26">26.08.2026 · 4 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tqpxbg-eGzg_בית_שמאי_גבורה__בית_הלל_חסד___כלולים_זה_מזה___הרב_מנחם_מיידנצ_יק__י_ג_אלול___אגר.mp3" preload="none" data-ep-id="tqpxbg-eGzg"></audio><button class="share-btn" data-epfile="rav-paz-shavit/בית-שמאי-גבורה-בית-הלל-חסד-כלולים-זה-מזה-הרב-מנחם-מיידנצ-יק-י-ג-אלול-א-2026-08-26.html" data-title="בית שמאי גבורה, בית הלל חסד – כלולים זה מזה | הרב מנחם מיידנצ&#x27;יק, י&quot;ג אלול | אגרות הקודש סימן יג"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="משיח-יגלה-עומקים-עצומים-בתורה-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/8w4Ys8iSuqU/maxresdefault.jpg" alt="משיח יגלה עומקים עצומים בתורה " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="משיח-יגלה-עומקים-עצומים-בתורה-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">משיח יגלה עומקים עצומים בתורה </a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8w4Ys8iSuqU_משיח_יגלה_עומקים_עצומים_בתורה.mp3" preload="none" data-ep-id="8w4Ys8iSuqU"></audio><button class="share-btn" data-epfile="rav-paz-shavit/משיח-יגלה-עומקים-עצומים-בתורה-2026-08-25.html" data-title="משיח יגלה עומקים עצומים בתורה "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="מעשה-מלך-הנהגות-הרבי-ביקור-במחנה-קיץ-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/wqIvzkd4Kg0/maxresdefault.jpg" alt="מעשה מלך- הנהגות הרבי - ביקור במחנה קיץ" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="מעשה-מלך-הנהגות-הרבי-ביקור-במחנה-קיץ-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">מעשה מלך- הנהגות הרבי - ביקור במחנה קיץ</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 11 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/wqIvzkd4Kg0_מעשה_מלך-_הנהגות_הרבי_-_ביקור_במחנה_קיץ.mp3" preload="none" data-ep-id="wqIvzkd4Kg0"></audio><button class="share-btn" data-epfile="rav-paz-shavit/מעשה-מלך-הנהגות-הרבי-ביקור-במחנה-קיץ-2026-08-25.html" data-title="מעשה מלך- הנהגות הרבי - ביקור במחנה קיץ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="מה-לומדים-לחיינו-ממצוות-ביכורים-הרבי-פרשתהשבוע-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/G_0ebNauzAg/maxresdefault.jpg" alt="מה לומדים לחיינו ממצוות ביכורים? #הרבי #פרשתהשבוע" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="מה-לומדים-לחיינו-ממצוות-ביכורים-הרבי-פרשתהשבוע-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">מה לומדים לחיינו ממצוות ביכורים? #הרבי #פרשתהשבוע</a><time class="ep-date" datetime="2026-08-28">28.08.2026 · 1 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="G_0ebNauzAg" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G_0ebNauzAg_מה_לומדים_לחיינו_ממצוות_ביכורים___הרבי__פרשתהשבוע.mp3" data-title="מה לומדים לחיינו ממצוות ביכורים? #הרבי #פרשתהשבוע" data-thumb="https://i.ytimg.com/vi/G_0ebNauzAg/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-paz-shavit/מה-לומדים-לחיינו-ממצוות-ביכורים-הרבי-פרשתהשבוע-2026-08-28.html" data-title="מה לומדים לחיינו ממצוות ביכורים? #הרבי #פרשתהשבוע"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="חסד-עולם-לעומת-רב-חסד-מוגבל-מול-אינסופי-הרב-מנחם-מיידנצ-יק-י-ד-אלול-אג-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ggkQ1MOVkug/maxresdefault.jpg" alt="חסד עולם לעומת רב חסד – מוגבל מול אינסופי | הרב מנחם מיידנצ&#x27;יק, י&quot;ד אלול | אגרות הקודש סימן י&quot;ג" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="חסד-עולם-לעומת-רב-חסד-מוגבל-מול-אינסופי-הרב-מנחם-מיידנצ-יק-י-ד-אלול-אג-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">חסד עולם לעומת רב חסד – מוגבל מול אינסופי | הרב מנחם מיידנצ&#x27;יק, י&quot;ד אלול | אגרות הקודש סימן י&quot;ג</a><time class="ep-date" datetime="2026-08-27">27.08.2026 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="ggkQ1MOVkug" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ggkQ1MOVkug_חסד_עולם_לעומת_רב_חסד___מוגבל_מול_אינסופי___הרב_מנחם_מיידנצ_יק__י_ד_אלול___אגרות.mp3" data-title="חסד עולם לעומת רב חסד – מוגבל מול אינסופי | הרב מנחם מיידנצ&#x27;יק, י&quot;ד אלול | אגרות הקודש סימן י&quot;ג" data-thumb="https://i.ytimg.com/vi/ggkQ1MOVkug/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-paz-shavit/חסד-עולם-לעומת-רב-חסד-מוגבל-מול-אינסופי-הרב-מנחם-מיידנצ-יק-י-ד-אלול-אג-2026-08-27.html" data-title="חסד עולם לעומת רב חסד – מוגבל מול אינסופי | הרב מנחם מיידנצ&#x27;יק, י&quot;ד אלול | אגרות הקודש סימן י&quot;ג"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="בית-שמאי-גבורה-בית-הלל-חסד-כלולים-זה-מזה-הרב-מנחם-מיידנצ-יק-י-ג-אלול-א-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/tqpxbg-eGzg/maxresdefault.jpg" alt="בית שמאי גבורה, בית הלל חסד – כלולים זה מזה | הרב מנחם מיידנצ&#x27;יק, י&quot;ג אלול | אגרות הקודש סימן יג" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="בית-שמאי-גבורה-בית-הלל-חסד-כלולים-זה-מזה-הרב-מנחם-מיידנצ-יק-י-ג-אלול-א-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">בית שמאי גבורה, בית הלל חסד – כלולים זה מזה | הרב מנחם מיידנצ&#x27;יק, י&quot;ג אלול | אגרות הקודש סימן יג</a><time class="ep-date" datetime="2026-08-26">26.08.2026 · 4 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="tqpxbg-eGzg" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tqpxbg-eGzg_בית_שמאי_גבורה__בית_הלל_חסד___כלולים_זה_מזה___הרב_מנחם_מיידנצ_יק__י_ג_אלול___אגר.mp3" data-title="בית שמאי גבורה, בית הלל חסד – כלולים זה מזה | הרב מנחם מיידנצ&#x27;יק, י&quot;ג אלול | אגרות הקודש סימן יג" data-thumb="https://i.ytimg.com/vi/tqpxbg-eGzg/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-paz-shavit/בית-שמאי-גבורה-בית-הלל-חסד-כלולים-זה-מזה-הרב-מנחם-מיידנצ-יק-י-ג-אלול-א-2026-08-26.html" data-title="בית שמאי גבורה, בית הלל חסד – כלולים זה מזה | הרב מנחם מיידנצ&#x27;יק, י&quot;ג אלול | אגרות הקודש סימן יג"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="משיח-יגלה-עומקים-עצומים-בתורה-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/8w4Ys8iSuqU/maxresdefault.jpg" alt="משיח יגלה עומקים עצומים בתורה " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="משיח-יגלה-עומקים-עצומים-בתורה-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">משיח יגלה עומקים עצומים בתורה </a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="8w4Ys8iSuqU" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/8w4Ys8iSuqU_משיח_יגלה_עומקים_עצומים_בתורה.mp3" data-title="משיח יגלה עומקים עצומים בתורה " data-thumb="https://i.ytimg.com/vi/8w4Ys8iSuqU/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-paz-shavit/משיח-יגלה-עומקים-עצומים-בתורה-2026-08-25.html" data-title="משיח יגלה עומקים עצומים בתורה "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="מעשה-מלך-הנהגות-הרבי-ביקור-במחנה-קיץ-2026-08-25.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/wqIvzkd4Kg0/maxresdefault.jpg" alt="מעשה מלך- הנהגות הרבי - ביקור במחנה קיץ" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="מעשה-מלך-הנהגות-הרבי-ביקור-במחנה-קיץ-2026-08-25.html" style="color:inherit;text-decoration:none;display:block">מעשה מלך- הנהגות הרבי - ביקור במחנה קיץ</a><time class="ep-date" datetime="2026-08-25">25.08.2026 · 11 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="wqIvzkd4Kg0" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/wqIvzkd4Kg0_מעשה_מלך-_הנהגות_הרבי_-_ביקור_במחנה_קיץ.mp3" data-title="מעשה מלך- הנהגות הרבי - ביקור במחנה קיץ" data-thumb="https://i.ytimg.com/vi/wqIvzkd4Kg0/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-paz-shavit/מעשה-מלך-הנהגות-הרבי-ביקור-במחנה-קיץ-2026-08-25.html" data-title="מעשה מלך- הנהגות הרבי - ביקור במחנה קיץ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -339,17 +343,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'he';
@@ -370,27 +374,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: '4n_KAgOLKJw', title: "מה זה בית מקדש בשביל יהודי ?", channel: "המכללה התורנית", art: "https://i.ytimg.com/vi/4n_KAgOLKJw/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_4n_KAgOLKJw', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_4n_KAgOLKJw'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '4n_KAgOLKJw');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "המכללה התורנית",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -404,16 +424,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

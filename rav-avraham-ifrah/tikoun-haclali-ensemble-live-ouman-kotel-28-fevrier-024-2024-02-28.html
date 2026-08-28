@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Breslev - Avraham Ifrah"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "ABONNEZ-VOUS à notre chaîne YouTube, c'est GRATUIT et ça aide la diffusion de lumière dans le monde https://bit.ly/3gPa6jX Pour tous nos services visitez…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Tikoun Haclali ensemble live Ouman Kotel -  28 février 024</h1>
     <p class="ep-meta"><a href="../rav-avraham-ifrah.html" style="color:#888;text-decoration:none">Breslev - Avraham Ifrah</a> · <time datetime="2024-02-28">28 février 2024 · 40 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Kabbala &amp; Spiritualité</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OxOD2kiGkeA_Tikoun_Haclali_ensemble_live_Ouman_Kotel_-__28_février_024.mp3" preload="none" data-ep-id="OxOD2kiGkeA" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OxOD2kiGkeA_Tikoun_Haclali_ensemble_live_Ouman_Kotel_-__28_février_024.mp3" preload="metadata" data-ep-id="OxOD2kiGkeA" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -337,11 +341,11 @@ AIDEZ NOUS à finir le MISHKANE https://donate.stripe.com/28ocMU2tocpbaxWeUV Rec
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>k c UN Oh Non ONU protection ch Sucer que Bourdonner cerveau en céramique B Nems B Fies Sakh cortège nuptial Par Avec humiliation Lit pour mar isabel mal alven Kh B Kh Mbm Meilleur Papa Ben Sahra Bf Dd B Khan Msf B Mm Meilleur Kh B J Bazaneh B mm B Na B Tama horreur Bzan B Khna Dl B Kh Nla Jab B Mart Naf Bor mais fort S Ken Rat bouche Ben Ben Z Natan Ben Ben dav Jean Christof moi Kaddad Wal Hushar Azd</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1150 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[musique] k c UN Oh Non ONU protection ch Sucer que Bourdonner cerveau en céramique B Nems B Fies Sakh cortège nuptial Par Avec humiliation Lit pour mar isabel mal alven Kh B Kh Mbm Meilleur Papa Ben Sahra Bf Dd B Khan Msf B Mm Meilleur Kh B J Bazaneh B mm B Na B Tama horreur Bzan B Khna Dl B Kh Nla Jab B Mart Naf Bor mais fort S Ken Rat bouche Ben Ben Z Natan Ben Ben dav Jean Christof moi Kaddad Wal Hushar Azd</p><p>B KHRL Amz et le fantôme Bakhud Sht Benm Bashm Rouleau scellé pour Shkht B Ad étendu Tash Dans quel Khmmm Musdam Shamf Manal faible Kh Nafal J&#x27;étais avare Shad Asher Yefel Monsieur Docteur Il a été achevé Lakhn Tirez la fumée, ne fumez pas Kh Sht Takh Kh Sa&#x27; Samakh n bmakh N Lado Mexique Adam ne ressemble pas à Ad L. Brecht Puma quoi Khum Wal Takhb ydkh nah lashad Bakh S Khat A B L J&#x27;ai choisi serrer Ness Khat S ZT TTLL KHL Laitue Pour la</p><p>guérison Seigneur de R Str L M Sonnerie, nous nous échappons Tesben Sla Azkh Et Badr Zu Parler Al Obsession à jet Saupoudrer et Mauvais Prenez un morceau de poisson bédouin D Et quoi Psaume Ladoush Musal Al-Dal B Rlt Ad Adam Et Wusher Bar et T Publicité Benafsh Zars piège Avec une poussée, une ligne Pour sceller et sentir, c&#x27;était un lrt Shab Allons-y cerf à main Ashu Kh S A Il craint D B U B Laveuse Shakh L Ysf Je n&#x27;ai pas vu Shlomi, je n&#x27;ai pas</p><p>vu Bakht lésiner Non, je n&#x27;ai pas mangé ni Ad Khan Et de Et quand il était pressé Ma grand-mère est lumière père Y Et il a été achevé par Quel art Bum Bukh Ad Al-Wah paralysent millimètre Et je suis en sécurité Et je crois produit Trove m nafsh t Dieu l&#x27;a empoisonné à mon frère Mort B Dieu, que ta vie soit longue, Lakhm, que ta vie soit longue Et n&#x27;a pas Il urine Un Bakh Regrets, Dieu, nous Quoi de neuf? Pisser et souffler Akh Pour HUD</p><p>Josué Dieu Ma respiration Takh Azkh Mar Radan et trou Bahr Tahum Al Tahum L Mesh Notre ligne Mais Sh Une transformation pour Kh L S Lma J&#x27;ai ronflé Lamam Bah Barkh Détends-toi, Umm al Hé Dieu, quoi J&#x27;ai fait pipi et quoi ? ته mdr Josué Haah Tchert Ladd Scellé par Shlo Shoul Et le vent souffla À Le dieu Soleil Hélène Damas Hro Laissez-le errer avec détermination Pour les cheveux et la ligne Ad B Aoun Grèce Atd Dieu, Dieu Rafo trahit B S Ysh Seigneur À propos</p><p>Avec compréhension, la fin Avec compréhension cire Ad T L T Je sens les amandes Mb Al Ils servaient le dieu Bash Ter Anshu Bakhm M Ad Khatt Bm Dab Safam Et prenez Bonam Et la peur Oui Bakhm Wad Al-Wah Mal Suite à Lavis Hars et Wash Ils sont trompés et dupés.</p><p>Ce sont deux personnes qui sont les premières à être nommées Umm Zaba. Ashz Booker Khkh Mazb Touche-moi Zakh La détermination de celui qui est déterminé à être déterminé Malheureusement, je suis désolé. Mazm machine Les secousses J&#x27;ai vendu Adana Dasht De Lala Nara Lafa Makhm Nafsh Z Alwh Et frère Et gonfler Sz Nous sentions C&#x27;était bénéfique Et tout s&#x27;est effondré. Yadem Shen Azz Mont A Lebbakh Rancid 5 Et il a dit Afas lanh vin douche Kh Baf Ram S Et passé Kh Shen Yen Aliyoun Visite Maz</p><p>Entrée Quoi B B Il l&#x27;a réprimandé avec une douche Daldula Graisse Bazt Baruch ben Ya&#x27;ab et Seph Salakh mam aloh hokh mam Ça fait peur à Z, ça, Zm, Ma Réseau racine Shakhf Ramkh humide h br tbl Zarsh Har B Dakh et Shu Bum Rab Et choisissons Khkh, au fait, Mishah Et les plus faibles rebuts pour Moshe déforme Ma&#x27;t L Bad Wad Bitrim Hadd Batel Ar Et la date Et étendre le Chante, et vois ce qu&#x27;a dit Ibn Adam Mille shens un jour Je sens quelque</p><p>chose, mais vous, vous sentiez un rictus.</p><p>Par Bakr Y Babakr Baf Et Bash Kh Et réprimandez et merde Atad Lamour Quelle est la signification de « شن ي شنت بهم ش0 » ? Shana B Shanm Khash Fabricant Et cela s&#x27;est terminé pour qui Y B Haha, quoi ? décédé Et il a insulté Bakr, haha Et moi Bensam Samakht Sh Ra Ra Le Et il entra Oui, nous sommes là. Han et Mas Maintenant, avec le cœur, ils s&#x27;approchent Kenneh Hudan Ter Basham Expliquez ce que Zamo Sakho Nefel Basham Qashkh pulp babshah ed darshu ed Wuzhou Quelle est l&#x27;étendue du Zakh ?</p><p>Naf Ashar Peigne Z-A-B Abd ibn Yaqub Bakhra est Adna Allah B Har Peigne Zakha, pas un bar D Lf Dor Ashr muet Et elle a raconté copies Haab Lo paralyser Barm Lam Arn Khall tamisé Avec lui Masram Rakh Abou Mamkha Al-Amm Akhar Le frère d&#x27;Adam Sentir Et sur Malkh Ta Uriner T Je ne l&#x27;ai pas fait Shab Shalakh Lafan Cendre Nimr Yusuf A. Bubl R. Barzal B taquiner Je suis revenu avec une commande Ad Shlakh Malkh Loup Samdoun B Las S Benfsh Et il est passé</p><p>Et Ab Baar Kham Et M Et il exalté Nous sommes Pour transférer Bad Shlakh Mashhad Ahr Asher Bakhr B Samm Da A Et Fatat Baar Kh Shalkh hochet m sang Et je suis mort DTM Sharm Loin Engourdi Malkhar et puant Cheshma flamme froide de cendres b et la bouche Et ce fut achevé Abm Et par Dieu, et par Dieu, et par Dieu Et un lion Levure de bière Et puissiez-vous demeurer une source d&#x27;encens. pulvérisation n&#x27;a pas Et légèrement Zub Bashal Samakh Mar Par où sommes-nous allés</p><p>?</p><p>Badams fait des copies, et qu&#x27;est-ce que ça lui apporte ? Sh S et Lakhm Shama Zabakh Zoo Makhu B Rivière Zakh Car qui est le père d&#x27;Abd ? Et protéger Berna Bakh et Tan pour eux Aro Bel L Rsh Bushm Kho Et ils l&#x27;ont suivi d&#x27;un baiser. Yashbum Bakhkh Y Btkh Ça sent le coquillage, un coquillage Et Makhoun Nash Sh J&#x27;ai saigné Palmier Chut Ch ramper ou Il tranche Samakht Zkhor Aden Édom Rachel Morceau dur Balshad Shalam Il comprenait Piquer Alléluia, Alléluia, Basho Hallooh, B Azou Hallooh B Bt3 Shifr Hé, Benbel et Khor, vous allez à la rivière et à Khawl ?</p><p>Bonjour, Bmm Bob Bonjour, Bell Shma Faire T Hshma T Salut Ral, je suis tellement contente ! Shell Yaab Namkh Rl et Shaat Did Maazem Baat Z Aden Et il a murmuré une éruption cutanée ils Laitue, khash, missi, medik, misid j mal Yund Il y a ces miracles pas miraculeux log c&#x27;est qui vaaire dans des mscit pas de complication de dee dans ave Il est là pour vous faire plaisir. pr Merci</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg" alt="Tikoun Haclali LIVE 15 ELOUL Breslev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali LIVE 15 ELOUL Breslev</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 47 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LH4ZWboSrfc_Tikoun_Haclali_LIVE_15_ELOUL_Breslev.mp3" preload="none" data-ep-id="LH4ZWboSrfc"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg" alt="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Wp8ARPbkoJA_TU_SOUFFRES___DIEU_NE_VEUT_QUE_TON_BIEN____5MIN30.mp3" preload="none" data-ep-id="Wp8ARPbkoJA"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg" alt="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1h05</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/D4W3apslDes_HATSOT_Attitude_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" preload="none" data-ep-id="D4W3apslDes"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg" alt="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 38 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/q-egujfm68I_Tikoun_Haclali_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" preload="none" data-ep-id="q-egujfm68I"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="rayonne-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg" alt="Rayonne!" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rayonne-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Rayonne!</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 0 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/MAv-386bmTA_Rayonne.mp3" preload="none" data-ep-id="MAv-386bmTA"></audio><button class="share-btn" data-epfile="rav-avraham-ifrah/rayonne-2026-08-27.html" data-title="Rayonne!"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg" alt="Tikoun Haclali LIVE 15 ELOUL Breslev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali LIVE 15 ELOUL Breslev</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 47 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="LH4ZWboSrfc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/LH4ZWboSrfc_Tikoun_Haclali_LIVE_15_ELOUL_Breslev.mp3" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev" data-thumb="https://i.ytimg.com/vi/LH4ZWboSrfc/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-15-eloul-breslev-2026-08-27.html" data-title="Tikoun Haclali LIVE 15 ELOUL Breslev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg" alt="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="Wp8ARPbkoJA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Wp8ARPbkoJA_TU_SOUFFRES___DIEU_NE_VEUT_QUE_TON_BIEN____5MIN30.mp3" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)" data-thumb="https://i.ytimg.com/vi/Wp8ARPbkoJA/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tu-souffres-dieu-ne-veut-que-ton-bien-5min30-2026-08-27.html" data-title="TU SOUFFRES ? DIEU NE VEUT QUE TON BIEN ! (5MIN30)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg" alt="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1h05</time><div class="ep-actions"><button class="play-btn" data-ep-id="D4W3apslDes" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/D4W3apslDes_HATSOT_Attitude_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -" data-thumb="https://i.ytimg.com/vi/D4W3apslDes/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/hatsot-attitude-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="HATSOT Attitude live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg" alt="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 38 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="q-egujfm68I" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/q-egujfm68I_Tikoun_Haclali_live_-_14_Eloul__-_Breslev_-_Ouman_-.mp3" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -" data-thumb="https://i.ytimg.com/vi/q-egujfm68I/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/tikoun-haclali-live-14-eloul-breslev-ouman-2026-08-27.html" data-title="Tikoun Haclali live - 14 Eloul  - Breslev - Ouman -"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="rayonne-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg" alt="Rayonne!" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="rayonne-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Rayonne!</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 0 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="MAv-386bmTA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/MAv-386bmTA_Rayonne.mp3" data-title="Rayonne!" data-thumb="https://i.ytimg.com/vi/MAv-386bmTA/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-avraham-ifrah/rayonne-2026-08-27.html" data-title="Rayonne!"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -350,17 +354,17 @@ AIDEZ NOUS à finir le MISHKANE https://donate.stripe.com/28ocMU2tocpbaxWeUV Rec
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -381,27 +385,43 @@ AIDEZ NOUS à finir le MISHKANE https://donate.stripe.com/28ocMU2tocpbaxWeUV Rec
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'OxOD2kiGkeA', title: "Tikoun Haclali ensemble live Ouman Kotel -  28 février 024", channel: "Breslev - Avraham Ifrah", art: "https://i.ytimg.com/vi/OxOD2kiGkeA/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_OxOD2kiGkeA', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_OxOD2kiGkeA'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'OxOD2kiGkeA');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Breslev - Avraham Ifrah",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -415,16 +435,6 @@ AIDEZ NOUS à finir le MISHKANE https://donate.stripe.com/28ocMU2tocpbaxWeUV Rec
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

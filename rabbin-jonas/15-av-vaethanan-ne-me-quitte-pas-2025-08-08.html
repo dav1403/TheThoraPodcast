@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Jonas"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Ce shabbat où nous lisons la parchade va être anan tombe le 15 av jour célébré en Israël aujourd'hui comme une Saint-Valentin juive journée pour déclarer…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>15 Av- Vaethanan - Ne me quitte pas</h1>
     <p class="ep-meta"><a href="../rabbin-jonas.html" style="color:#888;text-decoration:none">Rav Jonas</a> · <time datetime="2025-08-08">8 août 2025 · 9 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Paracha</span> <span class="ep-tag">Roch Hachana &amp; Yom Kippour</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/n-7xGEPA3HM_15_Av-_Vaethanan_-_Ne_me_quitte_pas.mp3" preload="none" data-ep-id="n-7xGEPA3HM" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/n-7xGEPA3HM_15_Av-_Vaethanan_-_Ne_me_quitte_pas.mp3" preload="metadata" data-ep-id="n-7xGEPA3HM" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -325,11 +329,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>Ce shabbat où nous lisons la parchade va être anan tombe le 15 av jour célébré en Israël aujourd&#x27;hui comme une Saint-Valentin juive journée pour déclarer sa sa flamme à la personne qu&#x27;on aime. Cette célébration du Quinza Av est inspirée du Talmud qui raconte qu&#x27;en ce jour les jeunes femmes de Jérusalem sortaient toutes de blancs vêtu dans les vignobles de Judée et dansait en chantant : &quot;Jeune homme, lève tes yeux et veille à choisir une bonne épouse, mais attention, ne regarde pas la beauté, mais privilégie la qualité de la famille de la jeune fille. Car le roi Salomon écrit que la grâce est mensonge et la beauté et vanité. Seule une femme craignant l&#x27;Éternel et digne de l&#x27;ouange.</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1371 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>Ce shabbat où nous lisons la parchade va être anan tombe le 15 av jour célébré en Israël aujourd&#x27;hui comme une Saint-Valentin juive journée pour déclarer sa sa flamme à la personne qu&#x27;on aime. Cette célébration du Quinza Av est inspirée du Talmud qui raconte qu&#x27;en ce jour les jeunes femmes de Jérusalem sortaient toutes de blancs vêtu dans les vignobles de Judée et dansait en chantant : &quot;Jeune homme, lève tes yeux et veille à choisir une bonne épouse, mais attention, ne regarde pas la beauté, mais privilégie la qualité de la famille de la jeune fille. Car le roi Salomon écrit que la grâce est mensonge et la beauté et vanité. Seule une femme craignant l&#x27;Éternel et digne de l&#x27;ouange.</p><p>Et nos sages et le magen d&#x27;Abraham notamment sont unanimes et précise que cet usage a cessé avec la destruction du deuxè temple de Jérusalem et que seul l&#x27;esprit de ce jour si particulier du 15 Hav doit être respecté. Car le Talmud décrit qu&#x27;il n&#x27;y a pas de jour meilleur plus heureux pour Israël que le 15 Haves. Pourquoi ? Car Rabmëel explique toujours dans le Talmud qu&#x27;en ce jour, quelques années après l&#x27;entrée des enfants d&#x27;Israël en terre promise, toutes les tribus furent enfin autorisées de se marier entre elles.</p><p>En effet, la règle est selon la Torah que seul les garçons héritent de leurs parents. poursuit Rabi Ismoël. Suite à la demande des filles de Tolofrade, de la tribu de Menaché, elle d&#x27;hérité de la terre de leur père Tolfrade, mort sans laisser derrière lui deux fils pour perpétuer son nom et hériter lui de la part de son père de territoire sacré. Et l&#x27;Éternel en personne a répondu favorablement à la requête de ces femmes remarquables d&#x27;intelligence et de piété selon nos sages.</p><p>Sauf que les notables de la tribu de Menaché ont fait appel de cette décision divine auprès de Mosché notre maître en argumentant que la conséquence directe d&#x27;octroyer l&#x27;héritage de Tfrade à ses filles sera de voir ces terres retranché de la tribu puisque selon la Torah le premier héritier d&#x27;une femme mariée est son mari ou à ou à des feux ses enfants. Dès lors, si l&#x27;une des filles de Tolfrade épouse un homme d&#x27;une autre tribu de manière presque inévitable, les terres de menacché, celles de Solofrade, tomberont</p><p>dans la propriété d&#x27;une autre tribu puisque les enfants appartiennent à la tribu du Père. Et l&#x27;Éternel a alors ajouté une précision suivante à sa décision d&#x27;offrir au fil de Solofrade les terres de leur de leur père qui effectivement toutes les filles d&#x27;Israël de cette génération héritièr des terres de leur pères teles les filles de Solofrade devront impérativement épouser un homme de leur tribus afin de s&#x27;assurer que le terre de ces femmes même après leur mort resteront dans la propriété de leur tribus. Mais conclut Rab Ismaël,</p><p>cette interdiction faite aux filles héritières de leur père n&#x27;a concerné que la première génération des enfants d&#x27;Israël pénétrant au pays des Canaan mais pas au-delà.</p><p>Et un 15 Havres justement cette destruction fut levée et à nouveau toutes les femmes d&#x27;Israël furent autorisées à épouser l&#x27;homme de leur choix quelle que soit sa tribu. Ainsi en ce 15 av la levée de l&#x27;obligation, la contrainte d&#x27;épouser un homme d&#x27;une autre tribu a bien évidemment favorisé les mariages au sein d&#x27;Israël. D&#x27;où la coutume jadice de profiter de l&#x27;esprit de ce jour du 15 Av en en encourageant les jeunes femmes à sortir dans les champs à la recherche d&#x27;un époux. Avant de poursuivre, une petite parenthèse pour préciser par honnêteté intellectuelle que le Talmud donne quatre autres raisons à cet usage, mais le banishra écrit que que celui que je viens d&#x27;ex d&#x27;exposer lié au fil de Solofrade est le principal.</p><p>Fermons cette parenthèse et remarquons qu&#x27;il y a 6 jours à peine, nous avons tous vécu la journée la plus noire de notre calendrier, le neuf Av, en prenant le deuil et en jeûant durant plus de 24 heures. Et voilà que peu de jours après, non seulement tout est oublié, mais voilà que le 15 av le plus le plus heureux du calendrier. Comment réaliser dans sa tête un tel changement, un tel switch ? du pneem avantdernier habit de gour citant son père le imremet rappelant que la cause la plus connue de de la destruction du deuxème temple de Jérusalem est la haine gratuite.</p><p>Car malgré l&#x27;immense savoir de cette de cette génération à l&#x27;image des 24000 disciples de Rabiakiva, il se jalousaient s&#x27;envit jusqu&#x27;à ce jusqu&#x27;à ce haï et ce sans raison véritable. situation insupportable pour l&#x27;Éternel de voir ses enfants si savants se déchirer sans motif sérieux. L&#x27;Éternel préféra quitter son sanctuaire et même le détruire plutôt que d&#x27;étider dans une atmosphère aussi malsaine. Et le metet poursuit son explication en ajoutant que la seule manière de réparer cette si grave faute de la haine gratuite sinatrinam en hébreu et bien de faire preuve de avatrinam d&#x27;amour gratuit apprendre à aimer l&#x27;autre sans rien en attendre uniquement parce qu&#x27;il est mon frère une créature divine comme moi.</p><p>En effet, on peut s&#x27;interroger sur la sur la raison pourquoi l&#x27;interdiction pour les filles héritières de n&#x27;épouser que des hommes de leur tribus n&#x27;a duré qu&#x27;une génération. A priori, le risque de voir le passage de la terre de cette fille héritière à la tribu de son mari existe encore et ce quelle que soit la génération. À moins de comprendre qu&#x27;effectivement la première génération des enfants d&#x27;Israël, nomade dans le désert, partageant uniquement un idéal de vie fondé sur la Torah, chaque tribu a pensé qu&#x27;il était essentiel</p><p>de conserver l&#x27;identité propre de la tribu, des qualités de cœur du fils de Yaob dont ils étaient issus. Mais une fois arrivé en Terre sainte, les enfants d&#x27;Israël sont imaginés que non seulement les traits de caractère sont importantissimes et devaient être préservés, mais aussi chaque centimètre carré de terre attribué à leur tribus de impérativement rester leur propriété exclusive dans un dés dans un dessin de respecter la mémoire et l&#x27;honneur de la tribu.</p><p>Mais au bout d&#x27;une génération, les enfants d&#x27;Israël ont compris qu&#x27;un peu de terre, un un peu de un peu d&#x27;argent, un peu d&#x27;orgueil ne peut être le motif d&#x27;une division dans notre peuple et que que l&#x27;unité est une valeur suprême et que l&#x27;amour du prochain et à plus forte raison de sa future épouse ou époux mérite de sacrifier même sa propre terre puisque désormais le défi au pays d&#x27;Israël n&#x27;est plus de raisonner en terme de tribu mais en terme d&#x27;Israël. Pass en un mot de Jacob,</p><p>l&#x27;homme qui se limite à son talon aux choses basses, à de la terre telob signifiant le talon en français à Israël le prince de Dieu surnom de Jacob le prince divin pour lequel rien ne compte plus que l&#x27;honneur de Dieu et l&#x27;unité de son royaume. Et c&#x27;est la raison pour laquelle ce jour du 15 av toutes les jeunes filles d&#x27;Israël, pauvres comme riches, portaient le même habit blanc. pour effacer toute différence entre elles.</p><p>Et on peut désormais offrir cette très jolie réponse à notre étonnement sur ce passage si brutal du deuil à la joie. Car d&#x27;après les règles de deuil, un homme ayant pris le deuil, le neuf av dimanche pour nous cette année, son deuil s&#x27;achè s&#x27;achève systématiquement le 15 av, c&#x27;est-à-dire ce shabbat cette année. Or, nous savons que les événements dramatiques du ne du neuf av n&#x27;avaient d&#x27;autre objectif que de nous réveiller et de nous faire comprendre la gravité de nos fautes comme nous le répétons sans cesse dans toutes les quinotes du neuf Hav. Ces poèmes d&#x27;une tristesse infinie que nous avons lu le neuf Av.</p><p>En conclusion, d&#x27;après nombre de classements, le célébrissime ne me quitte pas de Jacques Brê et considéré comme la plus belle chanson d&#x27;amour composée en français. Ces paroles du début à la fin. Depuis, il faut oublier. Tout peut s&#x27;oublier jusqu&#x27;à laisse-moi devenir l&#x27;ombre de ton ombre, l&#x27;ombre de ta main, l&#x27;ombre de ton chien sont si belles.</p><p>À se demander si Jacques Brê ne les a pas écrites un 15. Shabbat shalom à vous tous.</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="les-marches-de-provence-ki-tavo-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg" alt="Les marchés de Provence - Ki Tavo" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="les-marches-de-provence-ki-tavo-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Les marchés de Provence - Ki Tavo</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G2_3iMaX3OM_Les_marchés_de_Provence_-_Ki_Tavo.mp3" preload="none" data-ep-id="G2_3iMaX3OM"></audio><button class="share-btn" data-epfile="rabbin-jonas/les-marches-de-provence-ki-tavo-2026-08-28.html" data-title="Les marchés de Provence - Ki Tavo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-maladie-d-amour-ki-tetse-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg" alt="La maladie d&#x27;amour - Ki Tétsé" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-maladie-d-amour-ki-tetse-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">La maladie d&#x27;amour - Ki Tétsé</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/y4s7ezuFk58_La_maladie_d_amour_-_Ki_Tétsé.mp3" preload="none" data-ep-id="y4s7ezuFk58"></audio><button class="share-btn" data-epfile="rabbin-jonas/la-maladie-d-amour-ki-tetse-2026-08-21.html" data-title="La maladie d&#x27;amour - Ki Tétsé"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-eclipse-du-soleil-choftim-2026-08-14.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg" alt="L&#x27;éclipse du soleil - Choftim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-eclipse-du-soleil-choftim-2026-08-14.html" style="color:inherit;text-decoration:none;display:block">L&#x27;éclipse du soleil - Choftim</a><time class="ep-date" datetime="2026-08-14">14 août 2026 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/flDcQYqGQZo_L_éclipse_du_soleil_-_Choftim.mp3" preload="none" data-ep-id="flDcQYqGQZo"></audio><button class="share-btn" data-epfile="rabbin-jonas/l-eclipse-du-soleil-choftim-2026-08-14.html" data-title="L&#x27;éclipse du soleil - Choftim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-france-en-feu-ekev-2026-07-31.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg" alt="La France en feu - Ékev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-france-en-feu-ekev-2026-07-31.html" style="color:inherit;text-decoration:none;display:block">La France en feu - Ékev</a><time class="ep-date" datetime="2026-07-31">31 juillet 2026 · 7 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SazSsoMSYm4_La_France_en_feu_-_Ékev.mp3" preload="none" data-ep-id="SazSsoMSYm4"></audio><button class="share-btn" data-epfile="rabbin-jonas/la-france-en-feu-ekev-2026-07-31.html" data-title="La France en feu - Ékev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-espagne-par-k-o-devarim-2026-07-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg" alt="L&#x27;Espagne par K.O - Dévarim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espagne-par-k-o-devarim-2026-07-17.html" style="color:inherit;text-decoration:none;display:block">L&#x27;Espagne par K.O - Dévarim</a><time class="ep-date" datetime="2026-07-17">17 juillet 2026 · 8 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GVuOtTQAqTw_L_Espagne_par_K_O_-_Dévarim.mp3" preload="none" data-ep-id="GVuOtTQAqTw"></audio><button class="share-btn" data-epfile="rabbin-jonas/l-espagne-par-k-o-devarim-2026-07-17.html" data-title="L&#x27;Espagne par K.O - Dévarim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="les-marches-de-provence-ki-tavo-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg" alt="Les marchés de Provence - Ki Tavo" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="les-marches-de-provence-ki-tavo-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Les marchés de Provence - Ki Tavo</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="G2_3iMaX3OM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/G2_3iMaX3OM_Les_marchés_de_Provence_-_Ki_Tavo.mp3" data-title="Les marchés de Provence - Ki Tavo" data-thumb="https://i.ytimg.com/vi/G2_3iMaX3OM/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/les-marches-de-provence-ki-tavo-2026-08-28.html" data-title="Les marchés de Provence - Ki Tavo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-maladie-d-amour-ki-tetse-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg" alt="La maladie d&#x27;amour - Ki Tétsé" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-maladie-d-amour-ki-tetse-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">La maladie d&#x27;amour - Ki Tétsé</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="y4s7ezuFk58" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/y4s7ezuFk58_La_maladie_d_amour_-_Ki_Tétsé.mp3" data-title="La maladie d&#x27;amour - Ki Tétsé" data-thumb="https://i.ytimg.com/vi/y4s7ezuFk58/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/la-maladie-d-amour-ki-tetse-2026-08-21.html" data-title="La maladie d&#x27;amour - Ki Tétsé"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-eclipse-du-soleil-choftim-2026-08-14.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg" alt="L&#x27;éclipse du soleil - Choftim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-eclipse-du-soleil-choftim-2026-08-14.html" style="color:inherit;text-decoration:none;display:block">L&#x27;éclipse du soleil - Choftim</a><time class="ep-date" datetime="2026-08-14">14 août 2026 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="flDcQYqGQZo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/flDcQYqGQZo_L_éclipse_du_soleil_-_Choftim.mp3" data-title="L&#x27;éclipse du soleil - Choftim" data-thumb="https://i.ytimg.com/vi/flDcQYqGQZo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/l-eclipse-du-soleil-choftim-2026-08-14.html" data-title="L&#x27;éclipse du soleil - Choftim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-france-en-feu-ekev-2026-07-31.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg" alt="La France en feu - Ékev" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-france-en-feu-ekev-2026-07-31.html" style="color:inherit;text-decoration:none;display:block">La France en feu - Ékev</a><time class="ep-date" datetime="2026-07-31">31 juillet 2026 · 7 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="SazSsoMSYm4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/SazSsoMSYm4_La_France_en_feu_-_Ékev.mp3" data-title="La France en feu - Ékev" data-thumb="https://i.ytimg.com/vi/SazSsoMSYm4/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/la-france-en-feu-ekev-2026-07-31.html" data-title="La France en feu - Ékev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-espagne-par-k-o-devarim-2026-07-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg" alt="L&#x27;Espagne par K.O - Dévarim" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espagne-par-k-o-devarim-2026-07-17.html" style="color:inherit;text-decoration:none;display:block">L&#x27;Espagne par K.O - Dévarim</a><time class="ep-date" datetime="2026-07-17">17 juillet 2026 · 8 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="GVuOtTQAqTw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GVuOtTQAqTw_L_Espagne_par_K_O_-_Dévarim.mp3" data-title="L&#x27;Espagne par K.O - Dévarim" data-thumb="https://i.ytimg.com/vi/GVuOtTQAqTw/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rabbin-jonas/l-espagne-par-k-o-devarim-2026-07-17.html" data-title="L&#x27;Espagne par K.O - Dévarim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -338,17 +342,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -369,27 +373,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'n-7xGEPA3HM', title: "15 Av- Vaethanan - Ne me quitte pas", channel: "Rav Jonas", art: "https://i.ytimg.com/vi/n-7xGEPA3HM/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_n-7xGEPA3HM', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_n-7xGEPA3HM'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'n-7xGEPA3HM');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Jonas",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -403,16 +423,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

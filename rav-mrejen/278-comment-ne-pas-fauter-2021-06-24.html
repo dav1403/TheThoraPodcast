@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Nathan Mrejen"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "https://www.darkeihaim.com Comment apprendre à véritablement se connaître ? Comment construire une personnalité aboutie ? Comment développer son…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>278. Comment ne pas fauter ?</h1>
     <p class="ep-meta"><a href="../rav-mrejen.html" style="color:#888;text-decoration:none">Rav Nathan Mrejen</a> · <time datetime="2021-06-24">24 juin 2021 · 7 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Téchouva</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3k1u6RzXH_o_278__Comment_ne_pas_fauter.mp3" preload="none" data-ep-id="3k1u6RzXH_o" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3k1u6RzXH_o_278__Comment_ne_pas_fauter.mp3" preload="metadata" data-ep-id="3k1u6RzXH_o" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -333,11 +337,11 @@ Vous pouvez poser vos questions directement au Rav MREJEN sur https://www.darkei
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>bonjour mes chers amis arabes yossef on va continuer de prendre commande le plus jeune après avoir vécu totalement de miracle la sortie d&#x27;egypte qui peuvent faire peuvent tomber au niveau des travaux de ce point la cause possible moi je vais vous dire je ramenais peau on va essayer de comprendre le niveau un peu un peu collective plan donc prendre un peu de hauteur par rapport à ça pendant les débats de la part à chaque balade tous les petits détails tout capté de les petits fortiya</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1388 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] bonjour mes chers amis arabes yossef on va continuer de prendre commande le plus jeune après avoir vécu totalement de miracle la sortie d&#x27;egypte qui peuvent faire peuvent tomber au niveau des travaux de ce point la cause possible moi je vais vous dire je ramenais peau on va essayer de comprendre le niveau un peu un peu collective plan donc prendre un peu de hauteur par rapport à ça pendant les débats de la part à chaque balade tous les petits détails tout capté de les petits fortiya</p><p>mais je voudrais vous dire un enseignement que j&#x27;ai 17 ans et en qui est très intéressant cette notion pour arriver à leurs emblèmes ou bien une idée que des fois il ya un conflit entre les mousses calotte et le monde achète entre entre les sensations et les idées et dit que mouss calotte et les idées et monde déjanté les sensations mais il dit comme ça il dit à mon avis dit que jamais les murga shot elles peuvent être annulées par les mosquées note disait toujours ce</p><p>et les sensations qui domine qui ont pris un petit prennent le dessus sur l&#x27;intellect quand le débit la super fin et où il a super envie du naval une du 2 2 qui fait un truc tu peux lui en ai plein de mousse à rien savent pas grand chose ça c&#x27;est un moment il a pas envie donc nature construit sa personnalité mais c&#x27;est très difficile de faire en sorte que par une idée j&#x27;arrivais enlever une sensation d&#x27;accord d&#x27;un côté bien vu sauf en réalité comment faire</p><p>quand tu es tu arrivée ils sont arrivés par saint malachie et les très belles femmes qui arrivent comment voulez vous qu&#x27;ils ne fassent pas de la rai edf audience possible moi ça marche il vole mine est en vie nous amène en datation on en avait parlé il dit que le mois de leur midi que le mois de l&#x27;armée constitue de 3,2 trois niveaux des trois niveaux dans le mois de long il ya le conscient et l&#x27;inconscient entre trois niveaux ont expliqué ce que le conscient de</p><p>conscience et on a l&#x27;impression que tout ce qu&#x27;on décide ça vient de notre intellect dire j&#x27;ai décidé aujourd&#x27;hui d&#x27;étudier trois heures pour c&#x27;est mon intellect et que j&#x27;ai décidé d&#x27;étudier ses fonctions on essaie faut le consommer que 10 personnes déboursement de ma personnalité y est ce qu&#x27;on appelle un monde énorme qui complètement caché qu&#x27;on appelle l&#x27;inconscient ce que freud a très bien décrit et cet inconscient en fait c&#x27;est c&#x27;est les résidus de tous nos actes de tous les aides de notre vie tous les actes qu&#x27;on</p><p>a vécu tous les écrans ce qu&#x27;on a vécu toutes les aventures qu&#x27;on a vécu est fonds sorte qu&#x27; il reste en nous au plus profond de notre être dans notre inconscient des résidus c&#x27;est à dire des messages et ont été très souvent les décisions qu&#x27;on prend elles ne viennent pas de notre intérêt de notre intelligence de notre libre arbitre elles viennent en fait du conditionnement qui vient de notre impression on est conditionné par notre inconscient d&#x27;accord et donc dans notre inconscient il ya énormément en temps</p><p>il parle de libido et parle de il parle de 2,2 d&#x27;énergie sexuelle toujours d&#x27;une d&#x27;énergie positive négative qui pourrit vont nous pousser dans un sens ou dans l&#x27;autre selon les experts ce qu&#x27;on a vécu notre vie en été c&#x27;est plus profond que ça c&#x27;est pas seulement 2,7 spécialement les expériences on a décrit dans notre vie ça peut être également des sports ce qu&#x27;on a vécu en tant que quatre foetale dans ton foetus dans le ventre nantes moment même les ex pense qu&#x27;on a reçue en héritage</p><p>de nos parents de nos grands-parents d&#x27;une autre arrière grands parents de nos arrières en poste moins cher bennoo qu&#x27;on dit que le peuple juif et des rares mad bachchan et vous mettra sa dîme il est généreux qu&#x27;il est qu&#x27;il est discret et qu&#x27;il est rare man qu&#x27;il est miséricordieux c&#x27;est un héritage qu&#x27;on a notre inconscient on a reçu de nos ancêtres d&#x27;accord à bruxelles le problème c&#x27;est que la plupart des plupart des dés la plupart d&#x27;entre nous on ignore les sens de l&#x27;entraidé c&#x27;est qu&#x27;il ya</p><p>un troisième niveau de moi du annie est ce qu&#x27;on appelle la nique à gauche la nique à gauche et n&#x27;est pas de l&#x27;ordre du divin et les de l&#x27;ordre de l&#x27;humain c&#x27;est qu&#x27;il est très profond dans tellement profond qu&#x27;on fait tous un déni oui et psychologue et psychothérapeute le freud lacan adler et n&#x27;ont jamais vues n&#x27;ont jamais parlé de cela ni kadosh la rezaï ne pas que de ça et donc on n&#x27;a jamais vu cela n&#x27;est qu&#x27;à gauche personne n&#x27;en parle elle me le rappeler on</p><p>a vraiment donné définition des critères c&#x27;est quoi c&#x27;est quoi les critères qui résume ce handicap de rechange dit que on avait des syndicats marché touché profondément nos déchets 13 min ça s&#x27;est passé très clanique à gauche il est très profondément grand nous-mêmes et syndicats de chine nous pousse à faire la mise autres si vous voulez syndicat gauche c&#x27;est les qualités essentielles humaine que l&#x27;homme il a au plus profond de son être il provient de les fraudes il a dit mais il y en a qu&#x27;on sent</p><p>qui est plein de saletés mais il n&#x27;a pas compris que plus profondément que l&#x27;inconscient et un inconscient kadosh et c&#x27;est un france en cannage le but de la vie c&#x27;est de se connecter avec lui il a il a trois ou l&#x27;a4 particulière et dynamique à gauche on avait parlé déjà il ya deux mois comme la particularité c&#x27;est qu&#x27;il est en cours et instable il ne peut pas la voir tout le temps on ne peut pas le percevoir tout le temps d&#x27;accord deuxième caractéristique c&#x27;est qu&#x27;il est</p><p>unique c&#x27;est à dire que comme quand un homme y dévoile son manque à gauche à ce moment là faute et bien sûr je vais vous dire à ce moment là il devient être un être un être original il devient lui-même les gens qui n&#x27;ont pas dévoilé jamais lendemain cadeaux n&#x27;ont jamais pris conscience de l&#x27;ombre aux canaux sont la plupart du temps c&#x27;est que c&#x27;est des robots ils se ressemblent tous d&#x27;accord deuxième caractéristique première la tête il est instamment veut pas la voir tout le temps si</p><p>on est tout le temps connecté à ce moment quand on est au sénat d&#x27;avion deuxième caractéristique souvent kadosh c&#x27;est qu&#x27;il est unique tecsys est clair variables ils ne bougent pas de la naissance à la mort il ne bouge pas c&#x27;est le même voyez la nostalgie c&#x27;est un peu une collection un petit peu avec son cadeau sauter la notion nostalgie un enfant à l&#x27;âge de hanoi commence à percevoir un peu son ami cadeau je les perçois 20 ans 30 ans 50 ans 80 à 95 ans c&#x27;est</p><p>le même mois qu&#x27;à gauche qu&#x27;il a il est invariable crise c&#x27;est cesser de loi qu&#x27;elle juge qui prend c&#x27;est un inconscient quel âge qui prend source dans un examen de l&#x27;année chamakh ressources pendant un chat mardi explique l&#x27;arizona c&#x27;est un vol bêtise pixar est la 4ème caractéristique c&#x27;est pour s exprime par le plaisir avec mais on n&#x27;avait pas mettre d&#x27;accord il s&#x27;exprime par le plaisir dirk que quand vous avez du plaisir spirituel à ce moment là votre manque à tous ces deuils et c&#x27;est à ce</p><p>moment là qui va fabriquer votre ans la maman le monde futur y vient par un plaisir matériel que l&#x27;on créé à travers une réalité spirituelle donc c&#x27;est un acte spirituel vous avez un plaisir matériel ce plaisir matériel manger pendant shabbat safabrie votre lame à bas et ça réveille votre manque à gauche toutes les mises autres à chaque nouvelle mise à part on fait si on m&#x27;a serré bon manger on fabrique mais là on doit manger mitzna de manger pour en manger parce que le plaisir matériel</p><p>de la brit milah il sait il va faire il va vous mettre en connexion mais votre moi qu&#x27;à gauche vis et je vous donnais comment faire pour le dévoiler mais elles font tomber qu&#x27;au prochain à demain</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="326-pessah-pragmatisme-ou-mysticisme-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/KCMy1QREE3Y/hqdefault.jpg" alt="326. PessaH - Pragmatisme ou mysticisme" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="326-pessah-pragmatisme-ou-mysticisme-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">326. PessaH - Pragmatisme ou mysticisme</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KCMy1QREE3Y_326__PessaH_-_Pragmatisme_ou_mysticisme.mp3" preload="none" data-ep-id="KCMy1QREE3Y"></audio><button class="share-btn" data-epfile="rav-mrejen/326-pessah-pragmatisme-ou-mysticisme-2022-04-13.html" data-title="326. PessaH - Pragmatisme ou mysticisme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="325-pessah-une-connexion-avec-le-divin-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/0gh-GInTJCc/hqdefault.jpg" alt="325. PessaH - une connexion avec le Divin" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="325-pessah-une-connexion-avec-le-divin-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">325. PessaH - une connexion avec le Divin</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/0gh-GInTJCc_325__PessaH_-_une_connexion_avec_le_Divin.mp3" preload="none" data-ep-id="0gh-GInTJCc"></audio><button class="share-btn" data-epfile="rav-mrejen/325-pessah-une-connexion-avec-le-divin-2022-04-13.html" data-title="325. PessaH - une connexion avec le Divin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="323-l-existence-devoile-l-essence-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/PjkguFfpIG4/hqdefault.jpg" alt="323. L&#x27;existence dévoile l&#x27;essence" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="323-l-existence-devoile-l-essence-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">323. L&#x27;existence dévoile l&#x27;essence</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 8 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PjkguFfpIG4_323__L_existence_dévoile_l_essence.mp3" preload="none" data-ep-id="PjkguFfpIG4"></audio><button class="share-btn" data-epfile="rav-mrejen/323-l-existence-devoile-l-essence-2022-04-13.html" data-title="323. L&#x27;existence dévoile l&#x27;essence"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="324-l-existence-devoile-l-essence-2-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/R_-Jmk7C17E/hqdefault.jpg" alt="324. L&#x27;existence dévoile l&#x27;essence 2" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="324-l-existence-devoile-l-essence-2-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">324. L&#x27;existence dévoile l&#x27;essence 2</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/R_-Jmk7C17E_324__L_existence_dévoile_l_essence_2.mp3" preload="none" data-ep-id="R_-Jmk7C17E"></audio><button class="share-btn" data-epfile="rav-mrejen/324-l-existence-devoile-l-essence-2-2022-04-13.html" data-title="324. L&#x27;existence dévoile l&#x27;essence 2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="322-prendre-une-decision-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/cY80H0YkEoE/hqdefault.jpg" alt="322. Prendre une décision" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="322-prendre-une-decision-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">322. Prendre une décision</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 8 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/cY80H0YkEoE_322__Prendre_une_décision.mp3" preload="none" data-ep-id="cY80H0YkEoE"></audio><button class="share-btn" data-epfile="rav-mrejen/322-prendre-une-decision-2022-04-13.html" data-title="322. Prendre une décision"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="326-pessah-pragmatisme-ou-mysticisme-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/KCMy1QREE3Y/hqdefault.jpg" alt="326. PessaH - Pragmatisme ou mysticisme" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="326-pessah-pragmatisme-ou-mysticisme-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">326. PessaH - Pragmatisme ou mysticisme</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="KCMy1QREE3Y" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/KCMy1QREE3Y_326__PessaH_-_Pragmatisme_ou_mysticisme.mp3" data-title="326. PessaH - Pragmatisme ou mysticisme" data-thumb="https://i.ytimg.com/vi/KCMy1QREE3Y/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mrejen/326-pessah-pragmatisme-ou-mysticisme-2022-04-13.html" data-title="326. PessaH - Pragmatisme ou mysticisme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="325-pessah-une-connexion-avec-le-divin-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/0gh-GInTJCc/hqdefault.jpg" alt="325. PessaH - une connexion avec le Divin" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="325-pessah-une-connexion-avec-le-divin-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">325. PessaH - une connexion avec le Divin</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="0gh-GInTJCc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/0gh-GInTJCc_325__PessaH_-_une_connexion_avec_le_Divin.mp3" data-title="325. PessaH - une connexion avec le Divin" data-thumb="https://i.ytimg.com/vi/0gh-GInTJCc/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mrejen/325-pessah-une-connexion-avec-le-divin-2022-04-13.html" data-title="325. PessaH - une connexion avec le Divin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="323-l-existence-devoile-l-essence-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/PjkguFfpIG4/hqdefault.jpg" alt="323. L&#x27;existence dévoile l&#x27;essence" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="323-l-existence-devoile-l-essence-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">323. L&#x27;existence dévoile l&#x27;essence</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 8 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="PjkguFfpIG4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PjkguFfpIG4_323__L_existence_dévoile_l_essence.mp3" data-title="323. L&#x27;existence dévoile l&#x27;essence" data-thumb="https://i.ytimg.com/vi/PjkguFfpIG4/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mrejen/323-l-existence-devoile-l-essence-2022-04-13.html" data-title="323. L&#x27;existence dévoile l&#x27;essence"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="324-l-existence-devoile-l-essence-2-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/R_-Jmk7C17E/hqdefault.jpg" alt="324. L&#x27;existence dévoile l&#x27;essence 2" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="324-l-existence-devoile-l-essence-2-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">324. L&#x27;existence dévoile l&#x27;essence 2</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="R_-Jmk7C17E" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/R_-Jmk7C17E_324__L_existence_dévoile_l_essence_2.mp3" data-title="324. L&#x27;existence dévoile l&#x27;essence 2" data-thumb="https://i.ytimg.com/vi/R_-Jmk7C17E/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mrejen/324-l-existence-devoile-l-essence-2-2022-04-13.html" data-title="324. L&#x27;existence dévoile l&#x27;essence 2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="322-prendre-une-decision-2022-04-13.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/cY80H0YkEoE/hqdefault.jpg" alt="322. Prendre une décision" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="322-prendre-une-decision-2022-04-13.html" style="color:inherit;text-decoration:none;display:block">322. Prendre une décision</a><time class="ep-date" datetime="2022-04-13">13 avril 2022 · 8 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="cY80H0YkEoE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/cY80H0YkEoE_322__Prendre_une_décision.mp3" data-title="322. Prendre une décision" data-thumb="https://i.ytimg.com/vi/cY80H0YkEoE/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mrejen/322-prendre-une-decision-2022-04-13.html" data-title="322. Prendre une décision"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -346,17 +350,17 @@ Vous pouvez poser vos questions directement au Rav MREJEN sur https://www.darkei
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -377,27 +381,43 @@ Vous pouvez poser vos questions directement au Rav MREJEN sur https://www.darkei
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: '3k1u6RzXH_o', title: "278. Comment ne pas fauter ?", channel: "Rav Nathan Mrejen", art: "https://i.ytimg.com/vi/3k1u6RzXH_o/hqdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_3k1u6RzXH_o', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_3k1u6RzXH_o'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '3k1u6RzXH_o');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Nathan Mrejen",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -411,16 +431,6 @@ Vous pouvez poser vos questions directement au Rav MREJEN sur https://www.darkei
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

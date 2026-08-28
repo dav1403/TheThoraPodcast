@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Benizri"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "r j'ai une question oui à quel moment une personne elle est considérée balchuva quand est-ce qu'on sait que la personne elle est buva Raz très bonne…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>C&#x27;est quoi être Baal Techouva ?/Rav Daniel Benizri</h1>
     <p class="ep-meta"><a href="../rav-benizri.html" style="color:#888;text-decoration:none">Rav Benizri</a> · <time datetime="2024-06-20">20 juin 2024 · 6 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Téchouva</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tZ3BvkMrQqU_C_est_quoi_être_Baal_Techouva___Rav_Daniel_Benizri.mp3" preload="none" data-ep-id="tZ3BvkMrQqU" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/tZ3BvkMrQqU_C_est_quoi_être_Baal_Techouva___Rav_Daniel_Benizri.mp3" preload="metadata" data-ep-id="tZ3BvkMrQqU" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -325,11 +329,11 @@
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>r j&#x27;ai une question oui à quel moment une personne elle est considérée balchuva quand est-ce qu&#x27;on sait que la personne elle est buva Raz très bonne question très bonne question parce que je vais te dire il faut définir c&#x27;est quoi là tu VO tu dans le mot Touva lui-même c&#x27;est écrit tou c&#x27;est quoi le c&#x27;est la malout très bientenant il faut savoir qu&#x27;est-ce ça veut dire ça veut dire ça ve dire reviens la malout tu reviens à la malout qu&#x27;est ça veut dire dire en deux</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1079 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>r j&#x27;ai une question oui à quel moment une personne elle est considérée balchuva quand est-ce qu&#x27;on sait que la personne elle est buva Raz très bonne question très bonne question parce que je vais te dire il faut définir c&#x27;est quoi là tu VO tu dans le mot Touva lui-même c&#x27;est écrit tou c&#x27;est quoi le c&#x27;est la malout très bientenant il faut savoir qu&#x27;est-ce ça veut dire ça veut dire ça ve dire reviens la malout tu reviens à la malout qu&#x27;est ça veut dire dire en deux</p><p>mots le buva c&#x27;est celui qui a pris conscience qui s&#x27;est trompé tout simplement et qu&#x27;aujourd&#x27;hui et qu&#x27;aujourd&#x27;hui il va il va il a comme il a réalisé qu&#x27;il se trompait alors il va mieux agir il va mieux agir jour après jour pour se rapprocher vers son créateur donc c&#x27;est une évolution chaque jour quoi c&#x27;est une évolution par rapport à quelque chose qui par une prise de conscience ça que ça veut dire maintenant quelqu&#x27;un ce qu&#x27;on appelle tin n comme il dit le casonich il était élevé</p><p>dans la mauvaise voix donc c&#x27;est pas de sa faute pas de sa faute donc tu comprends donc tu peux pas l&#x27;accuser l&#x27;accuser de quoi c&#x27;est comme ça qu&#x27;on l&#x27;a élevé comment sait quand est-ce qu&#x27;une personne elle a pris conscience voilà en fonction de ses actions comment il a changé ah com comment toi tu le vois ou comment lui le com comment on le voit une personne comment on fait tout simplement tout simplement c&#x27;est quand elle cherche le met quand cette personne cherche le M ça il</p><p>est bal tu vois il est bal tu vois il cherche le M même s&#x27;il est pas arrivé au stade Bua c&#x27;est pas arrivé au niveau de Mabou c&#x27;est pas ça balua buva c&#x27;est cherché le parce qu&#x27;il a pris conscience qu&#x27;il s&#x27;est trompé un exemple un exemple un jour il y a le raadagon qui arrive dans une ville qu&#x27;on le connaî pas bon à l&#x27;époque il y avait pas les caméras et cetera donc on connaissait pas la personne on connaissait le nom tout le monde l&#x27;avait écouté</p><p>mais il connaissait pas physiquement pas de photo donc il arrive dans une synagogue dans dans une ville qui c&#x27;était pas la c&#x27;était pas sa ville et là-bas il arrive et bon évidemment personne le connaît de vu de nom mais bon évidemment lui dit pas qui il est il dévoile pas son identité et voilà que il y a quelqu&#x27;un qui vient vers lui et comme il a dit vous êtes nouveau dans cette communauté et si je peux vous inviter avec plaisir là a dit oui ça va</p><p>m&#x27;arranger donc il a pris quelques jours donc ils ont passé shabbat et cetera et voilà le dimanche qui suit il y a une personne de la ville du RF Sadia qui arrive dans cette communauté pour prier avec eux le dimanche et ni plus ni moins il voit le rag il va chez lui il lui embrasse la main varave godarave tout le monde c&#x27;est étonné c&#x27;est qui ce rave tu dis que varave mais c&#x27;est qui mais vous savez pas mais il est chez vous c&#x27;est le rab</p><p>saadiagon et tout le monde est étonné non il nous a pas dit que c&#x27;était il nous a pas dit son nom il nous a pas dit que c&#x27;est le rab saadagon et cetera et bon évidemment parce qu&#x27;il était anave donc il a pas dévoilé donc parce qu&#x27;il a voulu être humble et voilà que le la personne qui a invité le Rave en question le Rave Sadia il vient chez lui il lui demande pardon il se met à pleurer il dit mais pardon de quoi mais je</p><p>t&#x27;ai pas assez honoré je t&#x27;ai pas bien invité et il dit mais de quoi tu parles je dois te remercier que tu m&#x27;as invité je t&#x27;ai très bien reçu chez toi al on a passé un très bon shabbat fait vite mais qu&#x27;est-ce que tu veux de plus pourquoi tu me demandes pardon et il lui dit écoute si je savais qui tu étais je t&#x27;aurais mieux reçu le RF ça dit à Gon il écoute ça il lui dit merci beaucoup merci de quoi l&#x27;autre il vient pour</p><p>sesculer le r dit merci tu viens m&#x27;enseigner un enseignement extraordinaire que moi tous les jours maintenant je comprends que je connais àad beauou mieux tous les jours donc maintenant je comprends qu&#x27;il faut je ser mieux il faut que je fasse Tuva sur hier que je le connaissais pas aussi bien et chaque jour qu&#x27;on se rapprche on connait un peu plus voilà et chaque jour que je me rapprends je le connais un peu plus le bal touvin c&#x27;est celui qui prend conscience aujourd&#x27;hui qui connaissait pas assez</p><p>la Torah qui connaissait pas assez les mitvot donc bouva c&#x27;est pas nécessairement quelqu&#x27;un que hasv Shalom qui était complètement en dehors de la Torah pas du tout un bal touvin c&#x27;est quelqu&#x27;un qui a une barbe un chapeau un religieux il peut être bal touvin en fait mais bien sûr et c&#x27;est ça un vrai parce que le vrai c&#x27;est qui c&#x27;est celui qui est religieux qui comprend faitire pour le faire qui dououche rien du tout qu&#x27;est- tu veux qu&#x27;il fasse il est dans chevi il est il</p><p>est il est kidnappé tu peux rien faire tu comprends c&#x27;est ça donc quelqu&#x27;un qui a été éduqué dans la mauvaise voie c&#x27;est pas de sa faute tu comprends donc lui lui dès qu&#x27;il va connaître c&#x27;est quoi le judaïsme et cetera et ben bashem il va revenir c&#x27;est sûr que ça va être B tu vois c&#x27;est sûr mais mais mais c&#x27;est pas obligé d&#x27;attendre ce cas spécifique pour dire bah tu le religieux le religieux il va faire tout pourquoi il y a pourquoi hier quand il est</p><p>rentré à la maison il a mal parl sa femme pourquoi ah bah il va faire tu donc aujourd&#x27;hui il va rentrer à la maison il va bien parler avec sa femme doncut rien dire en fait on doit t tu tous les jours exactement exactement si tu dis que David qui était lui il s&#x27;appelle que lui il va apprendre à tout le monde c&#x27;est quoi alors tu vas dire tu vas dire que quoi que le c&#x27;est pas B c&#x27;est faux ça c&#x27;est erroné c&#x27;est quelqu&#x27;un c&#x27;est</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/hQFCXyZv4DM/maxresdefault.jpg" alt="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/hQFCXyZv4DM_הלכה_יומית_כשאינו_יכול_לחזיר_את_הגזל_רב_דניאל_בניזרי.mp3" preload="none" data-ep-id="hQFCXyZv4DM"></audio><button class="share-btn" data-epfile="Rav-benizri/הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html" data-title="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/NYefiaZ5izU/hqdefault.jpg" alt="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי </a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 13 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NYefiaZ5izU_אין_בית_המקדש_בלי_מחיית_עמלק_רב_דניאל_בניזרי.mp3" preload="none" data-ep-id="NYefiaZ5izU"></audio><button class="share-btn" data-epfile="Rav-benizri/אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html" data-title="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/dInwRnDTWqc/maxresdefault.jpg" alt="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/dInwRnDTWqc_הלכה_יומית_התוכחות_פרשת_כי_תבוא_רב_דניאל_בניזרי.mp3" preload="none" data-ep-id="dInwRnDTWqc"></audio><button class="share-btn" data-epfile="Rav-benizri/הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html" data-title="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/j65mlOQzcAc/hqdefault.jpg" alt="Hiloula Ben Ich Haï/Rav Daniel Benizri " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Hiloula Ben Ich Haï/Rav Daniel Benizri </a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 22 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/j65mlOQzcAc_Hiloula_Ben_Ich_Haï_Rav_Daniel_Benizri.mp3" preload="none" data-ep-id="j65mlOQzcAc"></audio><button class="share-btn" data-epfile="Rav-benizri/hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html" data-title="Hiloula Ben Ich Haï/Rav Daniel Benizri "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QkSHLiIxvW0/hqdefault.jpg" alt="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי </a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 14 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QkSHLiIxvW0_לכבוד_הילולת_הבן_איש_חי_זיע_א_רב_דניאל_בניזרי.mp3" preload="none" data-ep-id="QkSHLiIxvW0"></audio><button class="share-btn" data-epfile="Rav-benizri/לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html" data-title="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/hQFCXyZv4DM/maxresdefault.jpg" alt="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="hQFCXyZv4DM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/hQFCXyZv4DM_הלכה_יומית_כשאינו_יכול_לחזיר_את_הגזל_רב_דניאל_בניזרי.mp3" data-title="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי" data-thumb="https://i.ytimg.com/vi/hQFCXyZv4DM/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/הלכה-יומית-כשאינו-יכול-לחזיר-את-הגזל-רב-דניאל-בניזרי-2026-08-28.html" data-title="הלכה יומית/כשאינו יכול לחזיר את הגזל/רב דניאל בניזרי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/NYefiaZ5izU/hqdefault.jpg" alt="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי </a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 13 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="NYefiaZ5izU" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/NYefiaZ5izU_אין_בית_המקדש_בלי_מחיית_עמלק_רב_דניאל_בניזרי.mp3" data-title="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי " data-thumb="https://i.ytimg.com/vi/NYefiaZ5izU/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/אין-בית-המקדש-בלי-מחיית-עמלק-רב-דניאל-בניזרי-2026-08-27.html" data-title="אין בית המקדש בלי מחיית עמלק/רב דניאל בניזרי "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/dInwRnDTWqc/maxresdefault.jpg" alt="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="dInwRnDTWqc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/dInwRnDTWqc_הלכה_יומית_התוכחות_פרשת_כי_תבוא_רב_דניאל_בניזרי.mp3" data-title="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי" data-thumb="https://i.ytimg.com/vi/dInwRnDTWqc/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/הלכה-יומית-התוכחות-פרשת-כי-תבוא-רב-דניאל-בניזרי-2026-08-27.html" data-title="הלכה יומית/התוכחות פרשת כי תבוא/רב דניאל בניזרי"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/j65mlOQzcAc/hqdefault.jpg" alt="Hiloula Ben Ich Haï/Rav Daniel Benizri " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Hiloula Ben Ich Haï/Rav Daniel Benizri </a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 22 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="j65mlOQzcAc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/j65mlOQzcAc_Hiloula_Ben_Ich_Haï_Rav_Daniel_Benizri.mp3" data-title="Hiloula Ben Ich Haï/Rav Daniel Benizri " data-thumb="https://i.ytimg.com/vi/j65mlOQzcAc/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/hiloula-ben-ich-hai-rav-daniel-benizri-2026-08-26.html" data-title="Hiloula Ben Ich Haï/Rav Daniel Benizri "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QkSHLiIxvW0/hqdefault.jpg" alt="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי " loading="lazy"></a><div class="ep-body"><a class="ep-title" href="לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי </a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 14 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="QkSHLiIxvW0" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QkSHLiIxvW0_לכבוד_הילולת_הבן_איש_חי_זיע_א_רב_דניאל_בניזרי.mp3" data-title="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי " data-thumb="https://i.ytimg.com/vi/QkSHLiIxvW0/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Rav-benizri/לכבוד-הילולת-הבן-איש-חי-זיע-א-רב-דניאל-בניזרי-2026-08-26.html" data-title="לכבוד הילולת הבן איש חי זיע&quot;א/רב דניאל בניזרי "><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -338,17 +342,17 @@
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -369,27 +373,43 @@
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'tZ3BvkMrQqU', title: "C'est quoi être Baal Techouva ?/Rav Daniel Benizri", channel: "Rav Benizri", art: "https://i.ytimg.com/vi/tZ3BvkMrQqU/hqdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_tZ3BvkMrQqU', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_tZ3BvkMrQqU'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'tZ3BvkMrQqU');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Benizri",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -403,16 +423,6 @@
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

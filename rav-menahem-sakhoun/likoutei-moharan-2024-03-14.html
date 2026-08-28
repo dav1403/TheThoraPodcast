@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Menahem Sakhoun"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Tous les jours de 8h40 à 9h20 en direct de Jerusalem - Likouté Moharan par Rav Menahem Sakhoun Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Likoutei Moharan</h1>
     <p class="ep-meta"><a href="../rav-menahem-sakhoun.html" style="color:#888;text-decoration:none">Rav Menahem Sakhoun</a> · <time datetime="2024-03-14">14 mars 2024 · 11 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Likoutei Moharan</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/YF6T1fKMRk4_Likoutei_Moharan.mp3" preload="none" data-ep-id="YF6T1fKMRk4" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/YF6T1fKMRk4_Likoutei_Moharan.mp3" preload="metadata" data-ep-id="YF6T1fKMRk4" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -327,11 +331,11 @@ Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de Jerusalem par Rav Menah
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>amisendre aujourd&#x27;huiour aujourd&#x27;hui alors prenez des petits gâteaux servez-vousoupendend 2 4 6 8 9 10 10 lignes avant la fin 10 liges avant la fin de la page alors vous voyez ici qu&#x27;est-ce qu&#x27;on apprendend Michna dans et la Michna elle n parle de quelqu&#x27;un qui a trouvé il a trouvé il a trouvé dehors il a trouvé des il a trouvé des reconnaissan de dette maintenant on a fait diff dised garantie marqu ça dire l&#x27;emprunteur il ajti terrain au prêteur alors là peut pas rendre pour que il</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1559 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>amisendre aujourd&#x27;huiour aujourd&#x27;hui alors prenez des petits gâteaux servez-vousoupendend 2 4 6 8 9 10 10 lignes avant la fin 10 liges avant la fin de la page alors vous voyez ici qu&#x27;est-ce qu&#x27;on apprendend Michna dans et la Michna elle n parle de quelqu&#x27;un qui a trouvé il a trouvé il a trouvé dehors il a trouvé des il a trouvé des reconnaissan de dette maintenant on a fait diff dised garantie marqu ça dire l&#x27;emprunteur il ajti terrain au prêteur alors là peut pas rendre pour que il</p><p>peut il peut se faire il peut se faire il peut encaisser de là mtenant s&#x27;il y a pas alors il peut rendre pourquoi parce que le B il peut rien faire avec ça c&#x27;était les parole de ils ont dit non non d&#x27;une manière ou d&#x27;une autre qui ne rentre pas pourquoi parce que le B il peut il peut encaisser avec donc ça veut dire c&#x27;est une arme il faut faire attention et on a vu plusieurs critères on a vu d&#x27;abord premièrement qu un elle est par</p><p>terre dans la rue c&#x27;est pas normal ça devraitêtre dans la main du malv qui garde sa preuve de demander l&#x27;encaissement ou l&#x27;emprunteur il a normalement il doit l&#x27;avoir déchiré payé dessus ça fait par terre déjà il un point au moin et on a vu plusieurs C on y va et nousenons à la au c&#x27;est les on a vu une on a dit que que on a dit comme ça on a vu que à chaque fois qu&#x27;on a on prend jamais des biens sujtis pour une raison</p><p>très simple c&#x27;est que pe pas faire des affaires on peut pas faire du commerce en pensant que un bien est libre on acheté un bien libre aè pom on dit ah mais tu sais j&#x27;ai oublié de te dire dedans il y a une maison à la femme do payer do payer do payer pour les filles qu&#x27;on a eu ensemble ou pour toutes sortes de choses on a dit qu&#x27;on prend pas des biens ass elle s&#x27;intéresse à une chose elle veut savoir on parle d&#x27;un cas que</p><p>l&#x27;UR il a acheté d&#x27;un voleur on parle d&#x27;un cas où le créancier il est venu il a récupéré le terrain alors on est là alors t vient nous dit regarde écoute dans avait dit on prend pas des bientis pour les pour été consommé des fruits alors voilà te dit on parle qu&#x27;il y a un vol on voit que un il a volé un terra un autreant elle sort de chez lui c&#x27;estàdire on la récupère quand il y a encaissement on va distinguer de choses le capital</p><p>la valeur initiale le prend des bi des sutis ouot mais les les fruits les fruits qu&#x27; avait là-bas il peut encaisser que des qui sont libr ça veut dire qu&#x27; a disponibilité maintenant alors viens on réfléchit maintenant va réfléchir par raort àant ça peut pas être le cas du voleur le voleur de qui va récupérer récupen le voleur il a voléut maintenant donc le il est comme ça un il a volé un autre et il a vendu et celui-ci il a fait bonifier le terrain fait</p><p>attention c&#x27;est ce que le terin il a gagné il a bonifié mais mais Les potes c&#x27;est les fruits eux mêm non dit pas du tout ici on parle d&#x27;un cas spécial on parle que quand il a pris possession de son terrain le voleur il a volé il y avait déjà là-bas plein de récoles et plein de fruits et il a mangé les fruits et il a abîmé le terrain il a changé le terrain il a fait là-bas toutes sortes d&#x27;excavations alors maintenant on regarde le cas</p><p>suivant le volet il vient il ve récupérer quand il vient pour récupérer le capital là il va prendre des qui sont les ass par contre il VI pouré c&#x27;est la première son ils sont venus ils ont pris ils ont pris le terrain du de celui qui a volé et et maintenant ils l&#x27;ont pris même à cause de lui c&#x27;est lui qui a induit ça VI on a vu déjà la fin de si vous rappelez il a volé le terrain d&#x27;un autre ce sont des gens des</p><p>qui viennent et qui prennent de force avait vu bien que ce soit un gram ici le rend redevable voleur il faut qu&#x27;il se débrouille pour donner un autre terrain à voler et donc on dira que on va interpréter c&#x27;était des c&#x27;était les messin qui sont venus et qui ont volé ça c&#x27;était la première réponse alors la elle nous dit marqu mtenant veut faire un peu dit alors tu Rava et tu asava pourquoi chacun il a dit comme il a dit pourquoi il a pas dit comme</p><p>l&#x27;autre toi tu dis tout ça c&#x27;est pas marqué dans la dans la Michna c&#x27;est une interprétation tu dis bon je peux pas expliquer autrement qu disant qu&#x27;il y a des voleurs Go qui sont venus ils ont pris ils ont pris possession là-bas pourquoi parce que quand on dit dans la Brita voilà que le terrain il va sortir de sa main ça veut dire B ça veut dire que le bin il est venu le B il a décidé qu&#x27;il fallait récupérer ce terrain mais c&#x27;est pas que</p><p>c&#x27;est été pris par les voleurs il faut dire ça a été établi eu les les ils ont dit elle est que ce terrain il doit sortir de ses mains et il doit être rendu au propriétaire mais si tu dis que c&#x27;est des voleurs Go ça s&#x27;appelle pas que ça va avec un B ils sont venus ils ont volé et rabouna lui il a pas voulu dire comme Rava oui et et pour-ce qu&#x27;il avait dit Rava il a dit mais non il a pris le terrain et</p><p>il a fait et il a fait des trous dedans il a mangé les perottes il dit pourquoi on dit tu dis que le terrain été modifié comme il était il est resté voilà pourquoi Chac pas comm l&#x27;autre maintenant fait toi tu crois que c&#x27;est il y a de cas différents qui sont enseignés c&#x27;estàd qu&#x27;est-ce qu&#x27;il a fait le voleur il a volé les terrains d&#x27;un autre quand il était chargé de fuir et il a mangé les pérodes et après seulement il a vendu le terrain à</p><p>quelqu&#x27;un maintenant quand il y a le volet qui vient et réclame son terrain lui et on on dit ici bemet il va chez l&#x27;acheteur et et il a le droit il va au bin il va chez l&#x27;acheteur et l&#x27;achete dit mais moi je croyais que j&#x27;avischeté un vendeur hnê il dit d&#x27;accord c&#x27;est pas un vendeur hnette c&#x27;était un voleur il faut que tu rendes maintenant alors B les gabot mtenant quand l&#x27;acheteur il vient de celui qui il veut maintenant lui il a payé il va se</p><p>retourner alors quand il vient réclamer alors on va dire comme ça le Ken le capital comme il était tu vas le l&#x27;encaisser des bien mchouad comme mil vaar quand il y a un contrat avec un signé alors maintenant qu&#x27;est-ce qui s&#x27;est passé quand il y a un contrat il y a ce qu&#x27;on appelle un quand on achète quelque chose on met un point ici on lit la ligne de on explique est vient pour enseigner pour récupérer les fruits il ne peut prendre que des biens qui</p><p>sont des biens n rorines des biens libres s&#x27;il y a des biens il prend sinon non ah main non quand on achète un terrain peut pas jeter l&#x27;argent par la fenêtre qu&#x27;est-ce qu&#x27;on fait qu&#x27;est-ce qu&#x27;on fait on va on va vérifier que ce terrain là il est pas complètement hypothéqué quelqu&#x27;un il vient il dit écoute on m&#x27;a parlé d&#x27;un appartement extra on dit un appartement je vais t&#x27;expliquer ilappelle Michel peut-être qu&#x27;il pas de micro ah peut-être qu&#x27;il y a pas de micro non micro il est</p><p>pas avec non tout est bon non non écrivait à Michel si vous avez alors il dit ici regarde quand tu quand il appelle can narrive pas à se brancher regarde dans le dans le cas où tu viens acheter un bien la première des choses que tu fais tu vérifies que ce bien il est libre parce que si ton vendeur il est criblé de dette tu dois savoir tu il va te vendre la maison demain le banquier il vient demain le créancier il vient dem la femme</p><p>elle vient pour récupérer ses biens sur ce bien là il y a plus de dett que de tu vas te faire prendre le terrain alors maintenant on dit comme ça quand il a eu comment tu sais tu demandes aux gens tu vas à la chou tu vas au migv tu pars tu connais un tel oui B connaî sa fille elle est mariade ok dis-moi je vais acheter un terrain de lui comment il est lui lui il y a pas une personne dans le village à qui</p><p>il doit pas de l&#x27;argent ah bon tu bah oui et comment tu sais comment je sais il y a eu il y a eu ici il a ici</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="daf-hayomi-massehet-houlin-page-121-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QqZfPudmMfM/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 121" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-121-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 121</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 54 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QqZfPudmMfM_Daf_HaYomi_massehet_houlin_page_121.mp3" preload="none" data-ep-id="QqZfPudmMfM"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-121-2026-08-28.html" data-title="Daf HaYomi massehet houlin page 121"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="likoute-moharan-torah-19-5-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/-P1scnp8Loo/maxresdefault.jpg" alt="Likouté Moharan Torah 19,5" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="likoute-moharan-torah-19-5-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Likouté Moharan Torah 19,5</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 11 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/-P1scnp8Loo_Likouté_Moharan_Torah_19_5.mp3" preload="none" data-ep-id="-P1scnp8Loo"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/likoute-moharan-torah-19-5-2026-08-28.html" data-title="Likouté Moharan Torah 19,5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="daf-hayomi-massehet-houlin-page-120-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/d_puYA4ucSE/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 120" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-120-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 120</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 52 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/d_puYA4ucSE_Daf_HaYomi_massehet_houlin_page_120.mp3" preload="none" data-ep-id="d_puYA4ucSE"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-120-2026-08-27.html" data-title="Daf HaYomi massehet houlin page 120"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="likoute-moharan-torah-19-5-suite-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/DpANG742hjE/maxresdefault_live.jpg" alt="Likouté Moharan Torah 19,5 suite" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="likoute-moharan-torah-19-5-suite-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Likouté Moharan Torah 19,5 suite</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 34 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/DpANG742hjE_Likouté_Moharan_Torah_19_5_suite.mp3" preload="none" data-ep-id="DpANG742hjE"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/likoute-moharan-torah-19-5-suite-2026-08-27.html" data-title="Likouté Moharan Torah 19,5 suite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="daf-hayomi-massehet-houlin-page-119-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/r0bJkWLekg4/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 119" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-119-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 119</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 41 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/r0bJkWLekg4_Daf_HaYomi_massehet_houlin_page_119.mp3" preload="none" data-ep-id="r0bJkWLekg4"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-119-2026-08-26.html" data-title="Daf HaYomi massehet houlin page 119"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="daf-hayomi-massehet-houlin-page-121-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QqZfPudmMfM/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 121" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-121-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 121</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 54 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="QqZfPudmMfM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QqZfPudmMfM_Daf_HaYomi_massehet_houlin_page_121.mp3" data-title="Daf HaYomi massehet houlin page 121" data-thumb="https://i.ytimg.com/vi/QqZfPudmMfM/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-121-2026-08-28.html" data-title="Daf HaYomi massehet houlin page 121"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="likoute-moharan-torah-19-5-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/-P1scnp8Loo/maxresdefault.jpg" alt="Likouté Moharan Torah 19,5" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="likoute-moharan-torah-19-5-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Likouté Moharan Torah 19,5</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 11 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="-P1scnp8Loo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/-P1scnp8Loo_Likouté_Moharan_Torah_19_5.mp3" data-title="Likouté Moharan Torah 19,5" data-thumb="https://i.ytimg.com/vi/-P1scnp8Loo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/likoute-moharan-torah-19-5-2026-08-28.html" data-title="Likouté Moharan Torah 19,5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="daf-hayomi-massehet-houlin-page-120-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/d_puYA4ucSE/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 120" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-120-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 120</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 52 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="d_puYA4ucSE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/d_puYA4ucSE_Daf_HaYomi_massehet_houlin_page_120.mp3" data-title="Daf HaYomi massehet houlin page 120" data-thumb="https://i.ytimg.com/vi/d_puYA4ucSE/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-120-2026-08-27.html" data-title="Daf HaYomi massehet houlin page 120"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="likoute-moharan-torah-19-5-suite-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/DpANG742hjE/maxresdefault_live.jpg" alt="Likouté Moharan Torah 19,5 suite" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="likoute-moharan-torah-19-5-suite-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Likouté Moharan Torah 19,5 suite</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 34 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="DpANG742hjE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/DpANG742hjE_Likouté_Moharan_Torah_19_5_suite.mp3" data-title="Likouté Moharan Torah 19,5 suite" data-thumb="https://i.ytimg.com/vi/DpANG742hjE/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/likoute-moharan-torah-19-5-suite-2026-08-27.html" data-title="Likouté Moharan Torah 19,5 suite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="daf-hayomi-massehet-houlin-page-119-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/r0bJkWLekg4/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 119" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-119-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 119</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 41 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="r0bJkWLekg4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/r0bJkWLekg4_Daf_HaYomi_massehet_houlin_page_119.mp3" data-title="Daf HaYomi massehet houlin page 119" data-thumb="https://i.ytimg.com/vi/r0bJkWLekg4/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-119-2026-08-26.html" data-title="Daf HaYomi massehet houlin page 119"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -340,17 +344,17 @@ Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de Jerusalem par Rav Menah
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -371,27 +375,43 @@ Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de Jerusalem par Rav Menah
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'YF6T1fKMRk4', title: "Likoutei Moharan", channel: "Rav Menahem Sakhoun", art: "https://i.ytimg.com/vi/YF6T1fKMRk4/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_YF6T1fKMRk4', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_YF6T1fKMRk4'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'YF6T1fKMRk4');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Menahem Sakhoun",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -405,16 +425,6 @@ Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de Jerusalem par Rav Menah
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

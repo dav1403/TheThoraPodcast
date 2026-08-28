@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Nahal Haim - נחל חיים"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "🔥 PARACHAT VAYEHI - Je pense donc je suis ! La minute Paracha avec le Rav Dagani Cohen au Kollel Nahal Haim. Viens étudier toi aussi quand tu veux de 14h…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>COMPLET VAYEHI - Je pense donc je suis ! La minute Paracha avec le Rav Dagani Cohen à Nahal Haim</h1>
     <p class="ep-meta"><a href="../nahal-haim.html" style="color:#888;text-decoration:none">Nahal Haim - נחל חיים</a> · <time datetime="2026-01-01">1 janvier 2026 · 4 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Paracha</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ETng9Qo7dQ0_COMPLET_VAYEHI_-_Je_pense_donc_je_suis___La_minute_Paracha_avec_le_Rav_Dagani_Co.mp3" preload="none" data-ep-id="ETng9Qo7dQ0" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ETng9Qo7dQ0_COMPLET_VAYEHI_-_Je_pense_donc_je_suis___La_minute_Paracha_avec_le_Rav_Dagani_Co.mp3" preload="metadata" data-ep-id="ETng9Qo7dQ0" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -328,11 +332,11 @@ Des Rabbanim sont à ta disposition - 📍A 100m Kotel, 2 Rehov HaTamid, Jerusal
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>Aujourd&#x27;hui, je vais vous faire un tour dans un endroit très spécial. Venez avec nous. Alors voilà, je vous ai amené à ce qu&#x27;on appelle le côtel à Catan. Le petit côtel, c&#x27;est un petit morceau du côtel qui est moins connu aux yeux de tout le monde mais il est vraiment juste avant le temple. Le habait il est juste derrière ici. C&#x27;est un endroit moins connu côté la katane. Si vous venez au col, on va vous faire un tour ici. Ça va être très sympathique.</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">791 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>Bonjour à tous parach. Aujourd&#x27;hui, je vais vous faire un tour dans un endroit très spécial. Venez avec nous. [musique] [musique] Alors voilà, je vous ai amené à ce qu&#x27;on appelle le côtel à Catan.</p><p>Le petit côtel, c&#x27;est un petit morceau du côtel qui est moins connu aux yeux de tout le monde mais il est vraiment juste avant le temple. Le habait il est juste derrière ici. C&#x27;est un endroit moins connu côté la katane. Si vous venez au col, on va vous faire un tour ici.</p><p>Ça va être très sympathique. Si déjà nous avons la caméra, ben nous allons dire quelque chose sur la parachati. Dans cette parachat, avant de commencer, je vais juste ramener un traité dans Kidine 40A où il est écrit là-bas que un juif qui a l&#x27;intention de faire une mitva, même si à en fin de compte il n&#x27;a pas pu la faire et bienjou Dieu considère comme si qu&#x27;il l&#x27;a faite et il est récompensé pour cela. La même chose si un juif a l&#x27;intention de faire un péché et qu&#x27;en fin de compte il n&#x27;a pas pu le faire et bien Dieu ne considère pas comme si qu&#x27;il a fait ce péché et il n&#x27;est pas puni pour cela.</p><p>Mais dans la parachat de la semaine, nous voyons que nous bénit les enfants. Quand il arrive à Shimon et Lévi, il leur dit ou qu&#x27;avec leur colère, ils ont tué l&#x27;homme. L&#x27;homme c&#x27;est qui ? C&#x27;est qui a volé et violé Dina et Kers ont déraciné le taureau.</p><p>Ils ont tué le taureau. Qui est le taureau ? Yosf et Rashi sur place nous ditchor ils ont pas vraiment déassé il l&#x27;ont pas vraiment tué ils ont voulu le tuer et pourtant Yakob il dit ils l&#x27;ont tué il dit pas ils ont voulu donc ça veut dire que en fin de compte ils ont voulu le faire et Yakob il considère comme si qu&#x27;ils l&#x27;ont fait et c&#x27;est pas c&#x27;est pas comme il est écrit dans le traité Kitouchin que nous avons vu. Il y a un autre exemple que je vais vous donner dans le traité du shabbat, la page 118 B.</p><p>Il est écrit là-bas que si jamais le peuple d&#x27;Israël avait gardé le premier shabbat, ils auraient été tout de suite délivrés. Mais comme ils ont pas gardé le premier shabbat, et bien tout de suite va y avoir malek. Amalek, il est venu les embêter. Pourquoi ils ont pas gardé le premier shabbat ?</p><p>Et bien, il est écrit que Kadou a dit que le shabbat, la man ne va pas descendre. Donc tu pas chercher. Et voilà que deux personnes sont quand même sorties pour chercher la man qui c&#x27;était Datan et Aviram. Ils sont sortis pour chercher la man et là il y a une discussion quelle est la vera qui aurait été d&#x27;aller prendre la mane c&#x27;est où de cueillir parce que il fallait comme déraciner ou bien porter dans un endroit public.</p><p>Mais en fin de compte, ils sont sortis en fin de compte, ils ont pas trouvé. Donc ils ont pas péché et pourtant ils avaient l&#x27;intention de le faire. Et la Torah nous dit, ils ont pas gardé shabbat. Encore une fois, un endroit où on voit que même quelqu&#x27;un qui a voulu faire la vera et qui l&#x27;a pas fait en fin de compte, considéré comme si qu&#x27;il a fait.</p><p>Et on vient d&#x27;apprendre dans le traité de Kidoshin que c&#x27;est pas comme ça. Si j&#x27;avais pas l&#x27;intention de le faire ben je suis pas puni. La réponse à cette question se trouve dans le cité dans la parachat de la semaine il est dit comme ça quand est-ce qu&#x27;on dit que quelqu&#x27;un qui comptait faire une av qu&#x27;il a pas fait et bien n&#x27;est considéré comme ce qu&#x27;il a pas fait quand avant de faire la vera il regrette. Il regrette même s&#x27;il avait l&#x27;intention et bien il est pas puni pour son intention.</p><p>Mais si jamais un homme a voulu faire une Ara et en fin de compte il a pas fait pas parce qu&#x27;il a regretté parce qu&#x27;il a pas pu la faire comme Shimon et Lévic ont voulu tuer Joseph mais Yhouda et Roven ont empêché Datana Viram ont voulu cueillir la man mais ils ont pas trouvé dans ce cas-là oui la personne elle est considérée comme si qu&#x27;elle a fauté donc faut faire attention pas dans tous les cas on dit qu&#x27;on n pas puni seulement dans les cas où on a regretté sinon c&#x27;était pas passé comme ça et ben Il faut faire il faut faire le repentir venir au côel par exemple et demander pardon אם תחפש תקשיב לאיש J&#x27;appelle</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="paracha-ki-tavo-parnassa-pour-tous-rav-dagani-cohen-chabbat-torah-chio-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/N8jstYcgQw8/hqdefault.jpg" alt="#Paracha Ki Tavo : Parnassa pour tous ?! Rav Dagani Cohen #chabbat #torah #chiour #jerusalem #kotel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="paracha-ki-tavo-parnassa-pour-tous-rav-dagani-cohen-chabbat-torah-chio-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">#Paracha Ki Tavo : Parnassa pour tous ?! Rav Dagani Cohen #chabbat #torah #chiour #jerusalem #kotel</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/N8jstYcgQw8_Paracha_Ki_Tavo___Parnassa_pour_tous____Rav_Dagani_Cohen__chabbat__torah__chiou.mp3" preload="none" data-ep-id="N8jstYcgQw8"></audio><button class="share-btn" data-epfile="Nahal-Haim/paracha-ki-tavo-parnassa-pour-tous-rav-dagani-cohen-chabbat-torah-chio-2026-08-27.html" data-title="#Paracha Ki Tavo : Parnassa pour tous ?! Rav Dagani Cohen #chabbat #torah #chiour #jerusalem #kotel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="elloul-le-moment-de-prendre-de-bonnes-resolutions-fixes-toi-un-moment-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Rt7XunlOTaM/maxresdefault.jpg" alt="Elloul, le moment de prendre de bonnes résolutions ! Fixes toi un moment d’étude. #torah #jerusalem" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="elloul-le-moment-de-prendre-de-bonnes-resolutions-fixes-toi-un-moment-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Elloul, le moment de prendre de bonnes résolutions ! Fixes toi un moment d’étude. #torah #jerusalem</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 1 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Rt7XunlOTaM_Elloul__le_moment_de_prendre_de_bonnes_résolutions___Fixes_toi_un_moment_d_étude.mp3" preload="none" data-ep-id="Rt7XunlOTaM"></audio><button class="share-btn" data-epfile="Nahal-Haim/elloul-le-moment-de-prendre-de-bonnes-resolutions-fixes-toi-un-moment-2026-08-26.html" data-title="Elloul, le moment de prendre de bonnes résolutions ! Fixes toi un moment d’étude. #torah #jerusalem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="24-aout-2026-2026-08-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ZpU-OWjKa2A/maxresdefault.jpg" alt="24 août 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="24-aout-2026-2026-08-24.html" style="color:inherit;text-decoration:none;display:block">24 août 2026</a><time class="ep-date" datetime="2026-08-24">24 août 2026 · 33 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ZpU-OWjKa2A_24_août_2026.mp3" preload="none" data-ep-id="ZpU-OWjKa2A"></audio><button class="share-btn" data-epfile="Nahal-Haim/24-aout-2026-2026-08-24.html" data-title="24 août 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="23-aout-2026-2026-08-23.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D8FVHVi1Qgc/maxresdefault.jpg" alt="23 août 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="23-aout-2026-2026-08-23.html" style="color:inherit;text-decoration:none;display:block">23 août 2026</a><time class="ep-date" datetime="2026-08-23">23 août 2026 · 37 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/D8FVHVi1Qgc_23_août_2026.mp3" preload="none" data-ep-id="D8FVHVi1Qgc"></audio><button class="share-btn" data-epfile="Nahal-Haim/23-aout-2026-2026-08-23.html" data-title="23 août 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="paracha-ki-tetse-converti-d-ou-viens-tu-rav-dagani-cohen-torah-chabbat-2026-08-20.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/PFuF02wcqv8/maxresdefault.jpg" alt="#Paracha Ki Tétsé: Converti, d&#x27;où viens-tu ? Rav Dagani Cohen #torah #chabbat #breslev #jerusalem" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="paracha-ki-tetse-converti-d-ou-viens-tu-rav-dagani-cohen-torah-chabbat-2026-08-20.html" style="color:inherit;text-decoration:none;display:block">#Paracha Ki Tétsé: Converti, d&#x27;où viens-tu ? Rav Dagani Cohen #torah #chabbat #breslev #jerusalem</a><time class="ep-date" datetime="2026-08-20">20 août 2026 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PFuF02wcqv8_Paracha_Ki_Tétsé__Converti__d_où_viens-tu___Rav_Dagani_Cohen__torah__chabbat__b.mp3" preload="none" data-ep-id="PFuF02wcqv8"></audio><button class="share-btn" data-epfile="Nahal-Haim/paracha-ki-tetse-converti-d-ou-viens-tu-rav-dagani-cohen-torah-chabbat-2026-08-20.html" data-title="#Paracha Ki Tétsé: Converti, d&#x27;où viens-tu ? Rav Dagani Cohen #torah #chabbat #breslev #jerusalem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="paracha-ki-tavo-parnassa-pour-tous-rav-dagani-cohen-chabbat-torah-chio-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/N8jstYcgQw8/hqdefault.jpg" alt="#Paracha Ki Tavo : Parnassa pour tous ?! Rav Dagani Cohen #chabbat #torah #chiour #jerusalem #kotel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="paracha-ki-tavo-parnassa-pour-tous-rav-dagani-cohen-chabbat-torah-chio-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">#Paracha Ki Tavo : Parnassa pour tous ?! Rav Dagani Cohen #chabbat #torah #chiour #jerusalem #kotel</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="N8jstYcgQw8" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/N8jstYcgQw8_Paracha_Ki_Tavo___Parnassa_pour_tous____Rav_Dagani_Cohen__chabbat__torah__chiou.mp3" data-title="#Paracha Ki Tavo : Parnassa pour tous ?! Rav Dagani Cohen #chabbat #torah #chiour #jerusalem #kotel" data-thumb="https://i.ytimg.com/vi/N8jstYcgQw8/hqdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Nahal-Haim/paracha-ki-tavo-parnassa-pour-tous-rav-dagani-cohen-chabbat-torah-chio-2026-08-27.html" data-title="#Paracha Ki Tavo : Parnassa pour tous ?! Rav Dagani Cohen #chabbat #torah #chiour #jerusalem #kotel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="elloul-le-moment-de-prendre-de-bonnes-resolutions-fixes-toi-un-moment-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/Rt7XunlOTaM/maxresdefault.jpg" alt="Elloul, le moment de prendre de bonnes résolutions ! Fixes toi un moment d’étude. #torah #jerusalem" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="elloul-le-moment-de-prendre-de-bonnes-resolutions-fixes-toi-un-moment-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Elloul, le moment de prendre de bonnes résolutions ! Fixes toi un moment d’étude. #torah #jerusalem</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 1 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="Rt7XunlOTaM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Rt7XunlOTaM_Elloul__le_moment_de_prendre_de_bonnes_résolutions___Fixes_toi_un_moment_d_étude.mp3" data-title="Elloul, le moment de prendre de bonnes résolutions ! Fixes toi un moment d’étude. #torah #jerusalem" data-thumb="https://i.ytimg.com/vi/Rt7XunlOTaM/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Nahal-Haim/elloul-le-moment-de-prendre-de-bonnes-resolutions-fixes-toi-un-moment-2026-08-26.html" data-title="Elloul, le moment de prendre de bonnes résolutions ! Fixes toi un moment d’étude. #torah #jerusalem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="24-aout-2026-2026-08-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ZpU-OWjKa2A/maxresdefault.jpg" alt="24 août 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="24-aout-2026-2026-08-24.html" style="color:inherit;text-decoration:none;display:block">24 août 2026</a><time class="ep-date" datetime="2026-08-24">24 août 2026 · 33 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="ZpU-OWjKa2A" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ZpU-OWjKa2A_24_août_2026.mp3" data-title="24 août 2026" data-thumb="https://i.ytimg.com/vi/ZpU-OWjKa2A/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Nahal-Haim/24-aout-2026-2026-08-24.html" data-title="24 août 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="23-aout-2026-2026-08-23.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/D8FVHVi1Qgc/maxresdefault.jpg" alt="23 août 2026" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="23-aout-2026-2026-08-23.html" style="color:inherit;text-decoration:none;display:block">23 août 2026</a><time class="ep-date" datetime="2026-08-23">23 août 2026 · 37 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="D8FVHVi1Qgc" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/D8FVHVi1Qgc_23_août_2026.mp3" data-title="23 août 2026" data-thumb="https://i.ytimg.com/vi/D8FVHVi1Qgc/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Nahal-Haim/23-aout-2026-2026-08-23.html" data-title="23 août 2026"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="paracha-ki-tetse-converti-d-ou-viens-tu-rav-dagani-cohen-torah-chabbat-2026-08-20.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/PFuF02wcqv8/maxresdefault.jpg" alt="#Paracha Ki Tétsé: Converti, d&#x27;où viens-tu ? Rav Dagani Cohen #torah #chabbat #breslev #jerusalem" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="paracha-ki-tetse-converti-d-ou-viens-tu-rav-dagani-cohen-torah-chabbat-2026-08-20.html" style="color:inherit;text-decoration:none;display:block">#Paracha Ki Tétsé: Converti, d&#x27;où viens-tu ? Rav Dagani Cohen #torah #chabbat #breslev #jerusalem</a><time class="ep-date" datetime="2026-08-20">20 août 2026 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="PFuF02wcqv8" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/PFuF02wcqv8_Paracha_Ki_Tétsé__Converti__d_où_viens-tu___Rav_Dagani_Cohen__torah__chabbat__b.mp3" data-title="#Paracha Ki Tétsé: Converti, d&#x27;où viens-tu ? Rav Dagani Cohen #torah #chabbat #breslev #jerusalem" data-thumb="https://i.ytimg.com/vi/PFuF02wcqv8/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="Nahal-Haim/paracha-ki-tetse-converti-d-ou-viens-tu-rav-dagani-cohen-torah-chabbat-2026-08-20.html" data-title="#Paracha Ki Tétsé: Converti, d&#x27;où viens-tu ? Rav Dagani Cohen #torah #chabbat #breslev #jerusalem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -341,17 +345,17 @@ Des Rabbanim sont à ta disposition - 📍A 100m Kotel, 2 Rehov HaTamid, Jerusal
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -372,27 +376,43 @@ Des Rabbanim sont à ta disposition - 📍A 100m Kotel, 2 Rehov HaTamid, Jerusal
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'ETng9Qo7dQ0', title: "COMPLET VAYEHI - Je pense donc je suis ! La minute Paracha avec le Rav Dagani Cohen à Nahal Haim", channel: "Nahal Haim - נחל חיים", art: "https://i.ytimg.com/vi/ETng9Qo7dQ0/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_ETng9Qo7dQ0', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_ETng9Qo7dQ0'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'ETng9Qo7dQ0');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Nahal Haim - נחל חיים",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -406,16 +426,6 @@ Des Rabbanim sont à ta disposition - 📍A 100m Kotel, 2 Rehov HaTamid, Jerusal
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

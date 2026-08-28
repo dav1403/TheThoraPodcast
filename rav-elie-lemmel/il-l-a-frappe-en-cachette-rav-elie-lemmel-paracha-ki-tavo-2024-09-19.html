@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Elie Lemmel"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Rav Elie Lemmel nous offre une leçon de vie que la tradition juive retient de la parasha Ki Tavo. Une leçon de vie et un enseignement concret à méditer et…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Il l&#x27;a frappé en cachette ! Rav Elie Lemmel - Paracha Ki Tavo</h1>
     <p class="ep-meta"><a href="../rav-elie-lemmel.html" style="color:#888;text-decoration:none">Rav Elie Lemmel</a> · <time datetime="2024-09-19">19 septembre 2024 · 4 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Paracha</span> <span class="ep-tag">Halakha</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/BsyNwD2YIks_Il_l_a_frappé_en_cachette___Rav_Elie_Lemmel_-_Paracha_Ki_Tavo.mp3" preload="none" data-ep-id="BsyNwD2YIks" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/BsyNwD2YIks_Il_l_a_frappé_en_cachette___Rav_Elie_Lemmel_-_Paracha_Ki_Tavo.mp3" preload="metadata" data-ep-id="BsyNwD2YIks" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -331,11 +335,11 @@ Podcast Spotify : https://spoti.fi/45fLOYW</p>
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>bonjour Toujours dans le livre de dvarim parachat kitavo parachat complexe parce que il y a d&#x27;un côté beaucoup de bénédictions mais en même temps on nous rappelle que si on dysfonctionne si le peuple d&#x27;Israël dysfonctionne et bien son histoire risque de ne plus se conjuguer au plus que parfait et à l&#x27;intérieur de ce texte il va y avoir à un moment ce qu&#x27;on appelle la liste des harourimes c&#x27;est-à-dire la liste à propos des des gens à propos desquels la Torat nous dit Harour qu&#x27;il soit</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">782 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] bonjour Toujours dans le livre de dvarim parachat kitavo parachat complexe parce que il y a d&#x27;un côté beaucoup de bénédictions mais en même temps on nous rappelle que si on dysfonctionne si le peuple d&#x27;Israël dysfonctionne et bien son histoire risque de ne plus se conjuguer au plus que parfait et à l&#x27;intérieur de ce texte il va y avoir à un moment ce qu&#x27;on appelle la liste des harourimes c&#x27;est-à-dire la liste à propos des des gens à propos desquels la Torat nous dit Harour qu&#x27;il soit</p><p>maudit alors on va voir là-bas un certain nombre de situations à propos desquelles la Torah dit des choses très difficiles mais à un moment le texte va nous dire Harour makeréou Basser Arour c&#x27;est-à-dire soit maudit makeréou celui qui frappe son ami ber de manière cachée alors évidemment la question est de savoir de quoi il s&#x27;agit si quelqu&#x27;un prend un B et frappe l&#x27;autre évidemment que l&#x27;autre le voit parfaitement sauf si c&#x27;est la nuit noire éventuellement ou sauf si le bâton est immense mais enfin bon on</p><p>ne parle pas de ça disent nos maîtres et c&#x27;est comme ça que le rapporte Rachi il s&#x27;agit de celui qui fait du lachanara de la médisance et on ne saurait trop à nouveau en reparler car en effet s&#x27;il y a bien des sujets sur lesqueles nous devons parler de manière récurrente c&#x27;est de parler sur ces sujets sur lesquels on ne peut pas parler c&#x27;est-à-dire de dire du mal de l&#x27;autre MAK le verset nous dit Harour qu&#x27;il soit maudit celui qui frappe son ami bassaterre de manière</p><p>cachée pourquoi parce que la victime n&#x27;est pas au courant il ne sait pas qu&#x27;en vérité peut-être c&#x27;est son voisin de synagogue qui a commencé à raconter des choses sur lui et donc à partir de cela il le frappe mais tout en restant lui-même caché et c&#x27;est vrai que c&#x27;est quelque chose sur lequel la Torah nous dit attention la personne qui agit de cette manière doit être maudite ça veut dire on lui révèle qu&#x27;au fond il n&#x27;a pas sa place dans le monde et que quelqu&#x27;un comme</p><p>ça doit sortir de la société pourquoi parce que c&#x27;est la destruction de tous les systèmes lorsque l&#x27;on commence à parler du mal les uns sur les autres et bien il n&#x27;y a plus de limite alors bien sûr si quelqu&#x27;un est un bandit des grand chemin et qu&#x27;on doit se prémunir contre cette personne alors on aura le droit dans certaines circonstances voire même l&#x27;obligation de dire des choses mais vous savez c&#x27;est très intéressant parce que on joue ici avec la vie des gens et de manière très</p><p>curieuse on va parfois demander à un rabin des questions ai-je le droit le shabbat de faire telle et telle chose ai-je le droit si j&#x27;ai mis dans une casserole de lait un morceau de pomme de terre qui avait cuit il y a 3 jours dans dans une casserole dans laquelle de jours avant il y avait de la viande enfin vous savez les questions auquelles il faut avoir une réponse mais par contre très très rare extrêmement rare sont les personnes qui viennent poser la question voici telle</p><p>et telle situation ai-je le droit de dire dois-je dire pourquoi parce que dans ce domaine là on pense tout ce que l&#x27;on sait alors que les enjeux sont colossaux et c&#x27;est là où en effet la toran nous dit attention Arour maintenant on sait que le terme de Harour qui veut dire maudir nous renvoie la notion d&#x27;une clala la malédiction puisque la malédiction en hébreu se dit clala le mot clala fait remarquer leur volber vient de la racine cale qui veut dire léger au fond le problème</p><p>de celui qui n&#x27;est pas vigilant au niveau de sa parole c&#x27;est quelqu&#x27;un qui est léger quelqu&#x27;un qui ne donne pas de poids aux choses quelqu&#x27;un qui ne se donne pas les moyens de prendre la mesure de ce que peut représenter cette chose et nous sommes ici dans un moment cap puisque tout le peuple d&#x27;Israël est réuni et lorsque Moché va dire Harour que soit modudé celui qui frappe son ami basseter de manière cachée veut un marcolam amen tout le peuple dira amen nous validons c&#x27;est-à-dire que</p><p>le peuple d&#x27;Israël dans son entièreté dit oui nous validons cette chose qui est au fond extrêmement importante d&#x27;être vigilant dans toutes ces lois du langage alors évidemment ce n&#x27;est pas simple et quand la Torah dit de tels mots c&#x27;est pour nous faire prendre la mesure de l&#x27;importance et peut-être aussi pour nous aider à créer une r vigilance shabbat shalom</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg" alt="La reconnaissance clé de la réussite - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">La reconnaissance clé de la réussite - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 57 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/yIY5UmoHDQo_La_reconnaissance_cle__de_la_re_ussite_-_Rav_Elie_Lemmel.mp3" preload="none" data-ep-id="yIY5UmoHDQo"></audio><button class="share-btn" data-epfile="rav-elie-lemmel/la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-enjeu-de-l-education-au-coeur-du-couple-rav-elie-lemmel-2026-07-08.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ptpTQTOSF3o/maxresdefault.jpg" alt="L&#x27;enjeu de l&#x27;éducation au coeur du couple - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-enjeu-de-l-education-au-coeur-du-couple-rav-elie-lemmel-2026-07-08.html" style="color:inherit;text-decoration:none;display:block">L&#x27;enjeu de l&#x27;éducation au coeur du couple - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-07-08">8 juillet 2026 · 59 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ptpTQTOSF3o_L_enjeu_de_l_éducation_au_coeur_du_couple_-_Rav_Elie_Lemmel.mp3" preload="none" data-ep-id="ptpTQTOSF3o"></audio><button class="share-btn" data-epfile="rav-elie-lemmel/l-enjeu-de-l-education-au-coeur-du-couple-rav-elie-lemmel-2026-07-08.html" data-title="L&#x27;enjeu de l&#x27;éducation au coeur du couple - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-extremisme-un-danger-rav-elie-lemmel-2026-06-30.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/3Nfk5nzEVE4/maxresdefault.jpg" alt="L&#x27;extrémisme... un danger ? Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-extremisme-un-danger-rav-elie-lemmel-2026-06-30.html" style="color:inherit;text-decoration:none;display:block">L&#x27;extrémisme... un danger ? Rav Elie Lemmel</a><time class="ep-date" datetime="2026-06-30">30 juin 2026 · 58 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3Nfk5nzEVE4_L_extrémisme____un_danger___Rav_Elie_Lemmel.mp3" preload="none" data-ep-id="3Nfk5nzEVE4"></audio><button class="share-btn" data-epfile="rav-elie-lemmel/l-extremisme-un-danger-rav-elie-lemmel-2026-06-30.html" data-title="L&#x27;extrémisme... un danger ? Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-solitude-d-israel-face-aux-nations-rav-elie-lemmel-2026-06-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/w7i7Zt-Ey1A/maxresdefault.jpg" alt="La solitude d&#x27;Israël face aux Nations - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-solitude-d-israel-face-aux-nations-rav-elie-lemmel-2026-06-24.html" style="color:inherit;text-decoration:none;display:block">La solitude d&#x27;Israël face aux Nations - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-06-24">24 juin 2026 · 47 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/w7i7Zt-Ey1A_La_solitude_d_Israël_face_aux_Nations_-_Rav_Elie_Lemmel.mp3" preload="none" data-ep-id="w7i7Zt-Ey1A"></audio><button class="share-btn" data-epfile="rav-elie-lemmel/la-solitude-d-israel-face-aux-nations-rav-elie-lemmel-2026-06-24.html" data-title="La solitude d&#x27;Israël face aux Nations - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="comment-apprendre-a-gerer-les-conflits-rav-elie-lemmel-2026-06-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/UJs-riLtioA/maxresdefault.jpg" alt="Comment apprendre à gérer les conflits - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="comment-apprendre-a-gerer-les-conflits-rav-elie-lemmel-2026-06-17.html" style="color:inherit;text-decoration:none;display:block">Comment apprendre à gérer les conflits - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-06-17">17 juin 2026 · 40 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/UJs-riLtioA_Comment_apprendre_à_gérer_les_conflits_-_Rav_Elie_Lemmel.mp3" preload="none" data-ep-id="UJs-riLtioA"></audio><button class="share-btn" data-epfile="rav-elie-lemmel/comment-apprendre-a-gerer-les-conflits-rav-elie-lemmel-2026-06-17.html" data-title="Comment apprendre à gérer les conflits - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg" alt="La reconnaissance clé de la réussite - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">La reconnaissance clé de la réussite - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 57 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="yIY5UmoHDQo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/yIY5UmoHDQo_La_reconnaissance_cle__de_la_re_ussite_-_Rav_Elie_Lemmel.mp3" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel" data-thumb="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-elie-lemmel/la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-enjeu-de-l-education-au-coeur-du-couple-rav-elie-lemmel-2026-07-08.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/ptpTQTOSF3o/maxresdefault.jpg" alt="L&#x27;enjeu de l&#x27;éducation au coeur du couple - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-enjeu-de-l-education-au-coeur-du-couple-rav-elie-lemmel-2026-07-08.html" style="color:inherit;text-decoration:none;display:block">L&#x27;enjeu de l&#x27;éducation au coeur du couple - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-07-08">8 juillet 2026 · 59 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="ptpTQTOSF3o" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/ptpTQTOSF3o_L_enjeu_de_l_éducation_au_coeur_du_couple_-_Rav_Elie_Lemmel.mp3" data-title="L&#x27;enjeu de l&#x27;éducation au coeur du couple - Rav Elie Lemmel" data-thumb="https://i.ytimg.com/vi/ptpTQTOSF3o/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-elie-lemmel/l-enjeu-de-l-education-au-coeur-du-couple-rav-elie-lemmel-2026-07-08.html" data-title="L&#x27;enjeu de l&#x27;éducation au coeur du couple - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-extremisme-un-danger-rav-elie-lemmel-2026-06-30.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/3Nfk5nzEVE4/maxresdefault.jpg" alt="L&#x27;extrémisme... un danger ? Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-extremisme-un-danger-rav-elie-lemmel-2026-06-30.html" style="color:inherit;text-decoration:none;display:block">L&#x27;extrémisme... un danger ? Rav Elie Lemmel</a><time class="ep-date" datetime="2026-06-30">30 juin 2026 · 58 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="3Nfk5nzEVE4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3Nfk5nzEVE4_L_extrémisme____un_danger___Rav_Elie_Lemmel.mp3" data-title="L&#x27;extrémisme... un danger ? Rav Elie Lemmel" data-thumb="https://i.ytimg.com/vi/3Nfk5nzEVE4/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-elie-lemmel/l-extremisme-un-danger-rav-elie-lemmel-2026-06-30.html" data-title="L&#x27;extrémisme... un danger ? Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-solitude-d-israel-face-aux-nations-rav-elie-lemmel-2026-06-24.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/w7i7Zt-Ey1A/maxresdefault.jpg" alt="La solitude d&#x27;Israël face aux Nations - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-solitude-d-israel-face-aux-nations-rav-elie-lemmel-2026-06-24.html" style="color:inherit;text-decoration:none;display:block">La solitude d&#x27;Israël face aux Nations - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-06-24">24 juin 2026 · 47 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="w7i7Zt-Ey1A" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/w7i7Zt-Ey1A_La_solitude_d_Israël_face_aux_Nations_-_Rav_Elie_Lemmel.mp3" data-title="La solitude d&#x27;Israël face aux Nations - Rav Elie Lemmel" data-thumb="https://i.ytimg.com/vi/w7i7Zt-Ey1A/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-elie-lemmel/la-solitude-d-israel-face-aux-nations-rav-elie-lemmel-2026-06-24.html" data-title="La solitude d&#x27;Israël face aux Nations - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="comment-apprendre-a-gerer-les-conflits-rav-elie-lemmel-2026-06-17.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/UJs-riLtioA/maxresdefault.jpg" alt="Comment apprendre à gérer les conflits - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="comment-apprendre-a-gerer-les-conflits-rav-elie-lemmel-2026-06-17.html" style="color:inherit;text-decoration:none;display:block">Comment apprendre à gérer les conflits - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-06-17">17 juin 2026 · 40 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="UJs-riLtioA" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/UJs-riLtioA_Comment_apprendre_à_gérer_les_conflits_-_Rav_Elie_Lemmel.mp3" data-title="Comment apprendre à gérer les conflits - Rav Elie Lemmel" data-thumb="https://i.ytimg.com/vi/UJs-riLtioA/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-elie-lemmel/comment-apprendre-a-gerer-les-conflits-rav-elie-lemmel-2026-06-17.html" data-title="Comment apprendre à gérer les conflits - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -344,17 +348,17 @@ Podcast Spotify : https://spoti.fi/45fLOYW</p>
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -375,27 +379,43 @@ Podcast Spotify : https://spoti.fi/45fLOYW</p>
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'BsyNwD2YIks', title: "Il l'a frappé en cachette ! Rav Elie Lemmel - Paracha Ki Tavo", channel: "Rav Elie Lemmel", art: "https://i.ytimg.com/vi/BsyNwD2YIks/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_BsyNwD2YIks', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_BsyNwD2YIks'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'BsyNwD2YIks');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Elie Lemmel",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -409,16 +429,6 @@ Podcast Spotify : https://spoti.fi/45fLOYW</p>
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Lev"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "jérémy bonjour nous poursuivons notre cycle sur l'étude du texte de l'ami da et nous arrivons enfin à l'étude de la premier à bras je vous rappelle que…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Série La Amida - Braha 1 - Les Patriarches</h1>
     <p class="ep-meta"><a href="../lev.html" style="color:#888;text-decoration:none">Lev</a> · <time datetime="2022-04-03">3 avril 2022 · 7 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Tefila</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/1Pp0JSrFXCY_Série_La_Amida_-_Braha_1_-_Les_Patriarches.mp3" preload="none" data-ep-id="1Pp0JSrFXCY" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/1Pp0JSrFXCY_Série_La_Amida_-_Braha_1_-_Les_Patriarches.mp3" preload="metadata" data-ep-id="1Pp0JSrFXCY" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -329,11 +333,11 @@ L&#x27;équipe de Lev</p>
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>jérémy bonjour nous poursuivons notre cycle sur l&#x27;étude du texte de l&#x27;ami da et nous arrivons enfin à l&#x27;étude de la premier à bras je vous rappelle que cette barre à fait partie des trois premières bras roth que nous nommons bien cote acheva c&#x27;est à dire des bras roth de louanges louanges pourquoi louanges vis-à-vis des schèmes mais tout simplement au niveau stratégique pour se familiariser le plus possible avec cette prise de conscience que h&amp;amp;m peu tout et si h&amp;amp;m peu tout alors ce que nous allons</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">824 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] jérémy bonjour nous poursuivons notre cycle sur l&#x27;étude du texte de l&#x27;ami da et nous arrivons enfin à l&#x27;étude de la premier à bras je vous rappelle que cette barre à fait partie des trois premières bras roth que nous nommons bien cote acheva c&#x27;est à dire des bras roth de louanges louanges pourquoi louanges vis-à-vis des schèmes mais tout simplement au niveau stratégique pour se familiariser le plus possible avec cette prise de conscience que h&amp;amp;m peu tout et si h&amp;amp;m peu tout alors ce que nous allons</p><p>aborder toutes nos requêtes à titre personnel ou individuelles alors on sera d&#x27;autant plus concernés d&#x27;autant plus concentrés pour lui demander monts et merveilles la première des bras s&#x27;appelle la birkat à votre littéralement lab rat rat des patriarches on va effectivement parler de nos trois grand patriarche havre and iraq et yaacov et je vous propose dans un premier temps de déjà lire le texte en le traduisant mot-à-mot dans une traduction littérale et ensuite on essaiera d&#x27;une part de comprendre le sens général de l&#x27;avoir à et dans</p><p>une deuxième partie de comprendre le mot à mot de cette bras et qui nous permettra de bien définir chacun des concepts alors je commence par une traduction immédiate du texte donc le texte et bars ou ata h m mon dieu tu es source de bénédiction et look et nous vélo quai à voter nous notre dieu est le dieu de nos pères et le quai avram dieu d&#x27;abraham et le cates radieux d&#x27;ytrac et le quai ya&#x27;acov dieu de yakov à quel hagadol à guy bourdin aura le</p><p>dieu qui est grand que guibord qui et evonik et redoutable qu&#x27;elle et l&#x27;yonne dieu supérieur gomel grâce à jean tobin qui dispense des grâces connaît à cole qui réalise tous les horaires rasd a voté qui se souvient des bontés des patriarches où mes vigo elle lit venez venez aime et qui amène le libérateur pour leur progéniture lehmann chez mme aubé aava pour son nom par amour mais l&#x27;air aux airs ou mouche yahoo maghen tu es un roi qui aide qui sauve les qui protège baroque rattache</p><p>aimes tu es source de bénédiction h&amp;amp;m maghen abraham bouclier daverat voilà donc la traduction au motta mans alors on commence par une première étude du sens général de cette barque comme on l&#x27;a vu on parle ici beaucoup des patriarches abraham x trac et ya&#x27;acov et la raison est très simple c&#x27;est que ce sont les premiers à avoir initié et à avoir implémenté cette notion de rendez vous quotidien avec h&amp;amp;m a un temps tout à fait spécifique de la journée il y à la prière de l&#x27;individu</p><p>qui se lèvent le matin le chat ravito matin avec toute sa force et tout son engouement shalit c&#x27;est la prière qui est instituée par avraham il traque c&#x27;est la prière leaf notes et rêve à la proche de la nuit presque au prépuce kull haut au moment où le soleil est en train de se dissiper et ça c&#x27;est la prière quelques instituts et paris traque l&#x27;a pris à 2009 et en fin d&#x27;année a pris hier dans durant la nuit une fois que nous sommes dans cette incertitude</p><p>liés au monde des ténèbres alors il y à cove a institué la prière arvid sous-entendu chacune de ces prières correspond à un état d&#x27;âme particulier qui mérite un épanchement auprès d&#x27;hachette nous avons ici aussi trois patriarches qui chacun s&#x27;est caractérisée dans le développement dans le déploiement d&#x27;un caractère majeur avril est connu pour la dimension durée c&#x27;est de la bonté il traque les lui connu pour la dimension de la ira c&#x27;est-à-dire l&#x27;introspection de travail sur lui même la rigueur et enfin et accord revêt une synthèse entre</p><p>ces deux pôles opposés d&#x27;un côté la bonté de l&#x27;autre la rigueur c&#x27;est le principe de l&#x27; équilibre de la vérité s&#x27;il ya accord et chacun par le biais d&#x27;un développement de ce trait de caractère naturel c&#x27;était quelque chose qu&#x27;ils ont depuis leur naissance ils ont réussi à entrevoir à aborder à créer un lien tout à fait spécifique avec h m c&#x27;est la raison pour laquelle nous allons dire dans la bras que nous allons étudier dans la deuxième partie et look et avram et look et sa</p><p>cadillac offre il est dieu de avram dieu de inside du dieu de yakov mais pour qu&#x27;on ne dit pas le dieu de havre à 1005 yaakov c&#x27;est le même dieu oui c&#x27;est même dieu mais chacun un tracé son chemin singulier en fonction de la structure de caractère qu&#x27;il avait et c&#x27;est la raison pour laquelle hamida a besoin deux pointés du doigt cette singularité fondamentale qui est aussi notre singularité qui va nous permettre nos aussi en fonction de ce que nous sommes tristes wa de passer de</p><p>présent de pouvoir tisser un lien tout à fait personnelle avec h m merci</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/l1CD25dhF6Q/maxresdefault.jpg" alt="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/l1CD25dhF6Q_Tes_valeurs_existent-elles_seulement_quand_ça_t_arrange_____Rav_Eitan_Galam.mp3" preload="none" data-ep-id="l1CD25dhF6Q"></audio><button class="share-btn" data-epfile="lev/tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html" data-title="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/7KD3NWk3_kU/maxresdefault.jpg" alt="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7KD3NWk3_kU_Pourquoi_la_joie_est-elle_le_secret_du_bonheur_____Parachat_Ki_Tavo___Joy_Galam.mp3" preload="none" data-ep-id="7KD3NWk3_kU"></audio><button class="share-btn" data-epfile="lev/pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html" data-title="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg" alt="La reconnaissance clé de la réussite - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">La reconnaissance clé de la réussite - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 57 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/yIY5UmoHDQo_La_reconnaissance_cle__de_la_re_ussite_-_Rav_Elie_Lemmel.mp3" preload="none" data-ep-id="yIY5UmoHDQo"></audio><button class="share-btn" data-epfile="lev/la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/85KLsd-DWiM/maxresdefault.jpg" alt="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 0 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/85KLsd-DWiM_Teshouva__L_espoir_est_TOUJOURS_là__même_pour_toi.mp3" preload="none" data-ep-id="85KLsd-DWiM"></audio><button class="share-btn" data-epfile="lev/teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html" data-title="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/oYwDHzJAlMo/maxresdefault.jpg" alt="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/oYwDHzJAlMo_L_espoir_de_Techouva_pour_Tous_-_Paracha_Ki-Tetsé_-_Rav_Eliaou_Hassan.mp3" preload="none" data-ep-id="oYwDHzJAlMo"></audio><button class="share-btn" data-epfile="lev/l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html" data-title="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/l1CD25dhF6Q/maxresdefault.jpg" alt="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="l1CD25dhF6Q" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/l1CD25dhF6Q_Tes_valeurs_existent-elles_seulement_quand_ça_t_arrange_____Rav_Eitan_Galam.mp3" data-title="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam" data-thumb="https://i.ytimg.com/vi/l1CD25dhF6Q/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html" data-title="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/7KD3NWk3_kU/maxresdefault.jpg" alt="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="7KD3NWk3_kU" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7KD3NWk3_kU_Pourquoi_la_joie_est-elle_le_secret_du_bonheur_____Parachat_Ki_Tavo___Joy_Galam.mp3" data-title="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam" data-thumb="https://i.ytimg.com/vi/7KD3NWk3_kU/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html" data-title="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg" alt="La reconnaissance clé de la réussite - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">La reconnaissance clé de la réussite - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 57 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="yIY5UmoHDQo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/yIY5UmoHDQo_La_reconnaissance_cle__de_la_re_ussite_-_Rav_Elie_Lemmel.mp3" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel" data-thumb="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/85KLsd-DWiM/maxresdefault.jpg" alt="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 0 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="85KLsd-DWiM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/85KLsd-DWiM_Teshouva__L_espoir_est_TOUJOURS_là__même_pour_toi.mp3" data-title="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi" data-thumb="https://i.ytimg.com/vi/85KLsd-DWiM/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html" data-title="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/oYwDHzJAlMo/maxresdefault.jpg" alt="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="oYwDHzJAlMo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/oYwDHzJAlMo_L_espoir_de_Techouva_pour_Tous_-_Paracha_Ki-Tetsé_-_Rav_Eliaou_Hassan.mp3" data-title="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan" data-thumb="https://i.ytimg.com/vi/oYwDHzJAlMo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html" data-title="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -342,17 +346,17 @@ L&#x27;équipe de Lev</p>
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -373,27 +377,43 @@ L&#x27;équipe de Lev</p>
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: '1Pp0JSrFXCY', title: "Série La Amida - Braha 1 - Les Patriarches", channel: "Lev", art: "https://i.ytimg.com/vi/1Pp0JSrFXCY/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_1Pp0JSrFXCY', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_1Pp0JSrFXCY'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '1Pp0JSrFXCY');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Lev",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -407,16 +427,6 @@ L&#x27;équipe de Lev</p>
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

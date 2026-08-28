@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Lev"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Devenir une meilleure version de soi-même... Rav Elie Lemmel nous offre un enseignement concret à appliquer dans notre quotidien. Vous avez apprécié cet…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1># 17 - Permettre aux autres de tout recevoir</h1>
     <p class="ep-meta"><a href="../lev.html" style="color:#888;text-decoration:none">Lev</a> · <time datetime="2024-04-16">16 avril 2024 · 5 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Moussar</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/kqyr13oCSCw_17_-_Permettre_aux_autres_de_tout_recevoir.mp3" preload="none" data-ep-id="kqyr13oCSCw" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/kqyr13oCSCw_17_-_Permettre_aux_autres_de_tout_recevoir.mp3" preload="metadata" data-ep-id="kqyr13oCSCw" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -332,11 +336,11 @@ Podcast Spotify : https://spoti.fi/45fLOYW</p>
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>et alors là il va vers la personne il dit mais c&#x27;est quoi cette histoire et la personne lui sourit lui dit si vous n&#x27;aviez pas payé est-ce que vous auriez été prêt à tout recevoir quand vous arrivez là la dernière minute vous sentez tellement mal que je vous aurais dit mais servez-vous prenez non non ça va ça va pourquoi vous vous sentez gêné alors je me suis dit mais comment je vais faire en telle sorte pour qu&#x27;il ne se sente pas gêné et bien je lui donner l&#x27;impression que c&#x27;est un client il a payé et puisqu&#x27;il a payé il peut prendre de tout belle histoire qui n&#x27;a peut-être jamais eu lieu mais dont on peut sûrement s&#x27;inspirer alors bon travail I</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1099 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] bonjour Toujours l&#x27;univers du travail sur soi toujours dans le monde du réède je vais appeler ça l&#x27;épisode 5 bis pourquoi parce que je vais continuer encore un tout petit peu sur ce que nous avions vu la fois dernière dans l&#x27;univers du don vous rappelez on a évoqué la problématique de la dette lorsque l&#x27;on veut donner quelque chose à quelqu&#x27;un et que la personne refuse parce qu&#x27;elle ne veut pas se sentir endettée et a nous d&#x27;Ant un système pour que la personne ne se sente pas</p><p>en dette alors je sais pas si vous rappelez de cette chanson je vous ai amené des bonbons non pas parce que les fleurs peuvent fanner pas du tout pourquoi est-ce que lorsqu&#x27;on est invité chez des gens et bien on a tendance à amener quelque chose une bouteille de vin du chocolat que sais-je alors vousz dire ça se fait mais si on réfléchit lorsque l&#x27;on est invité chez quelqu&#x27;un on se sent un peu ente alors c&#x27;est c&#x27;est très fin mais donnant dès qu&#x27;on arrive quelque chose aux</p><p>personnes qui nous invite on se sent dans ce que j&#x27;appellerai une forme d&#x27;équilibre relationnel vous savez quand vous invitez des gens par exemple à passer chez vous un shabbat et bien elles sont là elles arrivent et souvent elles vont vous dire est-ce que je peux aider pourquoi parce que tout simplement ce sentiment d&#x27;être redevable est tellement fort que il est nécessaire de rééquilibrer les choses et c&#x27;est profondément humain à nous de leur donner les moyens de pouvoir se sentir bien en leur demandant même un service</p><p>peux-tu avoir la gentillesse de m&#x27;aider à faire cela la personne se sent tellement heureuse parce que elle se retrouve dans une relation d&#x27;égal à égal et elle ne se sent pas endettée même si de notre côté il n&#x27;y a aucun problème évidemment parce qu&#x27;on ne veut pas créer cette dette je vous raconter une histoire c&#x27;est une histoire vraie qui n&#x27;a jamais eu lieu vous savez toutes les histoires sont vraies certaines ont eu lieu d&#x27;autres n&#x27;ont jamais eu lieu en tout cas celle-là est vrai mais je</p><p>pense qu&#x27;elle n&#x27;a jamais eu lieu mais elle aurait pu avoir lieu c&#x27;est l&#x27;histoire de quelqu&#x27;un qui est veille de Shabbat dans une forêt perdue alors bien sûr curieux et cette personne bien sûr shabbat arrive vous savez shabbat ce moment dans lequel on se retrouve en famille et puis ça y est il va bien falloir être autour d&#x27;une table manger on peut plus rien faire et puis il est là il est en train d&#x27;Er et puis au bout d&#x27;un moment il voit au loin une maison et</p><p>il court vers cette maison et Jois et bonheur c&#x27;est une maison de cors Religionnaire il toque à la porte shabbat va rentrer bientôt et il demande pouvez-vous m&#x27;accueillir évidemment la personne qui est là lui dit avec avec plaisir ah génial et ce qui se passe c&#x27;est que l&#x27;autre ne le fait pas rentrer immédiatement lui dit oui d&#x27;accord vous allez donc passer tout shabbat avec nous dit ben oui si vous voulez bien m&#x27;accueillir avec joie donc vous allez manger avec nous les trois repas oui enfin et</p><p>là il comprend que l&#x27;autre est en train de lui faire une allusion que bon vous allez venir manger avec nous va peut-être falloir participer alors il lui dit écoutez oui oui bien sûr je vais manger avec vous d&#x27;ailleurs est-ce que je pourrais un peu participer et voilà je suis un invité surprise et l&#x27; l&#x27;autre de lui dire oui au moins c&#x27;est clair là il pense qu&#x27;il va le faire rentrer l&#x27;autre ne le fait toujours pas rentrer à la maison il lui dit vous allez repartir quand</p><p>et notre voyageur qui est l&#x27; perdu lui dit ben écoutez sans doute tout de suite après shabbat et la personne qui appartient à la maison lui dit donc immédiatement après dès que ça sera terminé vous allez partir immédiatement l&#x27;autre n&#x27;est pas fou comprend que l&#x27;autre a peur qu&#x27;il parte sans payer il lu dit oui d&#x27;ailleurs comme je risque de partir rapidement puis-je déjà vous donner ma participation au frais et l&#x27;autre de lui dire oui bon au moins c&#x27;est clair et là il lui dit bon ben</p><p>combien si déjà et l&#x27;autre lui annonce allez on va partir en Russie 500 roubles à une époque où le rouble valait beaucoup d&#x27;argent peut-être et l&#x27;autre lui dit quoi tellement on va dire en euros 300 € 400 € il dit oui c&#x27;est ça bon pas le choix shabbat va rentrer il lui donne 400 € et puis rentre là bien sûr vous imaginez bien que je viens payer 400 € je vais en profiter il demande où est sa chambre on lui donne une chambre est fyeux ça</p><p>se passe bien il arrive au repas de shabbat et là bien sûr vous imaginez bien qu&#x27;on vous a payé 400 € un shabbat il va se servir se resservir sans aucune difficulté premier repas deuxème repas premier dessert 4è dessert les alcool le chocolat voilà pourquoi ben pour 400 € et la table est royale mais il a aucune problématique à se servir et à se resservir fini shabbat il va quitter son hô et l&#x27;autre lui dit avant qu&#x27;il ne parte écoutez j&#x27;espère que vous avez passé un</p><p>bon shabbat l&#x27;autre dit merveilleux il dit voilà je voudrais vous faire quand même un petit cadeau de départ on a cette habitude comme ça vous vous rappellerez de nous l&#x27;autre lui dit rassurez-vous je me rappellerai de vous même sans ça mais bon c&#x27;est pas grave il lui donne un petit paquet l&#x27;autre sort et comme d&#x27;habitude bien sûr ouvre tout de suite le petit paquet et découvre dedans ces 400 €. et alors là il va vers la personne il dit mais c&#x27;est quoi cette histoire et la</p><p>personne lui sourit lui dit si vous n&#x27;aviez pas payé est-ce que vous auriez été prêt à tout recevoir quand vous arrivez là la dernière minute vous sentez tellement mal que je vous aurais dit mais servez-vous prenez non non ça va ça va pourquoi vous vous sentez gêné alors je me suis dit mais comment je vais faire en telle sorte pour qu&#x27;il ne se sente pas gêné et bien je lui donner l&#x27;impression que c&#x27;est un client il a payé et puisqu&#x27;il a payé il peut prendre de</p><p>tout belle histoire qui n&#x27;a peut-être jamais eu lieu mais dont on peut sûrement s&#x27;inspirer alors bon travail I</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/l1CD25dhF6Q/maxresdefault.jpg" alt="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/l1CD25dhF6Q_Tes_valeurs_existent-elles_seulement_quand_ça_t_arrange_____Rav_Eitan_Galam.mp3" preload="none" data-ep-id="l1CD25dhF6Q"></audio><button class="share-btn" data-epfile="lev/tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html" data-title="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/7KD3NWk3_kU/maxresdefault.jpg" alt="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7KD3NWk3_kU_Pourquoi_la_joie_est-elle_le_secret_du_bonheur_____Parachat_Ki_Tavo___Joy_Galam.mp3" preload="none" data-ep-id="7KD3NWk3_kU"></audio><button class="share-btn" data-epfile="lev/pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html" data-title="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg" alt="La reconnaissance clé de la réussite - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">La reconnaissance clé de la réussite - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 57 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/yIY5UmoHDQo_La_reconnaissance_cle__de_la_re_ussite_-_Rav_Elie_Lemmel.mp3" preload="none" data-ep-id="yIY5UmoHDQo"></audio><button class="share-btn" data-epfile="lev/la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/85KLsd-DWiM/maxresdefault.jpg" alt="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 0 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/85KLsd-DWiM_Teshouva__L_espoir_est_TOUJOURS_là__même_pour_toi.mp3" preload="none" data-ep-id="85KLsd-DWiM"></audio><button class="share-btn" data-epfile="lev/teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html" data-title="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/oYwDHzJAlMo/maxresdefault.jpg" alt="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/oYwDHzJAlMo_L_espoir_de_Techouva_pour_Tous_-_Paracha_Ki-Tetsé_-_Rav_Eliaou_Hassan.mp3" preload="none" data-ep-id="oYwDHzJAlMo"></audio><button class="share-btn" data-epfile="lev/l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html" data-title="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/l1CD25dhF6Q/maxresdefault.jpg" alt="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 1 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="l1CD25dhF6Q" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/l1CD25dhF6Q_Tes_valeurs_existent-elles_seulement_quand_ça_t_arrange_____Rav_Eitan_Galam.mp3" data-title="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam" data-thumb="https://i.ytimg.com/vi/l1CD25dhF6Q/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/tes-valeurs-existent-elles-seulement-quand-ca-t-arrange-rav-eitan-gala-2026-08-27.html" data-title="Tes valeurs existent-elles seulement quand ça t’arrange ? | Rav Eitan Galam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/7KD3NWk3_kU/maxresdefault.jpg" alt="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="7KD3NWk3_kU" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7KD3NWk3_kU_Pourquoi_la_joie_est-elle_le_secret_du_bonheur_____Parachat_Ki_Tavo___Joy_Galam.mp3" data-title="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam" data-thumb="https://i.ytimg.com/vi/7KD3NWk3_kU/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/pourquoi-la-joie-est-elle-le-secret-du-bonheur-parachat-ki-tavo-joy-ga-2026-08-26.html" data-title="Pourquoi la joie est-elle le secret du bonheur ? | Parachat Ki Tavo — Joy Galam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg" alt="La reconnaissance clé de la réussite - Rav Elie Lemmel" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">La reconnaissance clé de la réussite - Rav Elie Lemmel</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 57 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="yIY5UmoHDQo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/yIY5UmoHDQo_La_reconnaissance_cle__de_la_re_ussite_-_Rav_Elie_Lemmel.mp3" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel" data-thumb="https://i.ytimg.com/vi/yIY5UmoHDQo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/la-reconnaissance-cle-de-la-reussite-rav-elie-lemmel-2026-08-26.html" data-title="La reconnaissance clé de la réussite - Rav Elie Lemmel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/85KLsd-DWiM/maxresdefault.jpg" alt="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 0 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="85KLsd-DWiM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/85KLsd-DWiM_Teshouva__L_espoir_est_TOUJOURS_là__même_pour_toi.mp3" data-title="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi" data-thumb="https://i.ytimg.com/vi/85KLsd-DWiM/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/teshouva-l-espoir-est-toujours-la-meme-pour-toi-2026-08-21.html" data-title="Teshouva: L&#x27;espoir est TOUJOURS là, même pour toi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/oYwDHzJAlMo/maxresdefault.jpg" alt="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="oYwDHzJAlMo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/oYwDHzJAlMo_L_espoir_de_Techouva_pour_Tous_-_Paracha_Ki-Tetsé_-_Rav_Eliaou_Hassan.mp3" data-title="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan" data-thumb="https://i.ytimg.com/vi/oYwDHzJAlMo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="lev/l-espoir-de-techouva-pour-tous-paracha-ki-tetse-rav-eliaou-hassan-2026-08-21.html" data-title="L&#x27;espoir de Techouva pour Tous - Paracha Ki-Tetsé - Rav Eliaou Hassan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -345,17 +349,17 @@ Podcast Spotify : https://spoti.fi/45fLOYW</p>
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -376,27 +380,43 @@ Podcast Spotify : https://spoti.fi/45fLOYW</p>
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'kqyr13oCSCw', title: "# 17 - Permettre aux autres de tout recevoir", channel: "Lev", art: "https://i.ytimg.com/vi/kqyr13oCSCw/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_kqyr13oCSCw', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_kqyr13oCSCw'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'kqyr13oCSCw');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Lev",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -410,16 +430,6 @@ Podcast Spotify : https://spoti.fi/45fLOYW</p>
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Mimoun"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Rav Itshak Attali Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv Merci de vous abonner à nos vidéos sur…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>DES HISTOIRES INCROYABLES 32 - Rav Mimoun, pour l&#x27;ecole je n&#x27;ai pas d&#x27;argent ! - Rav Itshak Attali</h1>
     <p class="ep-meta"><a href="../rav-mimoun.html" style="color:#888;text-decoration:none">Rav Mimoun</a> · <time datetime="2022-09-11">11 septembre 2022 · 4 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Histoire juive</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/e3hkWSHJQF8_DES_HISTOIRES_INCROYABLES_32_-_Rav_Mimoun__pour_l_ecole_je_n_ai_pas_d_argent___-.mp3" preload="none" data-ep-id="e3hkWSHJQF8" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/e3hkWSHJQF8_DES_HISTOIRES_INCROYABLES_32_-_Rav_Mimoun__pour_l_ecole_je_n_ai_pas_d_argent___-.mp3" preload="metadata" data-ep-id="e3hkWSHJQF8" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -332,11 +336,11 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>2 selon mme morin on est en juillet 2008 et là je sors de la ive arr et je vois des enfants dans la vue et que je pouvais ne leur posait pas l&#x27;école amusé email collet l&#x27;a fait faillite ah bon mais où sont les autres ah les autres ces enfants du riche ils ont trouvé l&#x27;endroit étudiés il ya des enfants qui sont très intelligents mais non on n&#x27;est pas très fort on est des enfants turbulents mais alors des enfants turbulents mais vous êtes des débiles</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">582 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] 2 selon mme morin on est en juillet 2008 et là je sors de la ive arr et je vois des enfants dans la vue et que je pouvais ne leur posait pas l&#x27;école amusé email collet l&#x27;a fait faillite ah bon mais où sont les autres ah les autres ces enfants du riche ils ont trouvé l&#x27;endroit étudiés il ya des enfants qui sont très intelligents mais non on n&#x27;est pas très fort on est des enfants turbulents mais alors des enfants turbulents mais vous êtes des débiles</p><p>aux reds était juive ah non il est pas question non non non on va ouvrir une école de ce que j&#x27;entends une voix juste une nouvelle mue qu&#x27;est l&#x27;argent qui est toi oui c&#x27;est vrai j&#x27;avais alors je veux pas l&#x27;école et puis d&#x27;un seul coup je vous ouvre l&#x27;école n&#x27;en joue pas l&#x27;école et voilà que le lendemain je vais je veux jouer au kotel et la gironde dans le kotel chez h&amp;amp;m et rise qu&#x27;est-ce que je suis joue les corps joue pas l&#x27;école et puis d&#x27;un</p><p>seul coup tu vois qu&#x27;est-ce que je suis joyeux je vois un ange have à mon fils comment ça va ça va bien ramener moon juste une question oui mon fils oui mon fils yann regarde je sais pas est-ce que j&#x27;ouvre l&#x27;école jouve pas l&#x27;école il me dit ah bien sûr que vous l&#x27;école à les vallijee barea les bases du réseau grave c&#x27;est pas d&#x27;argent mois avec l argent je veux faire et même là il me donne une claque multi monfils c&#x27;est dur qui tourne la raison</p><p>c&#x27;est pas toi ah oui sur vous avez raison mais bon il faut payer les professeurs ont combiné peu comment je vais me donnant une claque un comme j&#x27;aime ses claques à lui il me dit je t&#x27;ai dit monfils paraît de t&#x27;inquiéter fait marcher times ou na chn keaton tu comprends c&#x27;est un chêne keaton large et là tout content je suis kitoko tél j&#x27;embrasse de cocktails jeux sortent en courant jusqu&#x27;à bac c&#x27;est ma femme dit qu&#x27;est ce qu&#x27;il ya j&#x27;ai dit j&#x27;ai vu la lumière j&#x27;ai vu</p><p>nos amis moon dit alors et ben j&#x27;ouvre l&#x27;école à bord et a donné de l&#x27;argent oui m&#x27;a donné plus que l&#x27;argent maintenez la haine il m&#x27;a donné la bras tu comprends ce qu&#x27;il m&#x27;a donné il m&#x27;a donné la lumière et l&#x27;ajout l&#x27;école ont commencé professeurs des élèves et là bon il faut commencer argent prend un peu d&#x27;argent gimont maintenant il faut se trouve que quand j&#x27;entends la voix je t&#x27;ai dit chm qui envoie l&#x27;argent et la rencontre monsieur alain et jugez vous savez monsieur à là</p><p>on a une école et voilà on aurait voulu à la propulser sauver ces enfants là c&#x27;est des enfants qui ont mal démarré dans la vie je vous leur donnez une chance de réussir alors là il me dit mais y&#x27;a pas de problème je fais tout donné 408 la 408 dollars wiley bono chevaux la brèche c&#x27;est impossible mois il aura walter bosch et bolade et puis bien sûr la la l ajout cours à marseille av rave et unira khl hm il envoyer l&#x27;argent je t&#x27;ai dit monfils</p><p>allez bonne chance elle est continuer avec cette école est là dix ans après je vois leur agir av il râle j&#x27;ai plus d&#x27;argent comment je vais tu recommences ach m qui entre l&#x27;argent allez mon fils et le petit claque basa</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="des-histoires-incroyables-155-rav-mimoun-et-les-cauchemars-d-une-jeune-2026-08-19.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/eOvxFZqUhGQ/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 155 - Rav Mimoun et les cauchemars d&#x27;une jeune adulte - Rav Itshak Attali" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-155-rav-mimoun-et-les-cauchemars-d-une-jeune-2026-08-19.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 155 - Rav Mimoun et les cauchemars d&#x27;une jeune adulte - Rav Itshak Attali</a><time class="ep-date" datetime="2026-08-19">19 août 2026 · 9 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/eOvxFZqUhGQ_DES_HISTOIRES_INCROYABLES_155_-_Rav_Mimoun_et_les_cauchemars_d_une_jeune_adulte.mp3" preload="none" data-ep-id="eOvxFZqUhGQ"></audio><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-155-rav-mimoun-et-les-cauchemars-d-une-jeune-2026-08-19.html" data-title="DES HISTOIRES INCROYABLES 155 - Rav Mimoun et les cauchemars d&#x27;une jeune adulte - Rav Itshak Attali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QhbJjlofJzs/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali</a><time class="ep-date" datetime="2026-08-10">10 août 2026 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QhbJjlofJzs_DES_HISTOIRES_INCROYABLES_154_-_Rav_Mimoun_a_sauvé_un_Notaire_non_juif_-_Rav_Its.mp3" preload="none" data-ep-id="QhbJjlofJzs"></audio><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html" data-title="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/9jsnD78VFhI/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali</a><time class="ep-date" datetime="2026-08-10">10 août 2026 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/9jsnD78VFhI_DES_HISTOIRES_INCROYABLES_154_-_Rav_Mimoun_a_sauvé_un_Notaire_non_juif_-_Rav_Its.mp3" preload="none" data-ep-id="9jsnD78VFhI"></audio><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html" data-title="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="des-histoires-incroyables-153-rav-mimoun-jusqu-au-mariage-2026-05-18.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/u2MiVne40-k/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 153 - Rav Mimoun : Jusqu’au mariage !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-153-rav-mimoun-jusqu-au-mariage-2026-05-18.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 153 - Rav Mimoun : Jusqu’au mariage !</a><time class="ep-date" datetime="2026-05-18">18 mai 2026 · 4 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/u2MiVne40-k_DES_HISTOIRES_INCROYABLES_153_-_Rav_Mimoun___Jusqu_au_mariage.mp3" preload="none" data-ep-id="u2MiVne40-k"></audio><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-153-rav-mimoun-jusqu-au-mariage-2026-05-18.html" data-title="DES HISTOIRES INCROYABLES 153 - Rav Mimoun : Jusqu’au mariage !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="des-histoires-incroyables-152-quand-rav-mimoun-etait-enfant-2026-05-14.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/RD4b8EA50LI/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-152-quand-rav-mimoun-etait-enfant-2026-05-14.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…</a><time class="ep-date" datetime="2026-05-14">14 mai 2026 · 4 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/RD4b8EA50LI_DES_HISTOIRES_INCROYABLES_152_-_Quand_Rav_Mimoun_était_enfant.mp3" preload="none" data-ep-id="RD4b8EA50LI"></audio><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-152-quand-rav-mimoun-etait-enfant-2026-05-14.html" data-title="DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="des-histoires-incroyables-155-rav-mimoun-et-les-cauchemars-d-une-jeune-2026-08-19.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/eOvxFZqUhGQ/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 155 - Rav Mimoun et les cauchemars d&#x27;une jeune adulte - Rav Itshak Attali" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-155-rav-mimoun-et-les-cauchemars-d-une-jeune-2026-08-19.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 155 - Rav Mimoun et les cauchemars d&#x27;une jeune adulte - Rav Itshak Attali</a><time class="ep-date" datetime="2026-08-19">19 août 2026 · 9 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="eOvxFZqUhGQ" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/eOvxFZqUhGQ_DES_HISTOIRES_INCROYABLES_155_-_Rav_Mimoun_et_les_cauchemars_d_une_jeune_adulte.mp3" data-title="DES HISTOIRES INCROYABLES 155 - Rav Mimoun et les cauchemars d&#x27;une jeune adulte - Rav Itshak Attali" data-thumb="https://i.ytimg.com/vi/eOvxFZqUhGQ/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-155-rav-mimoun-et-les-cauchemars-d-une-jeune-2026-08-19.html" data-title="DES HISTOIRES INCROYABLES 155 - Rav Mimoun et les cauchemars d&#x27;une jeune adulte - Rav Itshak Attali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QhbJjlofJzs/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali</a><time class="ep-date" datetime="2026-08-10">10 août 2026 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="QhbJjlofJzs" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QhbJjlofJzs_DES_HISTOIRES_INCROYABLES_154_-_Rav_Mimoun_a_sauvé_un_Notaire_non_juif_-_Rav_Its.mp3" data-title="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali" data-thumb="https://i.ytimg.com/vi/QhbJjlofJzs/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html" data-title="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/9jsnD78VFhI/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali</a><time class="ep-date" datetime="2026-08-10">10 août 2026 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="9jsnD78VFhI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/9jsnD78VFhI_DES_HISTOIRES_INCROYABLES_154_-_Rav_Mimoun_a_sauvé_un_Notaire_non_juif_-_Rav_Its.mp3" data-title="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali" data-thumb="https://i.ytimg.com/vi/9jsnD78VFhI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-154-rav-mimoun-a-sauve-un-notaire-non-juif-r-2026-08-10.html" data-title="DES HISTOIRES INCROYABLES 154 - Rav Mimoun a sauvé un Notaire non juif - Rav Itshak Attali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="des-histoires-incroyables-153-rav-mimoun-jusqu-au-mariage-2026-05-18.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/u2MiVne40-k/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 153 - Rav Mimoun : Jusqu’au mariage !" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-153-rav-mimoun-jusqu-au-mariage-2026-05-18.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 153 - Rav Mimoun : Jusqu’au mariage !</a><time class="ep-date" datetime="2026-05-18">18 mai 2026 · 4 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="u2MiVne40-k" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/u2MiVne40-k_DES_HISTOIRES_INCROYABLES_153_-_Rav_Mimoun___Jusqu_au_mariage.mp3" data-title="DES HISTOIRES INCROYABLES 153 - Rav Mimoun : Jusqu’au mariage !" data-thumb="https://i.ytimg.com/vi/u2MiVne40-k/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-153-rav-mimoun-jusqu-au-mariage-2026-05-18.html" data-title="DES HISTOIRES INCROYABLES 153 - Rav Mimoun : Jusqu’au mariage !"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="des-histoires-incroyables-152-quand-rav-mimoun-etait-enfant-2026-05-14.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/RD4b8EA50LI/maxresdefault.jpg" alt="DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="des-histoires-incroyables-152-quand-rav-mimoun-etait-enfant-2026-05-14.html" style="color:inherit;text-decoration:none;display:block">DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…</a><time class="ep-date" datetime="2026-05-14">14 mai 2026 · 4 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="RD4b8EA50LI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/RD4b8EA50LI_DES_HISTOIRES_INCROYABLES_152_-_Quand_Rav_Mimoun_était_enfant.mp3" data-title="DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…" data-thumb="https://i.ytimg.com/vi/RD4b8EA50LI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-mimoun/des-histoires-incroyables-152-quand-rav-mimoun-etait-enfant-2026-05-14.html" data-title="DES HISTOIRES INCROYABLES 152 - Quand Rav Mimoun était enfant…"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -345,17 +349,17 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -376,27 +380,43 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'e3hkWSHJQF8', title: "DES HISTOIRES INCROYABLES 32 - Rav Mimoun, pour l'ecole je n'ai pas d'argent ! - Rav Itshak Attali", channel: "Rav Mimoun", art: "https://i.ytimg.com/vi/e3hkWSHJQF8/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_e3hkWSHJQF8', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_e3hkWSHJQF8'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'e3hkWSHJQF8');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Mimoun",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -410,16 +430,6 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

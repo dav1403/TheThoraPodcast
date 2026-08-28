@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Chlomo Valensi - Ahavat HM"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Compter le temps qui nous sépare d'un évènement (bon ou mauvais d'ailleurs) est une coutume universelle pour l'humain qui est conscient de la dimension…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Vers l&#x27;infini et ... au-delà ! Mon compte MYSTIQUE pour accéder, enfin, à D.IEU - Rav Chlomo Valensi</h1>
     <p class="ep-meta"><a href="../rav-chlomo-valensi.html" style="color:#888;text-decoration:none">Rav Chlomo Valensi - Ahavat HM</a> · <time datetime="2022-05-12">12 mai 2022 · 5 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Kabbala &amp; Spiritualité</span> <span class="ep-tag">Emouna</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Bm9Ph_hHJtM_Vers_l_infini_et_____au-delà___Mon_compte_MYSTIQUE_pour_accéder__enfin__à_D_IEU.mp3" preload="none" data-ep-id="Bm9Ph_hHJtM" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/Bm9Ph_hHJtM_Vers_l_infini_et_____au-delà___Mon_compte_MYSTIQUE_pour_accéder__enfin__à_D_IEU.mp3" preload="metadata" data-ep-id="Bm9Ph_hHJtM" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -340,11 +344,11 @@ paracha emor
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>j&#x27;allais mal et rennes les amis c&#x27;est par la chasse est mort il par achat extraordinaire avec un message d&#x27;espérance pour nous les juifs on va nous expliquer aujourd&#x27;hui comment aboutir chose comment passer ce qu&#x27;on appelle le premier niveau au deuxième niveau a des ambitions en vue d&#x27;arriver à leur écoute secours il va beaucoup aider mes attaches l on attend vos commentaires il faut surtout s&#x27;abonner pour ne rien rater à écouter bien notre parent charland pas de cire intérimaire le conduit au vert c&#x27;est quoi le</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">995 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] j&#x27;allais mal et rennes les amis c&#x27;est par la chasse est mort il par achat extraordinaire avec un message d&#x27;espérance pour nous les juifs on va nous expliquer aujourd&#x27;hui comment aboutir chose comment passer ce qu&#x27;on appelle le premier niveau au deuxième niveau a des ambitions en vue d&#x27;arriver à leur écoute secours il va beaucoup aider mes attaches l on attend vos commentaires il faut surtout s&#x27;abonner pour ne rien rater à écouter bien notre parent charland pas de cire intérimaire le conduit au vert c&#x27;est quoi le</p><p>conduit au maire c&#x27;est le conte qui vient après la sortie d&#x27;égypte la sortie d&#x27;égypte c&#x27;est la première et à raboter quand un homme il sort de son exil l&#x27;egypte c&#x27;est l&#x27;étroitesse et l&#x27;exil du vif quand il est oppressé conti les esclaves de ses pulsions esclave de son entourage esclaves de lui-même parfois et surtout pas esclave des bonnes choses alors quand tu sors d&#x27;égypte quand tu es ma table et on va expliquer comment malgache m alors sache que il faut que tu arrives à ce qu&#x27;on appelle</p><p>matin tu auras odonates aura parce que la torah c&#x27;est le symbole de la liberté dix neuf sages nb laurine et la mission et ouattara ce qui s&#x27;y dit qui est libre c&#x27;est qui celui qui jouit de la ligue l&#x27;a fait celui qui est occupée par tout ce qui fait rentrer à lui à de dieu à l&#x27;intérieur de lui mais à savoir que avant d&#x27;arriver à l&#x27;aboutissement qui est la liberté qui est la liberté avec la torre avec dieu est une étape qui s&#x27;appelle siens à thomer</p><p>le conduire au maire pourquoi cette étape pourquoi on pourrait pas passer de l&#x27;étape le roi sortie arriver directement pour qu&#x27;on nous fait compter pourquoi on nous demande de côté les jours alors c&#x27;est extraordinaire mais j&#x27;aimerais voir continue histoire pour qu&#x27;on comprenne bien les choses jeanne a mis sa femme un des partis à l&#x27;étranger à quelques jours elle est partie la vague du jour à votre élu jour cm relaté va chez nous les juifs le chiffre 8 c au sud la nature la création ces cinq jours</p><p>elle est partie huit jours à l&#x27;étranger compte qu&#x27;il a senti pas qu&#x27;ils avaient les bras coupés jusqu&#x27;avant quelque part et il était déjà manchots qui vous allez à la maison le conteneur parti il est senti qu&#x27;on lui a arraché le coeur arraché le coeur à vos tags pourquoi à la base tout allait bien entre eux il s&#x27;attendait pas trop mal mais quand elle est partie hélas anciens amants terribles il s&#x27;est langui une façon pas possible de la femme avec qui il vivait depuis plus de douze</p><p>ans est là raconte juste avant son arrivée il est en train de commencer à compter les herbes et là il va faire sa femme il est dit ma chérie grâce à toi j&#x27;ai repris la mise a dû conduire au maire a dit qu&#x27;est ce que je raconte est encore temps pour toit sur la tête toi tu tues tubman fait que je parle j&#x27;ai encore une fois alors une dit pas du tout ma chérie j&#x27;ai compris en fait à quoi ça sert de compter qu&#x27;aucun ils conservèrent</p><p>qui se languit des choses nous les juifs la torah nous aimons de compter les joues à vendin et vos dons à toi avant d&#x27;arriver la liberté mais la vraie liberté pourquoi pas retenir des choses pour commencer à comprendre de quel cadeau il s&#x27;agit deuxième clé des amis la marque et d&#x27;en face aux coups ce soir tu aimes la reine côtés pour vous qu&#x27;est ce que ça veut dire comptez vous les arabes inattendu bruxelles et va nous expliquer la teneur de ce mot la reine ces trois</p><p>lettres trois lettres a voté qui vont tout changer qui vont faire pivoter de la vie dans le bon sens et qui vont empêcher ne te laisser séduire par le mensonge corretora te demande de compter pour toi ça veut dire arrête de te comparer aux autres si tu veux arriver un matin tu auras donne à toi je veux arriver à bout de nantes a ni peu importe le plan matériel et spirituel arrivé à augmenter de niveau qui a passé la seconde étape arrêt dans l&#x27;année ce qui</p><p>se passe chez les autres aller te comparer est à plus grand ennemi cas comparaison taille des fois se compare à quelqu&#x27;un de famille c&#x27;est le frère s&#x27;apaisent notre soeur qui l&#x27;a plus réussi finalement réussi ça peut être les voisins ça peut être un collègue peu importe mais comment lui il a fait pour arriver pourquoi moi je n&#x27;arrive pas pourquoi moi je fais des efforts et ça marche pas et lui des plus sur un bouton et ça sent quand on commence à se comprendre aux autres en</p><p>bretagne ça enlève la vie et ça enlève le désire on n&#x27;a plus envie de conter ils sont donnés sur soi et sur personne deuxièmement encore à secrets ne te compare jamais à toi même c&#x27;est vrai que des fois un juif il peut avoir des paroles d&#x27;ascension résumé où j&#x27;étais où je suis aujourd&#x27;hui et ça a voté quand ils commencent à réfléchir comme ça ils se tuent avec ses deux mains on peut pas faire une chose pareille nous les juifs on doit vivre avec ce qu&#x27;on appelle</p><p>l&#x27;instant présent ledit rabbinat thann le présent c&#x27;est la douche 1 c&#x27;est la sainteté le passé c&#x27;est l&#x27;impureté les furieux c&#x27;est l&#x27;inconnu donc cet euro garde plein au cas où tu aujourd&#x27;hui évolué selon ton niveau et commence à désirer le donne à toi comment ça dédié à aboutir au choix des ajouts sèche shabbat shalom et beaucoup de bonheur et plein de réussite de la chaîne n&#x27;oubliez pas de laïcs et est de ce fait les commentaires qu&#x27;on puisse évoluer avec vous et vous aider arrivé au pouvoir avec</p><p>3 à cuba où et</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="pour-commencer-a-etre-toi-meme-et-arreter-de-paraitre-le-secret-de-rab-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/JdxiUH6SVcE/maxresdefault.jpg" alt="Pour commencer à être toi-même et arrêter de paraître - Le secret de Rabbi Nahman - Rav C. Valensi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="pour-commencer-a-etre-toi-meme-et-arreter-de-paraitre-le-secret-de-rab-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Pour commencer à être toi-même et arrêter de paraître - Le secret de Rabbi Nahman - Rav C. Valensi</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 3 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JdxiUH6SVcE_Pour_commencer_à_être_toi-même_et_arrêter_de_paraître_-_Le_secret_de_Rabbi_Nahma.mp3" preload="none" data-ep-id="JdxiUH6SVcE"></audio><button class="share-btn" data-epfile="rav-chlomo-valensi/pour-commencer-a-etre-toi-meme-et-arreter-de-paraitre-le-secret-de-rab-2026-08-26.html" data-title="Pour commencer à être toi-même et arrêter de paraître - Le secret de Rabbi Nahman - Rav C. Valensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="tu-vis-dans-le-passe-voila-pourquoi-tu-n-avances-plus-rav-chlomo-valen-2026-08-23.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/2mXyuiuEDus/maxresdefault.jpg" alt="Tu vis dans le PASSE ❓👉 voilà pourquoi tu N’AVANCES PLUS ‼️- Rav Chlomo Valensi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tu-vis-dans-le-passe-voila-pourquoi-tu-n-avances-plus-rav-chlomo-valen-2026-08-23.html" style="color:inherit;text-decoration:none;display:block">Tu vis dans le PASSE ❓👉 voilà pourquoi tu N’AVANCES PLUS ‼️- Rav Chlomo Valensi</a><time class="ep-date" datetime="2026-08-23">23 août 2026 · 1 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/2mXyuiuEDus_Tu_vis_dans_le_PASSE____voilà_pourquoi_tu_N_AVANCES_PLUS___-_Rav_Chlomo_Valensi.mp3" preload="none" data-ep-id="2mXyuiuEDus"></audio><button class="share-btn" data-epfile="rav-chlomo-valensi/tu-vis-dans-le-passe-voila-pourquoi-tu-n-avances-plus-rav-chlomo-valen-2026-08-23.html" data-title="Tu vis dans le PASSE ❓👉 voilà pourquoi tu N’AVANCES PLUS ‼️- Rav Chlomo Valensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/jITH81A5ZJw/maxresdefault.jpg" alt="🚫 Le déclic qui débloque ton Mazal 🚫- Rav Chlomo Valensi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">🚫 Le déclic qui débloque ton Mazal 🚫- Rav Chlomo Valensi</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/jITH81A5ZJw_Le_déclic_qui_débloque_ton_Mazal__-_Rav_Chlomo_Valensi.mp3" preload="none" data-ep-id="jITH81A5ZJw"></audio><button class="share-btn" data-epfile="rav-chlomo-valensi/le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-21.html" data-title="🚫 Le déclic qui débloque ton Mazal 🚫- Rav Chlomo Valensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-20.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/eA3Xua1eqVQ/maxresdefault.jpg" alt="🚫Le déclic qui débloque ton Mazal - Rav Chlomo Valensi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-20.html" style="color:inherit;text-decoration:none;display:block">🚫Le déclic qui débloque ton Mazal - Rav Chlomo Valensi</a><time class="ep-date" datetime="2026-08-20">20 août 2026 · 2 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/eA3Xua1eqVQ_Le_déclic_qui_débloque_ton_Mazal_-_Rav_Chlomo_Valensi.mp3" preload="none" data-ep-id="eA3Xua1eqVQ"></audio><button class="share-btn" data-epfile="rav-chlomo-valensi/le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-20.html" data-title="🚫Le déclic qui débloque ton Mazal - Rav Chlomo Valensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="baal-chem-tov-le-secret-qui-stop-les-angoisses-et-qui-aide-a-ressentir-2026-08-16.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/RzAoA81CYqk/maxresdefault.jpg" alt="BAAL CHEM TOV 🚫 Le Secret qui stop les angoisses et qui aide à ressentir la lumière d’Hashem ‼️" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="baal-chem-tov-le-secret-qui-stop-les-angoisses-et-qui-aide-a-ressentir-2026-08-16.html" style="color:inherit;text-decoration:none;display:block">BAAL CHEM TOV 🚫 Le Secret qui stop les angoisses et qui aide à ressentir la lumière d’Hashem ‼️</a><time class="ep-date" datetime="2026-08-16">16 août 2026 · 1 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/RzAoA81CYqk_BAAL_CHEM_TOV___Le_Secret_qui_stop_les_angoisses_et_qui_aide_à_ressentir_la_lumi.mp3" preload="none" data-ep-id="RzAoA81CYqk"></audio><button class="share-btn" data-epfile="rav-chlomo-valensi/baal-chem-tov-le-secret-qui-stop-les-angoisses-et-qui-aide-a-ressentir-2026-08-16.html" data-title="BAAL CHEM TOV 🚫 Le Secret qui stop les angoisses et qui aide à ressentir la lumière d’Hashem ‼️"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="pour-commencer-a-etre-toi-meme-et-arreter-de-paraitre-le-secret-de-rab-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/JdxiUH6SVcE/maxresdefault.jpg" alt="Pour commencer à être toi-même et arrêter de paraître - Le secret de Rabbi Nahman - Rav C. Valensi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="pour-commencer-a-etre-toi-meme-et-arreter-de-paraitre-le-secret-de-rab-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Pour commencer à être toi-même et arrêter de paraître - Le secret de Rabbi Nahman - Rav C. Valensi</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 3 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="JdxiUH6SVcE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/JdxiUH6SVcE_Pour_commencer_à_être_toi-même_et_arrêter_de_paraître_-_Le_secret_de_Rabbi_Nahma.mp3" data-title="Pour commencer à être toi-même et arrêter de paraître - Le secret de Rabbi Nahman - Rav C. Valensi" data-thumb="https://i.ytimg.com/vi/JdxiUH6SVcE/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-chlomo-valensi/pour-commencer-a-etre-toi-meme-et-arreter-de-paraitre-le-secret-de-rab-2026-08-26.html" data-title="Pour commencer à être toi-même et arrêter de paraître - Le secret de Rabbi Nahman - Rav C. Valensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="tu-vis-dans-le-passe-voila-pourquoi-tu-n-avances-plus-rav-chlomo-valen-2026-08-23.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/2mXyuiuEDus/maxresdefault.jpg" alt="Tu vis dans le PASSE ❓👉 voilà pourquoi tu N’AVANCES PLUS ‼️- Rav Chlomo Valensi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="tu-vis-dans-le-passe-voila-pourquoi-tu-n-avances-plus-rav-chlomo-valen-2026-08-23.html" style="color:inherit;text-decoration:none;display:block">Tu vis dans le PASSE ❓👉 voilà pourquoi tu N’AVANCES PLUS ‼️- Rav Chlomo Valensi</a><time class="ep-date" datetime="2026-08-23">23 août 2026 · 1 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="2mXyuiuEDus" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/2mXyuiuEDus_Tu_vis_dans_le_PASSE____voilà_pourquoi_tu_N_AVANCES_PLUS___-_Rav_Chlomo_Valensi.mp3" data-title="Tu vis dans le PASSE ❓👉 voilà pourquoi tu N’AVANCES PLUS ‼️- Rav Chlomo Valensi" data-thumb="https://i.ytimg.com/vi/2mXyuiuEDus/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-chlomo-valensi/tu-vis-dans-le-passe-voila-pourquoi-tu-n-avances-plus-rav-chlomo-valen-2026-08-23.html" data-title="Tu vis dans le PASSE ❓👉 voilà pourquoi tu N’AVANCES PLUS ‼️- Rav Chlomo Valensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-21.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/jITH81A5ZJw/maxresdefault.jpg" alt="🚫 Le déclic qui débloque ton Mazal 🚫- Rav Chlomo Valensi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-21.html" style="color:inherit;text-decoration:none;display:block">🚫 Le déclic qui débloque ton Mazal 🚫- Rav Chlomo Valensi</a><time class="ep-date" datetime="2026-08-21">21 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="jITH81A5ZJw" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/jITH81A5ZJw_Le_déclic_qui_débloque_ton_Mazal__-_Rav_Chlomo_Valensi.mp3" data-title="🚫 Le déclic qui débloque ton Mazal 🚫- Rav Chlomo Valensi" data-thumb="https://i.ytimg.com/vi/jITH81A5ZJw/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-chlomo-valensi/le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-21.html" data-title="🚫 Le déclic qui débloque ton Mazal 🚫- Rav Chlomo Valensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-20.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/eA3Xua1eqVQ/maxresdefault.jpg" alt="🚫Le déclic qui débloque ton Mazal - Rav Chlomo Valensi" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-20.html" style="color:inherit;text-decoration:none;display:block">🚫Le déclic qui débloque ton Mazal - Rav Chlomo Valensi</a><time class="ep-date" datetime="2026-08-20">20 août 2026 · 2 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="eA3Xua1eqVQ" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/eA3Xua1eqVQ_Le_déclic_qui_débloque_ton_Mazal_-_Rav_Chlomo_Valensi.mp3" data-title="🚫Le déclic qui débloque ton Mazal - Rav Chlomo Valensi" data-thumb="https://i.ytimg.com/vi/eA3Xua1eqVQ/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-chlomo-valensi/le-declic-qui-debloque-ton-mazal-rav-chlomo-valensi-2026-08-20.html" data-title="🚫Le déclic qui débloque ton Mazal - Rav Chlomo Valensi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="baal-chem-tov-le-secret-qui-stop-les-angoisses-et-qui-aide-a-ressentir-2026-08-16.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/RzAoA81CYqk/maxresdefault.jpg" alt="BAAL CHEM TOV 🚫 Le Secret qui stop les angoisses et qui aide à ressentir la lumière d’Hashem ‼️" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="baal-chem-tov-le-secret-qui-stop-les-angoisses-et-qui-aide-a-ressentir-2026-08-16.html" style="color:inherit;text-decoration:none;display:block">BAAL CHEM TOV 🚫 Le Secret qui stop les angoisses et qui aide à ressentir la lumière d’Hashem ‼️</a><time class="ep-date" datetime="2026-08-16">16 août 2026 · 1 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="RzAoA81CYqk" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/RzAoA81CYqk_BAAL_CHEM_TOV___Le_Secret_qui_stop_les_angoisses_et_qui_aide_à_ressentir_la_lumi.mp3" data-title="BAAL CHEM TOV 🚫 Le Secret qui stop les angoisses et qui aide à ressentir la lumière d’Hashem ‼️" data-thumb="https://i.ytimg.com/vi/RzAoA81CYqk/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-chlomo-valensi/baal-chem-tov-le-secret-qui-stop-les-angoisses-et-qui-aide-a-ressentir-2026-08-16.html" data-title="BAAL CHEM TOV 🚫 Le Secret qui stop les angoisses et qui aide à ressentir la lumière d’Hashem ‼️"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -353,17 +357,17 @@ paracha emor
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -384,27 +388,43 @@ paracha emor
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: 'Bm9Ph_hHJtM', title: "Vers l'infini et ... au-delà ! Mon compte MYSTIQUE pour accéder, enfin, à D.IEU - Rav Chlomo Valensi", channel: "Rav Chlomo Valensi - Ahavat HM", art: "https://i.ytimg.com/vi/Bm9Ph_hHJtM/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_Bm9Ph_hHJtM', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_Bm9Ph_hHJtM'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, 'Bm9Ph_hHJtM');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Chlomo Valensi - Ahavat HM",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -418,16 +438,6 @@ paracha emor
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Menahem Sakhoun"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Tous les jours de 8h40 à 9h20 en direct de Jerusalem - Likouté Moharan par Rav Menahem Sakhoun Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Likouté Moharan - Torah 80 Téfilots de Rabbi Nathan</h1>
     <p class="ep-meta"><a href="../rav-menahem-sakhoun.html" style="color:#888;text-decoration:none">Rav Menahem Sakhoun</a> · <time datetime="2023-04-09">9 avril 2023 · 16 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Likoutei Moharan</span> <span class="ep-tag">Tefila</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/6nXz3_vfJss_Likouté_Moharan_-_Torah_80_Téfilots_de_Rabbi_Nathan.mp3" preload="none" data-ep-id="6nXz3_vfJss" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/6nXz3_vfJss_Likouté_Moharan_-_Torah_80_Téfilots_de_Rabbi_Nathan.mp3" preload="metadata" data-ep-id="6nXz3_vfJss" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -327,11 +331,11 @@ Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de Jerusalem par Rav Menah
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>toi tu sais faire la paix dans tes mondes supérieur ça veut dire tu sais unir les anges opposés et les forces opposées et les spires et toi tu es capable de faire réunir deux opposés ensemble echoumaim comme par exemple l&#x27;ange qui est responsable du feu et l&#x27;ange responsable de l&#x27;eau et tu sais faire que tous les deux ils existent et vivent ensemble au béni flotteurs tu fais la paix entre eux Shalom Gadol Aline une grande grande paix et alcool à sur le monde entier bon fensi</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">1464 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>toi tu sais faire la paix dans tes mondes supérieur ça veut dire tu sais unir les anges opposés et les forces opposées et les spires et toi tu es capable de faire réunir deux opposés ensemble echoumaim comme par exemple l&#x27;ange qui est responsable du feu et l&#x27;ange responsable de l&#x27;eau et tu sais faire que tous les deux ils existent et vivent ensemble au béni flotteurs tu fais la paix entre eux Shalom Gadol Aline une grande grande paix et alcool à sur le monde entier bon fensi</p><p>travaux quand la farine de telle manière que tous les contraires s&#x27;unissent ensemble y&#x27;a rien de béchalandée un grand amour d&#x27;une grande connaissance et un seul et même coeur ligne qui arrive avec un cœur entier vers nous toutes les bénédictions qu&#x27;on lâche pas autre et tous les influx de bien et qu&#x27;on aille échouent et toutes les délivres c&#x27;est compris pour le Chalon personnel c&#x27;est le cadeau là de d&#x27;être tout le temps en train de m&#x27;offrir de m&#x27;offrir pour le qui douche H&amp;amp;M pour sonifier ton nom et</p><p>mettre oublie pas de schéma ou de fila surtout quand je dis le créateur de schéma dans le créativement quand on dit il fait mince compense BMX à se donner pour la chaîne mais aussi dans notre fila chez ce qui est ami une école comme un apprentissage petit à petit mais est-ce que les cabels qui touchait et que j&#x27;ai la chance d&#x27;accepter l&#x27;intérieur de mon esprit avec une grande volonté véritable de me donner et d&#x27;être prêt à mourir pour lui sa chaîne pour sanctifier le nom de</p><p>la chaîne little de m&#x27;enflammer avec les flammes d&#x27;amour ou Lady et d&#x27;être plus fort que l&#x27;instinct de de gros inflation et tout ça il me sort comme bouffi et de donner tout mon corps mon âme et tous mes moyens mais je vais les cadèche pour consacrer ton père de la santé de la pureté BMS colmarion tout mon cerveau toutes mes pensées et toutes l&#x27;intérieur de moi ma connaissance de Darty les Torx fila comme ça je peux les mettre à l&#x27;intérieur des mots de la prière ou</p><p>les cacher à Marc Java elle a dit bourg et attachée la pensée à la parole mais que cher ami avec un lien très puissant Razak vélo et que même pas une parole de la prière je sors sans intention bon Finching telle manière que toi j&#x27;aime tu sois heureux tu es du bonheur avec nos prières en permanence oui et les femmes de nos prières on fait une couronne pour ta tête mais tâche bien les mots crimes de nous la romain Laguna du DAX et Toshi et nous</p><p>relevé nous de toutes sortes de délivrance et tiftar est Libé nombre est un mouton et ouvre notre cœur dans ta Torah partout là on étudie et tailler les mêmes heures et comme ça tu éclaire nos yeux avec les lumières de la thorax on voit le monde avec les beaux yeux de Torah mais dans une amitié à dire des des tantes qui viennent de nous de kiloshi que j&#x27;achète il nous donne des nouvelles manières de savoir dire les choses anciennes et vetta et donne-nous aussi et comme</p><p>un goûter comme des émanations de la Torah que tu vas plus tard dévoiler alliés ma chère et moi chez katum la joie des sources de la délivrance mais quel moment ou une panada secret vous allez recevoir une nouvelle thoracie une Torah qui existe mais on ne voit pas celui-là dévoiler le nom de cet endroit là que les sources de la délivrance maître du monde tout est plein de bonté envoie-moi le grand délivrance à chaque instant et chaque moment de cet endroit là bas qui atteint la</p><p>noche parce que toi tu nous as dévoilé que tu as des sources de délivrance qui ne s&#x27;interroge jamais jamais jamais source d&#x27;eau vive qui ne s&#x27;interromps jamais osez aide-moi délivre-moi de délivrance parfaite et véritables extraordinaire donne-nous de là-bas de parler de sa vie qui sont eux les sources de cette vie là ça roule ainsi à l&#x27;épuiser là-bas les os de la Torah de la joie ni mayonnais un choix [Musique] de vaincre et d&#x27;aider et de protéger et de sauver tous ceux qui espèrent en eux la</p><p>miséricorde pour les sauver de toutes sortes de guerre ou mis tartare aux animaux nathalidie aide-moi et donne-moi par leur mérite mais je puisse me renouveler à partir de maintenant et à partir de maintenant de cette seconde amener vers moi de réintelligence et de la vraie délivrance la zone daciara c&#x27;est-à-dire être capable d&#x27;abandonner tous les chemins pourris ou marchait vos tailles à mes Gounod ou les pensées moches vélo échouent les ivalty et comme ça je retourne pas à ma bêtise raquette comme ça tout ce que j&#x27;ai</p><p>jusqu&#x27;à chez lui il m&#x27;a donné comme ranconnaissance que je vais arriver à le mettre dans ta race ou les cacher la marche à bati elle a tort à votre fila tamide que j&#x27;arrive à attacher mes pensées à la Torah et la fille là en permanence BK de me sortir et de me sauver des eaux de des eaux méchantes ni mettre sous le Thiam ça veut dire le tout les tempêtes intérieures ni à 20 mètres sous la des profondeurs et des abîmes vn Mahamadou recherche tenir et</p><p>qui sont le taureau va beaucoup en des désolations et de la noirceur et des abîmes ushiéniques sauvement en permanence de ces sources là de délivrance qui à cause de mon éloignement que j&#x27;ai fait de toi belligio sans aucune mesure veiller de ça et que tu sais bien mais il vient et il domine il arrête pas de faire des trucs et des empêchements véhicouville et des soucis oublie le bowling mais des perturbations avec ses balais et il me tord mon cœur il me fait penser tendu admisphère</p><p>c&#x27;est un innommable tellement c&#x27;est grand ni de Salé donc on vis-à-vis de cette difficulté là j&#x27;ai besoin de plein plein de délivrance à chaque instant j&#x27;ai t-il faire un nouvel ami donne-nous myanai les choix donne-nous et les sources de délivrance j&#x27;ai dit à Yeshua je vais vous purifier encore une petite pilote et rigolo le maître du monde donc il fait pousser comme quelque chose qui pousse de la terre les délivrances rempli répond à toutes nos requêtes les Thauvin pour le bien vers la Rami hushini de</p><p>tout ce que je dois être sauvé aussi bien méga cheveux même chose du corps mais on rajoute que celle de l&#x27;arbre de manière que j&#x27;arrive à revenir vers toi ou met j&#x27;arrive à me rapprocher de toi vraiment les couilles en Banon comme ça le patio qui va être appliqué mais rare rapidement j&#x27;ai confiance je suis sûr de toi vélo et Sahara et j&#x27;ai pas besoin d&#x27;avoir peur qui aussi parce que ma puissance mon audace et ma chanson d&#x27;Achem j&#x27;aime de divorce et vous allez puiser de</p><p>l&#x27;eau dans la joie avec une joie mi pareil le choix des sources de délivrance à la merveille sur ton peuple le roi il va nous répondre mais on l&#x27;appelle beethovenera et qui soit bon à des yeux et malgré nous de nous bénir et boulevard et de bénir une connerie bachelon et toi tu vas appliquer le verset qui nous dit H&amp;amp;M il a donné saazloud sa puissance sa force de Mouchard à son peuple et j&#x27;aime y béni son peuple et comme il veut que la bénédiction est</p><p>dure très très très longtemps ça va être jamais comment il nous a béni avec le Shalom les filles que ça soit une volonté devant toi les paroles de ma bouche mais Guillaume Libye pensait de mon cœur les familles radonight souris goali toi tu m&#x27;en Sauveur toi tu es mon celui qui me délivre on s&#x27;échalant biberonale celui qui fait la paix dans les mondes supérieur avec les anges dorés de feu où il y a ces chaleurs c&#x27;est lui qui va faire le Chalon pour nous balcon Israël</p><p>vie et moi-même et c&#x27;est pour tout Israël VMO amen voilà pour les fila de la Torah payer de la Torah 80 des attachés et on arrive à les appliquer vraiment voilà ça c&#x27;est la première partie ça c&#x27;était la Torah la Torah le nom regarde ici la doré à l&#x27;Est on va reprendre maintenant encore une nouvelle dorade un petit peu Dora la mouette ah non on a une petite partie oui on a une petite partie de la Tour Eiffel qu&#x27;on a pas lu qui s&#x27;appelle spécial c&#x27;est</p><p>une phila spéciale c&#x27;est un morceau que la binata il a trouvé qui est un morceau d&#x27;une écoutez-moi RAM mais qu&#x27;il a eu après</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="daf-hayomi-massehet-houlin-page-121-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QqZfPudmMfM/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 121" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-121-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 121</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 54 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QqZfPudmMfM_Daf_HaYomi_massehet_houlin_page_121.mp3" preload="none" data-ep-id="QqZfPudmMfM"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-121-2026-08-28.html" data-title="Daf HaYomi massehet houlin page 121"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="likoute-moharan-torah-19-5-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/-P1scnp8Loo/maxresdefault.jpg" alt="Likouté Moharan Torah 19,5" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="likoute-moharan-torah-19-5-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Likouté Moharan Torah 19,5</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 11 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/-P1scnp8Loo_Likouté_Moharan_Torah_19_5.mp3" preload="none" data-ep-id="-P1scnp8Loo"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/likoute-moharan-torah-19-5-2026-08-28.html" data-title="Likouté Moharan Torah 19,5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="daf-hayomi-massehet-houlin-page-120-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/d_puYA4ucSE/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 120" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-120-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 120</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 52 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/d_puYA4ucSE_Daf_HaYomi_massehet_houlin_page_120.mp3" preload="none" data-ep-id="d_puYA4ucSE"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-120-2026-08-27.html" data-title="Daf HaYomi massehet houlin page 120"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="likoute-moharan-torah-19-5-suite-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/DpANG742hjE/maxresdefault_live.jpg" alt="Likouté Moharan Torah 19,5 suite" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="likoute-moharan-torah-19-5-suite-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Likouté Moharan Torah 19,5 suite</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 34 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/DpANG742hjE_Likouté_Moharan_Torah_19_5_suite.mp3" preload="none" data-ep-id="DpANG742hjE"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/likoute-moharan-torah-19-5-suite-2026-08-27.html" data-title="Likouté Moharan Torah 19,5 suite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="daf-hayomi-massehet-houlin-page-119-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/r0bJkWLekg4/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 119" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-119-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 119</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 41 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/r0bJkWLekg4_Daf_HaYomi_massehet_houlin_page_119.mp3" preload="none" data-ep-id="r0bJkWLekg4"></audio><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-119-2026-08-26.html" data-title="Daf HaYomi massehet houlin page 119"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="daf-hayomi-massehet-houlin-page-121-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/QqZfPudmMfM/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 121" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-121-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 121</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 54 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="QqZfPudmMfM" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/QqZfPudmMfM_Daf_HaYomi_massehet_houlin_page_121.mp3" data-title="Daf HaYomi massehet houlin page 121" data-thumb="https://i.ytimg.com/vi/QqZfPudmMfM/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-121-2026-08-28.html" data-title="Daf HaYomi massehet houlin page 121"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="likoute-moharan-torah-19-5-2026-08-28.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/-P1scnp8Loo/maxresdefault.jpg" alt="Likouté Moharan Torah 19,5" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="likoute-moharan-torah-19-5-2026-08-28.html" style="color:inherit;text-decoration:none;display:block">Likouté Moharan Torah 19,5</a><time class="ep-date" datetime="2026-08-28">28 août 2026 · 11 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="-P1scnp8Loo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/-P1scnp8Loo_Likouté_Moharan_Torah_19_5.mp3" data-title="Likouté Moharan Torah 19,5" data-thumb="https://i.ytimg.com/vi/-P1scnp8Loo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/likoute-moharan-torah-19-5-2026-08-28.html" data-title="Likouté Moharan Torah 19,5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="daf-hayomi-massehet-houlin-page-120-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/d_puYA4ucSE/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 120" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-120-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 120</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 52 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="d_puYA4ucSE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/d_puYA4ucSE_Daf_HaYomi_massehet_houlin_page_120.mp3" data-title="Daf HaYomi massehet houlin page 120" data-thumb="https://i.ytimg.com/vi/d_puYA4ucSE/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-120-2026-08-27.html" data-title="Daf HaYomi massehet houlin page 120"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="likoute-moharan-torah-19-5-suite-2026-08-27.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/DpANG742hjE/maxresdefault_live.jpg" alt="Likouté Moharan Torah 19,5 suite" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="likoute-moharan-torah-19-5-suite-2026-08-27.html" style="color:inherit;text-decoration:none;display:block">Likouté Moharan Torah 19,5 suite</a><time class="ep-date" datetime="2026-08-27">27 août 2026 · 34 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="DpANG742hjE" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/DpANG742hjE_Likouté_Moharan_Torah_19_5_suite.mp3" data-title="Likouté Moharan Torah 19,5 suite" data-thumb="https://i.ytimg.com/vi/DpANG742hjE/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/likoute-moharan-torah-19-5-suite-2026-08-27.html" data-title="Likouté Moharan Torah 19,5 suite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="daf-hayomi-massehet-houlin-page-119-2026-08-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/r0bJkWLekg4/maxresdefault_live.jpg" alt="Daf HaYomi massehet houlin page 119" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="daf-hayomi-massehet-houlin-page-119-2026-08-26.html" style="color:inherit;text-decoration:none;display:block">Daf HaYomi massehet houlin page 119</a><time class="ep-date" datetime="2026-08-26">26 août 2026 · 41 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="r0bJkWLekg4" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/r0bJkWLekg4_Daf_HaYomi_massehet_houlin_page_119.mp3" data-title="Daf HaYomi massehet houlin page 119" data-thumb="https://i.ytimg.com/vi/r0bJkWLekg4/maxresdefault_live.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-menahem-sakhoun/daf-hayomi-massehet-houlin-page-119-2026-08-26.html" data-title="Daf HaYomi massehet houlin page 119"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -340,17 +344,17 @@ Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de Jerusalem par Rav Menah
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -371,27 +375,43 @@ Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de Jerusalem par Rav Menah
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: '6nXz3_vfJss', title: "Likouté Moharan - Torah 80 Téfilots de Rabbi Nathan", channel: "Rav Menahem Sakhoun", art: "https://i.ytimg.com/vi/6nXz3_vfJss/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_6nXz3_vfJss', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_6nXz3_vfJss'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '6nXz3_vfJss');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Menahem Sakhoun",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -405,16 +425,6 @@ Tous les jours de 9h30 à 10h35, Daf Hayomi en direct de Jerusalem par Rav Menah
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');

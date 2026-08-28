@@ -41,6 +41,12 @@
     "@type": "Person",
     "name": "Rav Brand"
   },
+  "publisher": {
+    "@type": "Organization",
+    "@id": "https://thetorahpodcast.net/#organization",
+    "name": "The Torah Podcast",
+    "url": "https://thetorahpodcast.net/"
+  },
   "description": "Retrouvez nous sur notre site www.israeltorah.com et pour le direct live sur www.israeltorah.tv Merci de vous abonner à nos vidéos sur YouTube et de…",
   "associatedMedia": {
     "@type": "MediaObject",
@@ -81,6 +87,10 @@
   </script>
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev" crossorigin>
+  <!-- <audio> requests are not CORS, so they use a different connection pool than
+       the crossorigin preconnect above. This second one is the one that actually
+       saves the R2 TLS handshake before the first play. -->
+  <link rel="preconnect" href="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z2QEN865Y"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-7Z2QEN865Y');</script>
@@ -188,19 +198,7 @@
     .play-btn:hover { background:#2d2d50; }
     .play-btn.playing { background:#e87722; }
     .play-btn svg { width:10px; height:10px; flex-shrink:0; }
-    #player { position:fixed; bottom:0; left:0; right:0; background:#1a1a2e; color:#fff; display:flex; align-items:center; gap:12px; padding:10px 16px; box-shadow:0 -2px 16px rgba(0,0,0,.25); z-index:200; transform:translateY(0); transition:transform .25s ease; }
-    #player.hidden { transform:translateY(100%); }
-    #player-art { width:44px; height:44px; border-radius:6px; object-fit:cover; background:#333; flex-shrink:0; }
-    #player-info { min-width:0; flex:1; }
-    #player-title { font-size:.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #player-channel { font-size:.68rem; color:#99a; }
-    #player-audio { flex:2; min-width:120px; height:32px; accent-color:#e87722; }
-    #speed-cycle-btn { background:none; border:1px solid rgba(255,255,255,.2); color:rgba(255,255,255,.5); border-radius:4px; padding:3px 9px; font-size:.68rem; cursor:pointer; font-family:inherit; white-space:nowrap; flex-shrink:0; transition:background .12s,color .12s; }
-    #speed-cycle-btn:hover { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.4); }
-    #speed-cycle-btn.active { color:#e87722; border-color:#e87722; }
-    #player-close { background:none; border:none; color:#778; font-size:1.1rem; cursor:pointer; padding:4px 6px; flex-shrink:0; line-height:1; }
-    #player-close:hover { color:#fff; }
-    @media (max-width:500px) { #player-art { display:none; } }
+    /* The bottom player (markup + CSS + controls) lives in js/utils.js. */
     .btn-embed { background:#f5f5f0; color:#555; border:1px solid #ddd; }
     .btn-embed:hover { background:#eee; border-color:#bbb; }
     .embed-modal { display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:16px; }
@@ -231,6 +229,12 @@
   .breadcrumb a { color:#888; text-decoration:none; }
   .breadcrumb a:hover { text-decoration:underline; }
   .related-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }
+  .ep-play-main { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ep-play-main:hover { background:#f2872f; }
+  .ep-play-main:focus-visible { outline:2px solid #1a1a2e; outline-offset:2px; }
+  .ep-play-main.is-playing { background:#1a1a2e; }
   </style>
 </head>
 <body>
@@ -309,7 +313,7 @@
     <h1>Sefer Vayikra PARACHAT VAYIKRA (24) SAISON 4 - avec le duo Rav Brand et Fabrice</h1>
     <p class="ep-meta"><a href="../rav-brand.html" style="color:#888;text-decoration:none">Rav Brand</a> · <time datetime="2025-04-03">3 avril 2025 · 6 min</time></p>
     <div style="margin-bottom:8px"><span class="ep-tag">Paracha</span> <span class="ep-tag">Etude de Torah</span></div>
-    <audio id="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7JEWoqOpmA4_Sefer_Vayikra_PARACHAT_VAYIKRA__24__SAISON_4_-_avec_le_duo_Rav_Brand_et_Fabrice.mp3" preload="none" data-ep-id="7JEWoqOpmA4" style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>
+    <audio id="ep-audio" src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/7JEWoqOpmA4_Sefer_Vayikra_PARACHAT_VAYIKRA__24__SAISON_4_-_avec_le_duo_Rav_Brand_et_Fabrice.mp3" preload="metadata" data-ep-id="7JEWoqOpmA4" style="display:none"></audio><button type="button" id="ep-play-main" class="ep-play-main"><svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true"><polygon points="2,1 9,5 2,9"/></svg><span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>
     <div class="speed-bar">
       <span>Vitesse :</span>
       <button class="speed-btn active" data-speed="1">1×</button>
@@ -330,11 +334,11 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     <section class="ep-extract"><h2 data-i18n="extract_title">Extrait du cours</h2><p>B chavou à chavou à comment ça va il est là il est revenu vous l&#x27;attendiez he et ben il est là comment ça va alors aujourdhui on démre un nouveau livre de la tor exactement et comment s&#x27;appelle-til ce nouveau livre va va qui signifie il il a téléphoné avec les forfait bien sr l&#x27;allusion est là on a compris merci app m en WhatsApp en vidéo c&#x27;est pas la question la question entendre on écoute alors alors de quoi il parle le livre de nous a</p><p class="ep-extract-more"><a href="#transcript" data-i18n="extract_more">Lire la transcription complète ↓</a></p></section>
     <details class="transcript" id="transcript"><summary><span data-i18n="transcript_label">Transcription</span><span class="transcript-count">897 <span data-i18n="transcript_words">mots</span></span><button type="button" class="transcript-copy" id="transcript-copy" data-i18n="transcript_copy">Copier</button></summary><p class="transcript-note" data-i18n="transcript_auto">Transcription automatique — peut contenir des erreurs.</p><div class="transcript-body"><p>[Musique] [Applaudissements] B chavou à chavou à comment ça va il est là il est revenu vous l&#x27;attendiez he et ben il est là comment ça va alors aujourdhui on démre un nouveau livre de la tor exactement et comment s&#x27;appelle-til ce nouveau livre va va qui signifie il il a téléphoné avec les forfait bien sr l&#x27;allusion est là on a compris merci app m en WhatsApp en vidéo c&#x27;est pas la question la question entendre on écoute alors alors de quoi il parle le livre de nous a</p><p>parlé de l&#x27;histoire de la création du monde et de nos ancêtres Abraham Isac et yaakob jusqu&#x27;à que les Juifs sont descendus en Égypte il a posé le décor les livre de chot nous parle des Juifs en Égypte et de la délivrance la sortie d&#x27;Égypte on a reçu la Torah on a construit le Michkan et on rentre en Israël pas encore pas encore on attend Bamidbar va nous parler du voyage ok vaikra ne parle pas de d&#x27;événements chronologique oui c&#x27;est le livre de la sainteté le livre</p><p>de la Koucha le livre de la Torah quoi des LO c&#x27;est le centre on a CIN livres il est au milieu milieu c&#x27;est le centre très bien on a beaucoup de facettes à laakoucha on a le Corban les sacrifices qui sont Kad m d&#x27;accord on a la sainteté a de ce qu&#x27;on mange on mange les lois relatif à la cachereroute à la cacheroute on a la cacheroute du la sainteté du corps ouais t Tahara purifié impur pur le corps après on a les dates on parle</p><p>de Yom kipou fêtes après on a la sainteté du mariage les femmes permises les femmes interdites kedosim est mort h après on a des moments Kadoch à part les fêtes on a un autre moment shmita Yovel tous les 7 ans la terre se repose la terre et tout ça c&#x27;est dans vara tout çara et à la fin l&#x27;endroit on commence par le michkanan c&#x27;est là où Dieu réside ou et on termine par l&#x27;endroit du peuple er Israël bravo l&#x27;endroit cadoche l&#x27;alia l&#x27;alia on commence par le</p><p>Michkan et on finit par chacun à chaque moment à chaque endroit à son degré dans chaque chose qu&#x27;il fait il y a deux possibilités je fais bien je fais mal je suis pur je suis impur je suis proche je suis loin c&#x27;est proche de qui V je l&#x27;avais celle C tu l&#x27;avais he ouais proche d&#x27;AK au loin et là on arrive au sacrifice la parach parle des sacrifices tous les jours au bamdach un sacrifice c&#x27;est qui c&#x27;est le sacrifice du peuple il y a les cohanimes</p><p>qui nous représente qu&#x27;s amèent le sacrifice à kadash tous les jours tous les fêtes ça c&#x27;est public mais chacunom personnellement s&#x27;il va amener une offrande àadash il vientd il amène son Corban et qu&#x27;est-ce qui se passe quand une faute et ben il y a un Corban pour expier la faute expier expier expier expier et après l&#x27;expiation hm hm on est pardonné et la grâce qu&#x27; on dit le lien ou il est grati comment tu euh gratos non gratitude gracier gratitude grci ah non gracier c&#x27;est quand</p><p>on est pardonné voilà ah ok oui mais pardonné c&#x27;està dire je te frappe pas mais il y a une il y a une deuxième étape on redevient proche d&#x27;accord on se rapproche on se re rapproche voilà exactement d&#x27;accord le Corban c&#x27;est pour se rapprocher et se rapprocher se faire pardonner et se rapprocher alors quand tout va bien c&#x27;est un Corban normal Proxim traditionnel bonjour Corban c&#x27;est quoi le Corban le plus connu que tu connais ha ola celui-là complètement brûlé sur le misberg oh là c&#x27;est pour</p><p>ça qu&#x27;on disait ha oh là là il a brûlé celui-là etou après il y a le Corban khatat quand hom il a fauté la faute après on a le Coran shlamim je connais pas celui-là tu le connais pas c&#x27;est un cadeau où tout le monde il y a une partie sur le feu au missberf une partie pour le Cohen et une partie pour le Juif ah genre barbecue général oui mais général il est sympa schlamim schlamim donc genre tuappelles des copains tu dis venez on va</p><p>faire un schlam à mdage c&#x27;est dire on va manger on fait barbecue ex exct sympa alors au lieu de faire le barbecue à la mer ou aux îles de je sais pas quoi on vient proche d&#x27; kadash BO à yeroualaim là on voit les avec et même temps on k copainp renez le et le le plus connu le PE estigéne Pascal ça existene Pascal ex Il sppelle PASC non qu quand tu l&#x27;appelles maintenant si tous les agneaux il s&#x27;appellent Pascal on fait plus la différence non</p><p>quand on les appelle en tout cas ok le l&#x27;idée elle est que même quand tu manges ton barbecue tu le fais à proximité du bik à proximité de la SH de la shrina h comme ça ça se fait dans une ambiance et de la ch la et une ambiance koua ouais Tahara oui toujours de toute façon même même quand dans mon balcon c&#x27;est toujours kou chatar voilà ben ce qu&#x27;on rêve c&#x27;est qu&#x27;on passe de ton balcon tu as tout compris ouabat Chabbat Chalom</p></div></details>
   </div>
-  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="sefer-vayikra-parachat-shemini-26-saison-4-avec-le-duo-rav-brand-et-fa-2025-04-23.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/9Q1CREQBfvs/maxresdefault.jpg" alt="Sefer Vayikra PARACHAT SHEMINI (26) SAISON 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-vayikra-parachat-shemini-26-saison-4-avec-le-duo-rav-brand-et-fa-2025-04-23.html" style="color:inherit;text-decoration:none;display:block">Sefer Vayikra PARACHAT SHEMINI (26) SAISON 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-04-23">23 avril 2025 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/9Q1CREQBfvs_Sefer_Vayikra_PARACHAT_SHEMINI__26__SAISON_4_-_avec_le_duo_Rav_Brand_et_Fabrice.mp3" preload="none" data-ep-id="9Q1CREQBfvs"></audio><button class="share-btn" data-epfile="rav-brand/sefer-vayikra-parachat-shemini-26-saison-4-avec-le-duo-rav-brand-et-fa-2025-04-23.html" data-title="Sefer Vayikra PARACHAT SHEMINI (26) SAISON 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="sefer-vayikra-parachat-tsav-25-saison-4-avec-le-duo-rav-brand-et-fabri-2025-04-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/GDyV2JBHiRo/maxresdefault.jpg" alt="Sefer Vayikra PARACHAT TSAV (25) SAISON 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-vayikra-parachat-tsav-25-saison-4-avec-le-duo-rav-brand-et-fabri-2025-04-07.html" style="color:inherit;text-decoration:none;display:block">Sefer Vayikra PARACHAT TSAV (25) SAISON 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-04-07">7 avril 2025 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GDyV2JBHiRo_Sefer_Vayikra_PARACHAT_TSAV__25__SAISON_4_-_avec_le_duo_Rav_Brand_et_Fabrice.mp3" preload="none" data-ep-id="GDyV2JBHiRo"></audio><button class="share-btn" data-epfile="rav-brand/sefer-vayikra-parachat-tsav-25-saison-4-avec-le-duo-rav-brand-et-fabri-2025-04-07.html" data-title="Sefer Vayikra PARACHAT TSAV (25) SAISON 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="sefer-chemot-parachat-pekoudei-23-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/3tow0lQydDs/maxresdefault.jpg" alt="Sefer Chemot PARACHAT PEKOUDEI (23) SAISON 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-chemot-parachat-pekoudei-23-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-26.html" style="color:inherit;text-decoration:none;display:block">Sefer Chemot PARACHAT PEKOUDEI (23) SAISON 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-03-26">26 mars 2025 · 6 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3tow0lQydDs_Sefer_Chemot_PARACHAT_PEKOUDEI__23__SAISON_4_-_avec_le_duo_Rav_Brand_et_Fabrice.mp3" preload="none" data-ep-id="3tow0lQydDs"></audio><button class="share-btn" data-epfile="rav-brand/sefer-chemot-parachat-pekoudei-23-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-26.html" data-title="Sefer Chemot PARACHAT PEKOUDEI (23) SAISON 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="sefer-chemot-parachat-vayakhel-22-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-19.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/OQVCWTl2wwI/maxresdefault.jpg" alt="Sefer Chemot : PARACHAT VAYAKHEL (22) - Saison 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-chemot-parachat-vayakhel-22-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-19.html" style="color:inherit;text-decoration:none;display:block">Sefer Chemot : PARACHAT VAYAKHEL (22) - Saison 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-03-19">19 mars 2025 · 5 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OQVCWTl2wwI_Sefer_Chemot___PARACHAT_VAYAKHEL__22__-_Saison_4_-_avec_le_duo_Rav_Brand_et_Fabr.mp3" preload="none" data-ep-id="OQVCWTl2wwI"></audio><button class="share-btn" data-epfile="rav-brand/sefer-chemot-parachat-vayakhel-22-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-19.html" data-title="Sefer Chemot : PARACHAT VAYAKHEL (22) - Saison 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
-<article class="episode"><a href="sefer-chemot-parachat-ki-tissa-21-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-11.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/lGEdAV6HnPY/maxresdefault.jpg" alt="Sefer Chemot : PARACHAT KI TISSA (21) - Saison 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-chemot-parachat-ki-tissa-21-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-11.html" style="color:inherit;text-decoration:none;display:block">Sefer Chemot : PARACHAT KI TISSA (21) - Saison 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-03-11">11 mars 2025 · 8 min</time><div class="ep-actions"><audio class="ep-audio" controls src="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/lGEdAV6HnPY_Sefer_Chemot___PARACHAT_KI_TISSA__21__-_Saison_4_-_avec_le_duo_Rav_Brand_et_Fabr.mp3" preload="none" data-ep-id="lGEdAV6HnPY"></audio><button class="share-btn" data-epfile="rav-brand/sefer-chemot-parachat-ki-tissa-21-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-11.html" data-title="Sefer Chemot : PARACHAT KI TISSA (21) - Saison 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
+  <p class="related-label" data-i18n="related">Épisodes récents</p><div class="episode-list"><article class="episode"><a href="sefer-vayikra-parachat-shemini-26-saison-4-avec-le-duo-rav-brand-et-fa-2025-04-23.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/9Q1CREQBfvs/maxresdefault.jpg" alt="Sefer Vayikra PARACHAT SHEMINI (26) SAISON 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-vayikra-parachat-shemini-26-saison-4-avec-le-duo-rav-brand-et-fa-2025-04-23.html" style="color:inherit;text-decoration:none;display:block">Sefer Vayikra PARACHAT SHEMINI (26) SAISON 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-04-23">23 avril 2025 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="9Q1CREQBfvs" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/9Q1CREQBfvs_Sefer_Vayikra_PARACHAT_SHEMINI__26__SAISON_4_-_avec_le_duo_Rav_Brand_et_Fabrice.mp3" data-title="Sefer Vayikra PARACHAT SHEMINI (26) SAISON 4 - avec le duo Rav Brand et Fabrice" data-thumb="https://i.ytimg.com/vi/9Q1CREQBfvs/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-brand/sefer-vayikra-parachat-shemini-26-saison-4-avec-le-duo-rav-brand-et-fa-2025-04-23.html" data-title="Sefer Vayikra PARACHAT SHEMINI (26) SAISON 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="sefer-vayikra-parachat-tsav-25-saison-4-avec-le-duo-rav-brand-et-fabri-2025-04-07.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/GDyV2JBHiRo/maxresdefault.jpg" alt="Sefer Vayikra PARACHAT TSAV (25) SAISON 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-vayikra-parachat-tsav-25-saison-4-avec-le-duo-rav-brand-et-fabri-2025-04-07.html" style="color:inherit;text-decoration:none;display:block">Sefer Vayikra PARACHAT TSAV (25) SAISON 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-04-07">7 avril 2025 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="GDyV2JBHiRo" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/GDyV2JBHiRo_Sefer_Vayikra_PARACHAT_TSAV__25__SAISON_4_-_avec_le_duo_Rav_Brand_et_Fabrice.mp3" data-title="Sefer Vayikra PARACHAT TSAV (25) SAISON 4 - avec le duo Rav Brand et Fabrice" data-thumb="https://i.ytimg.com/vi/GDyV2JBHiRo/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-brand/sefer-vayikra-parachat-tsav-25-saison-4-avec-le-duo-rav-brand-et-fabri-2025-04-07.html" data-title="Sefer Vayikra PARACHAT TSAV (25) SAISON 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="sefer-chemot-parachat-pekoudei-23-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-26.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/3tow0lQydDs/maxresdefault.jpg" alt="Sefer Chemot PARACHAT PEKOUDEI (23) SAISON 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-chemot-parachat-pekoudei-23-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-26.html" style="color:inherit;text-decoration:none;display:block">Sefer Chemot PARACHAT PEKOUDEI (23) SAISON 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-03-26">26 mars 2025 · 6 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="3tow0lQydDs" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/3tow0lQydDs_Sefer_Chemot_PARACHAT_PEKOUDEI__23__SAISON_4_-_avec_le_duo_Rav_Brand_et_Fabrice.mp3" data-title="Sefer Chemot PARACHAT PEKOUDEI (23) SAISON 4 - avec le duo Rav Brand et Fabrice" data-thumb="https://i.ytimg.com/vi/3tow0lQydDs/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-brand/sefer-chemot-parachat-pekoudei-23-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-26.html" data-title="Sefer Chemot PARACHAT PEKOUDEI (23) SAISON 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="sefer-chemot-parachat-vayakhel-22-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-19.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/OQVCWTl2wwI/maxresdefault.jpg" alt="Sefer Chemot : PARACHAT VAYAKHEL (22) - Saison 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-chemot-parachat-vayakhel-22-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-19.html" style="color:inherit;text-decoration:none;display:block">Sefer Chemot : PARACHAT VAYAKHEL (22) - Saison 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-03-19">19 mars 2025 · 5 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="OQVCWTl2wwI" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/OQVCWTl2wwI_Sefer_Chemot___PARACHAT_VAYAKHEL__22__-_Saison_4_-_avec_le_duo_Rav_Brand_et_Fabr.mp3" data-title="Sefer Chemot : PARACHAT VAYAKHEL (22) - Saison 4 - avec le duo Rav Brand et Fabrice" data-thumb="https://i.ytimg.com/vi/OQVCWTl2wwI/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-brand/sefer-chemot-parachat-vayakhel-22-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-19.html" data-title="Sefer Chemot : PARACHAT VAYAKHEL (22) - Saison 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article>
+<article class="episode"><a href="sefer-chemot-parachat-ki-tissa-21-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-11.html"><img class="ep-thumb" src="https://i.ytimg.com/vi/lGEdAV6HnPY/maxresdefault.jpg" alt="Sefer Chemot : PARACHAT KI TISSA (21) - Saison 4 - avec le duo Rav Brand et Fabrice" loading="lazy"></a><div class="ep-body"><a class="ep-title" href="sefer-chemot-parachat-ki-tissa-21-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-11.html" style="color:inherit;text-decoration:none;display:block">Sefer Chemot : PARACHAT KI TISSA (21) - Saison 4 - avec le duo Rav Brand et Fabrice</a><time class="ep-date" datetime="2025-03-11">11 mars 2025 · 8 min</time><div class="ep-actions"><button class="play-btn" data-ep-id="lGEdAV6HnPY" data-audio="https://pub-a5fae25ce5124edebe0bf7393f72823c.r2.dev/thetorahpodcast/lGEdAV6HnPY_Sefer_Chemot___PARACHAT_KI_TISSA__21__-_Saison_4_-_avec_le_duo_Rav_Brand_et_Fabr.mp3" data-title="Sefer Chemot : PARACHAT KI TISSA (21) - Saison 4 - avec le duo Rav Brand et Fabrice" data-thumb="https://i.ytimg.com/vi/lGEdAV6HnPY/maxresdefault.jpg"><svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10"><polygon points="2,1 9,5 2,9"/></svg> Écouter</button><button class="share-btn" data-epfile="rav-brand/sefer-chemot-parachat-ki-tissa-21-saison-4-avec-le-duo-rav-brand-et-fa-2025-03-11.html" data-title="Sefer Chemot : PARACHAT KI TISSA (21) - Saison 4 - avec le duo Rav Brand et Fabrice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Partager</button></div></div></article></div>
   <div class="toast" id="toast"></div>
 </main>
 <script src="../js/utils.js"></script>
@@ -343,17 +347,17 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     fr: {
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     },
     en: {
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     },
     he: {
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     },
   };
   let lang = localStorage.getItem('lang') || 'fr';
@@ -374,27 +378,43 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     });
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   });
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => { a.playbackRate = rate; });
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => { currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); });
   });
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {
+    id: '7JEWoqOpmA4', title: "Sefer Vayikra PARACHAT VAYIKRA (24) SAISON 4 - avec le duo Rav Brand et Fabrice", channel: "Rav Brand", art: "https://i.ytimg.com/vi/7JEWoqOpmA4/maxresdefault.jpg",
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  };
   if (mainAudio) {
-    mainAudio.addEventListener('play', () => { mainAudio.playbackRate = currentSpeed; });
-    mainAudio.addEventListener('timeupdate', () => {
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_7JEWoqOpmA4', Math.floor(mainAudio.currentTime));
-    });
-    mainAudio.addEventListener('ended', () => { localStorage.removeItem('resume_7JEWoqOpmA4'); });
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    };
+    if (mainBtn) mainBtn.addEventListener('click', () => { TTPPlayer.toggle(mainAudio, epMeta); });
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => { TTPPlayer.attach(mainAudio, epMeta); paintMain(); });
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '7JEWoqOpmA4');
   }
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({ id: b.dataset.epId, title: b.dataset.title, channel: "Rav Brand",
+                     art: b.dataset.thumb || '', src: b.dataset.audio });
+  });
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {
     const host = document.getElementById('ep-share');
@@ -408,16 +428,6 @@ Soyez un des partenaires de la diffusion de la Torah dans le monde et associez-v
     row.appendChild(star.firstChild);
     host.appendChild(row);
   })();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => { audio.currentTime = saved; }, {once:true});
-    audio.addEventListener('play', () => { audio.playbackRate = currentSpeed; });
-    audio.addEventListener('timeupdate', () => {
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    });
-    audio.addEventListener('ended', () => { localStorage.removeItem('resume_' + epId); });
-  });
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
