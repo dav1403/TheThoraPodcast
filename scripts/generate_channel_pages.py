@@ -117,6 +117,12 @@ def ep_path(ch_slug: str, ep: dict) -> str:
     return f"{ch_slug}/{ep_filename(ep, ch_slug)}"
 
 
+def js_str(s) -> str:
+    """A safe JS string literal (also escapes `<` so `</script>` can never end
+    the inline block)."""
+    return json.dumps("" if s is None else str(s), ensure_ascii=False).replace("<", "\u003c")
+
+
 def esc(s):
     return _html.escape(str(s), quote=True)
 
@@ -1009,7 +1015,11 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
             f'<a class="ep-title" href="{esc(ep_filename(r, slug))}" style="color:inherit;text-decoration:none;display:block">{esc(r["title"])}</a>'
             f'<time class="ep-date" datetime="{r["published"][:10]}">{fmt_date(r["published"], lang)}'
             + (f' · {fmt_dur(r.get("duration_secs", 0))}' if r.get('duration_secs') else '') + '</time>'
-            f'<div class="ep-actions"><audio class="ep-audio" controls src="{esc(r["audio_url"])}" preload="none" data-ep-id="{esc(r_vid)}"></audio>'
+            f'<div class="ep-actions">'
+            f'<button class="play-btn" data-ep-id="{esc(r_vid)}" data-audio="{esc(r["audio_url"])}"'
+            f' data-title="{esc(r["title"])}" data-thumb="{esc(r_thumb)}">'
+            f'<svg viewBox="0 0 10 10" fill="currentColor" width="10" height="10">'
+            f'<polygon points="2,1 9,5 2,9"/></svg> Écouter</button>'
             f'<button class="share-btn" data-epfile="{esc(ep_path(slug, r))}" data-title="{esc(r["title"])}">'
             f'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="11" height="11">'
             f'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>'
@@ -1079,9 +1089,16 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     og_locale = "he_IL" if lang == "he" else "fr_FR"
     og_locale_alt = "fr_FR" if lang == "he" else "he_IL"
     og_image = thumb if thumb else f"{BASE_URL}/artwork/{slug}.png"
+    # The native <audio controls> widget is gone: playback happens in the shared
+    # bottom bar (js/utils.js), so the controls look and behave the same on every
+    # page and in every browser.
     audio_tag = (
-        f'<audio id="ep-audio" controls src="{esc(audio)}" preload="none" data-ep-id="{esc(video_id)}"'
-        f' style="width:100%;accent-color:#e87722;margin-bottom:16px"></audio>'
+        f'<audio id="ep-audio" src="{esc(audio)}" preload="none" data-ep-id="{esc(video_id)}"'
+        f' style="display:none"></audio>'
+        f'<button type="button" id="ep-play-main" class="ep-play-main">'
+        f'<svg viewBox="0 0 10 10" fill="currentColor" width="12" height="12" aria-hidden="true">'
+        f'<polygon points="2,1 9,5 2,9"/></svg>'
+        f'<span id="ep-play-label" data-i18n="ep_play">Écouter le cours</span></button>'
         if audio else ""
     )
     thumb_tag = (
@@ -1129,6 +1146,10 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 
     desc_tag  = f'<p style="font-size:.9rem;color:#444;line-height:1.7;white-space:pre-line;margin-top:16px">{esc(desc)}</p>' if desc else ""
     breadcrumb_title = (title[:60] + "…") if len(title) > 60 else title
+    # JS string literals for the metadata handed to the shared bottom player.
+    title_js = js_str(title)
+    name_js  = js_str(name)
+    thumb_js = js_str(thumb)
 
     return f"""<!DOCTYPE html>
 <html lang="{lang}">
@@ -1174,6 +1195,12 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   .breadcrumb a {{ color:#888; text-decoration:none; }}
   .breadcrumb a:hover {{ text-decoration:underline; }}
   .related-label {{ font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#999; margin:28px 0 12px; }}
+  .ep-play-main {{ display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px;
+    padding:0 22px; margin-bottom:16px; background:#e87722; color:#fff; border:none; border-radius:24px;
+    font-family:inherit; font-size:.92rem; font-weight:600; cursor:pointer; transition:background .15s; }}
+  .ep-play-main:hover {{ background:#f2872f; }}
+  .ep-play-main:focus-visible {{ outline:2px solid #1a1a2e; outline-offset:2px; }}
+  .ep-play-main.is-playing {{ background:#1a1a2e; }}
   </style>
 </head>
 <body>
@@ -1241,17 +1268,17 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     fr: {{
       nav_home:'Accueil', nav_rabbis:'Rabbins ▾', nav_last_classes:'Derniers cours', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Paracha', nav_themes:'Thème', nav_favorites:'Mes favoris',
       lang_toggle:'English', subtitle:'Cours de Torah — disponibles sur vos plateformes favorites',
-      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible',
+      related:'Épisodes récents', extract_title:'Extrait du cours', extract_more:'Lire la transcription complète ↓', transcript_label:'Transcription', transcript_words:'mots', transcript_auto:'Transcription automatique — peut contenir des erreurs.', transcript_copy:'Copier', transcript_copied:'Copié !', transcript_copy_error:'Copie impossible', ep_play:'Écouter le cours', ep_pause:'Mettre en pause',
     }},
     en: {{
       nav_home:'Home', nav_rabbis:'Rabbis ▾', nav_last_classes:'Latest classes', nav_daf_hayomi:'Daf Hayomi', nav_limud:'Limud Yomi', nav_hitat:'Hitat Yomi', nav_hayomyom:'Hayom Yom', nav_hiloula:'Hiloula', nav_paracha:'Parasha', nav_themes:'Topics', nav_favorites:'My favorites',
       lang_toggle:'עברית', subtitle:'Torah classes — available on your favorite platforms',
-      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed',
+      related:'Recent episodes', extract_title:'Class excerpt', extract_more:'Read the full transcript ↓', transcript_label:'Transcript', transcript_words:'words', transcript_auto:'Automatic transcript — may contain errors.', transcript_copy:'Copy', transcript_copied:'Copied!', transcript_copy_error:'Copy failed', ep_play:'Play the class', ep_pause:'Pause',
     }},
     he: {{
       nav_home:'ראשי', nav_rabbis:'הרבנים ▾', nav_last_classes:'שיעורים אחרונים', nav_daf_hayomi:'דף היומי', nav_limud:'לימוד יומי', nav_hitat:'חת"ת', nav_hayomyom:'היום יום', nav_hiloula:'הילולה', nav_paracha:'פרשה', nav_themes:'נושא', nav_favorites:'המועדפים שלי',
       lang_toggle:'Français', subtitle:'שיעורי תורה — זמינים בפלטפורמות האהובות עליכם',
-      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה',
+      related:'פרקים אחרונים', extract_title:'קטע מהשיעור', extract_more:'לקריאת התמליל המלא ↓', transcript_label:'תמליל', transcript_words:'מילים', transcript_auto:'תמליל אוטומטי — עלול להכיל שגיאות.', transcript_copy:'העתקה', transcript_copied:'הועתק!', transcript_copy_error:'ההעתקה נכשלה', ep_play:'האזנה לשיעור', ep_pause:'השהיה',
     }},
   }};
   let lang = localStorage.getItem('lang') || '{lang}';
@@ -1272,27 +1299,43 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     }});
     if (caret) caret.closest('.nav-dropdown').classList.toggle('open');
   }});
-  let currentSpeed = parseFloat(localStorage.getItem('playbackSpeed') || '1');
-  function applySpeed(rate) {{
-    currentSpeed = rate;
-    localStorage.setItem('playbackSpeed', rate);
-    document.querySelectorAll('.ep-audio, #ep-audio').forEach(a => {{ a.playbackRate = rate; }});
-    document.querySelectorAll('.speed-btn').forEach(b => b.classList.toggle('active', parseFloat(b.dataset.speed) === rate));
-  }}
+  // Speed: one truth, shared with the bottom bar's own control.
+  let currentSpeed = TTPPlayer.speed();
   document.querySelectorAll('.speed-btn').forEach(b => {{
     b.classList.toggle('active', parseFloat(b.dataset.speed) === currentSpeed);
-    b.addEventListener('click', () => applySpeed(parseFloat(b.dataset.speed)));
+    b.addEventListener('click', () => {{ currentSpeed = TTPPlayer.setSpeed(parseFloat(b.dataset.speed)); }});
   }});
+  // The class plays IN THE BAR, which is present on every page — so opening an
+  // episode no longer replaces the bar with an isolated widget.
   const mainAudio = document.getElementById('ep-audio');
+  const epMeta = {{
+    id: '{video_id}', title: {title_js}, channel: {name_js}, art: {thumb_js},
+    src: mainAudio ? mainAudio.getAttribute('src') : ''
+  }};
   if (mainAudio) {{
-    mainAudio.addEventListener('play', () => {{ mainAudio.playbackRate = currentSpeed; }});
-    mainAudio.addEventListener('timeupdate', () => {{
-      if (mainAudio.currentTime > 5) localStorage.setItem('resume_{video_id}', Math.floor(mainAudio.currentTime));
-    }});
-    mainAudio.addEventListener('ended', () => {{ localStorage.removeItem('resume_{video_id}'); }});
-    // "Reprendre à mm:ss" banner (shared helper reads resume_<id>).
+    const mainBtn = document.getElementById('ep-play-main');
+    const paintMain = () => {{
+      if (!mainBtn) return;
+      const on = !mainAudio.paused && !mainAudio.ended;
+      mainBtn.classList.toggle('is-playing', on);
+      const lbl = document.getElementById('ep-play-label');
+      if (lbl) lbl.textContent = on ? t('ep_pause') : t('ep_play');
+    }};
+    if (mainBtn) mainBtn.addEventListener('click', () => {{ TTPPlayer.toggle(mainAudio, epMeta); }});
+    // Any other way in (the "Reprendre à mm:ss" banner, a keyboard shortcut)
+    // still surfaces the bar.
+    mainAudio.addEventListener('play', () => {{ TTPPlayer.attach(mainAudio, epMeta); paintMain(); }});
+    ['pause', 'ended'].forEach(ev => mainAudio.addEventListener(ev, paintMain));
     if (typeof attachResumeBanner === 'function') attachResumeBanner(mainAudio, '{video_id}');
   }}
+  // Related episodes: same bar, no second widget.
+  document.addEventListener('click', e => {{
+    const b = e.target.closest('.play-btn[data-ep-id]');
+    if (!b) return;
+    if (TTPPlayer.audio() === mainAudio && mainAudio && !mainAudio.paused) mainAudio.pause();
+    TTPPlayer.load({{ id: b.dataset.epId, title: b.dataset.title, channel: {name_js},
+                     art: b.dataset.thumb || '', src: b.dataset.audio }});
+  }});
   // Share row (WhatsApp-first) + favorite star, built from the shared lib.
   (function () {{
     const host = document.getElementById('ep-share');
@@ -1306,16 +1349,6 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     row.appendChild(star.firstChild);
     host.appendChild(row);
   }})();
-  document.querySelectorAll('.ep-audio[data-ep-id]').forEach(audio => {{
-    const epId = audio.dataset.epId;
-    const saved = parseInt(localStorage.getItem('resume_' + epId) || '0');
-    if (saved > 5) audio.addEventListener('loadedmetadata', () => {{ audio.currentTime = saved; }}, {{once:true}});
-    audio.addEventListener('play', () => {{ audio.playbackRate = currentSpeed; }});
-    audio.addEventListener('timeupdate', () => {{
-      if (audio.currentTime > 5) localStorage.setItem('resume_' + epId, Math.floor(audio.currentTime));
-    }});
-    audio.addEventListener('ended', () => {{ localStorage.removeItem('resume_' + epId); }});
-  }});
   function showToast(msg) {{
     const t = document.getElementById('toast');
     t.textContent = msg; t.classList.add('show');
