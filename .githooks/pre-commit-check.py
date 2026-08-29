@@ -47,14 +47,30 @@ def extract_inline_js(text):
     )
 
 
+def is_episode_page(path):
+    return path.endswith(".html") and "/" in path.replace("\\", "/")
+
+
+def sample_episode_pages(paths):
+    """Pick a cheap but representative subset of staged episode pages.
+
+    A regeneration stages ~31 700 episode pages; `node --check` on all of them
+    would take many minutes and make the hook unusable. They all come out of the
+    same template, so a generator bug hits every one of them at once — checking
+    the first page of each channel directory (alphabetically, so the pick is
+    deterministic) catches it while keeping the hook to a couple of seconds.
+    """
+    by_channel = {}
+    for p in sorted(paths):
+        channel = p.replace("\\", "/").split("/")[0]
+        by_channel.setdefault(channel, p)
+    return set(by_channel.values())
+
+
 def check_js_syntax(path, content):
     if not os.path.isfile(NODE):
         return []
     text = content.decode("utf-8", errors="replace")
-    # Only check root-level HTML files (not episode subdirs)
-    parts = path.replace("\\", "/").split("/")
-    if len(parts) > 1 and path.endswith(".html"):
-        return []
     blocks = extract_inline_js(text)
     js_errors = []
     for i, block in enumerate(blocks):
@@ -127,7 +143,12 @@ def check_orphaned_code(path, content):
 
 
 # ── Main check loop ───────────────────────────────────────────────────────────
-for path in staged_files():
+STAGED = staged_files()
+# Episode pages are generated in bulk, so only a sample gets the (slow) Node
+# syntax check; root-level pages are hand-edited and are all checked.
+JS_SAMPLE = sample_episode_pages([p for p in STAGED if is_episode_page(p)])
+
+for path in STAGED:
     content = staged_bytes(path)
     size = len(content)
     lines = content.count(b"\n")
@@ -148,7 +169,8 @@ for path in staged_files():
         snippet = content[:2000].lower()
         if b"<!doctype" not in snippet and b"<html" not in snippet:
             errors.append(f"{path}: HTML sans DOCTYPE ni html")
-        errors.extend(check_js_syntax(path, content))
+        if not is_episode_page(path) or path in JS_SAMPLE:
+            errors.extend(check_js_syntax(path, content))
         errors.extend(check_duplicate_functions(path, content))
         errors.extend(check_required_functions(path, content))
         errors.extend(check_orphaned_code(path, content))
