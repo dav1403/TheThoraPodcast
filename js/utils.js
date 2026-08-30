@@ -258,6 +258,14 @@ function courseLangCount(rec, base) {
 //     it gets its own buttons that simply .click() the real ones.
 function _langMenuUiLabel()     { return _t3('Langue', 'Language', 'שפת האתר'); }
 function _langMenuCourseLabel() { return _clT('label'); }
+function _settingsLabel()       { return _t3('Réglages', 'Settings', 'הגדרות'); }
+
+// The settings page lives at the site root, but this file is also loaded from
+// episode pages one directory down (`../js/utils.js`) — hence the absolute path.
+var TTP_SETTINGS_URL = '/reglages.html';
+function _onSettingsPage() {
+  return /\/reglages\.html$/.test(location.pathname);
+}
 
 function _injectLangMenuCSS() {
   if (document.getElementById('langmenu-css')) return;
@@ -275,7 +283,13 @@ function _injectLangMenuCSS() {
     '.nav-langs .courselang-switch{margin:0}' +
     // The course switch carries its own label; inside the menu the shared
     // `.nav-lang-label` provides it, so hide the duplicate.
-    '.nav-langs .courselang-label{display:none}';
+    '.nav-langs .courselang-label{display:none}' +
+    // ⚙️ entry point to the full settings page, last row of the block.
+    '.nav-settings-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;' +
+      'font-size:.75rem;font-weight:600;color:rgba(255,255,255,.6);padding:5px 14px;' +
+      'border:1px solid rgba(255,255,255,.2);border-radius:20px;transition:color .15s,background .15s,border-color .15s}' +
+    '.nav-settings-link:hover{color:#fff;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.5)}' +
+    '.nav-settings-link[aria-current=page]{color:#1a1a2e;background:#fff;border-color:#fff}';
   document.head.appendChild(s);
 }
 
@@ -308,6 +322,42 @@ function _langMenuBox() {
   // MOVE (not clone): keeps the inline handlers and any page listener alive.
   if (uiRow && sw && sw.parentNode !== uiRow) uiRow.appendChild(sw);
   return box;
+}
+
+// ─── ⚙️ Settings page link (auto-injected, no page ever edited) ──────────────
+// reglages.html gathers the same two preferences on a full-size surface. It is
+// reachable from every page — hand-written or generated — because the link is
+// appended here, next to the language controls, exactly like the course switch.
+function _gearIcon() {
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+    'width="13" height="13" aria-hidden="true" focusable="false">' +
+    '<circle cx="12" cy="12" r="3"/>' +
+    '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 ' +
+      '1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 ' +
+      '1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a' +
+      '1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 ' +
+      '0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 ' +
+      '0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+}
+
+function _settingsLinkEl(cls) {
+  var a = document.createElement('a');
+  a.className = cls;
+  a.href = TTP_SETTINGS_URL;
+  a.innerHTML = _gearIcon() + '<span></span>';
+  a.querySelector('span').textContent = _settingsLabel();
+  if (_onSettingsPage()) a.setAttribute('aria-current', 'page');
+  return a;
+}
+
+// Idempotent: the last row of the `.nav-langs` block is the settings link.
+function _appendSettingsRow(box) {
+  if (!box || box.querySelector('[data-lang-row="settings"]')) return;
+  var row = document.createElement('div');
+  row.className = 'nav-lang-row';
+  row.setAttribute('data-lang-row', 'settings');
+  row.appendChild(_settingsLinkEl('nav-settings-link'));
+  box.appendChild(row);
 }
 
 // ─── Course-language control (auto-injected into every page menu) ────────────
@@ -397,16 +447,18 @@ function _courseLangSwitchEl() {
 function _buildCourseLangSwitch() {
   var menu = _langMenuBox();                                     // moves .lang-switch too
   if (menu) {
-    if (menu.querySelector('[data-lang-row="course"]')) return;   // idempotent
-    var row = document.createElement('div');
-    row.className = 'nav-lang-row';
-    row.setAttribute('data-lang-row', 'course');
-    var lbl = document.createElement('span');
-    lbl.className = 'nav-lang-label';
-    lbl.textContent = _langMenuCourseLabel();
-    row.appendChild(lbl);
-    row.appendChild(_courseLangSwitchEl());
-    menu.appendChild(row);
+    if (!menu.querySelector('[data-lang-row="course"]')) {        // idempotent
+      var row = document.createElement('div');
+      row.className = 'nav-lang-row';
+      row.setAttribute('data-lang-row', 'course');
+      var lbl = document.createElement('span');
+      lbl.className = 'nav-lang-label';
+      lbl.textContent = _langMenuCourseLabel();
+      row.appendChild(lbl);
+      row.appendChild(_courseLangSwitchEl());
+      menu.appendChild(row);
+    }
+    _appendSettingsRow(menu);                                     // always last
     return;
   }
   // Fallback for pages with no nav (embed.html…): keep the historical header
@@ -778,6 +830,12 @@ function _injectMobileNavCSS() {
       'border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);' +
       'color:rgba(255,255,255,.78);font-size:.85rem;font-weight:600;cursor:pointer}' +
     '.mnav-lang-opt.active{background:#e87722;border-color:#e87722;color:#fff}' +
+    '.mnav-settings-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none;' +
+      'margin-top:18px;min-height:44px;padding:10px 16px;border-radius:22px;' +
+      'border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);' +
+      'color:rgba(255,255,255,.78);font-size:.85rem;font-weight:600}' +
+    '.mnav-settings-link:hover{color:#fff;background:rgba(255,255,255,.1)}' +
+    '.mnav-settings-link[aria-current=page]{background:#e87722;border-color:#e87722;color:#fff}' +
     // Show the mobile menu, hide the desktop nav, at tablet width and below
     '@media(max-width:768px){' +
       'header{position:relative}' +
@@ -845,6 +903,9 @@ function _mnavLangSection() {
   ['all', 'fr', 'he'].forEach(function (v) {
     cRow.appendChild(opt(_clT(v), v === curCourse, null, function () { setCourseLang(v); }));
   });
+
+  // Same ⚙️ entry point as the desktop menu, at the very bottom of the panel.
+  wrap.appendChild(_settingsLinkEl('mnav-settings-link'));
   return wrap;
 }
 
