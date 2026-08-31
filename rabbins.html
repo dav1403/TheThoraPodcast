@@ -549,17 +549,20 @@
     });
   }
 
-  function latestEpisode(entries) {
-    if (!entries.length) return null;
-    return entries.reduce((best, ep) =>
-      new Date(ep.published) > new Date(best.published) ? ep : best
-    );
-  }
-
   // ─── Bubble grid ───────────────────────────────────────────────────────────
+  // A row is { ch, meta }: `ch` is the display/platform record (channels.json or
+  // a speaker pseudo-channel), `meta` the pre-computed home.json entry carrying
+  // the catalogue counts (count / count_fr / count_he) and the last class
+  // (last_* blocks). This page used to hold every EPISODE of every rav in
+  // memory — 22 feeds, 33.7 MB — purely to recompute those two numbers.
   let allData     = [];
   let dataBySlug  = {};
   let currentSort = 'alpha';
+
+  // Count and last class of a row, both already filtered by the course-language
+  // preference (courseLangCount / courseLangLast live in js/utils.js).
+  const rowCount = d => courseLangCount(d.meta, 'count');
+  const rowLast  = d => courseLangLast(d.meta);
 
   // Channel artwork exists in two sizes: artwork/<slug>.png is the 3000x3000
   // Apple Podcasts master (0.5-5 MB), artwork/thumb/<slug>.webp the 256 px
@@ -581,10 +584,11 @@
     return `src="${escapeHtml(list[0] || '')}" data-q="${rest}" onerror="${onerr}"`;
   }
 
-  function bubbleHtml({ ch, entries }) {
-    const latest = latestEpisode(entries);
+  function bubbleHtml(d) {
+    const { ch } = d;
+    const latest = rowLast(d);
     const recent = latest && (Date.now() - new Date(latest.published).getTime()) <= 30 * 86400000;
-    const count  = entries.length;
+    const count  = rowCount(d);
     const countTag = count
       ? `<span class="bubble-count" aria-label="${count} ${count > 1 ? t('ep_plural') : t('ep_singular')}">${count}</span>`
       : '';
@@ -605,14 +609,14 @@
     // the grid rather than shown as an empty bubble. Favourites are NEVER
     // filtered — see render(), the user picked those explicitly.
     const data = courseLangFiltering()
-      ? allData.filter(d => d.entries.length)
+      ? allData.filter(d => rowCount(d))
       : [...allData];
     if (sort === 'alpha') {
       data.sort((a, b) => a.ch.podcast_author.localeCompare(b.ch.podcast_author, 'fr'));
     } else {
       data.sort((a, b) => {
-        const la = latestEpisode(a.entries);
-        const lb = latestEpisode(b.entries);
+        const la = rowLast(a);
+        const lb = rowLast(b);
         if (!la && !lb) return 0;
         if (!la) return 1;
         if (!lb) return -1;
@@ -634,11 +638,61 @@
   // When a star is toggled while the favorites filter is active, keep the grid in sync.
   document.addEventListener('favchange', () => { if (favOnly) render(); });
 
+  // ─── Course-title search (lazy) ────────────────────────────────────────────
+  // Searching a rav BY ONE OF HIS COURSE TITLES used to be free: every episode
+  // was already in memory. It now works in two stages, so nothing is downloaded
+  // for a visitor who only browses the bubbles:
+  //   1. the ~1200 newest classes carried by latest.json (loaded at boot),
+  //   2. search-index.json — the whole catalogue, ~1.1 MB gzipped — fetched
+  //      once, and only once the visitor actually types.
+  // Stage 1 answers instantly; stage 2 re-renders when it lands. Same pattern
+  // as derniers-cours.html.
+  const titlesBySlug  = new Map();         // slug -> array of lowercased titles
+  const slugByName    = new Map();         // rav display name -> channel slug
+  const chMetaBySlug  = new Map();         // channel slug -> latest.json record
+  let   speakerDefs   = [];                // speakers.json (from_channels + title_patterns)
+  function addTitle(slug, title) {
+    if (!slug || !title) return;
+    let arr = titlesBySlug.get(slug);
+    if (!arr) titlesBySlug.set(slug, (arr = []));
+    arr.push(title.toLowerCase());
+  }
+
+  let searchIdxPending = false, searchIdxLoaded = false;
+  function ensureSearchIndex() {
+    if (searchIdxLoaded || searchIdxPending) return;
+    searchIdxPending = true;
+    // Rows: t = title, c = rav display name, u = episode URL, d = date, l = lang.
+    fetch('search-index.json')
+      .then(r => r.ok ? r.json() : [])
+      .catch(() => [])
+      .then(rows => {
+        for (const r of rows) {
+          const slug = slugByName.get(r.c);
+          // A class in the other language must not surface a rav the
+          // course-language filter has already removed from the grid.
+          if (!courseLangKeeps(r, chMetaBySlug.get(slug))) continue;
+          if (slug) addTitle(slug, r.t);
+          // A manually-added guest has no channel of his own: he is matched on
+          // the title with the very patterns build_latest_index uses server-side.
+          for (const sp of speakerDefs) {
+            if (!slug || !(sp.from_channels || []).includes(slug)) continue;
+            if ((sp.title_patterns || []).some(p => (r.t || '').toLowerCase().includes(p.toLowerCase())))
+              addTitle(sp.slug, r.t);
+          }
+        }
+        searchIdxPending = false;
+        searchIdxLoaded  = true;
+        render();
+      });
+  }
+
   // Keyword rule: match the rabbi NAME first (rank 0), then a course TITLE (rank 1).
   function matchRank(d, q) {
     const name = (d.ch.podcast_author || '').toLowerCase();
     if (name.includes(q)) return 0;
-    if (d.entries.some(ep => ep.title && ep.title.toLowerCase().includes(q))) return 1;
+    const titles = titlesBySlug.get(d.ch.slug);
+    if (titles && titles.some(t => t.includes(q))) return 1;
     return -1;
   }
 
@@ -678,7 +732,8 @@
   }
 
   // ─── Detail modal ──────────────────────────────────────────────────────────
-  function modalInner({ ch, entries }) {
+  function modalInner(d) {
+    const { ch } = d;
     const platforms   = ch.platforms || {};
     const activeLinks = Object.entries(platforms).filter(([, url]) => url && url.trim());
 
@@ -693,8 +748,8 @@
       return `<a class="platform-btn ${meta.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener">${meta.icon}${meta.label}</a>`;
     }).join('');
 
-    const count  = entries.length;
-    const latest = latestEpisode(entries);
+    const count  = rowCount(d);
+    const latest = rowLast(d);
     const epWord = count > 1 ? t('ep_plural') : t('ep_singular');
     const sub = count
       ? `${count} ${epWord}${latest ? `&nbsp;·&nbsp;${formatDate(latest.published)}` : ''}`
@@ -734,14 +789,29 @@
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+  // ─── Boot ──────────────────────────────────────────────────────────────────
+  // This page used to download the 22 `feeds/<slug>.entries.json` before it
+  // could paint a single bubble — 33 703 263 bytes raw / 4 577 320 gzipped,
+  // measured 31/08/2026 — only to derive, per rav, a COUNT and a LAST CLASS,
+  // plus a 15-card "derniers cours" carousel. All three are pre-computed:
+  //   • home.json    (8.7 KB gzip) → counts by language + `last_*` blocks,
+  //   • latest.json  (159 KB gzip) → the newest classes site-wide, HITAT already
+  //                                  excluded and guests already matched.
+  // Nothing else is fetched unless the visitor asks for it: search-index.json
+  // lands only when he types. Same pattern as derniers-cours.html (31/08/2026).
   (async () => {
     const app = document.getElementById('app');
 
-    let channels = [], speakers = [];
+    let channels = [], speakers = [], home = null, idx = null;
     try {
-      const [chRes, spRes] = await Promise.all([fetch('channels.json'), fetch('speakers.json')]);
+      const [chRes, spRes, hoRes, laRes] = await Promise.all([
+        fetch('channels.json'), fetch('speakers.json'),
+        fetch('home.json'),     fetch('latest.json'),
+      ]);
       if (chRes.ok) channels = (await chRes.json()).filter(ch => ch.enabled);
       if (spRes.ok) speakers = await spRes.json();
+      if (hoRes.ok) home = await hoRes.json();
+      if (laRes.ok) idx  = await laRes.json();
     } catch (_) {}
 
     if (!channels.length) {
@@ -750,40 +820,40 @@
       return;
     }
 
-    const channelData = await Promise.all(channels.map(async ch => {
-      // Course-language preference applied at the source (js/utils.js): the
-      // rav bubbles, their counts and the header total all follow from here.
-      try { return { ch, entries: await fetchChannelEntries(ch) }; }
-      catch (_) { return { ch, entries: [] }; }
-    }));
+    // home.json carries one record per channel AND per guest speaker, with the
+    // catalogue counts and the `last_*` blocks — the two figures every bubble,
+    // the sort and the modal need.
+    const metaBySlug = new Map();
+    for (const rec of ((home && home.channels) || [])) metaBySlug.set(rec.slug, rec);
+    for (const rec of ((home && home.speakers) || [])) metaBySlug.set(rec.slug, rec);
 
-    // Build speaker pseudo-channels by filtering source channel entries
-    const entriesCache = Object.fromEntries(channelData.map(({ ch, entries }) => [ch.slug, entries]));
+    const channelData = channels.map(ch => ({ ch, meta: metaBySlug.get(ch.slug) || null }));
+
+    // Guest speakers have no channel of their own: a pseudo-channel carries
+    // their display name, and — having no artwork/<slug>.png either — the
+    // representative thumbnail home.json already picked for them (the one their
+    // dedicated page uses, see generate_channel_pages.py).
     const speakerData = speakers.map(sp => {
-      const entries = sp.from_channels.flatMap(slug =>
-        (entriesCache[slug] || []).filter(ep =>
-          sp.title_patterns.some(p => ep.title && ep.title.toLowerCase().includes(p.toLowerCase()))
-        )
-      ).sort((a, b) => new Date(b.published) - new Date(a.published));
-      // Speakers have no dedicated artwork/<slug>.png — represent them with the
-      // thumbnail of their most recent episode (entries are sorted newest-first),
-      // matching the header image used on their dedicated page (generate_channel_pages.py).
-      const repImg = (entries.find(e => e.thumbnail) || {}).thumbnail || '';
+      const meta = metaBySlug.get(sp.slug) || null;
       return {
-        ch: { slug: sp.slug, podcast_author: sp.name, platforms: {}, language: sp.language, img: repImg },
-        entries
+        ch: { slug: sp.slug, podcast_author: sp.name, platforms: {}, language: sp.language,
+              img: (meta && meta.img) || '' },
+        meta,
       };
     });
 
     allData    = [...channelData, ...speakerData];
     dataBySlug = Object.fromEntries(allData.map(d => [d.ch.slug, d]));
 
-    const totalEpisodes = channelData.reduce((sum, { entries }) => sum + entries.length, 0);
+    // Site-wide total, pre-computed and language-aware (home.json `stats`), and
+    // equal by construction to the sum of the per-channel counts this page used
+    // to add up itself.
+    const totalEpisodes = courseLangCount((home && home.stats) || null, 'episodes');
     const approxH = Math.round(totalEpisodes * 0.75);
     // Under a course-language filter, only count the ravs who still have a class
     // in that language — otherwise the header would advertise silent rabbis.
     const nRabbis = courseLangFiltering()
-      ? [...channelData, ...speakerData].filter(d => d.entries.length).length
+      ? allData.filter(d => rowCount(d)).length
       : channels.length + speakers.length;
     document.getElementById('header-stats').textContent =
       lang === 'he'
@@ -792,16 +862,25 @@
           ? `${nRabbis} rabbis · ${totalEpisodes} classes · ~${approxH}h of Torah`
           : `${nRabbis} rabbins · ${totalEpisodes} cours · ~${approxH}h de Torah`);
 
+    // latest.json: the newest classes site-wide, already in publication order,
+    // HITAT DU JOUR already excluded and guests already matched server-side
+    // (`sp`). Feeds the carousel AND seeds the course-title search.
+    const idxEpisodes = (idx && idx.episodes) || [];
+    for (const ch of ((idx && idx.channels) || [])) chMetaBySlug.set(ch.slug, ch);
+    for (const ch of channels) slugByName.set(ch.podcast_author, ch.slug);
+    speakerDefs = speakers;
+
     setSort(currentSort);
 
     // Reusable homepage-style carousel: latest courses across all rabbanim.
     (function buildRabbiCarousel() {
       const flat = [];
-      allData.forEach(({ ch, entries }) => (entries || []).forEach(ep => {
-        if (!/HITAT DU JOUR/i.test(ep.title || ''))
-          flat.push({ ep, ch: { slug: ch.slug, name: ch.podcast_author } });
-      }));
-      flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
+      for (const row of idxEpisodes) {
+        if (!courseLangKeeps(row, chMetaBySlug.get(row.slug))) continue;
+        for (const slug of [row.slug].concat(row.sp || [])) addTitle(slug, row.title);
+        const d = dataBySlug[row.slug];
+        flat.push({ ep: row, ch: { slug: row.slug, name: (d && d.ch.podcast_author) || row.ch_name } });
+      }
       const car = buildCarousel(lang === 'he' ? 'שיעורים אחרונים' : (lang === 'en' ? 'Latest classes' : 'Derniers cours'), flat.slice(0, 15));
       const mount = document.getElementById('rabbi-carousel');
       if (car && mount) mount.appendChild(car);
@@ -810,6 +889,9 @@
     const searchInput = document.getElementById('rabbi-search');
     if (searchInput) searchInput.addEventListener('input', () => {
       searchQuery = searchInput.value.toLowerCase().trim();
+      // The catalogue-wide title index is worth its weight only once the
+      // visitor really searches — a browsing visitor never pays for it.
+      if (searchQuery) ensureSearchIndex();
       render();
     });
 
@@ -820,7 +902,7 @@
         ...channels.map(ch => ({ slug: ch.slug, name: ch.podcast_author })),
         ...speakers.map(sp => ({ slug: sp.slug, name: sp.name })),
       ]
-        .map(it => ({ ...it, count: (dataBySlug[it.slug]?.entries.length) || 0 }))
+        .map(it => ({ ...it, count: dataBySlug[it.slug] ? rowCount(dataBySlug[it.slug]) : 0 }))
         .sort((a, b) => a.name.localeCompare(b.name, 'fr'));
       sub.innerHTML = navItems
         .map(it => `<a href="${escapeHtml(it.slug)}.html">${escapeHtml(it.name)}${it.count ? ` (${it.count})` : ''}</a>`)

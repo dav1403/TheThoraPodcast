@@ -103,7 +103,10 @@ function buildCarousel(label, items) {
   var cards = items.map(function(it) {
     var ch = it.ch, ep = it.ep;
     var isChannel = !ep;
-    var href = isChannel ? (escapeHtml(ch.slug) + '.html') : epUrl(ep, ch.slug);
+    // Pre-computed indexes (home.json recents, latest.json episodes) already
+    // carry the episode page URL the generator really wrote; epUrl() only
+    // re-derives it from the title when the row comes straight from a feed.
+    var href = isChannel ? (escapeHtml(ch.slug) + '.html') : escapeHtml(ep.url || epUrl(ep, ch.slug));
     var img  = (ep && ep.thumbnail) ? escapeHtml(ep.thumbnail) : ('artwork/' + escapeHtml(ch.slug) + '.png');
     var title = escapeHtml(isChannel ? (ch.name || ch.slug) : ep.title);
     return '<div class="carousel-card' + (isChannel ? ' is-channel' : '') + '" data-slug="' + escapeHtml(ch.slug) + '">' +
@@ -242,6 +245,35 @@ function courseLangCount(rec, base) {
   if (pref === 'all') return rec[base] || 0;
   var v = rec[base + '_' + pref];
   return (typeof v === 'number') ? v : (rec[base] || 0);
+}
+
+// Last class of a rav, honouring the course-language preference, out of a
+// home.json `channels[]` / `speakers[]` record. Returns null when he has no
+// class at all (or none in the selected language) — never an invented date.
+//
+// ⚠️ The suffixed `last_*_fr` / `last_*_he` blocks exist ONLY for the ravs who
+// really teach in both languages (build_home_json / _last_class_block): for a
+// mono-language rav the suffixed copy would be byte-for-byte identical, so it
+// is not emitted. Hence the documented consumer rule applied here: when
+// `last_*_<lang>` is missing while `count_<lang> > 0`, the unsuffixed block IS
+// that language's last class. Skipping this rule would silently show a French
+// class to a visitor filtering on Hebrew.
+function courseLangLast(rec) {
+  if (!rec) return null;
+  var pref = window.TTPPrefs.courseLang();
+  var sfx = '';
+  if (pref !== 'all') {
+    if (!courseLangCount(rec, 'count')) return null;
+    if (rec['last_published_' + pref] !== undefined) sfx = '_' + pref;
+  }
+  if (!rec['last_published' + sfx]) return null;
+  return {
+    published:     rec['last_published' + sfx],
+    title:         rec['last_title' + sfx] || '',
+    video_id:      rec['last_video_id' + sfx] || '',
+    audio_url:     rec['last_audio_url' + sfx] || '',
+    duration_secs: rec['last_duration_secs' + sfx] || 0,
+  };
 }
 
 // ─── Language controls live in the MENU, not in the header banner ────────────
