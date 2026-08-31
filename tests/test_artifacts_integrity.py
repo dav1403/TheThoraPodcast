@@ -13,6 +13,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 HOME = ROOT / "home.json"
 SEARCH = ROOT / "search-index.json"
+LATEST = ROOT / "latest.json"
 
 
 @pytest.fixture(scope="module")
@@ -34,6 +35,39 @@ def test_home_json_valid_shape(home):
     assert isinstance(home["recents"], list) and home["recents"]
     for r in home["recents"]:
         assert r["url"].endswith(".html")
+
+
+@pytest.fixture(scope="module")
+def latest():
+    if not LATEST.exists():
+        pytest.skip("latest.json not present")
+    return json.loads(LATEST.read_text(encoding="utf-8"))
+
+
+def test_latest_index_valid_shape(latest):
+    # derniers-cours.html renders straight from these rows and announces
+    # `total` as the size of the whole catalogue; a drifted commit here shows up
+    # as a page with no artwork, no play button, or a wrong count.
+    assert set(latest) >= {"total", "total_fr", "total_he",
+                           "channels", "speakers", "episodes"}
+    assert latest["total_fr"] + latest["total_he"] == latest["total"]
+    assert latest["episodes"] and latest["channels"]
+    assert len(latest["episodes"]) <= latest["total"]
+    dates = [r["published"] for r in latest["episodes"]]
+    assert dates == sorted(dates, reverse=True)
+    for r in latest["episodes"]:
+        assert set(r) >= {"slug", "ch_name", "title", "published", "url",
+                          "video_id", "duration_secs", "lang"}
+        assert r["url"].endswith(".html")
+        assert r["lang"] in ("fr", "he")
+        assert "HITAT DU JOUR" not in r["title"].upper()
+
+
+def test_latest_index_episode_urls_exist(latest):
+    # Same guard as home.json below: a row pointing at a page that was never
+    # generated is a 404 in the visitor's very first screen.
+    for r in random.sample(latest["episodes"], min(40, len(latest["episodes"]))):
+        assert (ROOT / r["url"]).exists(), f"missing episode page: {r['url']}"
 
 
 def test_search_index_valid_shape(search_index):

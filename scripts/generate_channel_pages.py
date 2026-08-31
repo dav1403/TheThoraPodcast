@@ -1810,6 +1810,152 @@ def build_home_json(
     print(f"  home.json  ({len(recents_out)} recents, {len(channels_out)} channels, {len(speakers_out)} speakers)")
 
 
+LATEST_INDEX_COUNT = 1200
+
+
+def build_latest_index(
+    all_data: list[tuple],
+    speakers: list[dict],
+    entries_cache: dict,
+) -> None:
+    """Pre-compute latest.json — the index derniers-cours.html consumes instead
+    of downloading every per-channel feed at load.
+
+    Measured on 31/08/2026, the page fetched the 22 `feeds/<slug>.entries.json`
+    on boot: **33 672 889 bytes raw / 4 573 683 bytes gzipped** for a first
+    screen of 30 rows. Same idea as build_home_json, one notch bigger: the page
+    is a *chronological* list, so it needs a real depth of history, not the 20
+    rows of home.json.
+
+    Contract with the page (see the boot block of derniers-cours.html):
+      - `episodes` = the LATEST_INDEX_COUNT newest classes of the whole site,
+        HITAT DU JOUR excluded (those live on hitat.html and the page has always
+        dropped them), newest first, each row carrying everything the list item
+        needs — including `url` (identical to ep_path) and `audio_url` so a class
+        can be played without a second request.
+      - `sp` = the slugs of the manually-added rabbis this class matches. The
+        page used to recompute this in the browser from speakers.json patterns;
+        pre-computing it keeps a single source of truth for the matching.
+      - `lang` = course language (scripts/lang_detect.py) so the course-language
+        preference filters the rows without a per-channel fallback lookup.
+      - `channels` / `speakers` = the chip rows, with `count`/`count_fr`/
+        `count_he` **excluding HITAT** so a chip is hidden exactly when the page
+        would have nothing to show under the active language.
+      - `title_patterns` / `from_channels` are kept on the speaker rows: when the
+        visitor picks a chip the page lazy-loads that rav's full feed, and it has
+        to tag those entries the same way this function did.
+      - `total` / `total_fr` / `total_he` = the real catalogue size, so the page
+        keeps announcing "31 624 cours" and not the size of this index.
+
+    A chip therefore covers the WHOLE catalogue: picking one lazy-loads that
+    single feed (~1 MB) instead of the 22.
+    """
+    by_slug = {ch["slug"]: ch for ch, _ in all_data}
+
+    # Which manually-added rabbi(s) a class belongs to. Same rule as
+    # build_home_json / the page: patterns are matched inside the host channel
+    # only (a pattern like "elie lemmel" is only meaningful in `lev`).
+    sp_by_channel: dict[str, list[dict]] = {}
+    for sp in speakers:
+        for ch_slug in sp.get("from_channels", []):
+            sp_by_channel.setdefault(ch_slug, []).append(sp)
+
+    def matched_speakers(ch_slug: str, title: str) -> list[str]:
+        return [sp["slug"] for sp in sp_by_channel.get(ch_slug, [])
+                if speaker_matches(title or "", sp["title_patterns"])]
+
+    # Flatten, dropping HITAT — every count below is computed on this same
+    # HITAT-free view, so the chips, the totals and the list can never disagree.
+    flat: list[tuple[dict, dict, str]] = []
+    channels_out = []
+    for ch, entries in all_data:
+        per_lang = Counter()
+        kept = 0
+        for ep in entries:
+            if _HITAT_RE.search(ep.get("title") or ""):
+                continue
+            lang = episode_lang(ep, ch)
+            per_lang[lang] += 1
+            kept += 1
+            flat.append((ch, ep, lang))
+        channels_out.append({
+            "slug": ch["slug"],
+            "name": ch["podcast_author"],
+            "podcast_language": ch.get("podcast_language", "fr"),
+            "count": kept,
+            "count_fr": per_lang["fr"],
+            "count_he": per_lang["he"],
+        })
+
+    flat.sort(key=lambda cel: cel[1].get("published", ""), reverse=True)
+
+    episodes_out = []
+    for ch, ep, lang in flat[:LATEST_INDEX_COUNT]:
+        row = {
+            "slug": ch["slug"],
+            "ch_name": ch["podcast_author"],
+            "title": ep.get("title", ""),
+            "published": ep.get("published", ""),
+            "thumbnail": ep.get("thumbnail", ""),
+            "audio_url": ep.get("audio_url", ""),
+            "video_id": ep.get("video_id", ""),
+            "url": ep_path(ch["slug"], ep),
+            # The list shows description.slice(0, 200); shipping more would be
+            # dead weight on every visitor.
+            "description": (ep.get("description") or "")[:200],
+            "duration_secs": ep.get("duration_secs", 0) or 0,
+            "lang": lang,
+        }
+        sp_slugs = matched_speakers(ch["slug"], row["title"])
+        if sp_slugs:
+            row["sp"] = sp_slugs
+        episodes_out.append(row)
+
+    speakers_out = []
+    for sp in speakers:
+        per_lang = Counter()
+        kept = 0
+        for ch_slug in sp.get("from_channels", []):
+            ch = by_slug.get(ch_slug)
+            for ep in entries_cache.get(ch_slug, []):
+                if _HITAT_RE.search(ep.get("title") or ""):
+                    continue
+                if not speaker_matches(ep.get("title", ""), sp["title_patterns"]):
+                    continue
+                per_lang[episode_lang(ep, ch)] += 1
+                kept += 1
+        if not kept:
+            continue
+        speakers_out.append({
+            "slug": sp["slug"],
+            "name": sp["name"],
+            "from_channels": sp.get("from_channels", []),
+            "title_patterns": sp["title_patterns"],
+            # Guests have no artwork of their own — the chip borrows the host
+            # channel's, exactly as the page did client-side.
+            "art_slug": (sp.get("from_channels") or [sp["slug"]])[0],
+            "count": kept,
+            "count_fr": per_lang["fr"],
+            "count_he": per_lang["he"],
+        })
+
+    payload = {
+        "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "total": len(flat),
+        "total_fr": sum(c["count_fr"] for c in channels_out),
+        "total_he": sum(c["count_he"] for c in channels_out),
+        "channels": channels_out,
+        "speakers": speakers_out,
+        "episodes": episodes_out,
+    }
+    Path("latest.json").write_text(
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8", newline="\n",
+    )
+    print(f"  latest.json  ({len(episodes_out)} episodes of {len(flat)}, "
+          f"{len(channels_out)} channels, {len(speakers_out)} speakers)")
+
+
 def build_search_index(all_data: list[tuple]) -> None:
     """Pre-compute a minimal full-text search index over the WHOLE catalog.
 
@@ -2146,6 +2292,10 @@ def main():
 
     # Pre-computed homepage data (replaces the client-side ~11 MB entries.json fan-out).
     build_home_json(all_data, speakers, entries_cache, site_channels, site_episodes)
+
+    # Pre-computed chronological index for derniers-cours.html (replaces the
+    # 22 entries.json the page downloaded on boot).
+    build_latest_index(all_data, speakers, entries_cache)
 
     # Minimal full-text search index over the whole catalog (lazy-loaded by index.html
     # only on first search focus/keystroke — keeps the homepage at ~15 KB at load).

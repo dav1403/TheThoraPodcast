@@ -632,8 +632,55 @@
         x.ch.name.toLowerCase().includes(q) ||
         (x.ep.description || '').toLowerCase().includes(q)
       );
+      // latest.json only holds the newest classes, so a search limited to it
+      // would silently stop finding older ones. search-index.json (the very file
+      // index.html lazy-loads, fetched only once the visitor actually types)
+      // covers the whole catalogue. Skipped when a rav chip is active: his full
+      // feed is already loaded and those rows are richer.
+      if (activeFilter === 'all') flat = flat.concat(searchIndexMatches(q));
+      flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
     }
     return flat;
+  }
+
+  // -- Whole-catalogue title search (lazy) ------------------------------------
+  // search-index.json rows: t = title, c = rav display name, u = episode page
+  // URL, d = YYYY-MM-DD, l = course language.
+  let searchIdx = null, searchIdxPending = false;
+  function ensureSearchIndex() {
+    if (searchIdx || searchIdxPending) return;
+    searchIdxPending = true;
+    fetch('search-index.json')
+      .then(r => r.ok ? r.json() : [])
+      .catch(() => [])
+      .then(rows => { searchIdx = rows; searchIdxPending = false; renderList(); });
+  }
+
+  const SEARCH_EXTRA_MAX = 500;
+  function searchIndexMatches(q) {
+    // These rows carry no duration, so they cannot honour the duration chips --
+    // rather than guess, the fallback stands down while one is active.
+    if (!searchIdx || activeDurFilter !== 'all') return [];
+    // Seeded with what is already loaded, then grown as rows are emitted: the
+    // catalogue really does hold classes sharing a title and a date, and
+    // ep_path() maps both to the same page.
+    const seen = new Set(window._urls || []);
+    const out = [];
+    for (const r of searchIdx) {
+      if (out.length >= SEARCH_EXTRA_MAX) break;
+      if (seen.has(r.u)) continue;
+      if (HITAT_RE.test(r.t || '')) continue;
+      if (!(r.t || '').toLowerCase().includes(q) && !(r.c || '').toLowerCase().includes(q)) continue;
+      const ch = chByName.get(r.c) || { slug: '', name: r.c || '' };
+      if (!courseLangKeeps(r, ch)) continue;
+      // Deliberately partial row: the index carries no thumbnail, duration nor
+      // audio URL. renderEpisodeItem already degrades gracefully (placeholder
+      // artwork, no play button) and the title links to the episode page, which
+      // has its own player.
+      seen.add(r.u);
+      out.push({ ep: { title: r.t, published: r.d, url: r.u, duration_secs: 0 }, ch: ch, speakers: [] });
+    }
+    return out;
   }
 
   // The playing button is destroyed on every re-render (innerHTML). Re-attach to
@@ -660,7 +707,7 @@
     if (!slice.length) {
       // Never a blank page: while the rest of the catalog is still streaming in,
       // "no episode" would be a lie — say "loading" instead.
-      if (!catalogLoaded) {
+      if (!catalogLoaded || pendingFeeds) {
         app.innerHTML = `<div class="state loading">${t('loading')}</div>`;
         return;
       }
@@ -709,7 +756,10 @@
     for (const ep of entries || []) {
       if (!ep || HITAT_RE.test(ep.title || '')) continue;
       const item = { ep, ch };
-      item.speakers = speakers
+      // latest.json rows already carry their matched rabbis (`sp`); entries
+      // pulled straight from a feed are matched here, with the very patterns
+      // build_latest_index used server-side.
+      item.speakers = ep.sp || speakers
         .filter(sp => (sp.from_channels || []).includes(ch.slug) && speakerMatch(ep.title, sp.title_patterns))
         .map(sp => sp.slug);
       epStore.set(ep.video_id || (ch.slug + '|' + ep.published + '|' + ep.title), item);
@@ -720,40 +770,87 @@
     const flat = Array.from(epStore.values());
     flat.sort((a, b) => new Date(b.ep.published) - new Date(a.ep.published));
     window._flat = flat;
+    // Episode-page URLs of everything already loaded -- the only key shared with
+    // search-index.json rows (they carry no video_id), so it is what keeps a
+    // class from showing up twice in a search.
+    window._urls = new Set(flat.map(x => epHref(x.ep, x.ch.slug)));
   }
 
-  // Repainting on each of the ~37 feed arrivals would thrash the list the user
-  // is reading; one repaint every 700 ms is enough to feel live.
-  let renderTimer = null;
-  function scheduleRender() {
-    if (renderTimer) return;
-    renderTimer = setTimeout(() => { renderTimer = null; rebuildFlat(); renderList(); }, 700);
-  }
-
+  // The page holds only the newest slice of the catalogue, so the count comes
+  // from the pre-computed totals of latest.json -- and follows the
+  // course-language preference like every other count on the site.
   function setSubtitle() {
-    const n = epStore.size;
-    const suffix = catalogLoaded ? '' : ' · ' + t('loading_catalog');
+    const n = indexMeta ? courseLangCount(indexMeta, 'total') : epStore.size;
+    const suffix = (catalogLoaded && !pendingFeeds) ? '' : ' · ' + t('loading_catalog');
     document.getElementById('page-subtitle').textContent = (lang === 'he'
       ? `${n} שיעורים מכל הרבנים, לפי סדר פרסום`
       : (lang === 'en' ? `${n} classes from all rabbis, by publication order`
                        : `${n} cours de tous les rabbins, par ordre de publication`)) + suffix;
   }
 
-  // ─── Boot ──────────────────────────────────────────────────────────────────
-  // Two phases, deliberately. This page used to await ~30 MB of per-channel
-  // feeds before painting a single row, so the visitor stared at a spinner for
-  // the whole download. Now:
-  //   1. home.json (~8 KB gzipped) carries the 20 newest classes of the entire
-  //      site, course language already baked in — enough to fill the first
-  //      screen immediately;
-  //   2. the feeds then stream in behind that first paint, channel by channel,
-  //      each one merging into the list, adding its chip and bumping the count.
-  //      Search, filters and "voir plus" work throughout.
+  // -- Chips, lazy histories --------------------------------------------------
+  const chBySlug = new Map();
+  const chByName = new Map();
+  let indexMeta = null;
+  // Number of full feeds currently in flight; while > 0 the list says "loading"
+  // rather than "no episode".
+  let pendingFeeds = 0;
+
+  function addChip(slug, name, artSlug) {
+    const btn = document.createElement('button');
+    btn.className = 'filter-chip';
+    btn.dataset.slug = slug;
+    btn.innerHTML = `<img src="artwork/thumb/${escapeHtml(artSlug)}.webp" alt="" onerror="if(this.dataset.fb){this.onerror=null;this.style.display='none'}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(artSlug)}.png'}"> ${escapeHtml(name)}`;
+    document.getElementById('filter-row').appendChild(btn);
+  }
+
+  const fullyLoaded = new Set();
+
+  // Full history behind a chip. For a channel that is its own feed; for a
+  // manually-added rabbi it is the host channel(s) he was extracted from --
+  // loading those lets addEpisodes tag his classes exactly as
+  // build_latest_index did, and keeps every row attached to its real channel.
+  async function ensureFullHistory(slug) {
+    const sp = speakers.find(s => s.slug === slug);
+    const wanted = sp ? (sp.from_channels || []) : [slug];
+    const todo = wanted.filter(s => !fullyLoaded.has(s) && chBySlug.has(s));
+    if (!todo.length) return;
+    todo.forEach(s => fullyLoaded.add(s));
+    pendingFeeds += todo.length;
+    setSubtitle();
+    renderList();
+    try {
+      await Promise.all(todo.map(async s => {
+        const ch = chBySlug.get(s);
+        let entries = [];
+        // fetchChannelEntries (js/utils.js) applies the course-language
+        // preference, so the list and the counts follow from here.
+        try { entries = await fetchChannelEntries(ch); } catch (_) { entries = []; }
+        addEpisodes(ch, entries);
+      }));
+    } finally {
+      pendingFeeds -= todo.length;
+    }
+    rebuildFlat();
+    setSubtitle();
+    renderList();
+  }
+
+  // -- Boot -------------------------------------------------------------------
+  // This page used to download the 22 `feeds/<slug>.entries.json` before it
+  // could paint a single row -- 33 672 889 bytes raw / 4 573 683 gzipped,
+  // measured 31/08/2026, for a first screen of 30 items. It now reads
+  // `latest.json`, the pre-computed chronological index written by
+  // build_latest_index() (scripts/generate_channel_pages.py): the newest
+  // classes of the whole site, the chips with their real catalogue counts, and
+  // the real totals. Anything beyond that is fetched only if the visitor asks
+  // for it -- one rav's feed when he picks a chip, search-index.json when he
+  // types.
   (async () => {
     const app = document.getElementById('app');
     const filterRow = document.getElementById('filter-row');
 
-    // Controls are wired first: they must already work on the seed rows.
+    // Controls are wired first: they must already work on the index rows.
     filterRow.addEventListener('click', e => {
       const chip = e.target.closest('.filter-chip');
       if (!chip) return;
@@ -761,6 +858,9 @@
       visibleCount = PAGE_SIZE;
       filterRow.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c === chip));
       renderList();
+      // A chip must show that rav's WHOLE history, not just the slice of him
+      // that happened to land in the index.
+      if (activeFilter !== 'all') ensureFullHistory(activeFilter);
     });
 
     const searchEl = document.getElementById('search');
@@ -770,110 +870,56 @@
       searchTimer = setTimeout(() => {
         searchQuery  = searchEl.value.trim();
         visibleCount = PAGE_SIZE;
+        if (searchQuery && activeFilter === 'all') ensureSearchIndex();
         renderList();
       }, 200);
     });
 
-    // ── Phase 1: instant paint from home.json ────────────────────────────────
+    let idx = null;
     try {
-      const hres = await fetch('home.json');
-      if (hres.ok) {
-        const home = await hres.json();
-        for (const r of (home.recents || [])) {
-          const ch = { slug: r.slug, name: r.ch_name };
-          // Same course-language rule as fetchChannelEntries, applied here to
-          // the `lang` these rows already carry.
-          if (courseLangKeeps(r, ch)) addEpisodes(ch, [r]);
-        }
-        if (epStore.size) { rebuildFlat(); setSubtitle(); renderList(); }
-      }
+      const res = await fetch('latest.json');
+      if (res.ok) idx = await res.json();
     } catch (_) {}
 
-    // ── Phase 2: the real catalog, behind that first paint ───────────────────
-    let channels = [];
-    try {
-      const res = await fetch('channels.json');
-      if (res.ok) {
-        channels = (await res.json())
-          .filter(ch => ch.enabled)
-          .map(ch => ({ slug: ch.slug, name: ch.podcast_author, platforms: ch.platforms || {}, podcast_language: ch.podcast_language }));
-      }
-    } catch (_) {}
-
-    // Manually-added rabbis (extracted from aggregator channels like lev / rav-shimshone-attali)
-    try {
-      const sres = await fetch('speakers.json');
-      if (sres.ok) speakers = await sres.json();
-    } catch (_) {}
-
-    if (!channels.length) {
+    if (!idx) {
       catalogLoaded = true;
-      if (!epStore.size) app.innerHTML = `<div class="state">${t('no_episodes')}</div>`;
-      else { setSubtitle(); renderList(); }
+      app.innerHTML = `<div class="state">${t('no_episodes')}</div>`;
       return;
     }
+
+    indexMeta = idx;
+    speakers  = idx.speakers || [];
+    for (const ch of (idx.channels || [])) { chBySlug.set(ch.slug, ch); chByName.set(ch.name, ch); }
+
+    for (const row of (idx.episodes || [])) {
+      const ch = chBySlug.get(row.slug) || { slug: row.slug, name: row.ch_name };
+      if (courseLangKeeps(row, ch)) addEpisodes(ch, [row]);
+    }
+
+    catalogLoaded = true;
+    rebuildFlat();
+    setSubtitle();
+    renderList();
 
     // Populate nav submenu
     const sub = document.getElementById('nav-rabbis-submenu');
     if (sub) {
-      sub.innerHTML = channels.map(ch =>
+      sub.innerHTML = (idx.channels || []).map(ch =>
         `<a href="${escapeHtml(ch.slug)}.html">${escapeHtml(ch.name)}</a>`
       ).join('') + `<a href="rabbins.html" class="nav-submenu-all">${t('nav_all_rabbis')}</a>`;
     }
 
-    // Chips appear as their channel lands. A channel with nothing left in the
-    // chosen course language never gets one — a chip that always yields "no
-    // episode" is just noise.
-    const chipDone = new Set();
-    function addChannelChip(ch) {
-      if (!ch || chipDone.has(ch.slug)) return;
-      chipDone.add(ch.slug);
-      const btn = document.createElement('button');
-      btn.className = 'filter-chip';
-      btn.dataset.slug = ch.slug;
-      btn.innerHTML = `<img src="artwork/thumb/${escapeHtml(ch.slug)}.webp" alt="" onerror="if(this.dataset.fb){this.onerror=null;this.style.display='none'}else{this.dataset.fb='1';this.src='artwork/${escapeHtml(ch.slug)}.png'}"> ${escapeHtml(ch.name)}`;
-      filterRow.appendChild(btn);
+    // Chips. The counts are pre-computed over the whole catalogue, so the list
+    // no longer depends on what happens to be loaded -- and a rav with nothing
+    // in the chosen course language still never gets one (a chip that can only
+    // answer "no episode" is noise).
+    for (const ch of (idx.channels || [])) {
+      if (courseLangCount(ch, 'count')) addChip(ch.slug, ch.name, ch.slug);
     }
-
-    // Bounded parallelism: enough to saturate the link, few enough that the
-    // first channels land (and repaint) early instead of all at the very end.
-    const CONCURRENCY = 6;
-    let nextChannel = 0;
-    async function feedWorker() {
-      while (nextChannel < channels.length) {
-        const ch = channels[nextChannel++];
-        let entries = [];
-        // fetchChannelEntries (js/utils.js) applies the course-language
-        // preference, so the list, the total and the chips all follow from here.
-        try { entries = await fetchChannelEntries(ch); } catch (_) { entries = []; }
-        if (!entries.length) continue;
-        addEpisodes(ch, entries);
-        addChannelChip(ch);
-        setSubtitle();
-        scheduleRender();
-      }
+    // Guests have no artwork of their own -- the chip borrows the host channel's.
+    for (const sp of (idx.speakers || [])) {
+      if (courseLangCount(sp, 'count')) addChip(sp.slug, sp.name, sp.art_slug || sp.slug);
     }
-    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, channels.length) }, feedWorker));
-
-    // Speaker chips (manually-added rabbis) — only those with matching episodes.
-    // Uses the source channel's artwork (speakers have no own artwork).
-    const speakerCounts = {};
-    for (const x of epStore.values()) for (const s of (x.speakers || [])) speakerCounts[s] = (speakerCounts[s] || 0) + 1;
-    for (const sp of speakers) {
-      if (!speakerCounts[sp.slug]) continue;
-      const btn = document.createElement('button');
-      btn.className = 'filter-chip';
-      btn.dataset.slug = sp.slug;
-      const art = `artwork/thumb/${escapeHtml((sp.from_channels || [])[0] || sp.slug)}.webp`;
-      btn.innerHTML = `<img src="${art}" alt="" onerror="this.style.display='none'"> ${escapeHtml(sp.name)}`;
-      filterRow.appendChild(btn);
-    }
-
-    catalogLoaded = true;
-    if (renderTimer) { clearTimeout(renderTimer); renderTimer = null; }
-    rebuildFlat();
-    setSubtitle();
-    renderList();
   })();
 </script>
 
