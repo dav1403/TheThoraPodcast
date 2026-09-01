@@ -1573,6 +1573,12 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 
 
 HOME_RECENTS_COUNT = 20
+# Guest speakers teach on their HOST rav's channel, so they rarely reach the 20
+# `recents` rows. "Mon fil" therefore also reads `speaker_recents`: the N latest
+# classes of EACH speaker so following a guest always shows something.
+# Measured on 01/09/2026: 15 speakers x 3 = 45 rows, 28 046 bytes raw, taking
+# home.json from 40 849 to 69 364 bytes raw / 8 256 to 12 256 bytes gzipped.
+HOME_SPEAKER_RECENTS_COUNT = 3
 _HITAT_RE = re.compile(r"HITAT DU JOUR", re.IGNORECASE)
 
 
@@ -1647,6 +1653,12 @@ def build_home_json(
         excluded, sorted by `published` desc; URL identical to epUrl(ep, slug)
       - speakers = only those with >=1 matched episode; img = most-recent matched
         thumbnail (repImg)
+      - recents/speaker_recents rows carry `speakerSlug` (the guest teaching that
+        class, or null): a guest publishes on the HOST rav's channel, so `slug`
+        alone makes a followed guest invisible in "Mon fil"
+      - speaker_recents = the HOME_SPEAKER_RECENTS_COUNT latest classes of EACH
+        speaker (same row shape as recents), because a guest rarely reaches the
+        top-20 recents
       - stats.channels = channels + speakers count (matches renderStats today)
       - stats.episodes = total episodes across channels
       - every channel AND speaker entry also carries its LAST class
@@ -1691,9 +1703,20 @@ def build_home_json(
             flat.append((ch, ep))
     flat.sort(key=lambda ce: ce[1].get("published", ""), reverse=True)
 
-    recents_out = []
-    for ch, ep in flat[:HOME_RECENTS_COUNT]:
-        recents_out.append({
+    # A guest's class is published on the HOST rav's channel, so its `slug` is the
+    # host's: someone following the guest would never see it. Tag every row with
+    # the guest it matches, using the SAME speaker_matches() the speaker pages and
+    # write_speaker_feed() use — never a second heuristic.
+    def _speaker_slug_for(ch_slug: str, title: str) -> str | None:
+        for sp in speakers:
+            if ch_slug in sp.get("from_channels", []) and speaker_matches(
+                title or "", sp["title_patterns"]
+            ):
+                return sp["slug"]
+        return None
+
+    def _ep_row(ch: dict, ep: dict, speaker_slug: str | None = None) -> dict:
+        return {
             "slug": ch["slug"],
             "ch_name": ch["podcast_author"],
             "title": ep.get("title", ""),
@@ -1704,13 +1727,20 @@ def build_home_json(
             "url": ep_path(ch["slug"], ep),
             "duration_secs": ep.get("duration_secs", 0) or 0,
             "lang": episode_lang(ep, ch),
-        })
+            "speakerSlug": speaker_slug,
+        }
+
+    recents_out = []
+    for ch, ep in flat[:HOME_RECENTS_COUNT]:
+        recents_out.append(_ep_row(ch, ep, _speaker_slug_for(ch["slug"], ep.get("title", ""))))
 
     # Speakers with >=1 matched episode; repImg = most-recent matched thumbnail.
     speakers_out = []
+    speaker_recents = []
     by_slug = {c["slug"]: c for c, _ in all_data}
     for sp in speakers:
         matched = []
+        matched_src = []   # (host channel, episode) — needed to build speaker_recents
         sp_pairs = []
         sp_lang = Counter()
         for ch_slug in sp.get("from_channels", []):
@@ -1718,6 +1748,8 @@ def build_home_json(
                 if speaker_matches(ep.get("title", ""), sp["title_patterns"]):
                     lang = episode_lang(ep, by_slug.get(ch_slug))
                     matched.append(ep)
+                    if by_slug.get(ch_slug) and not _HITAT_RE.search(ep.get("title") or ""):
+                        matched_src.append((by_slug[ch_slug], ep))
                     sp_pairs.append((ep, lang))
                     sp_lang[lang] += 1
         if not matched:
@@ -1739,6 +1771,12 @@ def build_home_json(
         # these very episodes (write_speaker_feed).
         sp_entry.update(_last_class_block(sp_pairs))
         speakers_out.append(sp_entry)
+
+        # The N latest classes of this guest, same row shape as `recents`, so
+        # "Mon fil" can merge both lists and dedupe on `url`.
+        matched_src.sort(key=lambda ce: ce[1].get("published", ""), reverse=True)
+        for host_ch, ep in matched_src[:HOME_SPEAKER_RECENTS_COUNT]:
+            speaker_recents.append(_ep_row(host_ch, ep, sp["slug"]))
 
     # Spotlight "Découvrez le rav" — mirror the social "Zoom Rabbi" round-robin so
     # the homepage features the SAME rav currently promoted on Facebook/Instagram.
@@ -1801,13 +1839,15 @@ def build_home_json(
         "channels": channels_out,
         "speakers": speakers_out,
         "recents": recents_out,
+        "speaker_recents": speaker_recents,
         "spotlight": spotlight,
     }
     Path("home.json").write_text(
         json.dumps(home, ensure_ascii=False) + "\n",
         encoding="utf-8", newline="\n",
     )
-    print(f"  home.json  ({len(recents_out)} recents, {len(channels_out)} channels, {len(speakers_out)} speakers)")
+    print(f"  home.json  ({len(recents_out)} recents, {len(speaker_recents)} speaker recents, "
+          f"{len(channels_out)} channels, {len(speakers_out)} speakers)")
 
 
 LATEST_INDEX_COUNT = 1200

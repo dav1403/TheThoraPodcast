@@ -602,6 +602,7 @@
       listen_note:'Écoute directe sur le site — aucun abonnement ni application requis.',
       search_ph:'Rechercher un épisode ou un rav…',
       recents:'Derniers épisodes',
+      myfeed:'Mon fil',
       listen:'Écouter', playing:'En cours…', loading:'Chargement…',
       no_results:'Aucun épisode trouvé.', no_episodes:'Aucun épisode disponible.', no_channels:'Aucune chaîne disponible.',
       copied:'Lien copié !',
@@ -618,6 +619,7 @@
       listen_note:'Listen right here on the site — no subscription or app needed.',
       search_ph:'Search for an episode or a rabbi…',
       recents:'Latest episodes',
+      myfeed:'My feed',
       listen:'Listen', playing:'Playing…', loading:'Loading…',
       no_results:'No episodes found.', no_episodes:'No episodes available.', no_channels:'No channels available.',
       copied:'Link copied!',
@@ -634,6 +636,7 @@
       listen_note:'האזנה ישירה באתר — ללא צורך במנוי או אפליקציה.',
       search_ph:'חיפוש פרק או רב…',
       recents:'פרקים אחרונים',
+      myfeed:'הפיד שלי',
       listen:'האזן', playing:'מתנגן…', loading:'טוען…',
       no_results:'לא נמצאו פרקים.', no_episodes:'אין פרקים זמינים.', no_channels:'אין ערוצים זמינים.',
       copied:'הקישור הועתק!',
@@ -718,6 +721,8 @@
   let channels = [];   // [{ slug, name, count }]
   let speakers = [];   // [{ slug, name, img }]  (only speakers with >=1 episode)
   let recents  = [];   // [{ slug, ch_name, title, published, thumbnail, audio_url, video_id, url, duration_secs }]
+  let speakerRecents = []; // same row shape as `recents`, N latest classes per GUEST speaker
+  let myFeed  = [];    // "Mon fil" rows currently rendered (index = data-fidx)
   let spotlightData = null; // { slug, name, count, description, episodes:[…] } — featured rav (mirrors social Zoom Rabbi)
   // The bar itself (markup, CSS, play/pause, ±15/+30, speed, progress, resume
   // memory, Media Session) is owned by TTPPlayer in js/utils.js.
@@ -761,6 +766,15 @@
       const ep  = recents[idx];
       if (ep) loadInPlayer(ep, ep.ch_name, ep.slug);
     }
+  });
+
+  // "Mon fil" cards index into myFeed, not recents (different, merged list).
+  document.addEventListener('click', e => {
+    const card = e.target.closest('.recent-card[data-fidx]');
+    if (!card) return;
+    if (e.target.closest('a')) return; // let the title link navigate
+    const ep = myFeed[+card.dataset.fidx];
+    if (ep) loadInPlayer(ep, ep.ch_name, ep.slug);
   });
 
   // Hero + any [data-play] trigger plays recents[idx] straight from home.json.
@@ -889,6 +903,55 @@
       + `<div style="margin-top:12px"><a href="derniers-cours.html" style="font-size:.82rem;color:#e87722;text-decoration:none;font-weight:600">${lang === 'he' ? 'כל השיעורים האחרונים →' : (lang === 'en' ? 'See all latest classes →' : 'Voir tous les derniers cours →')}</a></div>`;
     return wrap;
   }
+
+  // "Mon fil" — the latest classes of the ravs the visitor follows (localStorage
+  // `ttp_favorite_ravs`, the same stars as rabbins.html; see js/utils.js).
+  // A GUEST teaches on the HOST rav's channel, so a row's `slug` is the host's:
+  // matching on `slug` alone made a followed guest invisible. Every row now also
+  // carries `speakerSlug` (build_home_json), and `speaker_recents` supplies the
+  // guest classes that never reach the top-20 recents.
+  const MYFEED_MAX = 12;
+  function buildMyFeed() {
+    const favs = (typeof getFavoriteRavs === 'function') ? getFavoriteRavs() : [];
+    if (!favs.length) return null;
+    const seen = new Set();
+    myFeed = [].concat(recents, speakerRecents)
+      .filter(ep => favs.indexOf(ep.slug) !== -1 ||
+                    (ep.speakerSlug && favs.indexOf(ep.speakerSlug) !== -1))
+      .filter(ep => { if (seen.has(ep.url)) return false; seen.add(ep.url); return true; })
+      .sort((a, b) => (b.published || '').localeCompare(a.published || ''))
+      .slice(0, MYFEED_MAX);
+    if (!myFeed.length) return null;
+    const cards = myFeed.map((ep, i) => `
+      <div class="recent-card" data-ep-dur="${ep.duration_secs || 0}" data-fidx="${i}">
+        <img ${imgChain([ep.thumbnail, artThumb(ep.slug), artFull(ep.slug)])} alt=""
+             loading="lazy">
+        <div class="recent-card-body">
+          <div class="recent-card-ch">${escapeHtml(ep.ch_name)}</div>
+          <a class="recent-card-title" href="${escapeHtml(ep.url)}">${escapeHtml(ep.title)}</a>
+          <div class="recent-card-date">${formatDate(ep.published)}</div>
+        </div>
+      </div>`).join('');
+
+    const wrap = document.createElement('div');
+    wrap.id = 'myfeed-section';
+    wrap.innerHTML = `<div class="section-label">${t('myfeed')}</div>`
+      + `<div class="recents-row">${cards}</div>`;
+    return wrap;
+  }
+
+  // Re-rendered in place whenever a star is toggled anywhere on the page.
+  function renderMyFeed() {
+    const app = document.getElementById('app');
+    if (!app) return;
+    const existing = document.getElementById('myfeed-section');
+    if (existing) existing.remove();
+    const section = buildMyFeed();
+    if (!section) return;
+    const anchor = document.getElementById('recents-section');
+    if (anchor) app.insertBefore(section, anchor); else app.appendChild(section);
+  }
+  document.addEventListener('favchange', renderMyFeed);
 
   // Channel grid: link to each channel page with its episode count. Replaces the
   // former per-channel episode lists (deep content now lives on <slug>.html pages).
@@ -1289,6 +1352,7 @@
         speakers = (home.speakers || []).filter(sp =>
           !courseLangFiltering() || sp.count === undefined || courseLangCount(sp, 'count') > 0);
         recents  = (home.recents || []).filter(ep => courseLangKeeps(ep));
+        speakerRecents = (home.speaker_recents || []).filter(ep => courseLangKeeps(ep));
         spotlightData = home.spotlight || null;
         if (spotlightData) {
           spotlightData = Object.assign({}, spotlightData, {
@@ -1328,6 +1392,9 @@
     if (heroSection) app.appendChild(heroSection);
 
     app.appendChild(buildRecents());
+
+    // Sits ABOVE the generic recents row — it is the personalised one.
+    renderMyFeed();
 
     const spotlightSection = buildSpotlight();
     if (spotlightSection) app.appendChild(spotlightSection);
