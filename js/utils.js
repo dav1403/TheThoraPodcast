@@ -234,6 +234,25 @@ function fetchChannelEntries(ch) {
     .then(function (entries) { return filterEntriesByCourseLang(entries, chRec); });
 }
 
+// ─── home.json — ONE shared, memoised load per page ──────────────────────────
+// `home.json` is the pre-built digest of the whole catalogue (stats, channels,
+// speakers, recents, spotlight). Several consumers on the same page want it
+// (the header line here, plus the page's own boot code), so it is fetched once
+// and the promise is shared — two callers never mean two requests.
+//
+// Absolute path for the same reason as TTP_SETTINGS_URL: this file is also
+// loaded from episode pages one directory down (`../js/utils.js`).
+var TTP_HOME_URL = '/home.json';
+var _ttpHomePromise = null;
+function fetchHomeJson() {
+  if (!_ttpHomePromise) {
+    _ttpHomePromise = fetch(TTP_HOME_URL)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+  return _ttpHomePromise;
+}
+
 // Pick the count matching the active preference out of a precomputed record
 // carrying `<base>`, `<base>_fr` and `<base>_he` (home.json stats/channels/
 // spotlight, mobile manifest totals). Falls back to the total when the
@@ -1085,27 +1104,71 @@ function _buildMobileNav() {
   }
 })();
 
-// Auto-load header stats if #header-stats exists and isn't already populated
-(function loadHeaderStats() {
+// ─── Header line ("37 rabbins · 32 428 cours · ~24 321h de Torah") ───────────
+// SINGLE rule, shared by this auto-loader and by index.html's own boot, so the
+// two can never print different numbers for the same page.
+//
+// `stats.channels` counts channels AND speakers (37 vs 22 channels), so the
+// baked figure is kept as-is when no course-language filter is active. Under a
+// filter it would be a lie ("37 rabbins · 5 099 cours"), so the ravs who have
+// nothing left in that language are dropped — speakers are kept when home.json
+// carries no per-language count for them, rather than wrongly hiding a rav.
+function homeHeaderStats(home) {
+  if (!home) return null;
+  var stats = home.stats || {};
+  var nEp = courseLangCount(stats, 'episodes');
+  var nCh;
+  if (window.TTPPrefs.courseLang() === 'all') {
+    nCh = stats.channels || 0;
+  } else {
+    nCh = (home.channels || []).filter(function (ch) {
+      return courseLangCount(ch, 'count') > 0;
+    }).length + (home.speakers || []).filter(function (sp) {
+      return sp.count === undefined || courseLangCount(sp, 'count') > 0;
+    }).length;
+  }
+  return { channels: nCh, episodes: nEp };
+}
+
+function headerStatsText(nCh, nEp) {
+  var totalH = Math.round(nEp * 0.75);
+  var lang = window.TTPPrefs.uiLang();
+  return lang === 'he'
+    ? nCh + ' ערוצים · ' + nEp + ' שיעורים · ~' + totalH + ' שעות'
+    : (lang === 'en' ? nCh + ' rabbis · ' + nEp + ' classes · ~' + totalH + 'h of Torah'
+                     : nCh + ' rabbins · ' + nEp + ' cours · ~' + totalH + 'h de Torah');
+}
+
+// Auto-load header stats if #header-stats exists and isn't already populated.
+//
+// ⚠️ This used to download `channels.json` + the 22 `feeds/*.entries.json`
+// (~33 MB, 23 requests) just to compose ONE line of text — on index.html, the
+// most visited page of the site, whose own boot then overwrote that text with
+// the very same numbers read from home.json. It now reads the pre-computed
+// digest only (~12 KB gzip, and shared with the page's own load, so in practice
+// zero extra request on index.html).
+//
+// Deferred to DOMContentLoaded on purpose: the ~52 generated pages bake their
+// own figure from an inline script that runs AFTER this file, so checking at
+// parse time saw an empty node and fetched for nothing.
+function _loadHeaderStats() {
   var el = document.getElementById('header-stats');
   if (!el || el.textContent.trim()) return;
-  fetch('channels.json').then(function(r) { return r.ok ? r.json() : []; }).then(function(channels) {
-    var enabled = channels.filter(function(c) { return c.enabled; });
-    // Entries come back already filtered by the course-language preference, so
-    // the header total never claims 31 624 classes while only 5 099 are shown.
-    return Promise.all(enabled.map(fetchChannelEntries)).then(function(results) {
-      var totalEp = results.reduce(function(s, eps) { return s + eps.length; }, 0);
-      // Under a filter, a channel with nothing left in that language is not
-      // counted either — otherwise "22 rabbins · 5 099 cours" would be a lie.
-      var nCh = results.filter(function(eps) { return eps.length > 0; }).length;
-      var totalH  = Math.round(totalEp * 0.75);
-      var lang = window.TTPPrefs.uiLang();
-      el.textContent = lang === 'he'
-        ? nCh + ' ערוצים · ' + totalEp + ' שיעורים · ~' + totalH + ' שעות'
-        : (lang === 'en' ? nCh + ' rabbis · ' + totalEp + ' classes · ~' + totalH + 'h of Torah'
-                         : nCh + ' rabbins · ' + totalEp + ' cours · ~' + totalH + 'h de Torah');
-    });
-  }).catch(function() {});
+  fetchHomeJson().then(function (home) {
+    var s = homeHeaderStats(home);
+    // Generated pages bake their own figure via applyLang(); if they won the
+    // race meanwhile, do not overwrite it with the site-wide numbers.
+    if (!s || el.textContent.trim()) return;
+    el.textContent = headerStatsText(s.channels, s.episodes);
+  });
+}
+
+(function initHeaderStats() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _loadHeaderStats);
+  } else {
+    _loadHeaderStats();
+  }
 })();
 
 // ─── Persistent bottom player — SINGLE SOURCE for every page ─────────────────

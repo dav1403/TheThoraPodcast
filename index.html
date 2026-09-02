@@ -1336,9 +1336,10 @@
   (async () => {
     const app = document.getElementById('app');
     try {
-      const res = await fetch('home.json');
-      if (res.ok) {
-        const home = await res.json();
+      // Shared, memoised loader (js/utils.js): the header line reads the same
+      // home.json, and one request serves both.
+      const home = await fetchHomeJson();
+      if (home) {
         // home.json bakes a per-episode `lang` and per-language counters
         // (stats.episodes_fr/_he, channels[].count_fr/_he, spotlight.count_fr/_he).
         // Everything below therefore reads the numbers of the ACTIVE course
@@ -1360,14 +1361,11 @@
             episodes: (spotlightData.episodes || []).filter(ep => courseLangKeeps(ep)),
           });
         }
-        // stats.channels counts channels AND speakers (37 vs 22 channels), so
-        // keep the baked figure unfiltered; under a filter, fall back to the
-        // channels that still have classes (+ speakers, which home.json does not
-        // break down per language).
-        renderStats(
-          courseLangFiltering() ? channels.length + speakers.length
-                                : ((home.stats && home.stats.channels) || 0),
-          courseLangCount(home.stats || {}, 'episodes'));
+        // Counting rule (baked total vs per-language recount) lives in ONE
+        // place: homeHeaderStats() in js/utils.js, shared with the header
+        // auto-loader so the two can never disagree.
+        const hs = homeHeaderStats(home);
+        if (hs) renderStats(hs.channels, hs.episodes);
       }
     } catch (_) {}
 
