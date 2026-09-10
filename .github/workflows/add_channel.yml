@@ -39,6 +39,9 @@ on:
 
 permissions:
   contents: write
+  # Needed by the final step, which dispatches "Update Podcast Feeds" so the new
+  # channel is ingested immediately instead of waiting for the hourly cron.
+  actions: write
 
 jobs:
   add:
@@ -210,3 +213,27 @@ jobs:
             echo "Push rejected (attempt $attempt) — someone pushed first; rebasing and retrying."
             sleep $((attempt * 5))
           done
+
+      # Without this, adding a channel produced nothing until the next hourly
+      # cron of "Update Podcast Feeds" — so the RSS feed a new channel needs in
+      # order to be submitted to Spotify/Apple/Deezer could be up to an hour
+      # away, plus the run itself. That wait was the whole friction.
+      #
+      # Nothing is duplicated here on purpose: "Update Podcast Feeds" already
+      # owns the full onboarding path — rotating YouTube cookies, 3000x3000
+      # artwork for Apple, `ci_bootstrap_all.py` (which backfills the last 10
+      # episodes of any channel whose feed is missing, i.e. exactly this one),
+      # then the regular episode processing and page generation. Copying those
+      # steps into this workflow would mean two places to keep in sync and a
+      # second copy of the R2 secrets. Dispatching is five lines and reuses the
+      # path that is already proven in production every hour.
+      #
+      # The commit above carries [skip ci], so this explicit dispatch is the
+      # only thing that starts the run.
+      - name: Ingest the new channel now (don't wait for the hourly cron)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run repair_missing_audio.yml --ref main
+          echo "Dispatched 'Update Podcast Feeds'. The feed for '${{ github.event.inputs.slug }}' will exist once that run completes."
+          echo "Follow it here: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/repair_missing_audio.yml"
