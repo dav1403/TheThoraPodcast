@@ -230,10 +230,26 @@ jobs:
       #
       # The commit above carries [skip ci], so this explicit dispatch is the
       # only thing that starts the run.
+      # Both budgets are pinned to 0 on purpose. `ci_bootstrap_all.py` runs
+      # *before* the budgeted steps and ignores them, so the new channel still
+      # gets its first 10 episodes and its RSS — while the run skips processing
+      # new episodes and backfilling history for the ~24 other channels, which
+      # is what makes an hourly run long. The regular cron picks that work back
+      # up at the next hour; nothing is lost, the feed just arrives far sooner.
+      #
+      # Caveat worth knowing: the pipeline declares
+      # `concurrency: podcast-pipeline` with `cancel-in-progress: false`, so if
+      # an hourly run is already going, this one queues behind it rather than
+      # starting at once. Still strictly better than waiting for the next cron.
       - name: Ingest the new channel now (don't wait for the hourly cron)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run repair_missing_audio.yml --ref main
-          echo "Dispatched 'Update Podcast Feeds'. The feed for '${{ github.event.inputs.slug }}' will exist once that run completes."
-          echo "Follow it here: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/repair_missing_audio.yml"
+          gh workflow run repair_missing_audio.yml --ref main \
+            -f reason="onboarding ${{ github.event.inputs.slug }}" \
+            -f process_budget=0 \
+            -f backfill_budget_override=0
+          echo "Dispatched 'Update Podcast Feeds' (bootstrap only)."
+          echo "The RSS for '${{ github.event.inputs.slug }}' will exist once that run completes:"
+          echo "  https://thetorahpodcast.net/feeds/${{ github.event.inputs.slug }}.xml"
+          echo "Follow the run: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/repair_missing_audio.yml"
