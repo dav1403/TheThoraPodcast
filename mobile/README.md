@@ -1,4 +1,36 @@
-# The Torah Podcast — application mobile (iOS / Android)
+# The Torah Podcast — wrapper mobile Capacitor
+
+> ## ⚠️ Statut au 16/09/2026 — ceci n'est PAS l'application publiee
+>
+> **L'application mobile livree est `ttp-mobile`** (depot prive `dav1403/ttp-mobile`,
+> Expo / React Native), pas ce wrapper. Elle est en **test ferme sur Google Play
+> depuis le 25/08/2026**, version 12 publiee le 01/09/2026. Decision de David du
+> **31/07/2026** : le wrapper Capacitor ci-dessous servait de depannage, l'app
+> native Expo l'a remplace.
+>
+> Ce dossier est **conserve**, pas maintenu. Il reste utile pour deux raisons :
+> les snippets de `native-config/` documentent la configuration audio
+> arriere-plan iOS/Android, et `resources/` porte l'icone et les splash screens
+> derives de l'identite du site. Le reste de la procedure ci-dessous n'a pas ete
+> rejoue depuis juillet 2026 — **ne pas s'en servir pour publier** sans verifier
+> d'abord ce que fait `ttp-mobile`.
+>
+> ⚠️ **Ne pas confondre avec les fichiers `mobile/*.json`** de ce meme dossier :
+> ceux-la sont **vivants**, regeneres a chaque run de CI par
+> `scripts/build_mobile_index.py`, et consommes par l'app `ttp-mobile`. Supprimer
+> `mobile/` casserait l'app publiee.
+>
+> **Branche `capacitor-local-20260820` : arbitree le 16/09/2026, rien a merger.**
+> Son sommet `22929c8ac` date du **28/07/2026**, soit un jour AVANT le commit par
+> lequel David a verse ce wrapper dans `main` (29/07) et deux jours avant
+> `mobile: make Capacitor wrapper store-submittable` (30/07). C'est donc un etat
+> *anterieur* du meme travail, pas un travail concurrent plus riche : 11 fichiers
+> sous `mobile/` contre 124 ici. La branche est **conservee en archive** (la
+> supprimer serait irreversible et ne gagne rien) mais n'a pas vocation a etre
+> mergee. Le seul element qu'elle portait et qui manquait ici — l'avertissement
+> disant que `UIBackgroundModes=audio` ne suffit pas sans `AVAudioSession` en
+> categorie `playback` — a ete recupere dans
+> `native-config/Info.plist.snippet.xml`.
 
 Wrapper **Capacitor** autour du site existant <https://thetorahpodcast.net>.
 L'application est une coque native qui affiche le site en plein ecran, sans barre

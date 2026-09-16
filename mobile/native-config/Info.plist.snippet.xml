@@ -3,7 +3,17 @@
   (apres `npx cap add ios`).
 -->
 
-<!-- Lecture audio quand l'app est en arriere-plan / ecran verrouille -->
+<!--
+  Lecture audio quand l'app est en arriere-plan / ecran verrouille.
+
+  /!\ Cette cle NE SUFFIT PAS a elle seule. Il faut AUSSI mettre l'AVAudioSession
+  en categorie `playback` au demarrage (voir AppDelegate.audio.swift.txt dans ce
+  meme dossier), sinon iOS coupe le son des que l'app passe en arriere-plan ou
+  que l'ecran se verrouille.
+
+  /!\ Et Apple REJETTE une app qui declare `audio` sans reellement lire de
+  l'audio en arriere-plan. Ne pas poser cette cle "au cas ou".
+-->
 <key>UIBackgroundModes</key>
 <array>
   <string>audio</string>
