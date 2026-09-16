@@ -1,11 +1,13 @@
-# Scaling ingestion — cookie pool, self-hosted lane, and bursts
+# Scaling ingestion — cookie pool and bursts
 
-This project downloads YouTube audio in CI. As we add channels, one cookie from
-one account gets rate-limited/blocked. This guide covers the three levers that
-scale ingestion:
+This project downloads YouTube audio in CI, on a single GitHub-hosted lane
+(`.github/workflows/repair_missing_audio.yml`, displayed as "Update Podcast
+Feeds", cron `0 * * * *`). As we add channels, one cookie from one account gets
+rate-limited/blocked. This guide covers the levers that scale ingestion:
 
 1. A **rotating cookie pool** (many YouTube accounts, one used per run).
-2. A **second self-hosted lane** running on David's PC (residential IP).
+2. ~~A second self-hosted lane on David's PC~~ — **retired 2026-09-16**, kept
+   below only so the decision is not re-litigated.
 3. **Bursts** to drain the backlog of a freshly added channel.
 
 ---
@@ -15,9 +17,11 @@ scale ingestion:
 ### Why
 
 Rotating cookies spreads download load across many accounts, so no single
-account looks like a bot hammering YouTube. The hosted lane and the self-hosted
-lane pick *different* cookies at the same time slot (via a rotation offset), so
-they never hit YouTube as the same identity simultaneously.
+account looks like a bot hammering YouTube. Each run picks one cookie from the
+pool by rotating on the run number, so consecutive runs use different accounts.
+A per-lane rotation offset also exists, so that two lanes would never hit
+YouTube as the same identity in the same slot; with a single lane today the
+hosted lane simply uses `OFFSET=0`.
 
 ### Format
 
@@ -101,10 +105,42 @@ and fallback to the single secret on an empty/malformed pool.
 
 ---
 
-## 2. Self-hosted lane — David's PC (residential IP)
+## 2. Self-hosted lane — RETIRED on 2026-09-16
 
-`.github/workflows/repair_selfhosted.yml` ("Update Podcast Feeds (self-hosted)")
-is a near-copy of the hosted workflow with:
+**There is no second lane. `.github/workflows/repair_selfhosted.yml` has been
+deleted; do not re-create it.** This section is kept only so the decision is not
+re-litigated.
+
+A second ingestion lane ("Update Podcast Feeds (self-hosted)", `runs-on:
+[self-hosted, ttp]`, cron `30 * * * *`, budget 60, cookie `OFFSET=1`) once
+existed to download from a residential IP. It was **disabled on 2026-08-05** and
+deleted on 2026-09-16, for three reasons:
+
+- **It never ran, not once.** No runner labelled `ttp` was ever registered
+  (`gh api repos/dav1403/TheThoraPodcast/actions/runners` → `total_count: 0`).
+  Every hourly run sat queued and was then cancelled, which read as a wall of
+  failures.
+- **A self-hosted runner would execute on David's own PC**, which contradicts the
+  standing rule that everything runs in the cloud. So the lane could never be
+  switched on as designed — leaving the file in place promised capacity that was
+  never going to arrive.
+- **The hosted lane covers the load alone.** It has been green on every scheduled
+  run checked on 2026-09-16.
+
+The file had also drifted: it predated the ingestion watchdog and never carried
+those steps, so reviving it would have restored an *unmonitored* lane.
+
+Nothing unique was lost. The cookie-pool rotation (section 1) lives in
+`scripts/select_cookie_from_pool.py` and is wired into the hosted lane with
+`OFFSET=0`; the offset mechanism still works if a second consumer ever appears.
+
+Recovering the file, should the constraint ever change, is a single command:
+`git show <commit-before-deletion>^:.github/workflows/repair_selfhosted.yml`.
+
+<details>
+<summary>What the retired lane contained</summary>
+
+It was a near-copy of the hosted workflow with:
 
 - `runs-on: [self-hosted, ttp]`,
 - cron `30 * * * *` (staggered 30 min from the hosted `0 * * * *`),
@@ -113,73 +149,41 @@ is a near-copy of the hosted workflow with:
 - a distinct concurrency group (`podcast-pipeline-selfhosted`),
 - a `git pull --rebase` + retry loop before push (both lanes push to `feeds/`).
 
-It stays **inert** until a runner labelled `ttp` is registered — the workflow
-exists but has nowhere to run, so nothing happens on David's account.
+It stayed inert for its whole life: the workflow existed but had nowhere to run.
 
-### Prerequisites on David's PC
+Its prerequisites, had a runner ever been registered, were system-installed
+`git`, Python 3.11+, `ffmpeg` and Deno on the host machine, plus a reusable venv
+at `~/.ttp-venv`. The runner registration procedure is standard GitHub
+documentation and is deliberately not reproduced here any more.
 
-The self-hosted lane uses **system-installed** tooling (not the `setup-*`
-actions). Install on the machine that will host the runner (Linux / macOS / WSL —
-the workflow steps are bash-based):
-
-- **git**
-- **Python 3.11+** (`python3` on PATH)
-- **ffmpeg** (`ffmpeg` on PATH) — e.g. `sudo apt-get install ffmpeg` / `brew install ffmpeg`
-- **Deno** (`deno` on PATH) — yt-dlp's EJS n-challenge solver:
-  `curl -fsSL https://deno.land/install.sh | sh`
-
-yt-dlp, boto3, feedgen, Pillow, anthropic, etc. are installed automatically by
-the workflow into a reusable venv at `~/.ttp-venv` (from `requirements.txt`).
-
-### Install the runner
-
-1. On GitHub: **repo → Settings → Actions → Runners → New self-hosted runner**.
-   Copy the registration token it shows (a fresh `RUNNER_TOKEN`).
-2. On David's PC:
-
-   ```bash
-   mkdir actions-runner && cd actions-runner
-   # Download the runner package GitHub shows on that page (curl command varies by OS/arch), then:
-   ./config.sh --url https://github.com/dav1403/TheThoraPodcast --token <RUNNER_TOKEN> --labels ttp
-   ```
-
-   The `--labels ttp` is what makes the workflow's `runs-on: [self-hosted, ttp]`
-   match. (`self-hosted` is added automatically.)
-3. Run it:
-
-   ```bash
-   ./run.sh
-   ```
-
-   or install it as an always-on service so it survives reboots:
-
-   ```bash
-   sudo ./svc.sh install
-   sudo ./svc.sh start
-   ```
-
-Once the runner shows **Idle** in GitHub, the `:30` cron (and any manual
-dispatch) starts executing on David's PC. To pause the lane, stop the runner
-(`./svc.sh stop` or Ctrl-C on `./run.sh`); the workflow goes inert again.
+</details>
 
 ---
 
 ## 3. Bursts — draining a new channel's backlog
 
 When a new channel is added it has a large backfill backlog. To drain it fast,
-**manually dispatch the self-hosted lane with a high budget** (its residential IP
-absorbs it better than the hosted datacenter IP):
+**manually dispatch the hosted lane with a raised budget**:
 
-- GitHub UI: **Actions → "Update Podcast Feeds (self-hosted)" → Run workflow →**
-  set `process_budget` to **100–150**.
+- GitHub UI: **Actions → "Update Podcast Feeds" → Run workflow →** set
+  `process_budget` above the default 30.
 - Or CLI:
 
   ```bash
-  gh workflow run repair_selfhosted.yml -f process_budget=150
+  gh workflow run repair_missing_audio.yml -f process_budget=60
   ```
 
 There is no dedicated burst cron — a burst is just a high-budget manual dispatch.
-The regular `:30` cron keeps running at budget 60 in between.
+The regular `:00` cron keeps running at budget 30 in between.
+
+⚠️ **Do not raise the budget without watching the clock.** The hosted lane's
+`podcast-pipeline` concurrency group *queues* an overrun behind the next hourly
+cron, and GitHub then drops scheduled runs. A run that stretches past ~50 min
+costs runs/day and can cancel out the gain. Check the duration of the burst run
+before repeating it. (Earlier guidance sent bursts to the self-hosted lane at
+budget 100–150; that lane no longer exists, and those numbers were sized for a
+residential IP with its own concurrency group — they do **not** transfer to the
+hosted lane.)
 
 ---
 
@@ -196,19 +200,20 @@ but the real ceiling is **cookies × per-account YouTube tolerance**, not comput
 | Lane        | Cron        | Runs/day | Budget/run | Nominal items/day |
 |-------------|-------------|----------|------------|-------------------|
 | Hosted      | `0 * * * *` | ~24      | 30         | ~720              |
-| Self-hosted | `30 * * * *`| ~24      | 60         | ~1440             |
 
-- Nominal combined ≈ **~2000 items/day**, but budgets are *ceilings*: a run stops
-  early once there's nothing left to fetch, and long runs can be dropped by the
-  concurrency queue.
+There is only one lane since 2026-09-16 (see section 2).
+
+- Nominal ≈ **~720 items/day**, but the budget is a *ceiling*: a run stops early
+  once there's nothing left to fetch, and long runs can be dropped by the
+  concurrency queue. Treat this as an upper bound, not a measurement.
 - The pool of **N cookies** spreads that load across N accounts, so per-account
-  daily volume ≈ `combined_items / N`. More cookies ⇒ lower per-account risk of
-  throttling ⇒ you can safely raise budgets.
-- **Bursts** (dispatch self-hosted at 100–150) add one-off spikes on top, best
-  used right after adding a channel to clear its backlog.
+  daily volume ≈ `items / N`. More cookies ⇒ lower per-account risk of
+  throttling ⇒ you can safely raise the budget.
+- **Bursts** (section 3) add one-off spikes on top, best used right after adding
+  a channel to clear its backlog.
 
 To scale further: add cookies to the pool first (lowers per-account risk), then
-raise `PROCESS_BUDGET_DEFAULT` — but keep the hosted lane's runs under ~50 min
-(see the budget comment in `repair_missing_audio.yml`) so scheduled runs aren't
-dropped. The self-hosted lane, being alone in its concurrency group with a 30-min
-stagger, has more headroom for a higher budget.
+raise `PROCESS_BUDGET_DEFAULT` — but keep runs under ~50 min (see the budget
+comment in `repair_missing_audio.yml`) so scheduled runs aren't dropped. That
+ceiling is now the binding one: with the second lane gone, there is no other
+place to put load except more cookies and a longer, riskier run.
