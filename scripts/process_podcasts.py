@@ -1075,6 +1075,14 @@ def process_channel(channel_cfg: dict, processed: dict, budget: int = 5) -> int:
         build_rss_feed(channel_cfg, channel_info, entries, feed_path)
     else:
         print("  No entries were successfully added (all downloads may have failed).")
+        # Still rewrite the RSS, exactly like the "no new videos" path above.
+        # Otherwise a channel whose pending video always fails (typically an
+        # ended live stream, which yt-dlp refuses for good) never regenerates its
+        # feed at all — so a change to channels.json or to build_rss_feed() never
+        # reaches it. That is how rav-avraham-ifrah was the single channel left
+        # without a <podcast:guid> once every other feed had one.
+        if entries:
+            build_rss_feed(channel_cfg, channel_info, entries, feed_path)
 
     return slots_used
 
