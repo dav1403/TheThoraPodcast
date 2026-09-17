@@ -15,9 +15,36 @@ would be paid for twice, and anything written there is overwritten on the next
 generator run. Use channel_entry_files() instead of globbing directly.
 """
 import json
+import re
+import uuid
 from pathlib import Path
 
 SPEAKERS_FILE = "speakers.json"
+
+# Podcasting 2.0 namespace, declared on <rss> so <podcast:guid> resolves.
+PODCAST_NS = "https://podcastindex.org/namespace/1.0"
+
+# Namespace UUID fixed by the <podcast:guid> spec. Do not change it: it is what
+# makes the identifier reproducible across every tool that reads the feed.
+PODCAST_GUID_NAMESPACE = uuid.UUID("ead4c236-bf58-58c6-a2c6-a6b28d128cb6")
+
+_SCHEME_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.\-]*://")
+
+
+def podcast_guid(feed_url: str) -> str:
+    """The <podcast:guid> of a show, derived from its feed URL.
+
+    The spec asks for a UUID v5 over the feed URL stripped of its protocol and
+    of any trailing slash, so `https://example.com/feeds/x.xml` hashes as
+    `example.com/feeds/x.xml`.
+
+    This value must stay stable for the lifetime of a show: directories key
+    their listing on it, so a GUID that moves creates the duplicate entry it
+    exists to prevent. It is a pure function of the feed URL — never seed it
+    from a random UUID, a hash of the episodes, or a YouTube channel id.
+    """
+    name = _SCHEME_RE.sub("", feed_url.strip()).rstrip("/")
+    return str(uuid.uuid5(PODCAST_GUID_NAMESPACE, name))
 
 
 def speaker_slugs(root: Path = Path(".")) -> set[str]:

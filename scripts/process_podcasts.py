@@ -28,6 +28,9 @@ from pathlib import Path
 from urllib.parse import quote, urlsplit, urlunsplit
 from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
+from feedgen.ext.base import BaseExtension
+from lxml import etree
+from feeds_util import PODCAST_NS, podcast_guid
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
@@ -859,12 +862,45 @@ def save_feed_entries(feed_path: Path, entries: list[dict]):
     sidecar.write_text(json.dumps(entries, indent=2, ensure_ascii=False))
 
 
+class PodcastIndexExtension(BaseExtension):
+    """Emits the Podcasting 2.0 <podcast:guid> in <channel>.
+
+    feedgen's own "podcast" extension is the iTunes one and knows nothing about
+    the Podcast Index namespace, so the tag is written by hand here. It is
+    registered under the key "podcastindex" because "podcast" is already taken
+    by that iTunes extension — the key is only the accessor name, the XML prefix
+    comes from extend_ns() below.
+    """
+
+    def __init__(self):
+        self._guid = None
+
+    def guid(self, value=None):
+        if value is not None:
+            self._guid = value
+        return self._guid
+
+    def extend_ns(self):
+        return {"podcast": PODCAST_NS}
+
+    def extend_rss(self, rss_feed):
+        if self._guid:
+            channel = rss_feed[0]
+            etree.SubElement(channel, "{%s}guid" % PODCAST_NS).text = self._guid
+        return rss_feed
+
+
 def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], feed_path: Path):
     """Regenerate the RSS XML from the entries list."""
     fg = FeedGenerator()
     fg.load_extension("podcast")
+    # <podcast:guid> — the identifier directories follow the show by. Without it
+    # a feed URL change is read as a brand new podcast and gets a duplicate
+    # listing instead of an update.
+    fg.register_extension("podcastindex", PodcastIndexExtension, atom=False, rss=True)
 
     feed_url = BASE_URL + f"feeds/{channel_cfg['slug']}.xml"
+    fg.podcastindex.guid(podcast_guid(feed_url))
 
     fg.id(feed_url)
     fg.title(channel_info["title"])
