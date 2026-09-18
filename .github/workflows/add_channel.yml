@@ -214,28 +214,207 @@ jobs:
             sleep $((attempt * 5))
           done
 
-      # Without this, adding a channel produced nothing until the next hourly
-      # cron of "Update Podcast Feeds" — so the RSS feed a new channel needs in
-      # order to be submitted to Spotify/Apple/Deezer could be up to an hour
-      # away, plus the run itself. That wait was the whole friction.
+      # ── Fast path: bootstrap THIS channel here, in this run ────────────────
       #
-      # Nothing is duplicated here on purpose: "Update Podcast Feeds" already
-      # owns the full onboarding path — rotating YouTube cookies, 3000x3000
-      # artwork for Apple, `ci_bootstrap_all.py` (which backfills the last 10
-      # episodes of any channel whose feed is missing, i.e. exactly this one),
-      # then the regular episode processing and page generation. Copying those
-      # steps into this workflow would mean two places to keep in sync and a
-      # second copy of the R2 secrets. Dispatching is five lines and reuses the
-      # path that is already proven in production every hour.
+      # Everything from here to the commit step exists for one reason: the RSS
+      # feed must be online in a few minutes, not in eighteen. Measured on the
+      # 2026-09-18 onboarding: this workflow 2m20, then the dispatched "Update
+      # Podcast Feeds" 11m33 (2m09 checkout, 51s of actual bootstrap for the new
+      # channel, 3m44 regenerating the HTML pages of ALL ~25 channels, 3m35 for
+      # the resulting giant commit+push), then 4m of GitHub Pages build. Out of
+      # those ~18 minutes, under one was spent on the channel being added — the
+      # rest is the roster-wide work the hourly pipeline does anyway.
       #
-      # The commit above carries [skip ci], so this explicit dispatch is the
-      # only thing that starts the run.
-      # Both budgets are pinned to 0 on purpose. `ci_bootstrap_all.py` runs
-      # *before* the budgeted steps and ignores them, so the new channel still
-      # gets its first 10 episodes and its RSS — while the run skips processing
-      # new episodes and backfilling history for the ~24 other channels, which
-      # is what makes an hourly run long. The regular cron picks that work back
-      # up at the next hour; nothing is lost, the feed just arrives far sooner.
+      # So we no longer wait for it. The steps below redo, for the new slug
+      # ONLY, the minimum needed for a submittable feed: Python + ffmpeg + Deno
+      # + rotating YouTube cookies (copied verbatim from repair_missing_audio.yml
+      # so there is one shape to keep in sync, not two), then
+      # bootstrap_channel.py, then artwork, then a commit restricted by pathspec
+      # to this channel's files. That is the whole cost: no page generation, no
+      # search index, no ~25-channel diff.
+      #
+      # Yes, this duplicates the R2/YouTube secret block. The earlier comment
+      # here argued that duplication was the reason to delegate everything; the
+      # trade was wrong at 18 minutes of latency on the one operation David runs
+      # by hand before going to Spotify/Apple/Deezer. The secrets are referenced,
+      # never printed, and the names are the same strings as in
+      # repair_missing_audio.yml.
+      #
+      # The fast path is best-effort by construction: every step below is
+      # continue-on-error, so a YouTube 403, an R2 hiccup or a lost push race
+      # degrades this back to exactly the previous behaviour — the dispatch at
+      # the end still runs and "Update Podcast Feeds" still onboards the channel
+      # as it always did. Losing ingestion is not an acceptable price for speed.
+      - name: Cache pip dependencies
+        continue-on-error: true
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Set up Deno (for yt-dlp EJS n-challenge solver)
+        continue-on-error: true
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install ffmpeg
+        continue-on-error: true
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        continue-on-error: true
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Write YouTube cookies (rotating pool, single-cookie fallback)
+        # Same picker as the hourly pipeline: one cookie out of
+        # YOUTUBE_COOKIES_POOL (accounts concatenated, separated by a line
+        # "-----COOKIE-----"), rotated by run number, falling back to the single
+        # YOUTUBE_COOKIES secret. Without it yt-dlp gets silent 403s and the
+        # bootstrap below downloads nothing.
+        continue-on-error: true
+        env:
+          YOUTUBE_COOKIES_POOL: ${{ secrets.YOUTUBE_COOKIES_POOL }}
+          YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
+          COOKIE_ROTATION_INDEX: ${{ github.run_number }}
+          COOKIE_ROTATION_OFFSET: '0'
+        run: |
+          python scripts/select_cookie_from_pool.py --output /tmp/yt_cookies.txt
+          if [ -s /tmp/yt_cookies.txt ]; then
+            echo "YOUTUBE_COOKIES_FILE=/tmp/yt_cookies.txt" >> $GITHUB_ENV
+          fi
+
+      # --max 3 is deliberate and is the whole point of the fast path: Spotify,
+      # Apple and Deezer only need a feed with a handful of valid enclosures to
+      # accept a submission, and 3 episodes cost ~1 min of download instead of
+      # ~5 for 10. The rest of the history is backfilled by the hourly cron (and
+      # by the dispatch at the end of this workflow), so nothing is lost —
+      # episodes simply keep arriving in the feed after it is already live.
+      #
+      # Skipped for RSS-sourced channels: bootstrap_channel.py reads
+      # youtube_channel_id, and an external feed is mirrored by
+      # sync_rss_channels.py inside the hourly pipeline instead.
+      - name: Bootstrap the new channel (first 3 episodes, enough to submit)
+        if: github.event.inputs.source == 'youtube'
+        continue-on-error: true
+        env:
+          YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
+          GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO:          ${{ github.repository }}
+          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_URL:        ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          mkdir -p feeds
+          touch processed.json
+          python scripts/bootstrap_channel.py --slug "${{ github.event.inputs.slug }}" --max 3
+
+      # generate_artwork.py skips any channel that already has its PNG, so the
+      # ~25 existing ones cost nothing: in practice this only renders the new
+      # slug. Apple rejects a feed whose <itunes:image> 404s, hence doing it now
+      # rather than leaving it to the hourly run.
+      - name: Generate channel artwork (3000x3000 PNG for Apple Podcasts)
+        continue-on-error: true
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: |
+          mkdir -p artwork
+          python scripts/generate_artwork.py
+
+      # Pathspec-restricted on purpose. The hourly pipeline's commit stages
+      # feeds/ artwork/ *.html search-fts/ mobile/ … — several hundred MB of
+      # regenerated artefacts, and most of the 3m35 measured above. Here we
+      # commit the five paths that belong to this channel and nothing else, with
+      # an explicit `git commit -- <paths>` rather than a bare `git commit`, so a
+      # concurrent hourly run cannot see its own half-written files swept into
+      # our commit (the git index is shared by whatever touches the worktree).
+      # Any of these paths may legitimately be missing — artwork if the render
+      # failed, the feed if the bootstrap was skipped for an RSS channel — so we
+      # keep only the ones that exist and no-op when the list is empty.
+      - name: Commit the new channel's feed and artwork (pathspec-restricted)
+        continue-on-error: true
+        run: |
+          SLUG="${{ github.event.inputs.slug }}"
+          git config --global user.name  "Podcast Bot"
+          git config --global user.email "action@github.com"
+
+          PATHS=()
+          for p in "channels.json" \
+                   "feeds/$SLUG.xml" \
+                   "feeds/$SLUG.entries.json" \
+                   "artwork/$SLUG.png" \
+                   "processed.json"; do
+            # if/then, not `[ -e ] && ...`: the runner's shell is `bash -e`, and a
+            # trailing false test on the last iteration would abort the step.
+            if [ -e "$p" ]; then PATHS+=("$p"); fi
+          done
+          if [ ${#PATHS[@]} -eq 0 ]; then
+            echo "Nothing produced by the fast path — leaving it to the dispatch below."
+            exit 0
+          fi
+          echo "Committing: ${PATHS[*]}"
+
+          git add -- "${PATHS[@]}"
+          if git diff --staged --quiet -- "${PATHS[@]}"; then
+            echo "No change in those paths (already committed upstream?) — nothing to do."
+          else
+            # [skip ci] matches the convention of every feeds commit in this repo
+            # and stops the hourly workflow from being triggered by our push.
+            # GitHub Pages is NOT a workflow trigger here — it builds from the
+            # branch — so the site still redeploys and the feed goes live.
+            git commit -m "feat: bootstrap feed for $SLUG [skip ci]" -- "${PATHS[@]}"
+          fi
+
+          # Same rebase-then-push retry as repair_missing_audio.yml: the hourly
+          # pipeline pushes to main constantly and would otherwise win the race
+          # and drop this commit on the floor.
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase --autostash origin main || true
+            if git push; then
+              echo "Pushed on attempt $attempt."
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "::warning::git push failed after 5 rebase attempts — the dispatch below will redo this work."
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt) — someone pushed first; rebasing and retrying."
+            sleep $((attempt * 5))
+          done
+
+          echo "Feed should be live within ~1 min of the Pages build:"
+          echo "  https://thetorahpodcast.net/feeds/$SLUG.xml"
+
+      # The dispatch below is no longer what makes the feed exist — the fast
+      # path above already did that — but it stays, for two distinct jobs.
+      #
+      # 1. It is the safety net. Every fast-path step is continue-on-error, so
+      #    if the bootstrap failed (expired cookies, R2 down, lost push race)
+      #    "Update Podcast Feeds" still runs `ci_bootstrap_all.py`, which
+      #    backfills any channel whose feed is missing — i.e. exactly this one.
+      #    Behaviour then degrades to what it was before the fast path existed:
+      #    slower, never broken.
+      # 2. It owns everything the fast path deliberately skips: the per-channel
+      #    HTML pages of the site, sitemap.xml, home.json, the search index and
+      #    the transcript full-text index — plus the backfill of the episodes
+      #    after the first three.
+      #
+      # Both budgets stay pinned to 0: `ci_bootstrap_all.py` runs *before* the
+      # budgeted steps and ignores them, so the safety net still works while the
+      # run skips processing new episodes and backfilling history for the ~24
+      # other channels — which is what makes an hourly run long. The regular
+      # cron picks that work back up at the next hour.
+      #
+      # The commits above carry [skip ci], so this explicit dispatch is the only
+      # thing that starts the run.
       #
       # Caveat worth knowing: the pipeline declares
       # `concurrency: podcast-pipeline` with `cancel-in-progress: false`, so if
@@ -249,7 +428,9 @@ jobs:
             -f reason="onboarding ${{ github.event.inputs.slug }}" \
             -f process_budget=0 \
             -f backfill_budget_override=0
-          echo "Dispatched 'Update Podcast Feeds' (bootstrap only)."
-          echo "The RSS for '${{ github.event.inputs.slug }}' will exist once that run completes:"
+          echo "Dispatched 'Update Podcast Feeds' (bootstrap only): site pages, sitemap,"
+          echo "search index, and the episodes after the first three."
+          echo "The RSS for '${{ github.event.inputs.slug }}' (published by the fast path above,"
+          echo "or by that run if the fast path failed):"
           echo "  https://thetorahpodcast.net/feeds/${{ github.event.inputs.slug }}.xml"
           echo "Follow the run: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/repair_missing_audio.yml"
