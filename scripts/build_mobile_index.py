@@ -344,12 +344,20 @@ HILOULOT = [{'fr': 'Rabbi Chimon bar Yochaï',
   'hm': 'Sivan',
   'hd': 6,
   'kw': ['baal chem tov', 'baal shem tov', 'בעל שם טוב', 'bécht', 'besht']},
- {'fr': 'Rabbi Yéhouda ben Baba / le Netivot',
-  'he': '',
+ # Index 9 — corrected in place (19/09/2026), never removed: the app addresses
+ # tsadikim by position. Was "Rabbi Yéhouda ben Baba / le Netivot" at
+ # 25 Cheshvan, which mixed two unrelated figures. R. Yaakov Lorberbaum of
+ # Lissa (Netivot HaMishpat) died 25 Iyar 5592. R. Yehuda ben Bava has no
+ # established yahrzeit and no course in the catalogue, so he was dropped.
+ # Bare 'netivot' is deliberately NOT a keyword: it matches the town.
+ {'fr': 'Le Netivot HaMishpat (Rabbi Yaakov de Lissa)',
+  'he': 'בעל נתיבות המשפט',
   'extra': None,
-  'hm': 'Cheshvan',
+  'hm': 'Iyyar',
   'hd': 25,
-  'kw': ['netivot']},
+  'kw': ['netivot hamishpat', 'netivot hamichpat', 'nétivot hamichpat',
+         'nesivos hamishpat', 'נתיבות המשפט', 'lorberbaum', 'lorbeerbaum',
+         'yaakov de lissa', 'יעקב מליסא']},
  {'fr': 'Le Rabbi de Loubavitch',
   'he': 'הרבי מליובאוויטש',
   'extra': None,
