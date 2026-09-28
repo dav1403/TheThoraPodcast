@@ -175,10 +175,15 @@ def site_files(site: Path) -> list[str]:
 
 
 def hash_files(repo: Path, site: Path, files: list[str]) -> dict[str, str]:
-    # Paths relative to the repo work tree so .gitattributes apply exactly as
-    # they do for the pipeline's own `git add`.
+    # --no-filters: hash the RAW bytes, i.e. exactly what Pages would serve,
+    # against the committed blob (also what Pages serves today). With filters,
+    # `* text=auto eol=lf` turned CRLF into LF in the hash, while the pipeline's
+    # own `git add` keeps CRLF for files whose index copy already has CRLF
+    # (git's "has CRLF in index" safety rule): 795 pages with CRLF inside
+    # episode descriptions showed up as different although byte-identical
+    # (full run 36385404670).
     data = "\n".join(files).encode("utf-8", "surrogateescape") + b"\n"
-    shas = git(repo, "hash-object", "--stdin-paths", input=data).decode().split()
+    shas = git(repo, "hash-object", "--no-filters", "--stdin-paths", input=data).decode().split()
     if len(shas) != len(files):
         raise RuntimeError(f"hash-object returned {len(shas)} hashes for {len(files)} files")
     return dict(zip(files, shas))
