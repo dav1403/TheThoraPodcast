@@ -354,24 +354,72 @@ def seo_snippet(text: str, limit: int = 155) -> str:
 # it. No cleaned or summarised transcript exists in the pipeline, so the
 # description is built from reliable metadata only — the transcript stays in
 # the page body (extract + panel), never in a description field.
+# A YouTube description written by hand for THIS episode is still the best
+# source, so it wins when it passes the anti-promo checks below
+# (episode_description_fields); the template is the fallback.
 EP_DESC_MAX = 160
 # Below this a YouTube description is promo boilerplate (see desc_text_score).
 MIN_DESC_LETTERS = 120
+# A hand-written description shorter than this ("Second chapitres", "Chapitre 3
+# versets 1-11") says less than the templated title + rav + date does.
+MIN_HANDWRITTEN_LETTERS = 50
+# Promo detection: the same opening (letters only, lowercased, URLs/digits
+# dropped) on this many episodes of a channel is a pasted block, not a summary.
+# Measured 28/09/2026: rav-menahem-sakhoun reuses one schedule block on 2 499 of
+# its 2 511 episodes, lev one "leçon de vie" teaser on 69.
+PROMO_PREFIX_CHARS = 80
+PROMO_MIN_EPISODES = 3
+_BARE_DOMAIN_RE = re.compile(
+    r"\b[\w-]+\.(?:com|net|org|fr|co|il|me|ly|be|io|tv|info)\b(?:/\S*)?", re.I
+)
+_HANDLE_RE = re.compile(r"(?<!\w)[@#]\w+")
+# "de 8h40 à 9h20", "début à 20h50", "à 21:30" — a timetable, not a summary.
+_SCHEDULE_RE = re.compile(r"\b\d{1,2}\s?[hH]\s?\d{2}\b|\b(?:[01]?\d|2[0-3]):[0-5]\d\b")
+# YouTube's RSS cuts long descriptions and appends "...".
+_TRUNC_TAIL_RE = re.compile(r"\s*(?:\.\.\.|…)\s*$")
+_SENTENCE_END = ".!?…"
+MONTHS_HE = [
+    "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
+    "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
+]
 
 
-def episode_seo_description(title: str, author: str, pub_iso: str) -> str:
+def _seo_date(pub_iso: str, lang: str) -> str:
+    """'29 février 2016' / '29 בפברואר 2016' (Gregorian, spelled out)."""
+    if not pub_iso:
+        return ""
+    if lang != "he":
+        return fmt_date(pub_iso, "fr")
+    try:
+        d = datetime.fromisoformat(pub_iso.replace("Z", "+00:00"))
+    except ValueError:
+        return pub_iso[:10]
+    return f"{d.day} ב{MONTHS_HE[d.month - 1]} {d.year}"
+
+
+def episode_seo_description(title: str, author: str, pub_iso: str,
+                            lang: str = "fr") -> str:
     """'{title} — cours de Torah par {author}, {date}. Écoute gratuite en podcast.'
+
+    Hebrew channels (lang == "he"):
+    '{title} — שיעור תורה מאת {author}, {date}. האזנה חינם בפודקאסט.'
 
     Always <= EP_DESC_MAX chars: the title is trimmed on a word boundary first,
     then the closing call-to-action is dropped if the author name is very long.
     """
-    title = re.sub(r"\s+", " ", title or "").strip()
+    # Some feed titles carry HTML entities (&#39;, &quot;); the caller escapes.
+    title = re.sub(r"\s+", " ", _html.unescape(title or "")).strip()
     author = re.sub(r"\s+", " ", author or "").strip()
-    date = fmt_date(pub_iso, "fr") if pub_iso else ""
-    meta = f"cours de Torah par {author}" if author else "cours de Torah"
+    date = _seo_date(pub_iso, lang)
+    if lang == "he":
+        meta = f"שיעור תורה מאת {author}" if author else "שיעור תורה"
+        cta = "האזנה חינם בפודקאסט."
+    else:
+        meta = f"cours de Torah par {author}" if author else "cours de Torah"
+        cta = "Écoute gratuite en podcast."
     if date:
         meta += f", {date}"
-    for tail in (f"{meta}. Écoute gratuite en podcast.", f"{meta}."):
+    for tail in (f"{meta}. {cta}", f"{meta}."):
         if not title:
             if len(tail) <= EP_DESC_MAX:
                 return tail[0].upper() + tail[1:]
@@ -380,6 +428,166 @@ def episode_seo_description(title: str, author: str, pub_iso: str) -> str:
         if room >= 20:
             return f"{seo_snippet(title, room - 1)} — {tail}"
     return seo_snippet(f"{title} — {meta}.", EP_DESC_MAX - 1)
+
+
+def desc_prefix_key(desc: str) -> str:
+    """Normalised opening of a description, the unit of promo detection.
+
+    Letters only (URLs, digits, punctuation and emoji dropped), lowercased, so
+    "page 9"/"page 10" or a changed link do not hide a pasted block.
+    """
+    text = unicodedata.normalize("NFC", _html.unescape(desc or ""))
+    text = _URL_RE.sub(" ", text).lower()
+    text = "".join(c if c.isalpha() else " " for c in text)
+    return " ".join(text.split())[:PROMO_PREFIX_CHARS]
+
+
+def is_handwritten_description(desc: str, prefix_counts: Counter) -> bool:
+    """True when `desc` is specific to its episode (not empty, not a timetable,
+    and its opening appears on fewer than PROMO_MIN_EPISODES of the channel)."""
+    key = desc_prefix_key(desc)
+    if not key:
+        return False
+    if _SCHEDULE_RE.search(_html.unescape(desc)):
+        return False
+    return prefix_counts.get(key, 0) < PROMO_MIN_EPISODES
+
+
+def _is_noise(text: str) -> bool:
+    """A link, a bare domain, a @handle/#hashtag or a timetable."""
+    return any(r.search(text) for r in
+               (_URL_RE, _BARE_DOMAIN_RE, _HANDLE_RE, _SCHEDULE_RE))
+
+
+def youtube_description_snippet(desc: str, limit: int = EP_DESC_MAX) -> str:
+    """First sentence(s) of a YouTube description, <= `limit` chars.
+
+    Lines are sentence boundaries (a missing full stop is added, a line ending
+    in ":" runs on); whole sentences are kept while they fit, otherwise the
+    first one is cut on a word. A later sentence carrying a link, a handle or a
+    timetable ends the snippet; if the FIRST one does, or the result is too
+    short to beat the template (MIN_HANDWRITTEN_LETTERS), returns "".
+    """
+    text = unicodedata.normalize("NFC", _html.unescape(desc or ""))
+    truncated = bool(_TRUNC_TAIL_RE.search(text))
+    text = _TRUNC_TAIL_RE.sub("", text)
+    merged: list[str] = []
+    for line in text.splitlines():
+        line = re.sub(r"\s+", " ", line).strip()
+        if not line:
+            continue
+        # "Pour suivre Elie Lemmel :" + next line = ONE sentence (and its link).
+        if merged and merged[-1].endswith(":"):
+            merged[-1] += " " + line
+        else:
+            merged.append(line)
+    sentences: list[str] = []
+    for line in merged:
+        sentences += [s for s in re.split(r"(?<=[.!?…])\s+", line) if s]
+    if not sentences:
+        return ""
+    # The last sentence of a truncated feed description is incomplete.
+    partial_last = truncated
+    out = ""
+    for i, sent in enumerate(sentences):
+        is_partial = partial_last and i == len(sentences) - 1
+        if is_partial and out:
+            break
+        if is_partial:
+            words = sent.split()[:-1]  # the last word may be cut mid-word
+            while words and len(words[-1]) <= 3:  # dangling "et la", "de"
+                words.pop()
+            candidate = " ".join(words).rstrip(" ,;:-") + "…"
+        else:
+            candidate = sent if sent[-1] in _SENTENCE_END else sent + "."
+        if _is_noise(candidate):
+            if out:
+                break  # keep the clean lead, drop the link/timetable after it
+            return ""
+        joined = f"{out} {candidate}".strip()
+        if len(joined) > limit:
+            if not out:
+                out = seo_snippet(candidate, limit - 1)
+            break
+        out = joined
+    if not out or _is_noise(out):
+        return ""
+    if sum(1 for c in out if c.isalpha()) < MIN_HANDWRITTEN_LETTERS:
+        return ""
+    return out
+
+
+# Promo-prefix counts per channel slug, computed once per entries list (the
+# generator passes the same list object for every episode of a channel).
+_PROMO_COUNTS: dict[str, tuple[list, Counter]] = {}
+_SPEAKERS_CACHE: dict[tuple[str, int], list[dict]] = {}
+
+
+def _load_speakers() -> list[dict]:
+    """speakers.json, read once per file version (same file main() reads)."""
+    if not SPEAKERS_FILE.exists():
+        return []
+    key = (str(SPEAKERS_FILE.resolve()), SPEAKERS_FILE.stat().st_mtime_ns)
+    if key not in _SPEAKERS_CACHE:
+        _SPEAKERS_CACHE[key] = json.loads(SPEAKERS_FILE.read_text(encoding="utf-8"))
+    return _SPEAKERS_CACHE[key]
+
+
+def _desc_prefix_counts(ch: dict, all_entries: list) -> Counter:
+    slug = ch["slug"]
+    cached = _PROMO_COUNTS.get(slug)
+    if cached is None or cached[0] is not all_entries:
+        counts = Counter(
+            k for k in (desc_prefix_key(e.get("description")) for e in all_entries) if k
+        )
+        _PROMO_COUNTS[slug] = (all_entries, counts)
+    counts = _PROMO_COUNTS[slug][1]
+    if ch.get("speaker"):
+        # A guest's list is a slice of the host channel: a block pasted on the
+        # whole host channel may appear only once or twice among the guest's
+        # episodes, so the host counts (rendered first in main) apply too.
+        sp = next((s for s in _load_speakers() if s.get("slug") == slug), None)
+        for host in (sp or {}).get("from_channels", []):
+            if host in _PROMO_COUNTS:
+                counts = counts | _PROMO_COUNTS[host][1]
+    return counts
+
+
+def guest_author(ch: dict, title: str) -> str:
+    """Name of the guest (speakers.json) teaching this episode on a HOST channel
+    page, else "". Same from_channels + speaker_matches() rule as the guest
+    pages and home.json — never a second heuristic."""
+    if ch.get("speaker"):
+        return ""
+    for sp in _load_speakers():
+        if ch["slug"] in sp.get("from_channels", []) and speaker_matches(
+            title or "", sp["title_patterns"]
+        ):
+            return sp["name"]
+    return ""
+
+
+def episode_description_fields(ep: dict, ch: dict, all_entries: list) -> tuple[str, str]:
+    """(description, abstract) for an episode page; abstract may be "".
+
+    description = the hand-written YouTube lead when there is one, else the
+    template (with the guest as author on the host channel, Hebrew wording on
+    Hebrew channels). abstract = the hand-written description only.
+    """
+    title = ep.get("title", "")
+    desc = (ep.get("description") or "").strip()
+    lang = ch.get("podcast_language", "fr")
+    handwritten = is_handwritten_description(desc, _desc_prefix_counts(ch, all_entries))
+    snippet = youtube_description_snippet(desc) if handwritten else ""
+    description = snippet or episode_seo_description(
+        title, guest_author(ch, title) or ch["podcast_author"],
+        ep.get("published", "")[:10], lang,
+    )
+    abstract = (
+        seo_snippet(desc, 300)
+        if handwritten and desc_text_score(desc) >= MIN_DESC_LETTERS else ""
+    )
+    return description, abstract
 
 
 # Auto-captions almost never open on the actual class: they start with a music
@@ -1224,6 +1432,10 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 
     tags_html = " ".join(f'<span class="ep-tag">{esc(t)}</span>' for t in tags) if tags else ""
 
+    # Hand-written YouTube lead or template; never the auto-captions (see
+    # episode_description_fields).
+    seo_description, seo_abstract = episode_description_fields(ep, ch, all_entries)
+
     schema = {
         "@context": "https://schema.org",
         "@type": "PodcastEpisode",
@@ -1237,7 +1449,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         },
         "author": {"@type": "Person", "name": name},
         "publisher": SITE_PUBLISHER,
-        "description": episode_seo_description(title, name, pub),
+        "description": seo_description,
     }
     if audio:
         schema["associatedMedia"] = {"@type": "MediaObject", "contentUrl": audio}
@@ -1265,8 +1477,8 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     )
 
     extract = transcript_extract(transcript) if transcript else ""
-    # Templated from metadata, never from the auto-captions (see
-    # episode_seo_description). Same string as the JSON-LD description.
+    # Never from the auto-captions (see episode_description_fields). Same
+    # string as the JSON-LD description.
     seo_desc = schema["description"]
     og_locale = "he_IL" if lang == "he" else "fr_FR"
     og_locale_alt = "fr_FR" if lang == "he" else "he_IL"
@@ -1329,9 +1541,10 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     if transcript:
         # Signals that this page holds a real, machine-readable text body.
         # `abstract` only carries a human-written YouTube description that says
-        # something about the episode; auto-captions never go there.
-        if desc_text_score(desc) >= MIN_DESC_LETTERS:
-            schema["abstract"] = seo_snippet(desc, 300)
+        # something about the episode (no promo block, no timetable);
+        # auto-captions never go there.
+        if seo_abstract:
+            schema["abstract"] = seo_abstract
         schema["wordCount"] = len(transcript.split())
     schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
 
