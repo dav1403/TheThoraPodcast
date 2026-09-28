@@ -29,6 +29,7 @@ tree, not rebuilt) / extra (rebuilt, not in the tree).
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import os
 import re
@@ -42,6 +43,7 @@ from urllib.parse import unquote
 SKIP_DIRS = {".git", "__pycache__"}
 SKIP_SUFFIXES = (".pyc", ".pyo")
 MAX_ANALYSED = 6000  # blobs fetched for tolerance analysis
+DIFF_SAMPLES = 15   # unified-diff excerpts kept in the report
 
 _GEN_AT = re.compile(r'("generated_at"\s*:\s*)"[^"]*"')
 _LASTMOD = re.compile(r"^\s*<lastmod>(\d{4}-\d{2}-\d{2})</lastmod>\s*$")
@@ -273,6 +275,21 @@ def main(argv: list[str] | None = None) -> int:
             real.append(p)
     real += unanalysed
 
+    # A few unified-diff excerpts (one per top-level group first) so a real
+    # difference can be diagnosed from the report alone.
+    samples: dict[str, str] = {}
+    seen_groups: set[str] = set()
+    ordered = [p for p in real if not (p.split("/", 1)[0] in seen_groups or seen_groups.add(p.split("/", 1)[0]))]
+    ordered += [p for p in real if p not in ordered]
+    for p in [q for q in ordered if q not in unanalysed][:DIFF_SAMPLES]:
+        try:
+            a = read_blob(repo, ref[p]).decode("utf-8", "replace").splitlines()
+            b = (site / p).read_bytes().decode("utf-8", "replace").splitlines()
+        except (OSError, subprocess.CalledProcessError):
+            continue
+        lines = list(difflib.unified_diff(a, b, "git/" + p, "rebuilt/" + p, n=0, lineterm=""))
+        samples[p] = "\n".join(line[:400] for line in lines[:40])
+
     header = {
         "ref": args.ref,
         "only_slug": args.only_slug or None,
@@ -303,6 +320,7 @@ def main(argv: list[str] | None = None) -> int:
         "different": real,
         "missing": cats["missing"],
         "extra": cats["extra"],
+        "diff_samples": samples,
         "groups": {k: group_counts(v) for k, v in
                    (("legacy_kept", legacy), ("different", real), ("missing", cats["missing"]),
                     ("extra", cats["extra"]))},
@@ -326,6 +344,10 @@ def main(argv: list[str] | None = None) -> int:
         for p in lst[:60]:
             md.append(f"- `{p}`")
         md.append("")
+    if samples:
+        md.append(f"### diff samples ({len(samples)})")
+        for p, d in samples.items():
+            md.append(f"\n`{p}`\n```diff\n{d}\n```")
     text = "\n".join(md) + "\n"
     (report_dir / "report.md").write_text(text, encoding="utf-8")
     print(text)
