@@ -67,3 +67,44 @@ def test_versioned_legacy_list():
     assert len(paths) >= 383
     assert all("/" in p for p in paths)
     assert len({p.lower() for p in paths}) == len(paths)
+
+
+def test_pin_unpin(tmp_path):
+    """Files changed on main after the state commit are generated from their
+    state-commit version, then main's version is put back."""
+    import json
+    import subprocess
+
+    def git(*a):
+        return subprocess.run(["git", "-C", str(tmp_path), *a], check=True,
+                              capture_output=True, text=True).stdout.strip()
+
+    git("init", "-q")
+    git("config", "user.email", "t@t")
+    git("config", "user.name", "t")
+    (tmp_path / "social_state.json").write_text('{"i": 1}')
+    (tmp_path / "gone.txt").write_text("old")
+    (tmp_path / "same.txt").write_text("same")
+    git("add", "-A")
+    git("commit", "-qm", "state")
+    state = git("rev-parse", "HEAD")
+    (tmp_path / "social_state.json").write_text('{"i": 2}')
+    (tmp_path / "gone.txt").unlink()
+    (tmp_path / "new.txt").write_text("new")
+    git("add", "-A")
+    git("commit", "-qm", "main")
+    main = git("rev-parse", "HEAD")
+    save = tmp_path.parent / "pinned.json"
+
+    assert site_deploy.main(["pin", "--repo", str(tmp_path), "--state", state,
+                             "--main", main, "--save", str(save)]) == 0
+    assert sorted(json.loads(save.read_text())) == ["gone.txt", "new.txt", "social_state.json"]
+    assert (tmp_path / "social_state.json").read_text() == '{"i": 1}'
+    assert (tmp_path / "gone.txt").read_text() == "old"
+    assert not (tmp_path / "new.txt").exists()
+
+    assert site_deploy.main(["unpin", "--repo", str(tmp_path), "--main", main, "--save", str(save)]) == 0
+    assert (tmp_path / "social_state.json").read_text() == '{"i": 2}'
+    assert not (tmp_path / "gone.txt").exists()
+    assert (tmp_path / "new.txt").read_text() == "new"
+    assert git("status", "--porcelain") == ""
