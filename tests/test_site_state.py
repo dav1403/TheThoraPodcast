@@ -142,6 +142,14 @@ def test_tolerate_sitemap_lastmod():
     assert site_compare.tolerate("index.html", b"a", b"b", {"2026-09-28"}) is None
 
 
+def test_tolerate_eol_only():
+    assert site_compare.tolerate("a/b.html", b"x\r\ny\r\n", b"x\ny\n", set()) == "eol"
+    assert site_compare.tolerate("a/b.html", b"x\ny\n", b"x\r\ny\n", set()) == "eol"
+    # a lone CR, or any other change, is NOT an eol difference
+    assert site_compare.tolerate("a/b.html", b"x\ry\n", b"x\ny\n", set()) is None
+    assert site_compare.tolerate("a/b.html", b"x\r\nz\n", b"x\ny\n", set()) is None
+
+
 def test_classify():
     site = {"a": "1", "b": "2", "c": "3"}
     ref = {"a": "1", "b": "x", "d": "4"}

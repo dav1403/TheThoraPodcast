@@ -13,6 +13,11 @@ Tolerated differences (explicit, nothing else is tolerated):
   * sitemap.xml `<lastmod>`: the generator stamps the channel/static URLs
     with the build day. Same number of lines, and every differing line must
     be a `<lastmod>` line whose rebuilt value is one of the build dates.
+  * `eol`: identical once every CRLF is turned into LF, nothing else. The
+    generator copies YouTube descriptions verbatim, CRLF included; git then
+    stores some pages with CRLF (index already had CRLF) and others
+    normalised to LF (`* text=auto eol=lf`), depending on each file's
+    history — not reproducible from scratch. Browsers render both the same.
 
 Legacy orphan pages (--keep-legacy-orphans): HTML pages present in the tree
 that the generator no longer produces (old episode filenames, renamed titles,
@@ -96,6 +101,8 @@ def mask_generated_at(text: str) -> str:
 
 def tolerate(path: str, site: bytes, ref: bytes, build_dates: set[str]) -> str | None:
     """Return the tolerance reason, or None if the difference is real."""
+    if site.replace(b"\r\n", b"\n") == ref.replace(b"\r\n", b"\n"):
+        return "eol"
     try:
         s, r = site.decode("utf-8"), ref.decode("utf-8")
     except UnicodeDecodeError:
