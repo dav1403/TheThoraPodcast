@@ -437,3 +437,24 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: python scripts/generate_summary.py >> $GITHUB_STEP_SUMMARY
+
+      # Phase 1 of moving generated artefacts out of git: mirror the persistent
+      # state (feeds/ incl. transcripts, processed.json, backfill_state.json,
+      # artwork/, search-fts/) to R2 `_state/`, plus a daily snapshot without
+      # transcripts in `_state-snapshots/YYYY-MM-DD/`. Git remains the source of
+      # truth and nothing in production reads this copy yet. Best-effort: a
+      # failure is a visible warning and never fails the pipeline.
+      - name: Mirror persistent state to R2 (best-effort)
+        if: ${{ !cancelled() && steps.commit.outcome == 'success' }}
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if ! python scripts/site_state.py push --root . --snapshot; then
+            echo "::warning::R2 state mirror failed - git is still the source of truth, pipeline unaffected."
+            exit 1
+          fi

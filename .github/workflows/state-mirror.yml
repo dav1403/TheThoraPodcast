@@ -1,0 +1,68 @@
+name: Mirror state to R2
+
+# Phase 1 of moving generated artefacts out of git (git stays the source of
+# truth). Mirrors the persistent pipeline state of `main` to R2 `_state/`
+# (+ daily snapshot) on demand: first seeding, recovery, or checks. The hourly
+# "Update Podcast Feeds" pipeline runs the same `site_state.py push` as its
+# last step, so this workflow is not needed in normal operation.
+# Nothing in production reads `_state/` yet.
+
+on:
+  workflow_dispatch:
+    inputs:
+      snapshot:
+        description: 'Also write today''s snapshot (_state-snapshots/YYYY-MM-DD/) if missing'
+        type: boolean
+        default: true
+      allow_mass_delete:
+        description: 'Allow deleting more than 5 % of the mirrored objects'
+        type: boolean
+        default: false
+
+concurrency:
+  group: r2-state-mirror
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      # Only the state + the scripts: the ~31 000 episode pages are not needed.
+      - name: Checkout state paths of main (blobless, sparse)
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /feeds/
+            /artwork/
+            /search-fts/
+            /processed.json
+            /backfill_state.json
+            /scripts/
+            /requirements.txt
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install boto3
+        run: python -m pip install --quiet boto3
+
+      - name: Push state to R2
+        env:
+          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          ARGS=""
+          [ "${{ inputs.snapshot }}" = "true" ] && ARGS="$ARGS --snapshot"
+          [ "${{ inputs.allow_mass_delete }}" = "true" ] && ARGS="$ARGS --allow-mass-delete"
+          python scripts/site_state.py push --root . $ARGS

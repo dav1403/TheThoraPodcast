@@ -1,0 +1,179 @@
+name: Build site from R2 state (dry run)
+
+# Phase 1 of moving generated artefacts out of git. Rebuilds the site WITHOUT
+# the generated files from git: a source-only checkout (state + generator
+# outputs excluded by scripts/site_state.py sparse-patterns), the state
+# restored from R2 `_state/`, then the same generation steps as the hourly
+# pipeline (no YouTube ingestion, no download: pages/JSON only). The result is
+# compared file by file with the commit the state was mirrored from.
+#
+# NO DEPLOYMENT: this workflow never pushes, never publishes. Output = a
+# comparison report (artifact). Optional: a tarball of the rebuilt site in R2
+# `_staging/` for the staging Pages test (dav1403/ttp-pages-staging).
+
+on:
+  workflow_dispatch:
+    inputs:
+      only_slug:
+        description: 'Restrict the COMPARISON to one channel/speaker slug (e.g. rav-itshak-cohen); blank = whole site'
+        required: false
+        default: ''
+      stage_tarball:
+        description: 'Upload the rebuilt site as _staging/site.tar.gz in R2 (staging test only)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-site
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+      R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+    steps:
+      - name: Checkout tooling (scripts + tests of main)
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          path: tools
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /tests/
+            /requirements.txt
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('tools/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tools/requirements.txt pytest
+
+      - name: Unit tests of the state/compare tooling
+        run: python -m pytest -q tools/tests/test_site_state.py
+
+      - name: Read the mirrored state manifest
+        id: manifest
+        run: python tools/scripts/site_state.py manifest
+
+      - name: Source-only checkout of the mirrored commit
+        id: src
+        env:
+          SHA: ${{ steps.manifest.outputs.commit }}
+        run: |
+          set -euo pipefail
+          T0=$(date +%s)
+          git init -q site
+          cd site
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git config remote.origin.promisor true
+          git config remote.origin.partialclonefilter blob:none
+          git fetch -q --depth=1 --filter=blob:none origin "$SHA"
+          # Unborn repo: seed the sparse file by hand, then let git manage it.
+          git config core.sparseCheckout true
+          printf '%s\n' /channels.json /speakers.json > .git/info/sparse-checkout
+          git checkout -q --detach "$SHA"
+          python ../tools/scripts/site_state.py sparse-patterns \
+            --channels channels.json --speakers speakers.json > "$RUNNER_TEMP/sparse.txt"
+          echo "Sparse patterns: $(wc -l < "$RUNNER_TEMP/sparse.txt")"
+          git sparse-checkout set --no-cone --stdin < "$RUNNER_TEMP/sparse.txt"
+          echo "source files: $(git ls-files | wc -l), $(du -sh --exclude=.git . | cut -f1)"
+          echo "seconds=$(( $(date +%s) - T0 ))" >> "$GITHUB_OUTPUT"
+          MAIN=$(git ls-remote origin refs/heads/main | cut -f1)
+          echo "origin_main=$MAIN" >> "$GITHUB_OUTPUT"
+          echo "State commit $SHA / origin/main $MAIN"
+
+      - name: Restore state from R2
+        id: restore
+        env:
+          SHA: ${{ steps.manifest.outputs.commit }}
+        run: |
+          T0=$(date +%s)
+          python tools/scripts/site_state.py pull --dest site --expect-commit "$SHA"
+          echo "seconds=$(( $(date +%s) - T0 ))" >> "$GITHUB_OUTPUT"
+
+      # Same generation steps as .github/workflows/repair_missing_audio.yml,
+      # minus everything that talks to YouTube/Anthropic (artwork download,
+      # RSS sync, ingestion, backfill, tagging, transcripts fetch).
+      - name: Generate (thumbnails, pages, JSON, sitemap, search index)
+        id: gen
+        working-directory: site
+        run: |
+          set -euo pipefail
+          T0=$(date +%s)
+          echo "build_date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+          python scripts/build_artwork_thumbs.py
+          python scripts/generate_channel_pages.py | tail -5
+          python scripts/build_transcript_index.py --min-interval-hours 6
+          echo "seconds=$(( $(date +%s) - T0 ))" >> "$GITHUB_OUTPUT"
+          echo "site files: $(find . -path ./.git -prune -o -type f -print | wc -l), $(du -sh --exclude=.git . | cut -f1)"
+
+      - name: Compare with the mirrored commit
+        id: compare
+        env:
+          SHA: ${{ steps.manifest.outputs.commit }}
+          ONLY: ${{ inputs.only_slug }}
+        run: |
+          FILES=$(find site -path site/.git -prune -o -type f -print | wc -l)
+          BYTES=$(du -sb --exclude=.git site | cut -f1)
+          INFO=$(printf '{"state_commit":"%s","origin_main":"%s","run_id":"%s","site_files_on_disk":%s,"site_bytes":%s,"seconds":{"source_checkout":%s,"restore":%s,"generate":%s}}' \
+            "$SHA" "${{ steps.src.outputs.origin_main }}" "${{ github.run_id }}" "$FILES" "$BYTES" \
+            "${{ steps.src.outputs.seconds }}" "${{ steps.restore.outputs.seconds }}" "${{ steps.gen.outputs.seconds }}")
+          python tools/scripts/site_compare.py --site site --ref "$SHA" \
+            --only-slug "$ONLY" --build-date "${{ steps.gen.outputs.build_date }}" \
+            --report-dir report --extra-info "$INFO"
+
+      - name: Upload comparison report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-compare-report${{ inputs.only_slug && format('-{0}', inputs.only_slug) || '' }}
+          path: report/
+          if-no-files-found: warn
+
+      - name: Stage rebuilt site tarball in R2 (_staging/)
+        if: ${{ inputs.stage_tarball }}
+        env:
+          SHA: ${{ steps.manifest.outputs.commit }}
+        run: |
+          set -euo pipefail
+          T0=$(date +%s)
+          tar -C site --exclude=.git -czf "$RUNNER_TEMP/site.tar.gz" .
+          ls -l "$RUNNER_TEMP/site.tar.gz"
+          MD5=$(md5sum "$RUNNER_TEMP/site.tar.gz" | cut -d' ' -f1)
+          python - "$RUNNER_TEMP/site.tar.gz" "$SHA" "$MD5" <<'EOF'
+          import json, os, sys
+          sys.path.insert(0, "tools/scripts")
+          import site_state
+          s3, bucket = site_state.r2_client(8)
+          path, sha, md5 = sys.argv[1:4]
+          s3.upload_file(path, bucket, "_staging/site.tar.gz",
+                         ExtraArgs={"ContentType": "application/gzip", "CacheControl": "no-cache"})
+          s3.put_object(Bucket=bucket, Key="_staging/site.json", ContentType="application/json",
+                        CacheControl="no-cache",
+                        Body=json.dumps({"commit": sha, "md5": md5, "bytes": os.path.getsize(path),
+                                         "run_id": os.environ.get("GITHUB_RUN_ID")}).encode())
+          print("uploaded _staging/site.tar.gz")
+          EOF
+          echo "staged in $(( $(date +%s) - T0 ))s"
