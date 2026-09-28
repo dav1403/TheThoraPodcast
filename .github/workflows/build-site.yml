@@ -35,6 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
+      PYTHONUNBUFFERED: '1'
       R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
       R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -142,7 +143,7 @@ jobs:
             "${{ steps.src.outputs.seconds }}" "${{ steps.restore.outputs.seconds }}" "${{ steps.gen.outputs.seconds }}")
           python tools/scripts/site_compare.py --site site --ref "$SHA" \
             --only-slug "$ONLY" --build-date "${{ steps.gen.outputs.build_date }}" \
-            --report-dir report --extra-info "$INFO"
+            --report-dir report --extra-info "$INFO" --keep-legacy-orphans
 
       - name: Upload comparison report
         if: ${{ !cancelled() }}

@@ -14,8 +14,16 @@ Tolerated differences (explicit, nothing else is tolerated):
     with the build day. Same number of lines, and every differing line must
     be a `<lastmod>` line whose rebuilt value is one of the build dates.
 
-Categories: identical / tolerated / different / missing (in the tree, not
-rebuilt) / extra (rebuilt, not in the tree).
+Legacy orphan pages (--keep-legacy-orphans): HTML pages present in the tree
+that the generator no longer produces (old episode filenames, renamed titles,
+disabled channels). They are still served today (HTTP 200) but are in no
+sitemap. They are NOT hidden: each one must be absent from the REBUILT
+sitemap.xml (proof it is not a page the build should have produced), is
+copied verbatim from git into the site, and is reported in its own
+`legacy_kept` category. Any other missing file stays "missing".
+
+Categories: identical / tolerated / legacy_kept / different / missing (in the
+tree, not rebuilt) / extra (rebuilt, not in the tree).
 """
 
 from __future__ import annotations
@@ -29,6 +37,7 @@ import sys
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import unquote
 
 SKIP_DIRS = {".git", "__pycache__"}
 SKIP_SUFFIXES = (".pyc", ".pyo")
@@ -59,6 +68,24 @@ def slug_scope(path: str, slug: str) -> bool:
             if stem == slug:
                 return True
     return False
+
+
+_LOC = re.compile(r"<loc>\s*https?://[^/<]+/([^<]*?)\s*</loc>")
+
+
+def sitemap_paths(text: str) -> set[str]:
+    """Site-relative paths listed in a sitemap (raw and percent-decoded)."""
+    out: set[str] = set()
+    for m in _LOC.finditer(text):
+        out.add(m.group(1))
+        out.add(unquote(m.group(1)))
+    return out
+
+
+def is_legacy_orphan(path: str, sitemap: set[str]) -> bool:
+    """A missing file that may be kept verbatim from git: an HTML page that the
+    rebuilt sitemap does not list. Never data files (feeds, JSON, ...)."""
+    return path.endswith(".html") and path not in sitemap
 
 
 def mask_generated_at(text: str) -> str:
@@ -160,10 +187,14 @@ def prefetch_blobs(repo: Path, shas: list[str]) -> None:
     promisor code runs, but with many objects per round-trip)."""
     for i in range(0, len(shas), 1000):
         chunk = "\n".join(shas[i:i + 1000]).encode() + b"\n"
-        subprocess.run(["git", "-C", str(repo), "-c", "fetch.negotiationAlgorithm=noop",
-                        "fetch", "origin", "--no-tags", "--no-write-fetch-head",
-                        "--recurse-submodules=no", "--filter=blob:none", "--stdin"],
-                       input=chunk, capture_output=True)
+        r = subprocess.run(["git", "-C", str(repo), "-c", "fetch.negotiationAlgorithm=noop",
+                            "fetch", "origin", "--no-tags", "--no-write-fetch-head",
+                            "--recurse-submodules=no", "--filter=blob:none", "--stdin"],
+                           input=chunk, capture_output=True)
+        if r.returncode:
+            # Not fatal: cat-file falls back to one lazy fetch per blob (slower).
+            print(f"prefetch of {len(shas[i:i + 1000])} blobs failed: "
+                  f"{r.stderr.decode(errors='replace')[:300]}")
 
 
 def read_blob(repo: Path, sha: str) -> bytes:
@@ -184,6 +215,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="YYYY-MM-DD the generator may have stamped (repeatable)")
     ap.add_argument("--report-dir", required=True)
     ap.add_argument("--extra-info", default="", help="JSON object merged into the report header")
+    ap.add_argument("--keep-legacy-orphans", action="store_true",
+                    help="copy missing HTML pages absent from the rebuilt sitemap from git into the site")
     ap.add_argument("--strict", action="store_true", help="exit 1 on any non-tolerated difference")
     args = ap.parse_args(argv)
 
@@ -205,6 +238,22 @@ def main(argv: list[str] | None = None) -> int:
         files = [p for p in files if slug_scope(p, args.only_slug)]
     site_hashes = hash_files(repo, site, files)
     cats = classify(site_hashes, ref)
+
+    legacy: list[str] = []
+    if args.keep_legacy_orphans and cats["missing"]:
+        smap = site / "sitemap.xml"
+        listed = sitemap_paths(smap.read_text(encoding="utf-8")) if smap.is_file() else None
+        if listed is None:
+            print("::warning::no rebuilt sitemap.xml - legacy orphans NOT kept")
+        else:
+            legacy = [p for p in cats["missing"] if is_legacy_orphan(p, listed)]
+            prefetch_blobs(repo, [ref[p] for p in legacy])
+            for p in legacy:
+                out = site / p
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_bytes(read_blob(repo, ref[p]))
+            kept = set(legacy)
+            cats["missing"] = [p for p in cats["missing"] if p not in kept]
 
     tolerated: dict[str, str] = {}
     unanalysed: list[str] = []
@@ -234,6 +283,7 @@ def main(argv: list[str] | None = None) -> int:
             "site_files": len(files),
             "identical": len(cats["identical"]),
             "tolerated": len(tolerated),
+            "legacy_kept": len(legacy),
             "different": len(real),
             "missing": len(cats["missing"]),
             "extra": len(cats["extra"]),
@@ -249,11 +299,13 @@ def main(argv: list[str] | None = None) -> int:
     report = dict(header)
     report.update({
         "tolerated": tolerated,
+        "legacy_kept": legacy,
         "different": real,
         "missing": cats["missing"],
         "extra": cats["extra"],
         "groups": {k: group_counts(v) for k, v in
-                   (("different", real), ("missing", cats["missing"]), ("extra", cats["extra"]))},
+                   (("legacy_kept", legacy), ("different", real), ("missing", cats["missing"]),
+                    ("extra", cats["extra"]))},
     })
     (report_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
 
@@ -263,7 +315,8 @@ def main(argv: list[str] | None = None) -> int:
         md.append(f"| {k} | {v} |")
     md.append(f"\n**Non-tolerated total: {non_tolerated}**  ")
     md.append(f"Tolerated by reason: {header['tolerated_by_reason'] or 'none'}\n")
-    for name, lst in (("different", real), ("missing", cats["missing"]), ("extra", cats["extra"])):
+    for name, lst in (("legacy_kept", legacy), ("different", real), ("missing", cats["missing"]),
+                      ("extra", cats["extra"])):
         if not lst:
             continue
         md.append(f"### {name} ({len(lst)}) — by top-level entry")

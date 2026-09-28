@@ -147,3 +147,19 @@ def test_classify():
     ref = {"a": "1", "b": "x", "d": "4"}
     got = site_compare.classify(site, ref)
     assert got == {"identical": ["a"], "different": ["b"], "missing": ["d"], "extra": ["c"]}
+
+
+def test_legacy_orphans_only_unlisted_html():
+    sm = (
+        "<url><loc>https://thetorahpodcast.net/rav-itshak-cohen.html</loc></url>\n"
+        "<url><loc>https://thetorahpodcast.net/lev/%D7%90-2020-01-01.html</loc></url>\n"
+        "<url>\n    <loc>https://thetorahpodcast.net/lev/b-2021-01-01.html</loc>\n</url>"
+    )
+    listed = site_compare.sitemap_paths(sm)
+    assert "lev/א-2020-01-01.html" in listed  # percent-decoded
+    assert "lev/b-2021-01-01.html" in listed
+    assert site_compare.is_legacy_orphan("rav-itshak-cohen/old-2020-01-01.html", listed)
+    assert not site_compare.is_legacy_orphan("lev/b-2021-01-01.html", listed)
+    assert not site_compare.is_legacy_orphan("rav-itshak-cohen.html", listed)
+    assert not site_compare.is_legacy_orphan("feeds/x.entries.json", listed)
+    assert not site_compare.is_legacy_orphan("home.json", listed)
