@@ -348,6 +348,40 @@ def seo_snippet(text: str, limit: int = 155) -> str:
     return cut.rstrip(" ,;:.-") + "…"
 
 
+# Episode meta/OG/Twitter/JSON-LD description. Auto-captions are phonetic
+# guesses ("sur pire carottes" for "sur Pirké Avot"): even the jingle-free head
+# of the transcript read as gibberish once Google and WhatsApp/Facebook showed
+# it. No cleaned or summarised transcript exists in the pipeline, so the
+# description is built from reliable metadata only — the transcript stays in
+# the page body (extract + panel), never in a description field.
+EP_DESC_MAX = 160
+# Below this a YouTube description is promo boilerplate (see desc_text_score).
+MIN_DESC_LETTERS = 120
+
+
+def episode_seo_description(title: str, author: str, pub_iso: str) -> str:
+    """'{title} — cours de Torah par {author}, {date}. Écoute gratuite en podcast.'
+
+    Always <= EP_DESC_MAX chars: the title is trimmed on a word boundary first,
+    then the closing call-to-action is dropped if the author name is very long.
+    """
+    title = re.sub(r"\s+", " ", title or "").strip()
+    author = re.sub(r"\s+", " ", author or "").strip()
+    date = fmt_date(pub_iso, "fr") if pub_iso else ""
+    meta = f"cours de Torah par {author}" if author else "cours de Torah"
+    if date:
+        meta += f", {date}"
+    for tail in (f"{meta}. Écoute gratuite en podcast.", f"{meta}."):
+        if not title:
+            if len(tail) <= EP_DESC_MAX:
+                return tail[0].upper() + tail[1:]
+            continue
+        room = EP_DESC_MAX - len(" — ") - len(tail)
+        if room >= 20:
+            return f"{seo_snippet(title, room - 1)} — {tail}"
+    return seo_snippet(f"{title} — {meta}.", EP_DESC_MAX - 1)
+
+
 # Auto-captions almost never open on the actual class: they start with a music
 # cue, applause, a chanted jingle or a bare greeting ("[Musique] Bircat chalom
 # à tous"). Taking the first words verbatim shipped that noise as the visible
@@ -1203,7 +1237,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         },
         "author": {"@type": "Person", "name": name},
         "publisher": SITE_PUBLISHER,
-        "description": desc[:500] if desc else f"Épisode de {name}",
+        "description": episode_seo_description(title, name, pub),
     }
     if audio:
         schema["associatedMedia"] = {"@type": "MediaObject", "contentUrl": audio}
@@ -1230,18 +1264,10 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
         if transcript_path.exists() else ""
     )
 
-    # Prefer the YouTube description only when it actually says something about
-    # this episode; otherwise the transcript is the better (and unique) source.
     extract = transcript_extract(transcript) if transcript else ""
-    # `extract` is already the jingle-free head of the transcript, so it is the
-    # right source for the SERP snippet too (the raw transcript would put the
-    # music cue back in <meta description>).
-    seo_desc_src = desc if desc_text_score(desc) >= 120 else (extract or transcript or desc)
-    seo_desc = (
-        seo_snippet(seo_desc_src)
-        if seo_desc_src
-        else f"Écoutez {title} — cours de {name} sur The Torah Podcast."
-    )
+    # Templated from metadata, never from the auto-captions (see
+    # episode_seo_description). Same string as the JSON-LD description.
+    seo_desc = schema["description"]
     og_locale = "he_IL" if lang == "he" else "fr_FR"
     og_locale_alt = "fr_FR" if lang == "he" else "he_IL"
     # Same artwork/<slug>.png family as render_page: that master only exists for
@@ -1302,9 +1328,11 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
 
     if transcript:
         # Signals that this page holds a real, machine-readable text body.
-        schema["abstract"] = seo_snippet(extract or transcript, 300)
+        # `abstract` only carries a human-written YouTube description that says
+        # something about the episode; auto-captions never go there.
+        if desc_text_score(desc) >= MIN_DESC_LETTERS:
+            schema["abstract"] = seo_snippet(desc, 300)
         schema["wordCount"] = len(transcript.split())
-        schema["description"] = seo_desc
     schema_json = json.dumps(schema, ensure_ascii=False, indent=2)
 
     transcript_block = ""
