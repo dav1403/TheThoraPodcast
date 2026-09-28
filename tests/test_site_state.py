@@ -53,6 +53,13 @@ def test_content_types():
     assert site_state.content_type("artwork/a.png") == "image/png"
 
 
+def test_normalize_endpoint():
+    n = site_state.normalize_endpoint
+    assert n("https://acct.r2.cloudflarestorage.com") == "https://acct.r2.cloudflarestorage.com"
+    assert n("https://acct.r2.cloudflarestorage.com/") == "https://acct.r2.cloudflarestorage.com"
+    assert n(" https://acct.r2.cloudflarestorage.com/thetorahpodcast\n") == "https://acct.r2.cloudflarestorage.com"
+
+
 def test_plan_sync_and_guards():
     local = {"a": {"md5": "1", "size": 1}, "b": {"md5": "2", "size": 1}, "c": {"md5": "3", "size": 1}}
     remote = {"a": "1", "b": "x", "d": "4"}

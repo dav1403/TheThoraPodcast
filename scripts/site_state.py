@@ -215,6 +215,20 @@ def is_newer(remote: dict | None, commit_time: int, commit: str) -> bool:
 # R2 client
 # --------------------------------------------------------------------------
 
+def normalize_endpoint(url: str) -> str:
+    """scheme://host only.
+
+    The pipeline's R2_ENDPOINT_URL secret ends with `/<bucket>` (that is why
+    every MP3 lives under the `thetorahpodcast/` key prefix). PUT/GET survive
+    it, but ListObjectsV2 is then routed as a GetObject of the key `<bucket>`
+    and fails with NoSuchKey — so the path is dropped here.
+    """
+    from urllib.parse import urlsplit
+
+    parts = urlsplit(url.strip())
+    return f"{parts.scheme}://{parts.netloc}"
+
+
 def r2_client(workers: int = 32):
     import boto3  # lazy: keeps the pure helpers importable without boto3
     from botocore.config import Config
@@ -225,9 +239,13 @@ def r2_client(workers: int = 32):
         raise SystemExit(f"missing environment: {', '.join(missing)}")
     cfg = Config(max_pool_connections=workers + 4, retries={"max_attempts": 8, "mode": "adaptive"},
                  s3={"addressing_style": "path"})
+    endpoint = normalize_endpoint(os.environ["R2_ENDPOINT_URL"])
+    if endpoint != os.environ["R2_ENDPOINT_URL"].rstrip("/"):
+        print("note: R2_ENDPOINT_URL carries a path component; it is ignored here "
+              "(state keys live at the bucket root, under _state/)")
     client = boto3.client(
         "s3",
-        endpoint_url=os.environ["R2_ENDPOINT_URL"],
+        endpoint_url=endpoint,
         aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
         aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
         region_name="auto",
