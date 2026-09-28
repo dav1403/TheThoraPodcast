@@ -28,6 +28,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run social post rabbi
+        id: post
+        # Exits 1 when a configured channel fails; details in the run summary.
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FB_PAGE_ID:        ${{ secrets.META_PAGE_ID }}
@@ -63,6 +65,7 @@ jobs:
           fi
           echo "Opened a new GitHub issue for the Anthropic credit error."
       - name: Commit updated social state
+        if: ${{ !cancelled() && steps.post.outcome != 'skipped' }}
         run: |
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"

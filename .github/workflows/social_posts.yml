@@ -60,7 +60,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Unit tests (social_post)
+        # Fast, network-free guard (Hebcal and Meta are mocked). Runs before
+        # posting so a broken reading resolver never reaches the Friday post.
+        run: |
+          pip install pytest
+          python -m pytest tests/test_social_post.py -q
+
       - name: Run social post
+        id: post
+        # Fails the job (exit 1) when a configured channel fails (e.g. Meta
+        # token expired), when the weekly reading cannot be determined, or when
+        # no channel is configured. The per-channel table (OK / NON CONFIRMÉ /
+        # ÉCHEC) is written to the run summary ($GITHUB_STEP_SUMMARY).
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FB_PAGE_ID:        ${{ secrets.META_PAGE_ID }}
@@ -111,6 +123,10 @@ jobs:
           echo "Opened a new GitHub issue for the Anthropic credit error."
 
       - name: Commit updated social state
+        # Also after a failed post: the script saves the rotation state and
+        # last_posted even when a channel fails, so a partial success is not
+        # re-posted on the next run.
+        if: ${{ !cancelled() && steps.post.outcome != 'skipped' }}
         run: |
           git config --global user.name  "Podcast Bot"
           git config --global user.email "action@github.com"
