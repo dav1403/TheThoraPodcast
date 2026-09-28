@@ -525,7 +525,8 @@ def cmd_manifest(args) -> int:
         return 2
     head = {k: v for k, v in manifest.items() if k != "files"}
     print(json.dumps(head, indent=2))
-    _output(commit=manifest["commit"], count=manifest.get("count", 0))
+    _output(commit=manifest["commit"], count=manifest.get("count", 0),
+            commit_time=manifest.get("commit_time", 0))
     return 0
 
 

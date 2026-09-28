@@ -1,0 +1,285 @@
+name: Deploy site (Pages, Actions mode)
+
+# Phase 3 of moving generated artefacts out of git: GitHub Pages publishes
+# the site built HERE (source of `main` + state mirrored in R2 `_state/` +
+# legacy orphan pages from R2 `_static-legacy/`), instead of serving the
+# `main` branch as is ("legacy" build type). URLs are unchanged.
+#
+# During phase 3 the hourly pipeline keeps committing its artefacts to `main`:
+# every build is compared file by file with `main` and is NOT published if a
+# single non-tolerated difference shows up (same tolerances as build-site.yml).
+#
+# Triggers: end of every "Update Podcast Feeds" run (workflow_run is not
+# affected by the [skip ci] of the bot commits), human pushes of static
+# source files, manual dispatch. Nothing is built unless Pages is in
+# "workflow" mode, so a rollback to legacy turns this workflow into a no-op:
+#   gh api -X PUT repos/dav1403/TheThoraPodcast/pages -f build_type=legacy -f "source[branch]=main" -f "source[path]=/"
+
+on:
+  workflow_run:
+    workflows: ["Update Podcast Feeds"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - '**'
+      # generated / state paths (the pipeline commits them) and generator
+      # inputs: a change there is published by the next pipeline run, once
+      # the artefacts are regenerated, otherwise the comparison fails.
+      - '!feeds/**'
+      - '!artwork/**'
+      - '!search-fts/**'
+      - '!mobile/*.json'
+      - '!*.json'
+      - '!sitemap.xml'
+      - '!scripts/**'
+      - '!tests/**'
+      - '!docs/**'
+      - '!.github/**'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Redeploy even if this exact main + state is already live'
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Build + guards only, whatever the Pages mode; never publish'
+        type: boolean
+        default: false
+
+# One deployment at a time, never cancelled while running. GitHub keeps at
+# most one pending run: a newer trigger replaces an older PENDING one, which
+# is what we want (the build always takes the latest main + R2 state).
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  SITE_URL: https://thetorahpodcast.net
+
+jobs:
+  build:
+    if: ${{ github.event_name != 'workflow_run' || contains(fromJSON('["success","failure"]'), github.event.workflow_run.conclusion) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      deploy: ${{ steps.go.outputs.deploy == 'true' && !inputs.dry_run }}
+      main: ${{ steps.main.outputs.sha }}
+    env:
+      PYTHONUNBUFFERED: '1'
+      R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+      R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+    steps:
+      - name: Pages must be in "workflow" mode
+        id: mode
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MODE=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type)
+          echo "Pages build_type: $MODE"
+          if [ "$MODE" = "workflow" ] || [ "${{ inputs.dry_run }}" = "true" ]; then echo "on=true" >> "$GITHUB_OUTPUT"
+          else echo "on=false" >> "$GITHUB_OUTPUT"; echo "::notice::Pages is in '$MODE' mode: nothing to deploy"; fi
+
+      - name: Resolve main
+        id: main
+        if: steps.mode.outputs.on == 'true'
+        run: |
+          SHA=$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"; echo "main = $SHA"
+
+      - name: Checkout tooling (scripts + tests of that main)
+        if: steps.mode.outputs.on == 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.main.outputs.sha }}
+          path: tools
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /tests/
+            /requirements.txt
+
+      - uses: actions/setup-python@v6
+        if: steps.mode.outputs.on == 'true'
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip dependencies
+        if: steps.mode.outputs.on == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('tools/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies + unit tests of the tooling
+        if: steps.mode.outputs.on == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tools/requirements.txt pytest
+          python -m pytest -q tools/tests/test_site_state.py tools/tests/test_site_deploy.py
+
+      - name: Read the mirrored state manifest
+        id: manifest
+        if: steps.mode.outputs.on == 'true'
+        run: python tools/scripts/site_state.py manifest
+
+      - name: Source-only checkout of main (+ the state commit, trees only)
+        id: src
+        if: steps.mode.outputs.on == 'true'
+        env:
+          SHA: ${{ steps.main.outputs.sha }}
+          STATE: ${{ steps.manifest.outputs.commit }}
+        run: |
+          set -euo pipefail
+          git init -q site
+          cd site
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git config remote.origin.promisor true
+          git config remote.origin.partialclonefilter blob:none
+          git fetch -q --depth=1 --filter=blob:none origin "$SHA"
+          [ "$STATE" = "$SHA" ] || git fetch -q --depth=1 --filter=blob:none origin "$STATE"
+          git config core.sparseCheckout true
+          printf '%s\n' /channels.json /speakers.json > .git/info/sparse-checkout
+          git checkout -q --detach "$SHA"
+          python ../tools/scripts/site_state.py sparse-patterns \
+            --channels channels.json --speakers speakers.json > "$RUNNER_TEMP/sparse.txt"
+          git sparse-checkout set --no-cone --stdin < "$RUNNER_TEMP/sparse.txt"
+          echo "time=$(git show -s --format=%ct "$SHA")" >> "$GITHUB_OUTPUT"
+          echo "source files: $(git ls-files | wc -l)"
+
+      - name: Is the R2 state the state of main?
+        id: drift
+        if: steps.mode.outputs.on == 'true'
+        run: |
+          python tools/scripts/site_deploy.py drift --repo site \
+            --state "${{ steps.manifest.outputs.commit }}" --main "${{ steps.main.outputs.sha }}"
+
+      - name: Never publish older than the live site
+        id: fresh
+        if: steps.mode.outputs.on == 'true' && steps.drift.outputs.drift == 'false'
+        run: |
+          python tools/scripts/site_deploy.py freshness --base "$SITE_URL" \
+            --main-sha "${{ steps.main.outputs.sha }}" --main-time "${{ steps.src.outputs.time }}" \
+            --state-commit "${{ steps.manifest.outputs.commit }}" \
+            --state-time "${{ steps.manifest.outputs.commit_time }}" \
+            ${{ (inputs.force || inputs.dry_run) && '--force' || '' }}
+
+      - name: Decision
+        id: go
+        run: echo "deploy=${{ steps.fresh.outputs.deploy == 'true' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore state from R2
+        if: steps.go.outputs.deploy == 'true'
+        run: python tools/scripts/site_state.py pull --dest site --expect-commit "${{ steps.manifest.outputs.commit }}"
+
+      # Same generation steps as build-site.yml (no YouTube / Anthropic call).
+      - name: Generate (thumbnails, pages, JSON, sitemap, search index)
+        id: gen
+        if: steps.go.outputs.deploy == 'true'
+        working-directory: site
+        run: |
+          set -euo pipefail
+          echo "build_date=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+          python scripts/build_artwork_thumbs.py
+          python scripts/generate_channel_pages.py | tail -5
+          python scripts/build_transcript_index.py --min-interval-hours 6
+
+      - name: Restore legacy orphan pages from R2 (seeded from git if missing)
+        if: steps.go.outputs.deploy == 'true'
+        run: |
+          set -euo pipefail
+          python tools/scripts/site_legacy.py sync --repo site --ref "${{ steps.main.outputs.sha }}"
+          python tools/scripts/site_legacy.py pull --dest site
+
+      - name: Guard - compare with main (0 non-tolerated difference)
+        id: compare
+        if: steps.go.outputs.deploy == 'true'
+        run: |
+          python tools/scripts/site_compare.py --site site --ref "${{ steps.main.outputs.sha }}" \
+            --build-date "${{ steps.gen.outputs.build_date }}" --report-dir report \
+            --keep-legacy-orphans --strict \
+            --extra-info '{"run_id":"${{ github.run_id }}","state_commit":"${{ steps.manifest.outputs.commit }}"}'
+
+      - name: Store new legacy orphans in R2 (if any)
+        if: steps.go.outputs.deploy == 'true'
+        run: python tools/scripts/site_legacy.py sync --repo site --ref "${{ steps.main.outputs.sha }}" --extra-from-report report/report.json
+
+      - name: Guard - feeds and episode counts vs main
+        if: steps.go.outputs.deploy == 'true'
+        run: python tools/scripts/site_deploy.py content --site site --repo site --ref "${{ steps.main.outputs.sha }}"
+
+      - name: Upload comparison report
+        if: ${{ !cancelled() && steps.go.outputs.deploy == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-compare-report
+          path: report/
+          if-no-files-found: warn
+
+      - name: Write the deployment marker (/_deploy.json)
+        if: steps.go.outputs.deploy == 'true'
+        run: |
+          set -euo pipefail
+          rm -rf site/.git
+          N=$(grep -cv '^\s*\(#\|$\)' tools/scripts/legacy_orphans.txt)
+          python tools/scripts/site_deploy.py marker --site site \
+            --main-sha "${{ steps.main.outputs.sha }}" --main-time "${{ steps.src.outputs.time }}" \
+            --state-commit "${{ steps.manifest.outputs.commit }}" \
+            --state-time "${{ steps.manifest.outputs.commit_time }}" --legacy-orphans "$N"
+          echo "site: $(find site -type f | wc -l) files, $(du -sh site | cut -f1)"
+
+      - name: Upload Pages artifact
+        if: steps.go.outputs.deploy == 'true' && !inputs.dry_run
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+        with:
+          timeout: 1500000
+
+  verify:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout scripts of the deployed main (trees only)
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.build.outputs.main }}
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      # deploy-pages reports success before the new content is served: wait
+      # for THIS run's marker, then probe the live site.
+      - name: Live verification
+        run: python scripts/site_deploy.py verify --base "$SITE_URL" --repo . --run-id "${{ github.run_id }}"
