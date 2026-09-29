@@ -52,3 +52,10 @@ jobs:
             tests/test_hiloulot_parity.py \
             tests/test_weekly_paracha.py \
             -q
+
+      - name: Espace rav stats tests
+        # Separate step: needs `cryptography` (AES-GCM) on top of pytest; the
+        # JS interop test uses the runner's node.
+        run: |
+          pip install cryptography
+          python -m pytest tests/test_stats_core.py -q

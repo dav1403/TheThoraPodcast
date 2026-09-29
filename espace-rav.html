@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace rav — The Torah Podcast</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <!-- Private page: the rav's link carries his key in the URL fragment
+       (#k=...), which the browser never sends to any server. The report is
+       an AES-GCM encrypted file (espace-rav/d/<id>.bin) produced by
+       scripts/stats_update.py; the id and the key are derived from the token
+       exactly as in scripts/stats_core.py (blob_id / blob_key). No analytics
+       tag on purpose. Not in the sitemap. -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f0; color: #222; line-height: 1.5; padding-bottom: 60px; }
+    header { background: #1a1a2e; color: #fff; padding: 26px 20px 22px; text-align: center; }
+    header h1 { font-size: 1.7rem; margin-bottom: 4px; }
+    header p { color: #aab; font-size: .95rem; }
+    header a { color: #aab; }
+    main { max-width: 980px; margin: 0 auto; padding: 20px 16px; }
+    .card { background: #fff; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .card h2 { font-size: 1.1rem; margin-bottom: 10px; }
+    .muted { color: #666; font-size: .88rem; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .tile { border: 1px solid #e6e6e0; border-radius: 10px; padding: 14px; }
+    .tile .v { font-size: 1.9rem; font-weight: 700; color: #1a1a2e; }
+    .tile .l { font-size: .9rem; font-weight: 600; }
+    .tile .s { font-size: .8rem; color: #666; }
+    .off .v { color: #aaa; font-size: 1.1rem; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th, td { text-align: start; padding: 7px 6px; border-bottom: 1px solid #eee; vertical-align: top; }
+    th { font-size: .8rem; color: #555; }
+    td.n, th.n { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .chart { width: 100%; height: auto; display: block; }
+    .legend { display: flex; gap: 16px; font-size: .85rem; margin-top: 6px; flex-wrap: wrap; }
+    .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-inline-end: 6px; vertical-align: -1px; }
+    .msg { text-align: center; padding: 40px 20px; }
+    .lang { margin-top: 8px; }
+    .lang button { background: none; border: 1px solid rgba(255,255,255,.3); color: #fff; border-radius: 14px; padding: 2px 10px; cursor: pointer; font-size: .8rem; }
+    .lang button[aria-pressed="true"] { background: #fff; color: #1a1a2e; }
+  </style>
+</head>
+<body>
+<header>
+  <h1 id="h-title">Espace rav</h1>
+  <p id="h-sub">Statistiques d'écoute privées — <a href="/">The Torah Podcast</a></p>
+  <div class="lang"><button type="button" data-l="fr">FR</button> <button type="button" data-l="he">עב</button></div>
+</header>
+<main id="app"><div class="card msg" id="status">…</div></main>
+<script>
+(function () {
+  'use strict';
+  var NS = 'ttp-espace-rav/v1/';
+  var T = {
+    fr: {
+      title: 'Espace rav', sub: "Statistiques d'écoute privées",
+      loading: 'Chargement de vos statistiques…',
+      nokey: "Ce lien est incomplet. Utilisez le lien personnel qui vous a été transmis.",
+      notfound: "Aucun rapport ne correspond à ce lien (lien erroné ou renouvelé). Contactez l'équipe The Torah Podcast.",
+      broken: "Ce rapport n'a pas pu être ouvert. Vérifiez que le lien est complet.",
+      unsupported: "Votre navigateur ne permet pas d'ouvrir ce rapport sécurisé. Essayez avec un navigateur récent.",
+      updated: 'Données jusqu’au', episodes: 'cours publiés',
+      d30: '30 derniers jours', all: 'Depuis le début de la mesure',
+      site: 'Écoutes sur le site', siteS: 'lecteur de thetorahpodcast.net',
+      direct: 'Téléchargements audio', directS: 'Apple Podcasts, applis de podcast, application mobile et lecteur du site',
+      plat: 'Spotify / Deezer / Apple', platS: 'relevés des consoles créateurs',
+      notyet: 'mesure en cours d’activation', since: 'depuis le',
+      weekly: 'Écoutes par semaine', top: 'Vos cours les plus écoutés',
+      course: 'Cours', pub: 'Publié', completes: 'écoutés jusqu’au bout',
+      nodata: 'La mesure vient d’être activée : les premiers chiffres apparaîtront ici dans quelques jours.',
+      note: 'Les téléchargements audio incluent les écoutes du lecteur du site : ne pas additionner les deux colonnes. Spotify et Deezer hébergent leur propre copie de l’audio : leurs écoutes n’apparaissent que dans leurs relevés.',
+      period: 'Période', plays: 'Écoutes', platform: 'Plateforme', week: 'Semaine du',
+      unassigned: 'dont écoutes non rattachées à un cours précis'
+    },
+    he: {
+      title: 'אזור הרב', sub: 'סטטיסטיקות האזנה פרטיות',
+      loading: 'טוען את הנתונים…',
+      nokey: 'הקישור אינו שלם. השתמשו בקישור האישי שנשלח אליכם.',
+      notfound: 'לא נמצא דוח עבור קישור זה (קישור שגוי או שחודש). צרו קשר עם צוות The Torah Podcast.',
+      broken: 'לא ניתן לפתוח את הדוח. ודאו שהקישור שלם.',
+      unsupported: 'הדפדפן אינו תומך בפתיחת דוח מאובטח זה. נסו דפדפן עדכני.',
+      updated: 'נתונים עד', episodes: 'שיעורים שפורסמו',
+      d30: '30 הימים האחרונים', all: 'מתחילת המדידה',
+      site: 'האזנות באתר', siteS: 'הנגן של thetorahpodcast.net',
+      direct: 'הורדות אודיו', directS: 'Apple Podcasts, אפליקציות פודקאסט, האפליקציה והנגן של האתר',
+      plat: 'Spotify / Deezer / Apple', platS: 'נתוני לוחות היוצרים',
+      notyet: 'המדידה בהפעלה', since: 'מאז',
+      weekly: 'האזנות לפי שבוע', top: 'השיעורים המושמעים ביותר',
+      course: 'שיעור', pub: 'פורסם', completes: 'הושמעו עד הסוף',
+      nodata: 'המדידה הופעלה זה עתה: הנתונים הראשונים יופיעו כאן בעוד כמה ימים.',
+      note: 'הורדות האודיו כוללות את ההאזנות בנגן האתר: אין לחבר בין שתי העמודות. Spotify ו-Deezer מאחסנים עותק משלהם של האודיו: ההאזנות שם מופיעות רק בנתונים שלהם.',
+      period: 'תקופה', plays: 'האזנות', platform: 'פלטפורמה', week: 'שבוע מ־',
+      unassigned: 'מתוכן האזנות שלא שויכו לשיעור מסוים'
+    }
+  };
+  var lang = 'fr', report = null, statusKey = 'loading';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+    });
+  }
+  function fmt(n) { return Number(n || 0).toLocaleString(lang === 'he' ? 'he-IL' : 'fr-FR'); }
+  function fdate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso + 'T12:00:00Z');
+    return d.toLocaleDateString(lang === 'he' ? 'he-IL' : 'fr-FR', {day: 'numeric', month: 'short', year: 'numeric'});
+  }
+  function tokenFromHash() {
+    var m = /(?:^#|&)k=([A-Za-z0-9_-]{16,64})/.exec(location.hash || '');
+    return m ? m[1] : null;
+  }
+  function hex(buf) {
+    return Array.prototype.map.call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function sha256(str) { return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); }
+
+  // Mirrors stats_core.blob_id / blob_key / encrypt (nonce(12) || ciphertext+tag).
+  function openReport(token, bytes) {
+    return sha256(NS + 'key/' + token).then(function (raw) {
+      return crypto.subtle.importKey('raw', raw, {name: 'AES-GCM'}, false, ['decrypt']);
+    }).then(function (key) {
+      var b = new Uint8Array(bytes);
+      return crypto.subtle.decrypt({name: 'AES-GCM', iv: b.slice(0, 12)}, key, b.slice(12));
+    }).then(function (plain) { return JSON.parse(new TextDecoder().decode(plain)); });
+  }
+  window.TTPEspaceRav = {openReport: openReport, blobId: function (token) {
+    return sha256(NS + 'id/' + token).then(function (h) { return hex(h).slice(0, 32); });
+  }};
+
+  function t(k) { return (T[lang] || T.fr)[k]; }
+
+  function setLang(l) {
+    lang = T[l] ? l : 'fr';
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'he' ? 'rtl' : 'ltr';
+    Array.prototype.forEach.call(document.querySelectorAll('.lang button'), function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-l') === lang));
+    });
+    render();
+  }
+
+  function tile(label, sub, value, on, extra) {
+    return '<div class="tile' + (on ? '' : ' off') + '"><div class="l">' + esc(label) + '</div>' +
+      '<div class="v">' + (on ? fmt(value) : esc(t('notyet'))) + '</div>' +
+      '<div class="s">' + esc(sub) + (extra ? '<br>' + extra : '') + '</div></div>';
+  }
+
+  function chart(weeks) {
+    var W = 900, H = 220, pad = 30, n = weeks.length || 1;
+    var max = 1;
+    weeks.forEach(function (w) { max = Math.max(max, w.site, w.direct); });
+    var slot = (W - pad) / n, bw = Math.max(2, slot * 0.36);
+    var bars = '';
+    weeks.forEach(function (w, i) {
+      var x = pad + i * slot + slot * 0.12;
+      var hs = (H - 30) * w.site / max, hd = (H - 30) * w.direct / max;
+      bars += '<rect x="' + x.toFixed(1) + '" y="' + (H - 20 - hs).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hs.toFixed(1) + '" fill="#3a6ea5"><title>' + esc(t('week') + ' ' + fdate(w.start) + ' — ' + t('site') + ' : ' + fmt(w.site)) + '</title></rect>';
+      bars += '<rect x="' + (x + bw).toFixed(1) + '" y="' + (H - 20 - hd).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hd.toFixed(1) + '" fill="#c98b2b"><title>' + esc(t('week') + ' ' + fdate(w.start) + ' — ' + t('direct') + ' : ' + fmt(w.direct)) + '</title></rect>';
+      if (i % 4 === 0) bars += '<text x="' + x.toFixed(1) + '" y="' + (H - 5) + '" font-size="11" fill="#666">' + esc(fdate(w.start)) + '</text>';
+    });
+    return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(t('weekly')) + '" direction="ltr">' +
+      '<line x1="' + pad + '" y1="' + (H - 20) + '" x2="' + W + '" y2="' + (H - 20) + '" stroke="#ccc"/>' +
+      '<text x="0" y="12" font-size="11" fill="#666">' + fmt(max) + '</text>' + bars + '</svg>' +
+      '<div class="legend"><span><i style="background:#3a6ea5"></i>' + esc(t('site')) + '</span><span><i style="background:#c98b2b"></i>' + esc(t('direct')) + '</span></div>';
+  }
+
+  function render() {
+    document.getElementById('h-title').textContent = report ? report.name : t('title');
+    document.getElementById('h-sub').firstChild.nodeValue = (report ? t('title') + ' — ' : '') + t('sub') + ' — ';
+    var app = document.getElementById('app');
+    if (!report) { app.innerHTML = '<div class="card msg">' + esc(t(statusKey)) + '</div>'; return; }
+    var r = report, s = r.sources || {}, siteOn = s.site && s.site.active, dirOn = s.direct && s.direct.active;
+    var html = '<p class="muted" style="margin-bottom:14px">' + esc(t('updated')) + ' ' + esc(fdate(r.until)) + ' · ' + fmt(r.episodes) + ' ' + esc(t('episodes')) + '</p>';
+    if (!siteOn && !dirOn && !(r.platforms || []).length) html += '<div class="card msg">' + esc(t('nodata')) + '</div>';
+    ['d30', 'all'].forEach(function (p) {
+      var tot = (r.totals || {})[p] || {};
+      var platSum = 0;
+      (r.platforms || []).forEach(function (x) { if (p === 'all') platSum += x.plays; });
+      var siteExtra = tot.site ? esc(fmt(tot.complete)) + ' ' + esc(t('completes')) : '';
+      var since = function (m) { return m && m.since ? esc(t('since') + ' ' + fdate(m.since)) : ''; };
+      html += '<div class="card"><h2>' + esc(t(p)) + '</h2><div class="tiles">' +
+        tile(t('site'), t('siteS'), tot.site, siteOn, [siteExtra, p === 'all' ? since(s.site) : ''].filter(Boolean).join('<br>')) +
+        tile(t('direct'), t('directS'), tot.direct, dirOn, p === 'all' ? since(s.direct) : '') +
+        (p === 'all' ? tile(t('plat'), t('platS'), platSum, (r.platforms || []).length > 0, '') : '') +
+        '</div></div>';
+    });
+    if (siteOn || dirOn) html += '<div class="card"><h2>' + esc(t('weekly')) + '</h2>' + chart(r.weekly || []) + '</div>';
+    if ((r.courses || []).length) {
+      html += '<div class="card"><h2>' + esc(t('top')) + '</h2><table><thead><tr><th>' + esc(t('course')) + '</th><th class="n">' + esc(t('site')) + '</th><th class="n">' + esc(t('direct')) + '</th></tr></thead><tbody>';
+      r.courses.forEach(function (c) {
+        html += '<tr><td>' + esc(c.title) + '<div class="muted">' + esc(t('pub')) + ' ' + esc(fdate(c.published)) + '</div></td><td class="n">' + fmt(c.site) + '</td><td class="n">' + fmt(c.direct) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    if ((r.platforms || []).length) {
+      html += '<div class="card"><h2>' + esc(t('plat')) + '</h2><table><thead><tr><th>' + esc(t('platform')) + '</th><th>' + esc(t('period')) + '</th><th class="n">' + esc(t('plays')) + '</th></tr></thead><tbody>';
+      r.platforms.forEach(function (x) {
+        html += '<tr><td>' + esc(x.platform) + '</td><td>' + esc(fdate(x.start) + ' → ' + fdate(x.end)) + '</td><td class="n">' + fmt(x.plays) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+    html += '<p class="muted">' + esc(t('note')) + '</p>';
+    app.innerHTML = html;
+  }
+
+  function fail(key) { statusKey = key; report = null; render(); }
+
+  function start() {
+    Array.prototype.forEach.call(document.querySelectorAll('.lang button'), function (b) {
+      b.addEventListener('click', function () { setLang(b.getAttribute('data-l')); });
+    });
+    setLang(/^he/.test(navigator.language || '') ? 'he' : 'fr');
+    var token = tokenFromHash();
+    if (!token) return fail('nokey');
+    if (!window.crypto || !crypto.subtle || !window.TextEncoder) return fail('unsupported');
+    window.TTPEspaceRav.blobId(token).then(function (id) {
+      return fetch('/espace-rav/d/' + id + '.bin', {cache: 'no-cache'});
+    }).then(function (res) {
+      if (res.status === 404) throw new Error('notfound');
+      if (!res.ok) throw new Error('broken');
+      return res.arrayBuffer();
+    }).then(function (buf) { return openReport(token, buf); }).then(function (r) {
+      report = r;
+      setLang(r.lang === 'he' ? 'he' : lang);
+    }).catch(function (e) { fail(e && e.message === 'notfound' ? 'notfound' : 'broken'); });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
+</body>
+</html>

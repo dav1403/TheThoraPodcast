@@ -1,0 +1,85 @@
+name: Espace rav stats
+
+# Private per-rav listening statistics ("Espace rav", validated by David on
+# 29/09/2026 — no monetisation). Daily: collect the previous days from every
+# configured source into the ENCRYPTED history (R2 _stats/history.bin), then
+# publish one ENCRYPTED report per rav (R2 _stats/pub/<id>.bin). The next
+# deploy-site run copies the reports into the site (espace-rav/d/), where
+# espace-rav.html opens them with the key carried by the rav's private link.
+# See scripts/stats_core.py for the confidentiality model.
+#
+# Sources switch on by themselves as soon as their secret exists:
+#   CF_API_TOKEN (+ optional CF_ACCOUNT_ID)  -> R2 downloads per episode
+#   GA4_SA_JSON  (+ optional GA4_PROPERTY_ID) -> site player plays
+# STATS_MASTER_KEY is mandatory (the job is red without it).
+# The repository and its Actions logs are PUBLIC: the scripts only ever log
+# counts of rows / days / files, never a figure of a rav nor a token.
+
+on:
+  schedule:
+    - cron: '23 3 * * *'   # after midnight UTC: yesterday is complete everywhere
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Days to (re)collect (Cloudflare keeps ~31)'
+        default: '30'
+
+concurrency:
+  group: espace-rav-stats
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUNBUFFERED: '1'
+      STATS_MASTER_KEY:     ${{ secrets.STATS_MASTER_KEY }}
+      R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+      R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+      CF_API_TOKEN:         ${{ secrets.CF_API_TOKEN }}
+      CF_ACCOUNT_ID:        ${{ secrets.CF_ACCOUNT_ID }}
+      GA4_SA_JSON:          ${{ secrets.GA4_SA_JSON }}
+      GA4_PROPERTY_ID:      ${{ secrets.GA4_PROPERTY_ID }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /tests/test_stats_core.py
+            /tests/conftest.py
+            /channels.json
+            /speakers.json
+            /espace-rav.html
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies + unit tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 requests cryptography google-auth pytest
+          python -m pytest -q tests/test_stats_core.py
+
+      - name: Master key present
+        id: key
+        run: |
+          if [ -z "$STATS_MASTER_KEY" ]; then
+            echo "::error::secret STATS_MASTER_KEY missing — no report can be encrypted"; exit 1
+          fi
+
+      - name: Collect
+        run: python scripts/stats_update.py collect --days "${{ inputs.days || '30' }}"
+
+      - name: Publish encrypted reports
+        if: ${{ !cancelled() && steps.key.outcome == 'success' }}
+        run: python scripts/stats_update.py publish

@@ -241,6 +241,14 @@ jobs:
           path: report/
           if-no-files-found: warn
 
+      # Espace rav (stats.yml): encrypted per-rav reports, added AFTER the
+      # comparison with main on purpose (they are not in git). Best-effort:
+      # a failure here must never block the site.
+      - name: Add Espace rav encrypted reports from R2
+        if: steps.go.outputs.deploy == 'true'
+        continue-on-error: true
+        run: python tools/scripts/stats_update.py pull --dest site/espace-rav/d
+
       - name: Write the deployment marker (/_deploy.json)
         if: steps.go.outputs.deploy == 'true'
         run: |
