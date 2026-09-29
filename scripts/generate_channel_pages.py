@@ -14,6 +14,7 @@ from pathlib import Path
 
 from build_mobile_index import build_mobile_index
 from lang_detect import episode_lang
+from weekly_paracha_pages import sitemap_entries as weekly_paracha_sitemap
 
 BASE_URL       = "https://thetorahpodcast.net"
 
@@ -2390,6 +2391,7 @@ def update_sitemap(slug_entries: list[tuple]):
         '    <changefreq>yearly</changefreq>\n'
         '    <priority>0.3</priority>\n'
         '  </url>\n'
+        f'{weekly_paracha_sitemap(today)}'
         f'{channel_entries}\n'
         f'{episode_entries}\n'
         '</urlset>\n'

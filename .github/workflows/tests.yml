@@ -20,6 +20,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest
+          # requests: tests/test_weekly_paracha.py imports social_post (no network used).
+          pip install requests
 
       - name: Run generator tests
         # Scoped to the generator test-suite (the feedback loop this workflow
@@ -48,4 +50,5 @@ jobs:
             tests/test_index_first_paint.py \
             tests/test_podcast_guid.py \
             tests/test_hiloulot_parity.py \
+            tests/test_weekly_paracha.py \
             -q

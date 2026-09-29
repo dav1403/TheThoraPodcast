@@ -681,6 +681,9 @@ def post_paracha(channels, state, dry_run=False, ref_date=None, fetch=None):
     body = generate_text(prompt) or fallback
 
     link = reading["link"]
+    # Thursday's "paracha de la semaine" page, when it covers this very reading.
+    from weekly_paracha_pages import weekly_page_link
+    link = weekly_page_link(reading, ref_date) or link
     message = f"{body}\n\n{rabbi_lines}\n\n🔗 {link}\n\n{HASHTAGS_FR} {reading['hashtag']} {HASHTAGS_HE}"
 
     # Image: artwork of the rabbi with the most matching episodes

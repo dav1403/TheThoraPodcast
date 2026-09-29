@@ -1,0 +1,180 @@
+name: Paracha de la semaine
+
+# "Rendez-vous hebdo paracha": every Thursday, the best classes of the catalogue
+# on the reading of the coming Shabbat + a short AI summary (Haiku 4.5, grounded
+# on the selected classes only), published as SOURCE files of main:
+#   paracha/<week>.json|html, paracha-de-la-semaine.html, paracha-de-la-semaine.xml
+# then deploy-site.yml is dispatched (a GITHUB_TOKEN push triggers nothing,
+# a workflow_dispatch does). The hourly pipeline never touches these files; its
+# sitemap lists them (generate_channel_pages -> weekly_paracha_pages).
+#
+# Two crons: GitHub skips scheduled runs a lot on this repo. The second one is a
+# no-op when the first succeeded (the week file for this Shabbat exists).
+# Israel is UTC+3 until 25/10/2026, UTC+2 after: 07:23 UTC = 10:23 / 09:23.
+
+on:
+  schedule:
+    - cron: '23 7 * * 4'
+    - cron: '41 10 * * 4'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Reference day YYYY-MM-DD (default: today, Israel)'
+        required: false
+        default: ''
+      force:
+        description: 'Regenerate even if this week already exists'
+        type: boolean
+        default: false
+      no_ai:
+        description: 'Deterministic summary, no Anthropic call'
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Generate and show, but do not commit / deploy / notify'
+        type: boolean
+        default: false
+
+concurrency:
+  group: weekly-paracha
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+
+env:
+  PYTHONIOENCODING: utf-8
+  SITE_URL: https://thetorahpodcast.net
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      changed: ${{ steps.gen.outputs.changed }}
+      week: ${{ steps.gen.outputs.week }}
+      pushed: ${{ steps.push.outputs.pushed }}
+    steps:
+      # Blobless, depth 1, sparse: the repo weighs ~50 GB of history. Only the
+      # course database (feeds/*.entries.json, ~35 MB) and the sources are
+      # needed; transcripts are read from the live site for the few candidates.
+      - name: Checkout (sources + entries only)
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /tests/
+            /requirements.txt
+            /channels.json
+            /speakers.json
+            /feeds/*.entries.json
+            /paracha/
+            /paracha-de-la-semaine.html
+            /paracha-de-la-semaine.xml
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests 'anthropic>=0.90.0' pytest
+
+      - name: Unit tests (weekly paracha + reading resolver)
+        run: python -m pytest -q tests/test_weekly_paracha.py tests/test_social_post.py
+
+      - name: Generate the week
+        id: gen
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          ARGS=""
+          [ -n "${{ inputs.date }}" ] && ARGS="$ARGS --date ${{ inputs.date }}"
+          [ "${{ inputs.force }}" = "true" ] && ARGS="$ARGS --force"
+          [ "${{ inputs.no_ai }}" = "true" ] && ARGS="$ARGS --no-ai"
+          python scripts/weekly_paracha.py generate $ARGS
+
+      - name: Alert if Anthropic credits exhausted (weekly summary)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -f /tmp/anthropic_credit_error ] || { echo "No Anthropic credit/quota error."; exit 0; }
+          echo "::warning::Anthropic credits/quota exhausted - the weekly summary fell back to canned text"
+          EXISTING=$(gh issue list --state open --search 'Anthropic credits exhausted in:title' --json number --jq '.[0].number // empty') || EXISTING=""
+          [ -n "$EXISTING" ] && { echo "Issue #$EXISTING already open"; exit 0; }
+          gh issue create --title "Anthropic credits exhausted - weekly paracha summary" \
+            --body "The weekly paracha summary fell back to canned text (credits/quota). Top up at https://console.anthropic.com/settings/billing — run ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --label bug || echo "::error::could not open the alert issue"
+
+      - name: Upload the generated files
+        if: steps.gen.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-paracha-${{ steps.gen.outputs.week }}
+          path: |
+            paracha/
+            paracha-de-la-semaine.html
+            paracha-de-la-semaine.xml
+
+      # Only our own files are committed. The hourly pipeline pushes to main all
+      # the time: replay OUR commit on the fresh main (depth-1 fetch + rebase
+      # --onto, never a plain rebase on this shallow blobless clone).
+      - name: Commit and push
+        id: push
+        if: steps.gen.outputs.changed == 'true' && !inputs.dry_run
+        run: |
+          set -euo pipefail
+          git config user.name  "Podcast Bot"
+          git config user.email "action@github.com"
+          git add -A -- paracha paracha-de-la-semaine.html paracha-de-la-semaine.xml
+          if git diff --cached --quiet; then echo "pushed=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git commit -q -m "chore: paracha de la semaine ${{ steps.gen.outputs.week }} [skip ci]" \
+            -- paracha paracha-de-la-semaine.html paracha-de-la-semaine.xml
+          for i in 1 2 3 4 5 6; do
+            if git push origin HEAD:main; then echo "pushed=true" >> "$GITHUB_OUTPUT"; git log --oneline -1; exit 0; fi
+            echo "push rejected (attempt $i) - replaying on the new main"
+            sleep $((i * 7))
+            git fetch -q --depth=1 origin main
+            git rebase -q --onto FETCH_HEAD HEAD~1 HEAD
+          done
+          echo "::error::could not push after 6 attempts"; exit 1
+
+      - name: Publish (dispatch deploy-site)
+        if: steps.push.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-site.yml --ref main -R "${{ github.repository }}"
+
+  # Dormant until TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL_ID exist (green no-op).
+  # Waits for the week page to be served before announcing it.
+  telegram:
+    needs: generate
+    if: needs.generate.outputs.pushed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /paracha/
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - name: Announce on the Telegram channel
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+        run: python scripts/weekly_paracha.py telegram --wait-live
