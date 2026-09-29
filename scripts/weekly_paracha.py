@@ -345,12 +345,13 @@ def build_prompt(label_fr: str, courses: list[dict]) -> str:
         "Voici les cours sélectionnés (titre, description, début de transcription quand il existe) :\n\n"
         f"{material}\n\n"
         "Consignes STRICTES :\n"
-        "- Écris en français 3 à 5 lignes (une idée par ligne, pas de puces, pas de titre).\n"
+        "- Écris en français 3 à 5 phrases courtes (25 mots maximum chacune), UNE PAR LIGNE, "
+        "700 caractères au total au maximum. Pas de puces, pas de titre.\n"
         "- Appuie-toi UNIQUEMENT sur le matériel ci-dessus : n'invente aucun enseignement, "
         "aucune citation, aucun chiffre, aucun nom qui n'y figure pas. Si le matériel est maigre, "
         "reste général et factuel (quels rabbins, quels angles d'après les titres).\n"
         "- Tu peux nommer les rabbins et les thèmes qui ressortent des titres et extraits.\n"
-        "- Ton sobre et informatif, pas de superlatifs publicitaires, pas d'emoji, pas de hashtag, "
+        "- Ton sobre et informatif (pas de « découvrez », pas de superlatifs), pas d'emoji, pas de hashtag, "
         "pas d'URL, pas d'appel à s'abonner.\n"
         "Réponds uniquement par le texte des lignes."
     )
@@ -365,9 +366,28 @@ def first_text(message) -> str:
     return ""
 
 
+SUMMARY_MAX_CHARS = 900
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?…])\s+(?=[A-ZÀ-ÖØ-Þ«\"'])")
+
+
+def normalize_summary(text: str) -> str:
+    """One sentence per line, bullets stripped, cut on whole sentences within
+    SUMMARY_MAX_CHARS. Models often return a single paragraph."""
+    lines = [ln.strip().lstrip("-•* ").strip() for ln in (text or "").splitlines() if ln.strip()]
+    if len(lines) < 2:
+        lines = [s.strip() for s in _SENTENCE_SPLIT.split(" ".join(lines)) if s.strip()]
+    out, used = [], 0
+    for ln in lines[:5]:
+        if out and used + len(ln) > SUMMARY_MAX_CHARS:
+            break
+        out.append(ln)
+        used += len(ln) + 1
+    return "\n".join(out)
+
+
 def valid_summary(text: str) -> bool:
     lines = [ln for ln in (text or "").splitlines() if ln.strip()]
-    return 2 <= len(lines) <= 6 and 80 <= len(text) <= 1200 and "http" not in text
+    return 2 <= len(lines) <= 6 and 80 <= len(text) <= SUMMARY_MAX_CHARS + 200 and "http" not in text
 
 
 def fallback_summary(label_fr: str, courses: list[dict]) -> str:
@@ -404,10 +424,9 @@ def generate_summary(label_fr: str, courses: list[dict], api_key: str | None) ->
             return fallback_summary(label_fr, courses), "fallback"
         print(f"WARNING: summary API call failed ({type(exc).__name__}: {exc}) — fallback summary")
         return fallback_summary(label_fr, courses), "fallback"
-    text = first_text(msg)
-    text = "\n".join(ln.strip().lstrip("-•* ").strip() for ln in text.splitlines() if ln.strip())
+    text = normalize_summary(first_text(msg))
     if not valid_summary(text):
-        print(f"WARNING: summary rejected by the sanity check — fallback. Got: {text[:300]!r}")
+        print(f"WARNING: summary rejected by the sanity check — fallback. Got: {text!r}")
         return fallback_summary(label_fr, courses), "fallback"
     return text, SUMMARY_MODEL
 

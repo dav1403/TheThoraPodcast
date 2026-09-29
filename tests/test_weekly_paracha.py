@@ -396,3 +396,13 @@ def test_send_telegram(site):
     assert sent["url"].endswith("/botTOKEN/sendMessage")
     assert sent["body"]["parse_mode"] == "HTML" and len(sent["body"]["text"]) <= 4096
     assert "paracha/bereshit-2026.html" in sent["body"]["text"]
+
+
+def test_normalize_summary_splits_a_single_paragraph():
+    para = ("À l'approche de Chemini Atseret, dix rabbins commentent Vézot Habracha. "
+            "Le Rav A lit l'Or Ha'haïm, le Rav B parle de la joie. "
+            "Plusieurs cours portent sur Souccot et Hoshana Rabba.")
+    text = wp.normalize_summary(para)
+    assert text.count("\n") == 2 and wp.valid_summary(text)
+    long = " ".join(f"Phrase numéro {i} assez longue pour remplir la limite du résumé." for i in range(40))
+    assert len(wp.normalize_summary(long)) <= wp.SUMMARY_MAX_CHARS
