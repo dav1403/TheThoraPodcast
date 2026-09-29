@@ -101,6 +101,24 @@ def api_get(endpoint, params, api_key, timeout=15):
         return json.loads(r.read())
 
 
+def safe_api_get(endpoint, params, api_key, timeout=15):
+    """api_get wrapped against HTTP/network errors. A single bad id (a
+    private/deleted playlist returning 404, a transient 5xx, a timeout on one
+    of hundreds of calls) must degrade that one candidate, not crash a run
+    that already spent thousands of quota units on everything before it.
+    Returns {} on failure, exactly like an API response with no items — every
+    call site here already treats an empty/absent "items" list as "nothing
+    found", so this reuses that path instead of adding a second branch."""
+    try:
+        return api_get(endpoint, params, api_key, timeout=timeout)
+    except urllib.error.HTTPError as e:
+        print(f"  [warn] {endpoint} {params.get('id') or params.get('playlistId') or params.get('q') or ''}: HTTP {e.code} {e.reason}")
+        return {}
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        print(f"  [warn] {endpoint} {params.get('id') or params.get('playlistId') or params.get('q') or ''}: {e}")
+        return {}
+
+
 def is_hebrew(text):
     return bool(HEBREW_RE.search(text or ""))
 
@@ -174,7 +192,7 @@ def resolve_handle(line, api_key, quota):
         handle = m.group(1)
         if not quota.can_afford(1):
             return None, "quota budget exhausted before forHandle lookup"
-        data = api_get("channels", {"part": "id", "forHandle": handle}, api_key)
+        data = safe_api_get("channels", {"part": "id", "forHandle": handle}, api_key)
         quota.spend(1, f"channels.list forHandle @{handle}")
         items = data.get("items", [])
         if items:
@@ -186,7 +204,7 @@ def resolve_handle(line, api_key, quota):
         name = m.group(1)
         if not quota.can_afford(1):
             return None, "quota budget exhausted before forUsername lookup"
-        data = api_get("channels", {"part": "id", "forUsername": name}, api_key)
+        data = safe_api_get("channels", {"part": "id", "forUsername": name}, api_key)
         quota.spend(1, f"channels.list forUsername {name}")
         items = data.get("items", [])
         if items:
@@ -203,7 +221,7 @@ def resolve_handle(line, api_key, quota):
 
     if not quota.can_afford(100):
         return None, "quota budget exhausted before search.list fallback"
-    data = api_get(
+    data = safe_api_get(
         "search",
         {"part": "snippet", "type": "channel", "q": query, "maxResults": 1},
         api_key,
@@ -225,7 +243,7 @@ def discover_channels(query, api_key, quota, max_results):
         if not quota.can_afford(100):
             print(f"  [quota] budget exhausted, skipping search.list '{query}' regionCode={region}")
             continue
-        data = api_get(
+        data = safe_api_get(
             "search",
             {
                 "part": "snippet",
@@ -256,7 +274,7 @@ def fetch_channel_details(channel_ids, api_key, quota):
         if not quota.can_afford(1):
             print(f"  [quota] budget exhausted, skipping channels.list batch of {len(batch)}")
             break
-        data = api_get(
+        data = safe_api_get(
             "channels",
             {"part": "snippet,statistics,contentDetails", "id": ",".join(batch)},
             api_key,
@@ -276,7 +294,7 @@ def fetch_recent_activity(uploads_playlist_id, api_key, quota):
         return None, 0, False
     if not quota.can_afford(1):
         return "non vérifié (budget quota atteint)", 0, False
-    data = api_get(
+    data = safe_api_get(
         "playlistItems",
         {"part": "contentDetails", "playlistId": uploads_playlist_id, "maxResults": 50},
         api_key,

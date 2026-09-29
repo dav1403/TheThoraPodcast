@@ -7,6 +7,7 @@ canned responses, matching the mocking approach requested for this workflow
 import csv
 import json
 import sys
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -256,6 +257,44 @@ def test_fetch_recent_activity_no_playlist_id():
     last_published, count_30d, capped = m.fetch_recent_activity(None, "x", m.QuotaTracker())
     assert last_published is None
     assert count_30d == 0
+
+
+def test_fetch_recent_activity_survives_404(monkeypatch):
+    # Regression: a deleted/private uploads playlist 404s. This must degrade
+    # to "no activity data" for that one channel, not crash the whole run
+    # (real incident: run 36528648953 died here after spending 2710 quota
+    # units on everything before it).
+    import urllib.error
+
+    def raising_api_get(endpoint, params, api_key, timeout=15):
+        raise urllib.error.HTTPError(url="x", code=404, msg="Not Found", hdrs=None, fp=None)
+
+    monkeypatch.setattr(m, "api_get", raising_api_get)
+    last_published, count_30d, capped = m.fetch_recent_activity("UUdeleted", "x", m.QuotaTracker())
+    assert last_published is None
+    assert count_30d == 0
+    assert capped is False
+
+
+def test_fetch_channel_details_survives_404(monkeypatch, capsys):
+    import urllib.error
+
+    def raising_api_get(endpoint, params, api_key, timeout=15):
+        raise urllib.error.HTTPError(url="x", code=404, msg="Not Found", hdrs=None, fp=None)
+
+    monkeypatch.setattr(m, "api_get", raising_api_get)
+    details = m.fetch_channel_details(["UC1", "UC2"], "x", m.QuotaTracker())
+    assert details == {}
+    assert "HTTP 404" in capsys.readouterr().out
+
+
+def test_discover_channels_survives_network_error(monkeypatch):
+    def raising_api_get(endpoint, params, api_key, timeout=15):
+        raise urllib.error.URLError("temporary failure in name resolution")
+
+    monkeypatch.setattr(m, "api_get", raising_api_get)
+    found = m.discover_channels("cours de Torah", "x", m.QuotaTracker(), max_results=25)
+    assert found == {}
 
 
 def test_fetch_recent_activity_budget_exhausted():
