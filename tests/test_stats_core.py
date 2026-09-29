@@ -293,3 +293,13 @@ def test_page_js_opens_a_python_sealed_report():
     res = json.loads(out.stdout)
     assert res["id"] == core.blob_id(tok)
     assert res["r"] == report
+
+
+def test_private_commands_refuse_to_run_in_actions(monkeypatch):
+    import stats_update
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("STATS_MASTER_KEY", core.new_master_key())
+    for argv in (["links"], ["show", "--slug", "lev"], ["import-platforms", "--csv", "x.csv"]):
+        with pytest.raises(SystemExit) as exc:
+            stats_update.main(argv)
+        assert "local use only" in str(exc.value)

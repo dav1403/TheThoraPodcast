@@ -214,10 +214,14 @@ def cmd_links(args) -> int:
     speakers = json.loads((ROOT / "speakers.json").read_text(encoding="utf-8"))
     rows = [(c["slug"], c.get("podcast_author", "")) for c in channels if c.get("enabled", True)]
     rows += [(s["slug"], s.get("name", "")) for s in speakers]
-    for slug, name in rows:
-        if args.slug and slug != args.slug:
-            continue
-        print(f"{slug}\t{name}\t{core.rav_link(core.rav_token(master, slug))}")
+    lines = [f"{slug}\t{name}\t{core.rav_link(core.rav_token(master, slug))}"
+             for slug, name in rows if not args.slug or slug == args.slug]
+    if args.out:                   # UTF-8 file (Windows consoles are not)
+        Path(args.out).write_text("\n".join(lines) + "\n", encoding="utf-8")
+        print(f"{len(lines)} link(s) written to {args.out}")
+    else:
+        sys.stdout.reconfigure(encoding="utf-8")
+        print("\n".join(lines))
     return 0
 
 
@@ -259,6 +263,7 @@ def main(argv: list[str] | None = None) -> int:
     c.set_defaults(fn=cmd_pull)
     c = sub.add_parser("links")
     c.add_argument("--slug")
+    c.add_argument("--out", help="write the links to this UTF-8 file instead of stdout")
     c.set_defaults(fn=cmd_links)
     c = sub.add_parser("show")
     c.add_argument("--slug", required=True)
