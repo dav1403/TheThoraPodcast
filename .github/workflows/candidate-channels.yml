@@ -1,0 +1,69 @@
+name: Candidate Channels Report
+
+# Manual-only: this hits the expensive search.list quota (100 units/call) and
+# reads YOUTUBE_API_KEY, so it must never run on a schedule or a push.
+on:
+  workflow_dispatch:
+    inputs:
+      handles:
+        description: >-
+          Known channels, one per line: full YouTube URL (/channel/UC…,
+          /@handle, /c/name, /user/name), a bare @handle, or a channel ID.
+        required: false
+        type: string
+      queries:
+        description: >-
+          Discovery search terms, one per line (French or Hebrew). Each is
+          searched via search.list(type=channel) for regionCode FR and IL.
+        required: false
+        type: string
+      max_results:
+        description: 'search.list maxResults per query per region (1-50)'
+        required: false
+        default: '25'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+        with:
+          # Only channels.json is read (to exclude already-onboarded channels)
+          # and nothing is committed here, so a shallow checkout is enough —
+          # no need for the blob:none partial-clone dance the write workflows
+          # use.
+          sparse-checkout: |
+            channels.json
+            scripts/candidate_channels_report.py
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Run candidate channels report
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          CANDIDATE_HANDLES: ${{ github.event.inputs.handles }}
+          CANDIDATE_QUERIES: ${{ github.event.inputs.queries }}
+        run: |
+          python scripts/candidate_channels_report.py \
+            --output candidate_channels.csv \
+            --channels-json channels.json \
+            --max-results "${{ github.event.inputs.max_results }}"
+
+      # Never committed: the repo is public, and this CSV can contain personal
+      # contact details (emails, phone numbers) scraped from channel
+      # descriptions. Artifact-only, auto-expires.
+      - name: Upload CSV artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-channels-${{ github.run_id }}
+          path: candidate_channels.csv
+          retention-days: 14
