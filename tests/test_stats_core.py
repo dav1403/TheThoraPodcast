@@ -303,3 +303,48 @@ def test_private_commands_refuse_to_run_in_actions(monkeypatch):
         with pytest.raises(SystemExit) as exc:
             stats_update.main(argv)
         assert "local use only" in str(exc.value)
+
+
+class _FakeS3:
+    def __init__(self):
+        self.objects = {}
+
+    def get_object(self, Bucket, Key):
+        if Key not in self.objects:
+            raise Exception("An error occurred (NoSuchKey)")
+        import io
+        return {"Body": io.BytesIO(self.objects[Key])}
+
+    def put_object(self, Bucket, Key, Body, **kw):
+        self.objects[Key] = Body
+
+
+def test_collect_runs_without_any_source_and_keeps_history(monkeypatch, capsys):
+    pytest.importorskip("cryptography")
+    import stats_update
+    for k in ("CF_API_TOKEN", "GA4_SA_JSON", "GITHUB_STEP_SUMMARY"):
+        monkeypatch.delenv(k, raising=False)
+    key = core.new_master_key()
+    monkeypatch.setenv("STATS_MASTER_KEY", key)
+    s3 = _FakeS3()
+    monkeypatch.setattr(stats_update, "_r2", lambda: (s3, "bucket"))
+    assert stats_update.main(["collect", "--days", "3", "--today", "2026-09-29"]) == 0
+    assert s3.objects == {}                       # nothing written without a source
+    assert "inactif" in capsys.readouterr().out
+
+
+def test_collect_merges_an_active_source(monkeypatch):
+    pytest.importorskip("cryptography")
+    import stats_sources
+    import stats_update
+    monkeypatch.delenv("GA4_SA_JSON", raising=False)
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    key = core.new_master_key()
+    monkeypatch.setenv("STATS_MASTER_KEY", key)
+    s3 = _FakeS3()
+    monkeypatch.setattr(stats_update, "_r2", lambda: (s3, "bucket"))
+    monkeypatch.setattr(stats_sources, "fetch_r2_downloads",
+                        lambda days: {d.isoformat(): {"AAAAAAAAAAA": 2} for d in days})
+    assert stats_update.main(["collect", "--days", "2", "--today", "2026-09-29"]) == 0
+    hist = core.open_history(core.load_master_key(key), s3.objects[stats_update.HISTORY_KEY])
+    assert hist["daily"]["direct"] == {"2026-09-27": {"AAAAAAAAAAA": 2}, "2026-09-28": {"AAAAAAAAAAA": 2}}

@@ -134,9 +134,9 @@ def cmd_collect(args) -> int:
     lines.append(f"- Plateformes (relevés manuels Spotify/Apple/Deezer) : {n_platform} relevé(s) en historique")
     if active:
         save_history(s3, bucket, master, history)
-        lines.append("", "Historique chiffré mis à jour dans R2.")
+        lines.extend(["", "Historique chiffré mis à jour dans R2."])
     else:
-        lines.append("", "Aucune source automatique configurée : historique inchangé.")
+        lines.extend(["", "Aucune source automatique configurée : historique inchangé."])
         print("::warning::Espace rav: no automatic source configured yet "
               "(CF_API_TOKEN / GA4_SA_JSON missing) — reports carry no figure")
     _summary(lines)
