@@ -29,6 +29,8 @@ from urllib.parse import quote
 sys.stdout.reconfigure(encoding="utf-8")
 sys.path.insert(0, str(Path(__file__).parent))
 
+from llm_util import first_text  # noqa: E402
+
 try:
     import anthropic as _anthropic
 except ImportError:
@@ -467,7 +469,8 @@ def generate_text(prompt, max_tokens=400):
             _flag_credit_error(exc)
             return None
         raise
-    return msg.content[0].text.strip()
+    # No text block (e.g. thinking only) -> None, so the caller uses its fallback.
+    return first_text(msg) or None
 
 # ---------------------------------------------------------------------------
 # Meta API posting

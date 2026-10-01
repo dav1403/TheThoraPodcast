@@ -13,6 +13,9 @@ import requests
 import anthropic
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from llm_util import first_text  # noqa: E402
+
 API_KEY       = os.environ.get("YOUTUBE_API_KEY")
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
@@ -92,14 +95,14 @@ Retourne uniquement le texte."""
         max_tokens=600,
         messages=[{"role": "user", "content": page_desc_prompt}],
     )
-    page_description = page_resp.content[0].text.strip()
+    page_description = first_text(page_resp)
 
     meta_resp = client.messages.create(
         model="claude-haiku-4-5-20251001",
         max_tokens=200,
         messages=[{"role": "user", "content": meta_prompt}],
     )
-    seo_description = meta_resp.content[0].text.strip().strip('"')
+    seo_description = first_text(meta_resp).strip('"')
 
     return {
         "seo_description":  seo_description,

@@ -18,6 +18,7 @@ from pathlib import Path
 import anthropic
 
 from feeds_util import channel_entry_files
+from llm_util import first_text
 
 THEMES = [
     "Chabbat",
@@ -101,7 +102,7 @@ def tag_batch(client: anthropic.Anthropic, titles: list[str]) -> list[list[str]]
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": f"Tag these {len(titles)} episodes:\n{numbered}"}],
     )
-    text = response.content[0].text.strip()
+    text = first_text(response)
     match = re.search(r"\[.*\]", text, re.DOTALL)
     if not match:
         return [[] for _ in titles]

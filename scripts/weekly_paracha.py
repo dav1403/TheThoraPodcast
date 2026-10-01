@@ -43,6 +43,7 @@ import social_post as sp  # noqa: E402  (reading resolution + Hebcal + matching)
 import weekly_paracha_pages as pages  # noqa: E402
 from generate_channel_pages import ep_path, transcript_extract, url_slug  # noqa: E402
 from lang_detect import episode_lang  # noqa: E402
+from llm_util import first_text  # noqa: E402  (content[0] may be a ThinkingBlock)
 
 try:
     import anthropic as _anthropic
@@ -355,15 +356,6 @@ def build_prompt(label_fr: str, courses: list[dict]) -> str:
         "pas d'URL, pas d'appel à s'abonner.\n"
         "Réponds uniquement par le texte des lignes."
     )
-
-
-def first_text(message) -> str:
-    """Text of the first `text` content block. With extended/adaptive thinking
-    content[0] can be a ThinkingBlock, so never read content[0].text blindly."""
-    for block in getattr(message, "content", None) or []:
-        if getattr(block, "type", None) == "text":
-            return (getattr(block, "text", "") or "").strip()
-    return ""
 
 
 SUMMARY_MAX_CHARS = 900
