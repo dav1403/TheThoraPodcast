@@ -1217,6 +1217,7 @@ window.TTPPlayer = (function () {
   var SPEEDS = [1, 1.25, 1.5, 2];
   var root = null, cur = null, meta = {}, built = false;
   var elTitle, elCh, elArt, elTime, elFill, elSeek, elPlay, elSpeed, elClose;
+  var elThumb, elTCur, elTDur, dragP = -1;
   var pendingSeek = 0, restoredPos = 0, lastNowWrite = 0, msBound = null;
 
   function speed() {
@@ -1233,13 +1234,30 @@ window.TTPPlayer = (function () {
         'background:var(--color-inverse-bg, #1a1a2e);color:var(--color-surface, #fff);z-index:200;box-shadow:0 -2px 16px rgba(0,0,0,.28);' +
         'transform:translateY(0);transition:transform .25s ease;font-family:inherit}' +
       '#player.hidden{transform:translateY(110%)}' +
-      // 2 px hairline at the very top of the bar (mirrors the app mini-player),
-      // with an invisible taller strip around it so it stays tappable.
-      '#player-seek{position:relative;height:2px;background:rgba(255,255,255,.16);cursor:pointer;' +
-        'touch-action:none;outline:none}' +
-      '#player-seek::before{content:"";position:absolute;left:0;right:0;top:-9px;bottom:-7px}' +
-      '#player-seek:focus-visible{box-shadow:0 0 0 2px var(--color-accent, #e87722)}' +
+      // Scrubber row: elapsed · track · duration. It used to be a bare 2 px
+      // hairline with an 18 px hit strip — invisible and untappable on a phone
+      // (reported 01/10/2026). The track is now 4 px with a thumb, and the
+      // touch target is 44 px tall (the ::before overhangs the 28 px row).
+      '.ttp-seekrow{display:flex;align-items:center;gap:10px;padding:2px 12px 0;height:28px;' +
+        'font-size:.72rem;color:#c4c4d6;font-variant-numeric:tabular-nums}' +
+      '.ttp-tcur,.ttp-tdur{flex:0 0 auto;min-width:2.6em;direction:ltr;unicode-bidi:isolate;white-space:nowrap}' +
+      '.ttp-tdur{text-align:end}' +
+      '#player-seek{position:relative;flex:1 1 auto;align-self:stretch;cursor:pointer;' +
+        'touch-action:none;outline:none;-webkit-tap-highlight-color:transparent;' +
+        '-webkit-user-select:none;user-select:none}' +
+      '#player-seek::before{content:"";position:absolute;left:-6px;right:-6px;top:-8px;bottom:-8px}' +
+      '.ttp-track{position:absolute;left:0;right:0;top:50%;height:4px;margin-top:-2px;border-radius:2px;' +
+        'background:rgba(255,255,255,.2);overflow:hidden;pointer-events:none}' +
       '#player-bar-fill{height:100%;width:0;background:var(--color-accent, #e87722);pointer-events:none}' +
+      '.ttp-thumb{position:absolute;top:50%;width:14px;height:14px;margin:-7px -7px 0;border-radius:50%;' +
+        'background:var(--color-accent, #e87722);box-shadow:0 0 0 3px rgba(232,119,34,.25);pointer-events:none;' +
+        'transition:transform .12s}' +
+      '#player-seek.is-dragging .ttp-thumb{transform:scale(1.3)}' +
+      '#player-seek:focus-visible .ttp-track{box-shadow:0 0 0 2px var(--color-accent, #e87722)}' +
+      // The caption under the title only carries "Reprendre à mm:ss" now; the
+      // live time sits in the scrubber row.
+      '#player-time{display:none}' +
+      '#player.ttp-restored #player-time{display:inline}' +
       '.ttp-pbody{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;' +
         'padding:7px 12px;padding-bottom:calc(7px + env(safe-area-inset-bottom,0px))}' +
       '#player-art{width:42px;height:42px;border-radius:6px;object-fit:cover;background:var(--color-text-secondary, #333);' +
@@ -1309,7 +1327,25 @@ window.TTPPlayer = (function () {
     elSeek.setAttribute('aria-valuemax', '100');
     elSeek.setAttribute('aria-valuenow', '0');
     elFill = _slot('player-bar-fill', 'div');
-    elSeek.appendChild(elFill);
+    var track = document.createElement('div');
+    track.className = 'ttp-track';
+    track.appendChild(elFill);
+    elThumb = document.createElement('div');
+    elThumb.className = 'ttp-thumb';
+    elSeek.textContent = '';
+    elSeek.appendChild(track);
+    elSeek.appendChild(elThumb);
+    elTCur = document.createElement('span');
+    elTCur.className = 'ttp-tcur';
+    elTCur.textContent = '0:00';
+    elTDur = document.createElement('span');
+    elTDur.className = 'ttp-tdur';
+    elTDur.textContent = '--:--';
+    var seekRow = document.createElement('div');
+    seekRow.className = 'ttp-seekrow';
+    seekRow.appendChild(elTCur);
+    seekRow.appendChild(elSeek);
+    seekRow.appendChild(elTDur);
 
     var body = document.createElement('div');
     body.className = 'ttp-pbody';
@@ -1380,7 +1416,7 @@ window.TTPPlayer = (function () {
     var legacySpeed = document.getElementById('speed-cycle-btn');
 
     root.textContent = '';
-    root.appendChild(elSeek);
+    root.appendChild(seekRow);
     root.appendChild(body);
     root.appendChild(ownAudio);
     if (legacySpeed) root.appendChild(legacySpeed);   // kept alive, hidden by CSS
@@ -1401,22 +1437,47 @@ window.TTPPlayer = (function () {
       if (cur) cur.pause();
       hide();
     });
-    var seeking = false;
-    function seekAt(clientX) {
-      if (!cur || !isFinite(cur.duration) || cur.duration <= 0) return;
+    // Drag = preview only (thumb + elapsed time follow the finger); the audio
+    // seeks once, on release. Seeking on every pointermove fired a burst of
+    // range requests and made the thumb fight `timeupdate` under the finger.
+    function posAt(clientX) {
       var r = elSeek.getBoundingClientRect();
       var p = (clientX - r.left) / (r.width || 1);
-      if (document.documentElement.dir === 'rtl') p = 1 - p;
+      if (_isRtl()) p = 1 - p;
+      return Math.min(1, Math.max(0, p));
+    }
+    function hasDur() { return !!(cur && isFinite(cur.duration) && cur.duration > 0); }
+    function commit(p) {
+      if (!hasDur()) return;
+      _armResume();
+      pendingSeek = 0;
       try { cur.currentTime = Math.min(cur.duration, Math.max(0, p * cur.duration)); } catch (_) {}
     }
+    function endDrag(apply) {
+      if (dragP < 0) return;
+      var p = dragP;
+      dragP = -1;
+      elSeek.classList.remove('is-dragging');
+      if (apply) commit(p);
+      _renderTime();
+    }
     elSeek.addEventListener('pointerdown', function (e) {
-      seeking = true;
+      if (e.button != null && e.button > 0) return;   // right/middle click
+      if (!hasDur()) return;
+      dragP = posAt(e.clientX);
+      elSeek.classList.add('is-dragging');
       try { elSeek.setPointerCapture(e.pointerId); } catch (_) {}
-      seekAt(e.clientX); e.preventDefault();
+      _renderTime();
+      e.preventDefault();
     });
-    elSeek.addEventListener('pointermove', function (e) { if (seeking) seekAt(e.clientX); });
-    elSeek.addEventListener('pointerup', function () { seeking = false; });
-    elSeek.addEventListener('pointercancel', function () { seeking = false; });
+    elSeek.addEventListener('pointermove', function (e) {
+      if (dragP < 0) return;
+      dragP = posAt(e.clientX);
+      _renderTime();
+    });
+    elSeek.addEventListener('pointerup', function () { endDrag(true); });
+    elSeek.addEventListener('pointercancel', function () { endDrag(true); });
+    elSeek.addEventListener('lostpointercapture', function () { endDrag(true); });
     elSeek.addEventListener('keydown', function (e) {
       if (e.key === 'ArrowRight') { skip(15); e.preventDefault(); }
       else if (e.key === 'ArrowLeft') { skip(-15); e.preventDefault(); }
@@ -1519,22 +1580,44 @@ window.TTPPlayer = (function () {
     elPlay.title = lbl;
   }
 
+  function _isRtl() {
+    var d = document.documentElement.getAttribute('dir') || document.dir || '';
+    return d.toLowerCase() === 'rtl';
+  }
+
   function _renderTime() {
     if (!elTime) return;
+    if (root) root.classList.toggle('ttp-restored', restoredPos > 0);
     if (restoredPos > 0) {
       elTime.textContent = _t3('Reprendre à ', 'Resume at ', 'המשך מ-') + _ttpFmtTime(restoredPos);
+      if (elTCur) elTCur.textContent = _ttpFmtTime(restoredPos);
+      if (elTDur) elTDur.textContent = '--:--';
       _setFill(0);
       return;
     }
     if (!cur) return;
     var d = isFinite(cur.duration) ? cur.duration : 0;
-    elTime.textContent = _ttpFmtTime(cur.currentTime) + (d > 0 ? ' / ' + _ttpFmtTime(d) : '');
-    _setFill(d > 0 ? (cur.currentTime / d) : 0);
+    var t = (dragP >= 0 && d > 0) ? dragP * d : cur.currentTime;
+    elTime.textContent = _ttpFmtTime(t) + (d > 0 ? ' / ' + _ttpFmtTime(d) : '');
+    if (elTCur) elTCur.textContent = _ttpFmtTime(t);
+    if (elTDur) elTDur.textContent = d > 0 ? _ttpFmtTime(d) : '--:--';
+    _setFill(d > 0 ? (t / d) : 0);
+    if (elSeek) {
+      elSeek.setAttribute('aria-valuetext', _ttpFmtTime(t) + (d > 0 ? ' / ' + _ttpFmtTime(d) : ''));
+      elSeek.setAttribute('aria-disabled', d > 0 ? 'false' : 'true');
+    }
   }
 
   function _setFill(p) {
     p = Math.min(1, Math.max(0, p || 0));
-    if (elFill) elFill.style.width = (p * 100).toFixed(2) + '%';
+    var pct = (p * 100).toFixed(2) + '%';
+    if (elFill) elFill.style.width = pct;
+    if (elThumb) {
+      // The fill is a block inside the track, so it already grows from the
+      // inline-start side; the thumb is absolutely positioned and must follow.
+      if (_isRtl()) { elThumb.style.left = ''; elThumb.style.right = pct; }
+      else { elThumb.style.right = ''; elThumb.style.left = pct; }
+    }
     if (elSeek) elSeek.setAttribute('aria-valuenow', String(Math.round(p * 100)));
   }
 
