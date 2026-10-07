@@ -12,7 +12,7 @@ index holds every entry):
 
   python scripts/phase4_untrack.py --dry-run      # prints the counts only
   python scripts/phase4_untrack.py                # git rm -r --cached + .gitignore
-  git add .gitignore
+  git add --sparse .gitignore                     # --sparse: outside a sparse cone
   git diff --staged --name-only | wc -l           # == expected + 1 (.gitignore)
   git commit -m "phase4: stop tracking generated artefacts and state"
                          ^^^ NO pathspec: `git commit -- <paths>` commits the
@@ -93,15 +93,26 @@ def main(argv: list[str] | None = None) -> int:
         print(f"EXPECTED_DELETIONS={len(doomed)}")
         return 0
 
-    git("rm", "-r", "--cached", "--quiet", "--pathspec-from-file=-", "--pathspec-file-nul",
+    # --sparse: in a sparse worktree most of these paths are outside the
+    # sparse definition, and `git rm` refuses them without it.
+    git("rm", "-r", "--cached", "--sparse", "--quiet", "--pathspec-from-file=-", "--pathspec-file-nul",
         inp="\0".join(doomed).encode("utf-8", "surrogateescape"))
     gi = repo / ".gitignore"
-    text = gi.read_text(encoding="utf-8") if gi.exists() else ""
+    # In a sparse worktree .gitignore may be absent from disk: start from the
+    # committed one, never from empty (the 07/10 rehearsal caught exactly that:
+    # the existing rules would have been replaced by the phase 4 block alone).
+    if gi.exists():
+        text = gi.read_text(encoding="utf-8")
+    else:
+        try:
+            text = git("show", ":.gitignore").decode("utf-8")
+        except subprocess.CalledProcessError:
+            text = ""
     if MARK not in text:
         text = text.rstrip("\n") + "\n\n" + MARK + "\n" + "\n".join(untracked_rules(slugs)) + "\n"
         gi.write_text(text, encoding="utf-8", newline="\n")
     staged = [p for p in git("diff", "--staged", "--name-only", "-z").decode("utf-8", "surrogateescape").split("\0") if p]
-    print(f"staged now: {len(staged)} path(s) (expected {len(doomed)} deletions; then `git add .gitignore`)")
+    print(f"staged now: {len(staged)} path(s) (expected {len(doomed)} deletions; then `git add --sparse .gitignore`)")
     print(f"EXPECTED_DELETIONS={len(doomed)}")
     return 0 if len(staged) == len(doomed) else 1
 

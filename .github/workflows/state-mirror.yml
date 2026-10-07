@@ -28,6 +28,10 @@ on:
         description: 'Snapshot day for restore-* (YYYY-MM-DD or latest)'
         required: false
         default: latest
+      expect_commit:
+        description: 'adopt only: the main SHA the last git-era mirror was taken from (blank = current main)'
+        required: false
+        default: ''
       prod_snapshots:
         description: 'restore-test only (read-only): drill on the PRODUCTION snapshots'
         type: boolean
@@ -100,7 +104,13 @@ jobs:
 
       - name: adopt (cutover)
         if: inputs.action == 'adopt'
-        run: python scripts/site_state.py adopt --expect-commit "$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)"
+        env:
+          EXPECT: ${{ inputs.expect_commit }}
+        run: |
+          # The cutover merges phase 4 AFTER the last git-era mirror, so main
+          # has moved: pass the SHA that mirror was taken from.
+          [ -n "$EXPECT" ] || EXPECT=$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)
+          python scripts/site_state.py adopt --expect-commit "$EXPECT"
 
       - name: restore-test (backup drill, read-only)
         if: inputs.action == 'restore-test'
