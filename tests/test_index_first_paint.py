@@ -221,6 +221,10 @@ def test_french_filter():
 
 def test_rule_runs_on_the_committed_home_json():
     """Sanity check against the real artefact, not only a fixture."""
+    if not HOME_JSON.exists():
+        # Phase 4 (07/10/2026): home.json is no longer committed, it is built
+        # from the R2 state by deploy-site (where the artefact tests run).
+        pytest.skip("home.json not present (phase 4: built by deploy-site)")
     home = json.loads(HOME_JSON.read_text(encoding="utf-8"))
     out = _eval_header_stats(home, "all")
     assert out["s"]["channels"] == home["stats"]["channels"]
