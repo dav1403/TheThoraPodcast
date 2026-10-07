@@ -1,68 +1,160 @@
 name: Mirror state to R2
 
-# Phase 1 of moving generated artefacts out of git (git stays the source of
-# truth). Mirrors the persistent pipeline state of `main` to R2 `_state/`
-# (+ daily snapshot) on demand: first seeding, recovery, or checks. The hourly
-# "Update Podcast Feeds" pipeline runs the same `site_state.py push` as its
-# last step, so this workflow is not needed in normal operation.
-# Nothing in production reads `_state/` yet.
+# Phase 4: R2 `_state/` IS the source of truth of the pipeline state (see
+# scripts/site_state.py). This workflow is the toolbox around it — every
+# action is manual:
+#   status            manifest header + lease
+#   cond-test         check that R2 honours If-None-Match / If-Match on PUT
+#   restore-test      rebuild a state directory from the latest snapshot
+#                     (+ transcripts), MD5-verified, then a full site build
+#                     from it — the backup drill
+#   restore-to-state  replace the live state with a snapshot (under the lease)
+#   prune             snapshot retention (30 days, 90 with transcripts)
+#   adopt             cutover only: v1 manifest (git era) -> v2 generation 1
+#   seed-staging      off main only: copy `_state/` into `_state-staging/`
+#
+# Off `main` every key lives under `_state-staging/` (+ snapshots): a run
+# dispatched on a branch can never touch the production state.
 
 on:
   workflow_dispatch:
     inputs:
-      snapshot:
-        description: 'Also write today''s snapshot (_state-snapshots/YYYY-MM-DD/) if missing'
-        type: boolean
-        default: true
-      allow_mass_delete:
-        description: 'Allow deleting more than 5 % of the mirrored objects'
+      action:
+        description: 'status | cond-test | restore-test | restore-to-state | prune | adopt | seed-staging'
+        required: true
+        default: status
+      day:
+        description: 'Snapshot day for restore-* (YYYY-MM-DD or latest)'
+        required: false
+        default: latest
+      prod_snapshots:
+        description: 'restore-test only (read-only): drill on the PRODUCTION snapshots'
         type: boolean
         default: false
 
 concurrency:
-  group: r2-state-mirror
+  group: r2-state-tools${{ github.ref != 'refs/heads/main' && '-staging' || '' }}
   cancel-in-progress: false
 
 permissions:
   contents: read
 
+env:
+  TTP_STATE_PREFIX: ${{ github.ref == 'refs/heads/main' && '_state/' || '_state-staging/' }}
+  TTP_SNAPSHOT_PREFIX: ${{ (github.ref == 'refs/heads/main' || (inputs.action == 'restore-test' && inputs.prod_snapshots)) && '_state-snapshots/' || '_state-staging-snapshots/' }}
+  R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+  R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+  R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+  PYTHONUNBUFFERED: '1'
+
 jobs:
-  mirror:
+  tools:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
-      # Only the state + the scripts: the ~31 000 episode pages are not needed.
-      - name: Checkout state paths of main (blobless, sparse)
+      - name: Checkout scripts
         uses: actions/checkout@v7
         with:
-          ref: main
           fetch-depth: 1
           filter: blob:none
           sparse-checkout-cone-mode: false
           sparse-checkout: |
-            /feeds/
-            /artwork/
-            /search-fts/
-            /processed.json
-            /backfill_state.json
             /scripts/
+            /tests/
             /requirements.txt
+            /channels.json
+            /speakers.json
 
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
-      - name: Install boto3
-        run: python -m pip install --quiet boto3
-
-      - name: Push state to R2
-        env:
-          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
-          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
+      - name: Install boto3 (+ generator deps for restore-test)
         run: |
-          ARGS=""
-          [ "${{ inputs.snapshot }}" = "true" ] && ARGS="$ARGS --snapshot"
-          [ "${{ inputs.allow_mass_delete }}" = "true" ] && ARGS="$ARGS --allow-mass-delete"
-          python scripts/site_state.py push --root . $ARGS
+          python -m pip install --quiet --upgrade pip
+          if [ "${{ inputs.action }}" = "restore-test" ]; then pip install --quiet -r requirements.txt pytest; else pip install --quiet boto3 pytest; fi
+          echo "prefix: $TTP_STATE_PREFIX / snapshots: $TTP_SNAPSHOT_PREFIX"
+
+      - name: Unit tests of the state tooling
+        run: python -m pytest -q tests/test_site_state.py tests/test_site_state_v2.py
+
+      - name: status
+        if: inputs.action == 'status'
+        run: |
+          python scripts/site_state.py manifest
+          python scripts/site_state.py lock status
+          python scripts/site_state.py prune-snapshots --dry-run
+
+      - name: cond-test
+        if: inputs.action == 'cond-test'
+        run: python scripts/site_state.py cond-test
+
+      - name: seed-staging (copy of the production state)
+        if: inputs.action == 'seed-staging'
+        run: |
+          if [ "$TTP_STATE_PREFIX" = "_state/" ]; then echo "::error::seed-staging is refused on main"; exit 1; fi
+          python scripts/site_state.py seed --from-prefix _state/ --force
+
+      - name: adopt (cutover)
+        if: inputs.action == 'adopt'
+        run: python scripts/site_state.py adopt --expect-commit "$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)"
+
+      - name: restore-test (backup drill, read-only)
+        if: inputs.action == 'restore-test'
+        run: |
+          set -euo pipefail
+          python scripts/site_state.py snapshot-restore --day "${{ inputs.day }}" --dest "$RUNNER_TEMP/restored" --transcripts
+          python scripts/site_state.py manifest > "$RUNNER_TEMP/live-manifest.txt"
+          python - "$RUNNER_TEMP/restored" <<'EOF'
+          import json, sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          import site_state
+          root = Path(sys.argv[1])
+          rels = site_state.iter_state_files(root)
+          c = site_state.state_counts(root, rels)
+          s3, bucket = site_state.r2_client(4)
+          live = site_state.get_manifest(s3, bucket)
+          live_rels = list(live["files"])
+          tr_live = sum(1 for r in live_rels if r.startswith("feeds/transcripts/"))
+          tr_rest = sum(1 for r in rels if r.startswith("feeds/transcripts/"))
+          print(f"restored: {len(rels)} files, {len(c['entries'])} entries.json, "
+                f"{sum(v for v in c['entries'].values() if v > 0)} episodes, {c['xml']} xml, "
+                f"{tr_rest} transcripts (live state: {len(live_rels)} files, {tr_live} transcripts, "
+                f"generation {site_state.generation_of(live)})")
+          EOF
+          # Full site build from the restored directory alone (no git state).
+          python scripts/site_state.py sparse-patterns --channels channels.json --speakers speakers.json > "$RUNNER_TEMP/sparse.txt"
+          git sparse-checkout set --no-cone --stdin < "$RUNNER_TEMP/sparse.txt"
+          cp -a "$RUNNER_TEMP/restored/." .
+          python scripts/build_artwork_thumbs.py
+          python scripts/generate_channel_pages.py | tail -5
+          python scripts/build_transcript_index.py --min-interval-hours 6
+          echo "site files: $(find . -path ./.git -prune -o -type f -print | wc -l)"
+          test -s home.json && test -s latest.json && test -s sitemap.xml
+          python -m pytest -q tests/test_artifacts_integrity.py
+
+      - name: restore-to-state (replace the live state with a snapshot)
+        if: inputs.action == 'restore-to-state'
+        run: |
+          set -euo pipefail
+          python scripts/site_state.py lock acquire --wait-minutes 180
+          python scripts/site_state.py snapshot-restore --day "${{ inputs.day }}" --dest "$RUNNER_TEMP/restored" --transcripts
+          # Base = the CURRENT manifest (CAS), anti-loss bypassed on purpose:
+          # restoring an older day means fewer episodes by definition.
+          python scripts/site_state.py pull --dest "$RUNNER_TEMP/cur" --only processed.json --record "$RUNNER_TEMP/rec.json"
+          python - "$RUNNER_TEMP/rec.json" <<'EOF'
+          import json, sys
+          p = sys.argv[1]; r = json.load(open(p)); r["only"] = []; json.dump(r, open(p, "w"))
+          EOF
+          python scripts/site_state.py push --root "$RUNNER_TEMP/restored" --base-record "$RUNNER_TEMP/rec.json" --allow-loss --allow-mass-delete --commit "$GITHUB_SHA"
+          python scripts/site_state.py lock release
+
+      - name: prune
+        if: inputs.action == 'prune'
+        run: python scripts/site_state.py prune-snapshots
+
+      - name: Release the lease on failure
+        if: failure() && inputs.action == 'restore-to-state'
+        run: python scripts/site_state.py lock release
