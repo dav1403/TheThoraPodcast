@@ -167,6 +167,10 @@ def cmd_pull(args) -> int:
     if absent:
         print(f"::error::{len(absent)} listed legacy page(s) missing from R2 manifest: {absent[:10]}")
         return 1
+    if args.include_extra:
+        # Phase 4: pages captured from the live site when they vanished from
+        # a build (see site_deploy.py capture-vanished) are stored unlisted.
+        listed = listed + sorted(p for p, m in files.items() if p not in set(listed) and not m.get("listed", True))
 
     def fetch(p: str) -> str | None:
         data = s3.get_object(Bucket=bucket, Key=PREFIX + p)["Body"].read()
@@ -206,6 +210,8 @@ def main(argv: list[str] | None = None) -> int:
     sp = sub.add_parser("pull", help="restore the listed pages into a site directory")
     sp.add_argument("--list", default=str(DEFAULT_LIST))
     sp.add_argument("--dest", required=True)
+    sp.add_argument("--include-extra", action="store_true",
+                    help="also the unlisted pages stored in the manifest (phase 4 captures)")
     sp.set_defaults(func=cmd_pull)
     args = p.parse_args(argv)
     return args.func(args)

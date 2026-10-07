@@ -1,22 +1,54 @@
 name: Fetch Channel Info (one-time)
 
+# Phase 4: feeds/<slug>.channel_info.json is state (R2). Under the state
+# lease: restore the existing channel_info files, fetch/regenerate, partial
+# push of those files only, then deploy-site regenerates the pages.
+
 on:
   workflow_dispatch:
 
+concurrency:
+  group: fetch-channel-info${{ github.ref != 'refs/heads/main' && '-staging' || '' }}
+  cancel-in-progress: false
+
 permissions:
-  contents: write
+  contents: read
+  actions: write
+
+env:
+  TTP_STATE_PREFIX: ${{ github.ref == 'refs/heads/main' && '_state/' || '_state-staging/' }}
+  R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+  R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+  R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /channels.json
+            /scripts/
 
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
-      - run: pip install requests anthropic
+      - run: pip install requests anthropic boto3
+
+      - name: Take the state lease (waits for a running pipeline)
+        id: lease
+        run: python scripts/site_state.py lock acquire --ttl-minutes 40 --wait-minutes 200
+
+      - name: Restore the channel_info files from R2
+        run: python scripts/site_state.py pull --dest . --only 'feeds/*.channel_info.json' --record "$RUNNER_TEMP/rec.json"
 
       - name: Fetch channel descriptions and generate SEO copy with Claude
         env:
@@ -24,13 +56,16 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scripts/fetch_channel_info.py
 
-      - name: Regenerate channel pages with real descriptions
-        run: python scripts/generate_channel_pages.py
-
-      - name: Commit results
+      - name: Push the channel_info files (partial push)
         run: |
-          git config --global user.name  "Podcast Bot"
-          git config --global user.email "action@github.com"
-          git add feeds/*.channel_info.json sitemap.xml *.html
-          git diff --staged --quiet || git commit -m "chore: add channel descriptions and regenerate pages [skip ci]"
-          git push
+          python scripts/site_state.py push --root . --base-record "$RUNNER_TEMP/rec.json" \
+            --only 'feeds/*.channel_info.json' --commit "$GITHUB_SHA"
+
+      - name: Release the state lease
+        if: always() && steps.lease.outcome == 'success'
+        run: python scripts/site_state.py lock release
+
+      - name: Publish (dispatch deploy-site, which regenerates the pages)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run deploy-site.yml --ref "${{ github.ref_name }}" -R "${{ github.repository }}"

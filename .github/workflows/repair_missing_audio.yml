@@ -19,8 +19,10 @@ on:
     - cron: '37 * * * *'
     - cron: '7 * * * *'
 
+# Off main (a staging dispatch on a branch) the group is suffixed: a test run
+# can never take the place of a pending production run, nor wait behind one.
 concurrency:
-  group: podcast-pipeline
+  group: podcast-pipeline${{ github.ref != 'refs/heads/main' && '-staging' || '' }}
   cancel-in-progress: false
 
 permissions:
@@ -41,31 +43,48 @@ env:
   # under ~50 min. Single source of truth; override per-run via the
   # workflow_dispatch "process_budget" input.
   PROCESS_BUDGET_DEFAULT: '30'
+  # Phase 4: the state lives in R2 (scripts/site_state.py), not in git.
+  # Off main, every key lives under _state-staging/ — a branch run can never
+  # write the production state.
+  TTP_STATE_PREFIX: ${{ github.ref == 'refs/heads/main' && '_state/' || '_state-staging/' }}
+  TTP_SNAPSHOT_PREFIX: ${{ github.ref == 'refs/heads/main' && '_state-snapshots/' || '_state-staging-snapshots/' }}
+  TTP_IS_PROD: ${{ github.ref == 'refs/heads/main' }}
+  R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+  R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+  R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    # The state lease (below) is taken for 200 min: the job must always end
+    # before it expires, or a waiting writer could take it over mid-run.
+    timeout-minutes: 190
 
     steps:
-      - name: Checkout repo
+      # Source only: the state comes from R2 (below), the generated pages are
+      # rebuilt by deploy-site. Depth 1 + blobless + sparse: seconds instead
+      # of the full-history checkout of the git-state era.
+      - name: Checkout source (sparse, depth 1)
         uses: actions/checkout@v7
         with:
-          # Full history: the commit step rebases onto main to survive a race with
-          # the hourly pipeline, and rebasing on a depth-1 shallow clone is unsafe.
-          # BUT the repo carries ~28 Go of regenerated artefacts in its history, so
-          # a plain fetch-depth: 0 fills the runner disk and hangs forever.
-          # filter: blob:none = blobless partial clone: all commits/trees, zero
-          # historical blobs. Git hydrates the few blobs it actually needs on
-          # demand (checkout of HEAD, pull --rebase), so the rebase-retry below
-          # keeps working.
-          fetch-depth: 0
+          # The branch as it stands at execution time (a run delayed in the
+          # concurrency queue must not run stale scripts).
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
           filter: blob:none
-          # Explicit branch ref (not the default github.sha) so a run delayed in the
-          # concurrency queue (e.g. behind a manual workflow_dispatch) checks out main
-          # as it stands at execution time, not at trigger time. Without this, a
-          # long-queued scheduled run bases its commit on a stale HEAD and its later
-          # `git pull --rebase` conflicts with whatever was pushed in the meantime.
-          ref: main
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /channels.json
+            /speakers.json
+            /scripts/
+            /requirements.txt
+
+      - name: Widen to the whole SOURCE tree (state and generated outputs excluded)
+        run: |
+          python3 scripts/site_state.py sparse-patterns --channels channels.json --speakers speakers.json > "$RUNNER_TEMP/sparse.txt"
+          git sparse-checkout set --no-cone --stdin < "$RUNNER_TEMP/sparse.txt"
+          echo "source files: $(git ls-files | wc -l)"
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
@@ -83,6 +102,7 @@ jobs:
             echo "$err"
             TITLE="🔴 channels.json invalid — pipeline halted"
             BODY=$(printf 'channels.json failed JSON validation. Pipeline stopped before touching feeds/site.\n\n```\n%s\n```\n\nFix the JSON, push, next run recovers.\nRun: %s/%s/actions/runs/%s' "$err" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}")
+            [ "$TTP_IS_PROD" = "true" ] || exit 1  # staging: red run, no production issue
             EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null)
             if [ -n "$EXISTING" ]; then
               gh issue comment "$EXISTING" --body "$BODY" 2>/dev/null || true
@@ -114,6 +134,22 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Install boto3 early (state lease + restore)
+        run: python -m pip install --quiet boto3
+
+      # Git used to serialise the writers (a stale push was refused); R2 does
+      # not, so every state writer takes this lease first (If-None-Match on
+      # <prefix>_lock.json). Waits for e.g. the nightly duration backfill.
+      - name: Take the state lease
+        id: lease
+        run: python scripts/site_state.py lock acquire --ttl-minutes 200 --wait-minutes 60
+
+      # The state of the previous run, MD5-verified. Mandatory: without it the
+      # run would start from nothing and the push guard would refuse it.
+      - name: Restore the state from R2
+        id: restore
+        run: python scripts/site_state.py pull --dest . --record "$RUNNER_TEMP/state-record.json"
 
       - name: Ensure feeds/ directory exists
         run: mkdir -p feeds
@@ -234,76 +270,39 @@ jobs:
       - name: Build transcript full-text search index
         run: python scripts/build_transcript_index.py --min-interval-hours 6
 
-      - name: Commit and push updated feeds
-        id: commit
+      # Replaces the git commit: the new generation of the state goes to R2,
+      # compare-and-swap on the manifest, refused if any entries.json lost
+      # episodes or a feed disappeared (anti-loss guard). Mandatory: a failure
+      # is a red run. Daily snapshot (+ transcripts on Sundays).
+      # The site is rebuilt and published by deploy-site.yml (workflow_run).
+      - name: Push the new state to R2 (anti-loss guard, CAS)
+        id: push
+        timeout-minutes: 30
         run: |
-          git config --global user.name  "Podcast Bot"
-          git config --global user.email "action@github.com"
-          # home.json + search-index.json are regenerated by generate_channel_pages.py
-          # each run; they MUST be staged or the homepage hero/recents + full-text
-          # search stay frozen while feeds advance (bug: were omitted → data stuck).
-          # search-fts/ carries a leading-dot state file (.build-state.json) that
-          # `git add search-fts/` picks up, and WITHOUT which every rebuild
-          # renumbers the documents and rewrites all ~17 000 shards.
-          # mobile/ holds the pre-computed study rattachements the mobile app reads
-          # (daf / hitat / hayom-yom / paracha / hiloula / themes). Same trap as
-          # home.json above: omit it and the app's course lists freeze.
-          # artwork/thumb/ is spelled out even though `artwork/` already covers it:
-          # it is the 256 px WebP set the site and the app load instead of the
-          # multi-MB masters, and it carries a leading-dot state file
-          # (.state.json) without which every run re-encodes all the thumbnails.
-          git add feeds/ processed.json backfill_state.json artwork/ artwork/thumb/ sitemap.xml *.html home.json latest.json search-index.json search-fts/ mobile/
-          # Stage every rav's episode-page directory, derived from channels.json AND
-          # speakers.json slugs. The guest speakers get episode pages too (linked from
-          # their speaker page); staging channels only left those links 404ing.
-          # Robust against slug casing/prefix (was hardcoded to rav-*/ rabbin-*/ beth-*/,
-          # which silently skipped dirs like Rav-Itshak-Sitruk/, Nahal-Haim/, lev/, torah_fr/).
-          python -c "import json;[print(r['slug']) for f in ('channels.json','speakers.json') for r in json.load(open(f, encoding='utf-8-sig'))]" \
-            | while IFS= read -r s; do
-                [ -n "$s" ] && [ -d "$s" ] && git add -- "$s/"
-              done
-          if git diff --staged --quiet; then
-            echo "committed=false" >> $GITHUB_OUTPUT
-          else
-            git commit -m "chore: update podcast feeds [skip ci]"
-            echo "committed=true" >> $GITHUB_OUTPUT
-          fi
-          # Rebase-then-push with retry: the self-hosted lane also pushes to feeds/
-          # (staggered by 30 min, but a long run can overlap), so race on the
-          # remote is possible. Retry rebase+push a few times instead of failing.
-          for attempt in 1 2 3 4 5; do
-            git pull --rebase --autostash origin main || true
-            if git push; then
-              echo "Pushed on attempt $attempt."
-              break
-            fi
-            if [ "$attempt" -eq 5 ]; then
-              echo "::error::git push failed after 5 rebase attempts."
-              exit 1
-            fi
-            echo "Push rejected (attempt $attempt) — someone pushed first; rebasing and retrying."
-            sleep $((attempt * 5))
-          done
+          python scripts/site_state.py push --root . --base-record "$RUNNER_TEMP/state-record.json"             --snapshot --snapshot-copy "$RUNNER_TEMP/snapshot/state.tar.gz"
 
-      - name: Submit new episode pages to IndexNow
-        if: steps.commit.outputs.committed == 'true'
-        run: |
-          NEW_URLS=$(git diff --name-only HEAD~1 HEAD -- '*.html' | \
-            grep -E '^(rav-|rabbin-|beth-)[^/]+/.+\.html$' | head -100 | \
-            sed 's|^|https://thetorahpodcast.net/|' | \
-            jq -Rsc '[split("\n")[] | select(length > 0)]')
-          COUNT=$(echo "$NEW_URLS" | jq 'length')
-          if [ "$COUNT" -gt 0 ]; then
-            curl -s -X POST "https://api.indexnow.org/indexnow" \
-              -H "Content-Type: application/json; charset=utf-8" \
-              -d "{\"host\":\"thetorahpodcast.net\",\"key\":\"b9e2d8f1c3a74065b8e2d8f1c3a74065\",\"keyLocation\":\"https://thetorahpodcast.net/b9e2d8f1c3a74065b8e2d8f1c3a74065.txt\",\"urlList\":${NEW_URLS}}"
-            echo "IndexNow: submitted $COUNT new episode URL(s)"
-          else
-            echo "IndexNow: no new episode pages to submit"
-          fi
+      - name: Snapshot retention (30 days, 90 with transcripts)
+        if: steps.push.outcome == 'success'
+        continue-on-error: true
+        run: python scripts/site_state.py prune-snapshots
+
+      # Independent of R2: the day's snapshot (state minus transcripts) kept
+      # 90 days by GitHub. Only present on the first run of the UTC day.
+      - name: Keep the day's snapshot as a GitHub artefact (90 days)
+        if: steps.push.outcome == 'success' && hashFiles(format('{0}/snapshot/state.tar.gz', runner.temp)) != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: state-snapshot-${{ github.run_id }}
+          path: ${{ runner.temp }}/snapshot/state.tar.gz
+          retention-days: 90
+          compression-level: 0
+
+      - name: Release the state lease
+        if: always() && steps.lease.outcome == 'success'
+        run: python scripts/site_state.py lock release
 
       - name: Alert if YouTube auth error detected
-        if: always()
+        if: always() && env.TTP_IS_PROD == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -355,7 +354,7 @@ jobs:
           echo "Opened a new GitHub issue for the YouTube auth error."
 
       - name: Alert if Anthropic credits exhausted (theme tagging)
-        if: always()
+        if: always() && env.TTP_IS_PROD == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -390,7 +389,7 @@ jobs:
           echo "Opened a new GitHub issue for the Anthropic credit error."
 
       - name: Alert if ingestion has been stuck at zero
-        if: always()
+        if: always() && env.TTP_IS_PROD == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ADDED: ${{ steps.ingest.outputs.added }}
@@ -438,24 +437,3 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: python scripts/generate_summary.py >> $GITHUB_STEP_SUMMARY
-
-      # Phase 1 of moving generated artefacts out of git: mirror the persistent
-      # state (feeds/ incl. transcripts, processed.json, backfill_state.json,
-      # artwork/, search-fts/) to R2 `_state/`, plus a daily snapshot without
-      # transcripts in `_state-snapshots/YYYY-MM-DD/`. Git remains the source of
-      # truth and nothing in production reads this copy yet. Best-effort: a
-      # failure is a visible warning and never fails the pipeline.
-      - name: Mirror persistent state to R2 (best-effort)
-        if: ${{ !cancelled() && steps.commit.outcome == 'success' }}
-        continue-on-error: true
-        timeout-minutes: 20
-        env:
-          R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
-          R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
-        run: |
-          if ! python scripts/site_state.py push --root . --snapshot; then
-            echo "::warning::R2 state mirror failed - git is still the source of truth, pipeline unaffected."
-            exit 1
-          fi
