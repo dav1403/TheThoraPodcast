@@ -53,7 +53,14 @@ jobs:
             tests/test_weekly_paracha.py \
             tests/test_candidate_channels.py \
             tests/test_nav_counts_stability.py \
+            tests/test_site_state.py \
+            tests/test_site_state_v2.py \
+            tests/test_site_deploy.py \
+            tests/test_site_deploy_v2.py \
+            tests/test_llm_util.py \
             -q
+        # test_artifacts_integrity.py skips itself once the generated files are
+        # no longer committed (phase 4): it runs in deploy-site on the build.
 
       - name: Espace rav stats tests
         # Separate step: needs `cryptography` (AES-GCM) on top of pytest; the

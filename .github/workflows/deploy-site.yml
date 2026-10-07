@@ -1,57 +1,66 @@
 name: Deploy site (Pages, Actions mode)
 
-# Phase 3 of moving generated artefacts out of git: GitHub Pages publishes
-# the site built HERE (source of `main` + state mirrored in R2 `_state/` +
-# legacy orphan pages from R2 `_static-legacy/`), instead of serving the
-# `main` branch as is ("legacy" build type). URLs are unchanged.
+# Phase 4 of moving generated artefacts out of git: GitHub Pages publishes the
+# site built HERE from the source of `main` + the pipeline state in R2
+# `_state/` (the source of truth, see scripts/site_state.py) + the legacy
+# orphan pages in R2 `_static-legacy/`. Nothing generated is in git any more,
+# so there is no `main` to compare with: every build is compared with the
+# LAST DEPLOYMENT VERIFIED LIVE (R2 `_deploy/last.json` + file list):
+#   - never an older state generation or source than the live site;
+#   - no fewer feeds/*.xml, no entries.json missing or with fewer episodes,
+#     no more than 2 % fewer files;
+#   - feeds in the build == feeds of the restored state (MD5);
+#   - the 383 legacy orphans present and MD5-verified; an episode page that
+#     vanished since the last deployment (renamed title) is captured from the
+#     live site and kept online as an orphan (> 50 at once = red).
+# After the live verification, the run is promoted as the new reference and
+# its new episode pages are submitted to IndexNow (once they are online).
 #
-# During phase 3 the hourly pipeline keeps committing its artefacts to `main`:
-# every build is compared file by file with `main` and is NOT published if a
-# single non-tolerated difference shows up (same tolerances as build-site.yml).
+# Off `main` (staging dispatch on a branch): state `_state-staging/`, deploy
+# records `_deploy-staging/`, never a Pages deployment; the built site goes to
+# R2 `_staging/site.tar.gz` for dav1403/ttp-pages-staging (deploy-full.yml).
 #
-# Triggers: end of every "Update Podcast Feeds" run (workflow_run is not
-# affected by the [skip ci] of the bot commits), human pushes of static
-# source files, manual dispatch. Nothing is built unless Pages is in
-# "workflow" mode, so a rollback to legacy turns this workflow into a no-op:
+# Rollback of the publication mode:
 #   gh api -X PUT repos/dav1403/TheThoraPodcast/pages -f build_type=legacy -f "source[branch]=main" -f "source[path]=/"
+# (only meaningful if the generated files are committed to main again).
 
 on:
   workflow_run:
     workflows: ["Update Podcast Feeds"]
     types: [completed]
+    # Only production pipeline runs: a staging run dispatched on a branch
+    # also completes "Update Podcast Feeds" (seen on 07/10/2026, run 37608311822).
+    branches: [main]
   push:
     branches: [main]
     paths:
       - '**'
-      # generated / state paths (the pipeline commits them) and generator
-      # inputs: a change there is published by the next pipeline run, once
-      # the artefacts are regenerated, otherwise the comparison fails.
-      - '!feeds/**'
-      - '!artwork/**'
-      - '!search-fts/**'
-      - '!mobile/*.json'
-      - '!*.json'
-      - '!sitemap.xml'
-      - '!scripts/**'
+      # tests/docs/workflows do not change the site. Everything else does —
+      # including channels.json / speakers.json / scripts (the generator):
+      # the site is regenerated from the R2 state at every deployment.
       - '!tests/**'
       - '!docs/**'
       - '!.github/**'
   workflow_dispatch:
     inputs:
       force:
-        description: 'Redeploy even if this exact main + state is already live'
+        description: 'Redeploy even if this exact source + state generation is already live'
         type: boolean
         default: false
       dry_run:
         description: 'Build + guards only, whatever the Pages mode; never publish'
         type: boolean
         default: false
+      allow_shrink:
+        description: 'Accept fewer feeds/files than the last deployment (channel removed on purpose)'
+        type: boolean
+        default: false
 
-# One deployment at a time, never cancelled while running. GitHub keeps at
-# most one pending run: a newer trigger replaces an older PENDING one, which
-# is what we want (the build always takes the latest main + R2 state).
+# One deployment at a time, never cancelled while running. A newer trigger
+# replaces an older PENDING one, which is what we want (the build always takes
+# the latest source + R2 state).
 concurrency:
-  group: pages-deploy
+  group: pages-deploy${{ github.ref != 'refs/heads/main' && '-staging' || '' }}
   cancel-in-progress: false
 
 permissions:
@@ -60,7 +69,10 @@ permissions:
   id-token: write
 
 env:
-  SITE_URL: https://thetorahpodcast.net
+  IS_PROD: ${{ github.ref == 'refs/heads/main' }}
+  SITE_URL: ${{ github.ref == 'refs/heads/main' && 'https://thetorahpodcast.net' || 'https://dav1403.github.io/ttp-pages-staging' }}
+  TTP_STATE_PREFIX: ${{ github.ref == 'refs/heads/main' && '_state/' || '_state-staging/' }}
+  TTP_DEPLOY_PREFIX: ${{ github.ref == 'refs/heads/main' && '_deploy/' || '_deploy-staging/' }}
 
 jobs:
   build:
@@ -68,8 +80,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     outputs:
-      deploy: ${{ steps.go.outputs.deploy == 'true' && !inputs.dry_run }}
-      main: ${{ steps.main.outputs.sha }}
+      deploy: ${{ steps.go.outputs.deploy == 'true' && !inputs.dry_run && github.ref == 'refs/heads/main' }}
+      src: ${{ steps.src.outputs.sha }}
     env:
       PYTHONUNBUFFERED: '1'
       R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
@@ -77,28 +89,29 @@ jobs:
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
     steps:
-      - name: Pages must be in "workflow" mode
+      - name: Pages must be in "workflow" mode (production)
         id: mode
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if [ "$IS_PROD" != "true" ]; then echo "on=true" >> "$GITHUB_OUTPUT"; echo "staging build (${{ github.ref_name }})"; exit 0; fi
           MODE=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type)
           echo "Pages build_type: $MODE"
           if [ "$MODE" = "workflow" ] || [ "${{ inputs.dry_run }}" = "true" ]; then echo "on=true" >> "$GITHUB_OUTPUT"
           else echo "on=false" >> "$GITHUB_OUTPUT"; echo "::notice::Pages is in '$MODE' mode: nothing to deploy"; fi
 
-      - name: Resolve main
-        id: main
+      - name: Resolve the source commit (tip of the branch, now)
+        id: src
         if: steps.mode.outputs.on == 'true'
         run: |
-          SHA=$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"; echo "main = $SHA"
+          SHA=$(git ls-remote "https://github.com/${{ github.repository }}.git" "refs/heads/${{ github.ref_name }}" | cut -f1)
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"; echo "source = ${{ github.ref_name }} @ $SHA"
 
-      - name: Checkout tooling (scripts + tests of that main)
+      - name: Checkout tooling (scripts + tests of that commit)
         if: steps.mode.outputs.on == 'true'
         uses: actions/checkout@v7
         with:
-          ref: ${{ steps.main.outputs.sha }}
+          ref: ${{ steps.src.outputs.sha }}
           path: tools
           fetch-depth: 1
           filter: blob:none
@@ -127,19 +140,19 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r tools/requirements.txt pytest
-          python -m pytest -q tools/tests/test_site_state.py tools/tests/test_site_deploy.py
+          python -m pytest -q tools/tests/test_site_state.py tools/tests/test_site_state_v2.py \
+            tools/tests/test_site_deploy.py tools/tests/test_site_deploy_v2.py
 
-      - name: Read the mirrored state manifest
+      - name: Read the state manifest
         id: manifest
         if: steps.mode.outputs.on == 'true'
         run: python tools/scripts/site_state.py manifest
 
-      - name: Source-only checkout of main (+ the state commit, trees only)
-        id: src
+      - name: Source-only checkout
+        id: tree
         if: steps.mode.outputs.on == 'true'
         env:
-          SHA: ${{ steps.main.outputs.sha }}
-          STATE: ${{ steps.manifest.outputs.commit }}
+          SHA: ${{ steps.src.outputs.sha }}
         run: |
           set -euo pipefail
           git init -q site
@@ -148,7 +161,6 @@ jobs:
           git config remote.origin.promisor true
           git config remote.origin.partialclonefilter blob:none
           git fetch -q --depth=1 --filter=blob:none origin "$SHA"
-          [ "$STATE" = "$SHA" ] || git fetch -q --depth=1 --filter=blob:none origin "$STATE"
           git config core.sparseCheckout true
           printf '%s\n' /channels.json /speakers.json > .git/info/sparse-checkout
           git checkout -q --detach "$SHA"
@@ -158,41 +170,26 @@ jobs:
           echo "time=$(git show -s --format=%ct "$SHA")" >> "$GITHUB_OUTPUT"
           echo "source files: $(git ls-files | wc -l)"
 
-      - name: Is the R2 state the state of main?
-        id: drift
-        if: steps.mode.outputs.on == 'true'
-        run: |
-          python tools/scripts/site_deploy.py drift --repo site \
-            --state "${{ steps.manifest.outputs.commit }}" --main "${{ steps.main.outputs.sha }}"
-
       - name: Never publish older than the live site
         id: fresh
-        if: steps.mode.outputs.on == 'true' && steps.drift.outputs.drift == 'false'
+        if: steps.mode.outputs.on == 'true'
         run: |
-          python tools/scripts/site_deploy.py freshness --base "$SITE_URL" \
-            --main-sha "${{ steps.main.outputs.sha }}" --main-time "${{ steps.src.outputs.time }}" \
-            --state-commit "${{ steps.manifest.outputs.commit }}" \
-            --state-time "${{ steps.manifest.outputs.commit_time }}" \
+          python tools/scripts/site_deploy.py freshness2 --base "$SITE_URL" \
+            --src-sha "${{ steps.src.outputs.sha }}" --src-time "${{ steps.tree.outputs.time }}" \
+            --generation "${{ steps.manifest.outputs.generation }}" \
             ${{ (inputs.force || inputs.dry_run) && '--force' || '' }}
 
       - name: Decision
         id: go
         run: echo "deploy=${{ steps.fresh.outputs.deploy == 'true' }}" >> "$GITHUB_OUTPUT"
 
+      # No lease: a reader. MD5-verified against the manifest; if a writer
+      # publishes mid-restore, the restore follows it to the new generation.
       - name: Restore state from R2
+        id: restore
         if: steps.go.outputs.deploy == 'true'
-        run: python tools/scripts/site_state.py pull --dest site --expect-commit "${{ steps.manifest.outputs.commit }}"
+        run: python tools/scripts/site_state.py pull --dest site --record "$RUNNER_TEMP/state-record.json"
 
-      # main's artefacts were generated by the pipeline run that mirrored the
-      # state: generate with THAT commit's source (social_state.json bumps and
-      # human edits landed since did not regenerate anything on main either),
-      # then put main's files back so the site is exactly main's tree.
-      - name: Pin generation inputs to the state commit
-        if: steps.go.outputs.deploy == 'true'
-        run: |
-          python tools/scripts/site_deploy.py pin --repo site --state "${{ steps.manifest.outputs.commit }}"             --main "${{ steps.main.outputs.sha }}" --save "$RUNNER_TEMP/pinned.json"
-
-      # Same generation steps as build-site.yml (no YouTube / Anthropic call).
       - name: Generate (thumbnails, pages, JSON, sitemap, search index)
         id: gen
         if: steps.go.outputs.deploy == 'true'
@@ -204,69 +201,81 @@ jobs:
           python scripts/generate_channel_pages.py | tail -5
           python scripts/build_transcript_index.py --min-interval-hours 6
 
-      - name: Unpin (main's source files back)
+      - name: Integrity of the generated artefacts (home.json, latest.json, search-index.json)
+        if: steps.go.outputs.deploy == 'true'
+        working-directory: site
+        run: python -m pytest -q -p no:cacheprovider tests/test_artifacts_integrity.py
+
+      - name: Restore legacy orphan pages from R2 (MD5-verified)
+        if: steps.go.outputs.deploy == 'true'
+        run: python tools/scripts/site_legacy.py pull --dest site --include-extra
+
+      - name: Guard - compare with the last verified deployment
         if: steps.go.outputs.deploy == 'true'
         run: |
-          python tools/scripts/site_deploy.py unpin --repo site             --main "${{ steps.main.outputs.sha }}" --save "$RUNNER_TEMP/pinned.json"
+          python tools/scripts/site_deploy.py guard --site site --record "$RUNNER_TEMP/state-record.json" \
+            --vanished-out "$RUNNER_TEMP/vanished.txt" ${{ inputs.allow_shrink && '--allow-shrink' || '' }}
 
-      - name: Restore legacy orphan pages from R2 (seeded from git if missing)
+      - name: Keep vanished episode pages online (captured from the live site)
         if: steps.go.outputs.deploy == 'true'
         run: |
-          set -euo pipefail
-          python tools/scripts/site_legacy.py sync --repo site --ref "${{ steps.main.outputs.sha }}"
-          python tools/scripts/site_legacy.py pull --dest site
+          python tools/scripts/site_deploy.py capture-vanished --site site --list "$RUNNER_TEMP/vanished.txt" \
+            --base "$SITE_URL" ${{ env.IS_PROD != 'true' && '--dry-run' || '' }}
 
-      - name: Guard - compare with main (0 non-tolerated difference)
-        id: compare
-        if: steps.go.outputs.deploy == 'true'
-        run: |
-          python tools/scripts/site_compare.py --site site --ref "${{ steps.main.outputs.sha }}" \
-            --build-date "${{ steps.gen.outputs.build_date }}" --report-dir report \
-            --keep-legacy-orphans --strict \
-            --extra-info '{"run_id":"${{ github.run_id }}","state_commit":"${{ steps.manifest.outputs.commit }}"}'
-
-      - name: Store new legacy orphans in R2 (if any)
-        if: steps.go.outputs.deploy == 'true'
-        run: python tools/scripts/site_legacy.py sync --repo site --ref "${{ steps.main.outputs.sha }}" --extra-from-report report/report.json
-
-      - name: Guard - feeds and episode counts vs main
-        if: steps.go.outputs.deploy == 'true'
-        run: python tools/scripts/site_deploy.py content --site site --repo site --ref "${{ steps.main.outputs.sha }}"
-
-      - name: Upload comparison report
-        if: ${{ !cancelled() && steps.go.outputs.deploy == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: deploy-compare-report
-          path: report/
-          if-no-files-found: warn
-
-      # Espace rav (stats.yml): encrypted per-rav reports, added AFTER the
-      # comparison with main on purpose (they are not in git). Best-effort:
-      # a failure here must never block the site.
+      # Espace rav (stats.yml): encrypted per-rav reports. Best-effort: a
+      # failure here must never block the site.
       - name: Add Espace rav encrypted reports from R2
         if: steps.go.outputs.deploy == 'true'
         continue-on-error: true
         run: python tools/scripts/stats_update.py pull --dest site/espace-rav/d
 
-      - name: Write the deployment marker (/_deploy.json)
+      - name: Record this build (summary + file list in R2), write /_deploy.json
         if: steps.go.outputs.deploy == 'true'
         run: |
           set -euo pipefail
           rm -rf site/.git
+          GEN=$(python -c "import json;print(json.load(open('$RUNNER_TEMP/state-record.json'))['generation'])")
+          python tools/scripts/site_deploy.py record --site site --run-id "${{ github.run_id }}" \
+            --generation "$GEN" --src-sha "${{ steps.src.outputs.sha }}" --marker-md5 "$RUNNER_TEMP/feeds-md5.json"
           N=$(grep -cv '^\s*\(#\|$\)' tools/scripts/legacy_orphans.txt)
           python tools/scripts/site_deploy.py marker --site site \
-            --main-sha "${{ steps.main.outputs.sha }}" --main-time "${{ steps.src.outputs.time }}" \
-            --state-commit "${{ steps.manifest.outputs.commit }}" \
-            --state-time "${{ steps.manifest.outputs.commit_time }}" --legacy-orphans "$N"
+            --main-sha "${{ steps.src.outputs.sha }}" --main-time "${{ steps.tree.outputs.time }}" \
+            --state-commit "${{ steps.manifest.outputs.commit }}" --state-time 0 \
+            --state-generation "$GEN" --feeds-md5 "$RUNNER_TEMP/feeds-md5.json" --legacy-orphans "$N"
           echo "site: $(find site -type f | wc -l) files, $(du -sh site | cut -f1)"
 
       - name: Upload Pages artifact
-        if: steps.go.outputs.deploy == 'true' && !inputs.dry_run
+        if: steps.go.outputs.deploy == 'true' && !inputs.dry_run && env.IS_PROD == 'true'
         uses: actions/upload-pages-artifact@v5
         with:
           path: site
           include-hidden-files: true
+
+      # Staging only: hand the built site to dav1403/ttp-pages-staging
+      # (deploy-full.yml reads R2 _staging/), promote the run as the staging
+      # reference, and show what IndexNow would have been sent.
+      - name: Staging - stage the built site in R2 and promote the run
+        if: steps.go.outputs.deploy == 'true' && env.IS_PROD != 'true'
+        run: |
+          set -euo pipefail
+          tar -C site -czf "$RUNNER_TEMP/site.tar.gz" .
+          MD5=$(md5sum "$RUNNER_TEMP/site.tar.gz" | cut -d' ' -f1)
+          python - "$RUNNER_TEMP/site.tar.gz" "${{ steps.src.outputs.sha }}" "$MD5" <<'EOF'
+          import json, os, sys
+          sys.path.insert(0, "tools/scripts")
+          import site_state
+          s3, bucket = site_state.r2_client(8)
+          path, sha, md5 = sys.argv[1:4]
+          s3.upload_file(path, bucket, "_staging/site.tar.gz",
+                         ExtraArgs={"ContentType": "application/gzip", "CacheControl": "no-cache"})
+          s3.put_object(Bucket=bucket, Key="_staging/site.json", ContentType="application/json",
+                        CacheControl="no-cache",
+                        Body=json.dumps({"commit": sha, "md5": md5, "bytes": os.path.getsize(path),
+                                         "run_id": os.environ.get("GITHUB_RUN_ID"), "phase": 4}).encode())
+          print(f"staged {os.path.getsize(path) / 1e6:.0f} MB")
+          EOF
+          python tools/scripts/site_deploy.py promote --run-id "${{ github.run_id }}" --new-urls "$RUNNER_TEMP/new-urls.txt"
+          python tools/scripts/site_deploy.py indexnow --list "$RUNNER_TEMP/new-urls.txt" --base https://thetorahpodcast.net --dry-run
 
   deploy:
     needs: build
@@ -286,22 +295,46 @@ jobs:
     needs: [build, deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      R2_ENDPOINT_URL:      ${{ secrets.R2_ENDPOINT_URL }}
+      R2_ACCESS_KEY_ID:     ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME:       ${{ secrets.R2_BUCKET_NAME }}
     steps:
-      - name: Checkout scripts of the deployed main (trees only)
+      - name: Checkout scripts + .well-known of the deployed source
         uses: actions/checkout@v7
         with:
-          ref: ${{ needs.build.outputs.main }}
+          ref: ${{ needs.build.outputs.src }}
           fetch-depth: 1
           filter: blob:none
           sparse-checkout-cone-mode: false
           sparse-checkout: |
             /scripts/
+            /.well-known/
 
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
+      - run: python -m pip install --quiet boto3
+
       # deploy-pages reports success before the new content is served: wait
       # for THIS run's marker, then probe the live site.
       - name: Live verification
-        run: python scripts/site_deploy.py verify --base "$SITE_URL" --repo . --run-id "${{ github.run_id }}"
+        run: |
+          python - <<'EOF'
+          import json, sys
+          sys.path.insert(0, "scripts")
+          import site_legacy, site_state
+          s3, bucket = site_state.r2_client(4)
+          json.dump(site_legacy.get_manifest(s3, bucket), open("legacy-manifest.json", "w"))
+          EOF
+          python scripts/site_deploy.py verify2 --base "$SITE_URL" --repo . --run-id "${{ github.run_id }}" \
+            --legacy-manifest legacy-manifest.json
+
+      - name: Promote this run as the reference deployment
+        run: python scripts/site_deploy.py promote --run-id "${{ github.run_id }}" --new-urls new-urls.txt
+
+      - name: Submit the new episode pages to IndexNow (now that they are online)
+        continue-on-error: true
+        run: python scripts/site_deploy.py indexnow --list new-urls.txt --base "$SITE_URL"
