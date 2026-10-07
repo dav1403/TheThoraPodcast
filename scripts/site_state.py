@@ -566,6 +566,9 @@ def cmd_lock(args) -> int:
     _output(token=token, waited_seconds=int(waited))
     env = os.environ.get("GITHUB_ENV")
     if env:
+        # Not an access secret (anyone able to write R2 holds the keys), but
+        # no reason to print it in the public logs of the next steps either.
+        print(f"::add-mask::{token}")
         with open(env, "a", encoding="utf-8") as fh:
             fh.write(f"TTP_LOCK_TOKEN={token}\n")
     if args.print_token:
