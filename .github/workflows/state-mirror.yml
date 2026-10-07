@@ -12,6 +12,7 @@ name: Mirror state to R2
 #   prune             snapshot retention (30 days, 90 with transcripts)
 #   adopt             cutover only: v1 manifest (git era) -> v2 generation 1
 #   seed-staging      off main only: copy `_state/` into `_state-staging/`
+#   rollback-to-git   abandon phase 4: commit the R2 state back to git (job below)
 #
 # Off `main` every key lives under `_state-staging/` (+ snapshots): a run
 # dispatched on a branch can never touch the production state.
@@ -20,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'status | cond-test | restore-test | restore-to-state | prune | adopt | seed-staging'
+        description: 'status | cond-test | restore-test | restore-to-state | prune | adopt | seed-staging | rollback-to-git'
         required: true
         default: status
       day:
@@ -50,6 +51,7 @@ env:
 
 jobs:
   tools:
+    if: inputs.action != 'rollback-to-git'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -157,4 +159,62 @@ jobs:
 
       - name: Release the lease on failure
         if: failure() && inputs.action == 'restore-to-state'
+        run: python scripts/site_state.py lock release
+
+  # Abandoning phase 4 (NOT for a data incident: use restore-to-state).
+  # Commits the current R2 state + the regenerated pages back to the branch,
+  # i.e. recreates the git-era commit, so that reverting the phase 4 merge
+  # leaves main exactly where the R2 state is. Order: disable the writers,
+  # revert the untrack commit, run this, revert the phase 4 merge, run the
+  # (phase 3) state mirror, re-enable the writers. Not exercised for real:
+  # one run adds a full site commit (~1 GB) to the public history.
+  rollback-to-git:
+    if: inputs.action == 'rollback-to-git'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /channels.json
+            /speakers.json
+            /scripts/
+            /requirements.txt
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Rebuild the git-era tree from R2 and commit it
+        run: |
+          set -euo pipefail
+          pip install --quiet -r requirements.txt
+          python scripts/site_state.py sparse-patterns --channels channels.json --speakers speakers.json > "$RUNNER_TEMP/sparse.txt"
+          git sparse-checkout set --no-cone --stdin < "$RUNNER_TEMP/sparse.txt"
+          python scripts/site_state.py lock acquire --wait-minutes 200
+          python scripts/site_state.py pull --dest .
+          python scripts/build_artwork_thumbs.py
+          python scripts/generate_channel_pages.py | tail -3
+          python scripts/build_transcript_index.py --min-interval-hours 0
+          git config user.name "Podcast Bot"; git config user.email "action@github.com"
+          git add --sparse -f -- feeds processed.json backfill_state.json artwork search-fts sitemap.xml home.json latest.json search-index.json mobile/*.json
+          python3 -c "import json;[print(r['slug']) for f in ('channels.json','speakers.json') for r in json.load(open(f, encoding='utf-8-sig'))]" \
+            | while IFS= read -r s; do
+                for x in "$s" "$(echo "$s" | tr 'A-Z' 'a-z')"; do
+                  [ -d "$x" ] && git add --sparse -f -- "$x/"; [ -f "$x.html" ] && git add --sparse -f -- "$x.html"; true
+                done
+              done
+          echo "staged: $(git diff --staged --name-only | wc -l)"
+          git commit -q -m "rollback(phase4): state from R2 back into git [skip ci]"
+          BR="${{ github.ref_name }}"
+          for i in 1 2 3 4 5; do
+            git push origin "HEAD:$BR" && break
+            sleep $((i * 10)); git fetch -q --depth=1 origin "$BR"; git rebase -q --onto FETCH_HEAD HEAD~1 HEAD
+          done
+      - name: Release the lease
+        if: always()
         run: python scripts/site_state.py lock release
