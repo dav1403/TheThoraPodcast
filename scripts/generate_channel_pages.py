@@ -82,12 +82,19 @@ def write_redirect_stub(from_slug: str, to_slug: str) -> None:
     )
 
 
-def render_nav_submenu(href_prefix: str = "") -> str:
+def render_nav_submenu(href_prefix: str = "", show_counts: bool = True) -> str:
     """Render the Rabbins dropdown links from NAV_ITEMS, showing '(N)' episode counts.
-    href_prefix is "" for top-level pages and "../" for episode subpages."""
+    href_prefix is "" for top-level pages and "../" for episode subpages.
+
+    show_counts=False is used by the ~37 000 episode pages: with the counts baked
+    in, a single new episode anywhere changed every page of the site, so every
+    pipeline run rewrote ~37 500 files (measured 07/10/2026 on 6 bot commits,
+    75/75 sampled pages differed by that count only) — the main driver of the
+    repo's growth and of the Pages artefact churn. Channel, speaker and root
+    pages keep the counts (they change with their rav anyway)."""
     parts = []
     for it in NAV_ITEMS:
-        count_tag = " ({})".format(it["count"]) if it["count"] else ""
+        count_tag = " ({})".format(it["count"]) if (show_counts and it["count"]) else ""
         parts.append(
             '      <a href="{}{}.html">{}{}</a>'.format(
                 href_prefix, esc(url_slug(it["slug"])), esc(it["name"]), count_tag
@@ -1469,7 +1476,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
     )
     breadcrumb_json = render_breadcrumb_jsonld(bc_levels)
 
-    submenu_links = render_nav_submenu("../")
+    submenu_links = render_nav_submenu("../", show_counts=False)
 
     transcript_path = FEEDS_DIR / "transcripts" / f"{video_id}.txt"
     transcript = (
