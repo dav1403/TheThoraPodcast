@@ -656,6 +656,11 @@ def cmd_push(args) -> int:
         files = local
         n_remote = len(remote)
     up_bytes = sum(local[r]["size"] for r in upload)
+    if partial and not upload:
+        print(f"partial push: nothing changed in {only}: manifest untouched (generation stays "
+              f"{generation_of(remote_manifest)})")
+        _output(generation=generation_of(remote_manifest), uploaded=0, deleted=0, etag=etag)
+        return 0
     print(f"{'partial ' if partial else ''}push: local={len(local)} remote={n_remote} "
           f"upload={len(upload)} ({up_bytes / 1e6:.1f} MB) delete={len(delete)}")
 

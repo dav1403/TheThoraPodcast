@@ -28,6 +28,9 @@ on:
   workflow_run:
     workflows: ["Update Podcast Feeds"]
     types: [completed]
+    # Only production pipeline runs: a staging run dispatched on a branch
+    # also completes "Update Podcast Feeds" (seen on 07/10/2026, run 37608311822).
+    branches: [main]
   push:
     branches: [main]
     paths:

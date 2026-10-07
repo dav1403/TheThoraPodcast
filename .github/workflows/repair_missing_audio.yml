@@ -289,13 +289,14 @@ jobs:
       # Independent of R2: the day's snapshot (state minus transcripts) kept
       # 90 days by GitHub. Only present on the first run of the UTC day.
       - name: Keep the day's snapshot as a GitHub artefact (90 days)
-        if: steps.push.outcome == 'success' && hashFiles(format('{0}/snapshot/state.tar.gz', runner.temp)) != ''
+        if: steps.push.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: state-snapshot-${{ github.run_id }}
           path: ${{ runner.temp }}/snapshot/state.tar.gz
           retention-days: 90
           compression-level: 0
+          if-no-files-found: ignore
 
       - name: Release the state lease
         if: always() && steps.lease.outcome == 'success'
