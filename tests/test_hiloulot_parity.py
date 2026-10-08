@@ -64,3 +64,14 @@ def test_no_mixed_ben_baba_netivot_entry():
     assert (entry["hm"], entry["hd"]) == ("Iyyar", 25)
     # Bare 'netivot' matches the town of Netivot, not the book.
     assert "netivot" not in entry["kw"]
+
+
+def test_rabbi_akiva_appended_last():
+    # 08/10/2026: Rabbi Akiva was APPENDED (index 16) so that indices 0..15,
+    # which the app uses as keys, did not move.
+    assert len(bmi.HILOULOT) == 17
+    assert bmi.HILOULOT[15]["fr"] == "Le Rav Ovadia Yossef"
+    entry = bmi.HILOULOT[16]
+    assert entry["fr"] == "Rabbi Akiva"
+    assert (entry["hm"], entry["hd"]) == ("Iyyar", 18)
+    assert "akiva" not in entry["kw"]

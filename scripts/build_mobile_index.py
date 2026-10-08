@@ -395,7 +395,19 @@ HILOULOT = [{'fr': 'Rabbi Chimon bar Yochaï',
   'extra': None,
   'hm': 'Cheshvan',
   'hd': 3,
-  'kw': ['ovadia yossef', 'ovadia yosef', 'עובדיה יוסף']}]
+  'kw': ['ovadia yossef', 'ovadia yosef', 'עובדיה יוסף']},
+ # Index 16 — appended at the END (08/10/2026) so no existing index shifts.
+ # Rabbi Akiva has no established yahrzeit; attached to Lag BaOmer (18 Iyar)
+ # through his students. Bare 'akiva' / 'עקיבא' are deliberately NOT keywords:
+ # they match people merely named Akiva. Known false positive kept: 'רבי עקיבא'
+ # also matches R. Akiva Eiger (1 class in the catalogue on 08/10/2026).
+ {'fr': 'Rabbi Akiva',
+  'he': 'רבי עקיבא',
+  'extra': 'Lag BaOmer',
+  'hm': 'Iyyar',
+  'hd': 18,
+  'kw': ['rabbi akiva', 'rabbi akiba', 'rabbiakiva', 'rabi akiva', 'r. akiva',
+         'רבי עקיבא']}]
 
 # ─── Matching — ports of the site's client-side predicates ───────────────────
 
