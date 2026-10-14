@@ -450,15 +450,18 @@ def find_theme_episodes(theme, channels, max_per_channel=3):
 # ---------------------------------------------------------------------------
 # Claude Haiku content generation
 # ---------------------------------------------------------------------------
-def generate_text(prompt, max_tokens=400):
+def generate_text(prompt, max_tokens=2048):
     if not ANTHROPIC_KEY or not _anthropic:
         return None
     client = _anthropic.Anthropic(api_key=ANTHROPIC_KEY)
     try:
         msg = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-5-5",
             max_tokens=max_tokens,
             messages=[{"role": "user", "content": prompt}],
+            # Haiku 5.5 thinks by default and thinking counts against max_tokens:
+            # effort "low" for a short social post, plus headroom in max_tokens.
+            extra_body={"output_config": {"effort": "low"}},
         )
     except Exception as exc:  # noqa: BLE001
         # On credit/quota exhaustion: flag it for the CI alert step (visible
@@ -469,6 +472,10 @@ def generate_text(prompt, max_tokens=400):
             _flag_credit_error(exc)
             return None
         raise
+    # Refused or truncated output must never be posted: use the caller's fallback.
+    if getattr(msg, "stop_reason", None) in ("refusal", "max_tokens"):
+        print(f"WARNING: Claude stop_reason={msg.stop_reason} — using fallback text")
+        return None
     # No text block (e.g. thinking only) -> None, so the caller uses its fallback.
     return first_text(msg) or None
 
