@@ -86,7 +86,7 @@ function _injectCarouselCSS() {
     '.carousel-card img{width:100%;height:84px;object-fit:cover;display:block}' +
     '.carousel-card-body{padding:8px 9px 10px}' +
     '.carousel-card-ch{font-size:.66rem;color:var(--color-accent, #e87722);font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
-    '.carousel-card-title{font-size:.8rem;line-height:1.25;color:var(--color-inverse-bg, #1a1a2e);text-decoration:none;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}' +
+    '.carousel-card-title{font-size:.8rem;line-height:1.25;color:var(--color-heading, #1a1a2e);text-decoration:none;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}' +
     '.carousel-card-date{font-size:.68rem;color:var(--color-text-disabled, #aaa);margin-top:5px}' +
     '.carousel-card.is-channel{width:128px;text-align:center}' +
     '.carousel-card.is-channel img{height:128px}' +
@@ -570,12 +570,12 @@ function _injectShareCSS() {
     '.share-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}' +
     '.share-row .share-lbl{font-size:.75rem;color:var(--color-text-subtle, #888);margin-inline-end:2px}' +
     '.share-btn2{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;' +
-      'font-family:inherit;font-size:.8rem;font-weight:600;color:var(--color-surface, #fff);border-radius:999px;' +
+      'font-family:inherit;font-size:.8rem;font-weight:600;color:var(--color-on-accent, #fff);border-radius:999px;' +
       'padding:7px 13px;text-decoration:none;line-height:1;transition:transform .12s ease,opacity .12s ease}' +
     '.share-btn2:hover{transform:translateY(-1px);opacity:.92}' +
     '.share-btn2 svg{width:15px;height:15px;display:block}' +
     '.share-wa{background:#25d366}.share-tg{background:#2aabee}' +
-    '.share-em{background:#6b7280}.share-cp{background:var(--color-inverse-bg, #1a1a2e)}';
+    '.share-em{background:#6b7280}.share-cp{background:var(--color-primary, #1a1a2e)}';
   document.head.appendChild(s);
 }
 
@@ -596,7 +596,7 @@ function shareToast(msg) {
     el = document.createElement('div');
     el.id = 'ttp-toast';
     el.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--color-inverse-bg, #1a1a2e);' +
-      'color:var(--color-surface, #fff);padding:10px 18px;border-radius:999px;font-size:.85rem;z-index:9999;opacity:0;' +
+      'color:var(--color-on-inverse, #fff);padding:10px 18px;border-radius:999px;font-size:.85rem;z-index:9999;opacity:0;' +
       'transition:opacity .2s ease;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.28)';
     document.body.appendChild(el);
   }
@@ -1231,7 +1231,7 @@ window.TTPPlayer = (function () {
     s.id = 'ttp-player-css';
     s.textContent =
       '#player{position:fixed;bottom:0;left:0;right:0;display:block;padding:0;gap:0;' +
-        'background:var(--color-inverse-bg, #1a1a2e);color:var(--color-surface, #fff);z-index:200;box-shadow:0 -2px 16px rgba(0,0,0,.28);' +
+        'background:var(--color-inverse-bg, #1a1a2e);color:var(--color-on-inverse, #fff);z-index:200;box-shadow:0 -2px 16px rgba(0,0,0,.28);' +
         'transform:translateY(0);transition:transform .25s ease;font-family:inherit}' +
       '#player.hidden{transform:translateY(110%)}' +
       // Scrubber row: elapsed · track · duration. It used to be a bare 2 px
@@ -1278,17 +1278,17 @@ window.TTPPlayer = (function () {
         'border:none;color:rgba(255,255,255,.82);font-family:inherit;cursor:pointer;padding:0;' +
         'height:44px;border-radius:10px;-webkit-tap-highlight-color:transparent;' +
         'transition:background .12s,color .12s}' +
-      '.ttp-btn:hover{background:var(--color-inverse-hover, rgba(255,255,255,.1));color:var(--color-surface, #fff)}' +
+      '.ttp-btn:hover{background:var(--color-inverse-hover, rgba(255,255,255,.1));color:var(--color-on-inverse, #fff)}' +
       '.ttp-btn:focus-visible{outline:2px solid var(--color-accent, #e87722);outline-offset:-2px}' +
       '.ttp-skip{width:38px}.ttp-skip svg{width:22px;height:22px;display:block}' +
       '#ttp-speed-btn{width:42px;font-size:.72rem;font-weight:700;letter-spacing:.01em}' +
       '#ttp-speed-btn.active{color:var(--color-accent, #e87722)}' +
       '#player-close{width:34px;font-size:1.05rem;line-height:1;color:#8a8aa5}' +
-      '#player-close:hover{color:var(--color-surface, #fff)}' +
+      '#player-close:hover{color:var(--color-on-inverse, #fff)}' +
       // Round, high-contrast play/pause — the one control everybody looks for.
       '#ttp-play-btn{width:46px;height:46px;border-radius:50%;background:var(--color-accent, #e87722);color:var(--color-on-accent, #fff);' +
         'flex:0 0 auto;margin:0 2px}' +
-      '#ttp-play-btn:hover{background:#f2872f;color:var(--color-surface, #fff)}' +
+      '#ttp-play-btn:hover{background:#f2872f;color:var(--color-on-accent, #fff)}' +
       '#ttp-play-btn svg{width:15px;height:15px;display:block;margin-inline-start:1px}' +
       '#ttp-play-btn.is-playing svg{margin-inline-start:0}' +
       // 414 px and below: the artwork is the first thing that can go.

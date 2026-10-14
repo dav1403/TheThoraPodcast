@@ -88,6 +88,29 @@
       --shadow-card: rgba(0,0,0,.08);
       --shadow-card-soft: rgba(0,0,0,.06);
       --shadow-overlay: rgba(0,0,0,.5);
+      /* Light-surface roles added for the dark theme */
+      --color-heading: #1a1a2e;
+      --color-text-body: #444;
+      --color-text-soft: #777;
+      --color-border-strong: #ccc;
+      --color-border-hover: #bbb;
+      --color-divider: #f0f0f0;
+      --color-surface-muted: #f0f0f0;
+      --color-surface-sunken: #fafafa;
+      --color-skeleton: #e8e8e8;
+      --color-surface-warm: #fbfaf7;
+      --color-surface-tag: #f0f0e8;
+      --color-text-hint: #bbb;
+      --color-surface-cream: #faf6f0;
+      --color-border-cream: #f0e6d8;
+      --color-surface-hover: #f0f0ea;
+      --color-surface-muted-hover: #e2e2e2;
+      --color-badge-bg: #eceaf6;
+      --color-badge-text: #6a5acd;
+      --color-mark-bg: #ffe9d2;
+      --color-mark-text: #b4530a;
+      --color-primary: #1a1a2e;
+      --color-primary-hover: #2d2d50;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -160,7 +183,7 @@
       justify-content: center;
       gap: 8px;
       font-size: 0.82rem;
-      color: #777;
+      color: var(--color-text-soft);
     }
     .sort-btn {
       background: var(--color-surface);
@@ -173,7 +196,7 @@
       font-family: inherit;
       transition: all .15s;
     }
-    .sort-btn.active          { background: var(--color-inverse-bg); color: var(--color-surface); border-color: var(--color-inverse-bg); }
+    .sort-btn.active          { background: var(--color-primary); color: var(--color-on-inverse); border-color: var(--color-primary); }
     .sort-btn:not(.active):hover { border-color: var(--color-text-disabled); color: var(--color-text-secondary); }
 
     /* Search — dark sticky bar, consistent with the rest of the site */
@@ -187,7 +210,7 @@
       border-radius: 20px;
       font-size: 0.9rem;
       background: rgba(255,255,255,0.12);
-      color: var(--color-surface);
+      color: var(--color-on-inverse);
       outline: none;
       font-family: inherit;
     }
@@ -235,7 +258,7 @@
       box-shadow: 0 8px 20px rgba(0,0,0,.22);
     }
     .bubble:focus-visible { outline: none; }
-    .bubble:focus-visible .bubble-img { outline: 3px solid var(--color-inverse-bg); outline-offset: 2px; }
+    .bubble:focus-visible .bubble-img { outline: 3px solid var(--color-heading); outline-offset: 2px; }
     .bubble-dot {
       position: absolute;
       bottom: 5%;
@@ -264,8 +287,8 @@
       margin-left: 5px;
       padding: 0 6px;
       border-radius: 9px;
-      background: #eceaf6;
-      color: #6a5acd;
+      background: var(--color-badge-bg);
+      color: var(--color-badge-text);
       font-size: .68rem;
       font-weight: 700;
       vertical-align: middle;
@@ -287,9 +310,9 @@
     }
     .platform-btn:hover { opacity: 0.82; }
     .platform-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-    .btn-spotify { background: #1DB954; color: var(--color-surface); }
-    .btn-apple   { background: #872EC4; color: var(--color-surface); }
-    .btn-deezer  { background: #EF5466; color: var(--color-surface); }
+    .btn-spotify { background: #1DB954; color: var(--color-on-accent); }
+    .btn-apple   { background: #872EC4; color: var(--color-on-accent); }
+    .btn-deezer  { background: #EF5466; color: var(--color-on-accent); }
     .btn-rss     { background: var(--color-bg); color: var(--color-text-tertiary); border: 1px solid var(--color-border); }
     .copy-rss {
       display: inline-flex;
@@ -308,7 +331,7 @@
       transition: all .15s;
     }
     .copy-rss:hover { border-color: var(--color-text-disabled); color: var(--color-text-secondary); }
-    .copy-rss.copied { background: var(--color-inverse-bg); color: var(--color-surface); border-color: var(--color-inverse-bg); }
+    .copy-rss.copied { background: var(--color-primary); color: var(--color-on-inverse); border-color: var(--color-primary); }
     .no-platforms { font-size: 0.78rem; color: var(--color-text-disabled); font-style: italic; }
 
     /* ─── Detail modal ────────────────────────────────────────── */
@@ -345,7 +368,7 @@
       width: 30px;
       height: 30px;
       border: none;
-      background: #f0f0f0;
+      background: var(--color-surface-muted);
       border-radius: 50%;
       cursor: pointer;
       font-size: 0.95rem;
@@ -353,7 +376,7 @@
       line-height: 1;
       font-family: inherit;
     }
-    .modal-close:hover { background: #e2e2e2; }
+    .modal-close:hover { background: var(--color-surface-muted-hover); }
     .modal-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding-right: 30px; }
     .modal-art {
       width: 64px; height: 64px;
@@ -372,15 +395,15 @@
       text-align: center;
       margin-top: 16px;
       padding: 10px;
-      background: var(--color-inverse-bg);
-      color: var(--color-surface);
+      background: var(--color-primary);
+      color: var(--color-on-inverse);
       border-radius: 22px;
       text-decoration: none;
       font-size: .85rem;
       font-weight: 600;
       transition: background .15s;
     }
-    .modal-all:hover { background: #2d2d50; }
+    .modal-all:hover { background: var(--color-primary-hover); }
     [dir="rtl"] .bubble-dot { right: auto; left: 5%; }
     [dir="rtl"] .modal-head { padding-right: 0; padding-left: 30px; }
     [dir="rtl"] .modal-close { right: auto; left: 12px; }
