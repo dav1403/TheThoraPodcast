@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlsplit
 
 import stats_core as core
@@ -219,3 +219,82 @@ def _each_day(start: date, end: date):
     while d <= end:
         yield d
         d += timedelta(days=1)
+
+
+# --------------------------------------------------------------------------
+# Pipeline health (dashboard only) — GitHub Actions runs + live deploy record
+# --------------------------------------------------------------------------
+
+GH_API = "https://api.github.com"
+# workflow file -> label shown on the dashboard
+WATCHED_WORKFLOWS = {
+    "repair_missing_audio.yml": "Pipeline (Update Podcast Feeds)",
+    "deploy-site.yml": "Déploiement du site",
+    "site_health.yml": "Contrôle de santé du site",
+    "stats.yml": "Statistiques (espace rav + tableau de bord)",
+    "weekly_paracha.yml": "Paracha de la semaine",
+    "social_posts.yml": "Posts réseaux sociaux",
+}
+
+
+def _iso(ts: str) -> datetime:
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+
+def summarize_runs(runs: list[dict], now: datetime, days: int = 7) -> dict:
+    """GitHub workflow runs (API objects, any order) -> health summary."""
+    since = now - timedelta(days=days)
+    rs = sorted((r for r in runs if _iso(r["created_at"]) >= since), key=lambda r: r["created_at"])
+    done = [r for r in rs if r.get("status") == "completed"]
+    ok = sum(1 for r in done if r.get("conclusion") == "success")
+    ko = sum(1 for r in done if r.get("conclusion") in ("failure", "timed_out", "startup_failure"))
+    sched = [_iso(r["created_at"]) for r in rs if r.get("event") == "schedule"]
+    gaps = [(b - a).total_seconds() / 3600 for a, b in zip(sched, sched[1:])]
+    last = rs[-1] if rs else None
+    last_ok = next((r for r in reversed(done) if r.get("conclusion") == "success"), None)
+    return {
+        "runs": len(rs), "success": ok, "failure": ko, "scheduled": len(sched),
+        "max_gap_h": round(max(gaps), 1) if gaps else None,
+        "last": ({"at": last["created_at"], "status": last.get("status"),
+                  "conclusion": last.get("conclusion"), "event": last.get("event"),
+                  "url": last.get("html_url")} if last else None),
+        "last_success": last_ok["created_at"] if last_ok else None,
+    }
+
+
+def fetch_health(now: datetime | None = None, session=None, days: int = 7) -> dict:
+    """Health snapshot for the dashboard. Needs GITHUB_TOKEN + GITHUB_REPOSITORY
+    (Actions provides both); the deploy record is read from the live site."""
+    token = (os.environ.get("GITHUB_TOKEN") or "").strip()
+    repo = (os.environ.get("GITHUB_REPOSITORY") or "").strip()
+    if not token or not repo:
+        raise SourceUnavailable("GITHUB_TOKEN / GITHUB_REPOSITORY absent")
+    import requests
+    s = session or requests.Session()
+    now = now or datetime.now(timezone.utc)
+    since = (now - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
+    workflows = []
+    for wf, label in WATCHED_WORKFLOWS.items():
+        runs = []
+        for page in range(1, 6):
+            r = s.get(f"{GH_API}/repos/{repo}/actions/workflows/{wf}/runs", headers=headers, timeout=30,
+                      params={"per_page": 100, "page": page, "created": f">={since}"})
+            if r.status_code == 404:
+                break
+            r.raise_for_status()
+            batch = r.json().get("workflow_runs") or []
+            runs += batch
+            if len(batch) < 100:
+                break
+        workflows.append({"file": wf, "label": label, **summarize_runs(runs, now, days)})
+    deploy = None
+    try:
+        r = s.get(f"{core.SITE_URL}/_deploy.json", timeout=30)
+        if r.ok:
+            j = r.json()
+            deploy = {k: j.get(k) for k in ("built_at", "run_id", "files", "state_generation", "event")}
+    except Exception as exc:  # the live record is a nice-to-have
+        deploy = {"error": str(exc)[:200]}
+    return {"available": True, "at": now.isoformat(timespec="seconds"), "days": days,
+            "repo": repo, "workflows": workflows, "deploy": deploy}

@@ -348,3 +348,112 @@ def test_collect_merges_an_active_source(monkeypatch):
     assert stats_update.main(["collect", "--days", "2", "--today", "2026-09-29"]) == 0
     hist = core.open_history(core.load_master_key(key), s3.objects[stats_update.HISTORY_KEY])
     assert hist["daily"]["direct"] == {"2026-09-27": {"AAAAAAAAAAA": 2}, "2026-09-28": {"AAAAAAAAAAA": 2}}
+
+
+# ---------------------------------------------------------------- dashboard
+
+
+DASH_PAGE = ROOT / "tableau-de-bord.html"
+
+
+def test_dashboard_token_is_distinct_from_every_rav_token():
+    tok = core.dashboard_token(MASTER)
+    assert re.fullmatch(r"[A-Za-z0-9_-]{22}", tok)
+    assert tok == core.dashboard_token(MASTER)
+    assert tok not in {core.rav_token(MASTER, s) for s in ("lev", "dashboard", "Nahal-Haim")}
+    assert core.dashboard_link(tok) == f"https://thetorahpodcast.net/tableau-de-bord.html#k={tok}"
+
+
+def test_dashboard_totals_do_not_double_count_guests():
+    cat = _catalogue()
+    h = core.empty_history()
+    core.merge_daily(h, "direct", {"2026-09-27": {"AAAAAAAAAAA": 10, "BBBBBBBBBBB": 3, "ZZZZZZZZZZZ": 4},
+                                   "2026-08-01": {"CCCCCCCCCCC": 6}})
+    core.merge_daily(h, "site_page", {"2026-09-27": {"audio_play|lev": 5, "audio_play|index": 2,
+                                                     "audio_complete|lev": 1}})
+    reports = {s: core.build_report(r, cat, h, TODAY) for s, r in cat.items()}
+    dash = core.build_dashboard(cat, h, reports, TODAY, health={"available": True, "workflows": []})
+    assert dash["kind"] == "dashboard" and dash["until"] == "2026-09-28"
+    assert dash["totals"]["all"] == {"site": 7, "complete": 1, "direct": 23}
+    assert dash["totals"]["d7"]["direct"] == 17 and dash["totals"]["prev30"]["direct"] == 6
+    assert dash["direct_unmatched"] == 4
+    assert len(dash["series"]) == 90 and dash["series"][-1]["day"] == "2026-09-28"
+    assert {r["slug"] for r in dash["ravs"]} == set(cat)
+    # course A is credited to the host channel (not the guest) in the top list, once
+    assert [c["vid"] for c in dash["courses"]].count("AAAAAAAAAAA") == 1
+    assert next(c for c in dash["courses"] if c["vid"] == "AAAAAAAAAAA")["rav"] == "Lev"
+    assert dash["by_lang"]["fr"]["ravs"] == 1 and dash["by_lang"]["he"]["direct"] == 0
+    assert dash["catalogue"]["episodes"] == 3 and dash["catalogue"]["guests"] == 1
+    assert dash["catalogue"]["new_d30"] == 3
+    assert sum(w["n"] for w in dash["catalogue"]["new_weekly"]) == 3
+    assert [q["slug"] for q in dash["catalogue"]["quiet"]] == []
+    json.dumps(dash)
+
+
+def test_summarize_runs_counts_failures_and_schedule_gaps():
+    from datetime import datetime, timezone
+    now = datetime(2026, 10, 13, 12, tzinfo=timezone.utc)
+    runs = [
+        {"created_at": "2026-10-13T10:00:00Z", "status": "completed", "conclusion": "success", "event": "schedule", "html_url": "u3"},
+        {"created_at": "2026-10-13T02:00:00Z", "status": "completed", "conclusion": "failure", "event": "schedule"},
+        {"created_at": "2026-10-12T20:00:00Z", "status": "completed", "conclusion": "success", "event": "workflow_dispatch"},
+        {"created_at": "2026-10-12T18:00:00Z", "status": "completed", "conclusion": "success", "event": "schedule"},
+        {"created_at": "2026-09-01T00:00:00Z", "status": "completed", "conclusion": "failure", "event": "schedule"},
+    ]
+    s = sources.summarize_runs(runs, now)
+    assert s["runs"] == 4 and s["success"] == 3 and s["failure"] == 1 and s["scheduled"] == 3
+    assert s["max_gap_h"] == 8.0
+    assert s["last"]["url"] == "u3" and s["last_success"] == "2026-10-13T10:00:00Z"
+    assert sources.summarize_runs([], now)["last"] is None
+
+
+def test_health_is_inactive_without_token(monkeypatch):
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    with pytest.raises(sources.SourceUnavailable):
+        sources.fetch_health()
+
+
+def test_dashboard_page_is_private_by_construction():
+    html = DASH_PAGE.read_text(encoding="utf-8")
+    assert '<meta name="robots" content="noindex, nofollow">' in html
+    assert 'name="referrer" content="no-referrer"' in html
+    assert "googletagmanager" not in html and "gtag(" not in html
+    assert "location.hash" in html and "'/espace-rav/d/'" in html
+    assert "ttp-espace-rav/v1/" in html
+    gen = (ROOT / "scripts" / "generate_channel_pages.py").read_text(encoding="utf-8")
+    assert "tableau-de-bord" not in gen
+
+
+def test_dashboard_page_js_opens_a_python_sealed_dashboard():
+    pytest.importorskip("cryptography")
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node not available")
+    html = DASH_PAGE.read_text(encoding="utf-8")
+    script = re.search(r"<script>\n(.*?)</script>", html, re.S).group(1)
+    tok = core.dashboard_token(MASTER)
+    report = {"kind": "dashboard", "totals": {"d30": {"site": 3}}}
+    blob = core.seal_report(tok, report)
+    harness = (
+        "globalThis.window = globalThis;"
+        "globalThis.document = {readyState: 'loading', addEventListener: function () {}};"
+        + script +
+        f"\nconst tok = {json.dumps(tok)};"
+        f"\nconst bytes = Buffer.from({json.dumps(blob.hex())}, 'hex');"
+        "\nwindow.TTPDashboard.blobId(tok).then(id => window.TTPDashboard.openReport(tok, bytes)"
+        ".then(r => console.log(JSON.stringify({id: id, r: r}))))"
+        ".catch(e => { console.error(e); process.exit(3); });"
+    )
+    out = subprocess.run([node, "-e", harness], capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert out.returncode == 0, out.stderr
+    res = json.loads(out.stdout)
+    assert res["id"] == core.blob_id(tok) and res["r"] == report
+
+
+def test_dashboard_link_refuses_to_run_in_actions(monkeypatch):
+    import stats_update
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("STATS_MASTER_KEY", core.new_master_key())
+    with pytest.raises(SystemExit) as exc:
+        stats_update.main(["dashboard-link"])
+    assert "local use only" in str(exc.value)

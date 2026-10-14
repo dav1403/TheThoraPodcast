@@ -417,3 +417,173 @@ def build_report(rav: dict, catalogue: dict, history: dict, today: date,
         "courses_count": len(courses),
         "platforms": platforms,
     }
+
+
+# --------------------------------------------------------------------------
+# Dashboard (David's private global view: audience of every rav + pipeline)
+# --------------------------------------------------------------------------
+#
+# Same confidentiality model as the rav reports: one token derived from the
+# master key (in a namespace no rav slug can reach), the report sealed with
+# it and published next to the rav reports (espace-rav/d/<id>.bin), opened
+# by tableau-de-bord.html with the token carried in the link's fragment.
+
+DASHBOARD_PAGE = "tableau-de-bord.html"
+
+
+def dashboard_token(master: bytes) -> str:
+    mac = hmac.new(master, _NS + b"dashboard", hashlib.sha256).digest()
+    return base64.urlsafe_b64encode(mac).decode().rstrip("=")[:TOKEN_CHARS]
+
+
+def dashboard_link(token: str) -> str:
+    return f"{SITE_URL}/{DASHBOARD_PAGE}#k={token}"
+
+
+def _site_events(counts: dict) -> tuple[int, int]:
+    """site_page day -> (plays, completes), every page of the site."""
+    plays = completes = 0
+    for key, n in counts.items():
+        event = key.split("|", 1)[0]
+        if event == "audio_play":
+            plays += n
+        elif event == "audio_complete":
+            completes += n
+    return plays, completes
+
+
+def build_dashboard(catalogue: dict, history: dict, reports: dict[str, dict], today: date,
+                    health: dict | None = None, days: int = 90, top: int = 25,
+                    stale_days: int = 30) -> dict:
+    """Global report: every rav at once, plus the pipeline health snapshot.
+
+    Global totals come from the history itself, never from adding up the
+    per-rav reports: a guest's course is also his host's course, so the sum
+    of the reports counts it twice. Site plays = every audio_play of the
+    site (all pages, GA4 pagePath); direct = every R2 GetObject on an mp3.
+    `reports` are the per-rav reports built in the same run (build_report).
+    """
+    end = today - timedelta(days=1)
+    first = end - timedelta(days=days - 1)
+    known = {v for r in catalogue.values() for v in r["episodes"]}
+    zero = {"site": 0, "complete": 0, "direct": 0}
+
+    per_day: dict[str, dict[str, int]] = {}
+    unmatched = 0
+    for day, counts in _days_between(history, "direct", None, end).items():
+        row = per_day.setdefault(day, dict(zero))
+        for vid, n in counts.items():
+            row["direct"] += n
+            if vid not in known:
+                unmatched += n
+    for day, counts in _days_between(history, "site_page", None, end).items():
+        plays, completes = _site_events(counts)
+        row = per_day.setdefault(day, dict(zero))
+        row["site"] += plays
+        row["complete"] += completes
+
+    def window(start: date | None, stop: date) -> dict:
+        out = dict(zero)
+        for day, row in per_day.items():
+            d = date.fromisoformat(day)
+            if d <= stop and (start is None or d >= start):
+                for k in out:
+                    out[k] += row[k]
+        return out
+
+    totals = {
+        "d7": window(end - timedelta(days=6), end),
+        "d30": window(end - timedelta(days=29), end),
+        "prev30": window(end - timedelta(days=59), end - timedelta(days=30)),
+        "all": window(None, end),
+    }
+    series = []
+    d = first
+    while d <= end:
+        series.append({"day": d.isoformat(), **per_day.get(d.isoformat(), zero)})
+        d += timedelta(days=1)
+
+    # Per rav: taken from the reports, which credit guests correctly
+    ravs = []
+    for slug, rav in catalogue.items():
+        tot = (reports.get(slug) or {}).get("totals") or {}
+        last = max((e["published"] for e in rav["episodes"].values() if e.get("published")), default="")
+        ravs.append({
+            "slug": slug, "name": rav["name"], "kind": rav.get("kind", "channel"),
+            "lang": rav.get("lang", "fr"), "episodes": len(rav["episodes"]), "last": last,
+            "d30": {k: (tot.get("d30") or {}).get(k, 0) for k in ("site", "direct")},
+            "all": {k: (tot.get("all") or {}).get(k, 0) for k in ("site", "direct")},
+        })
+    ravs.sort(key=lambda r: (-(r["d30"]["site"] + r["d30"]["direct"]),
+                             -(r["all"]["site"] + r["all"]["direct"]), r["name"]))
+
+    # By language: channels only (a guest's courses already sit in a channel)
+    by_lang: dict[str, dict[str, int]] = {}
+    for r in ravs:
+        if r["kind"] != "channel":
+            continue
+        b = by_lang.setdefault(r["lang"], {"site": 0, "direct": 0, "ravs": 0, "episodes": 0})
+        b["site"] += r["d30"]["site"]
+        b["direct"] += r["d30"]["direct"]
+        b["ravs"] += 1
+        b["episodes"] += r["episodes"]
+
+    # Top courses: the global top-k always lies within the union of the
+    # per-rav top-k (same ranking key), so the reports' lists are enough.
+    courses: dict[str, dict] = {}
+    for slug, rep in reports.items():
+        rav = catalogue.get(slug) or {}
+        for c in rep.get("courses") or []:
+            cur = courses.get(c["vid"])
+            if cur is None or (cur["_kind"] == "guest" and rav.get("kind") == "channel"):
+                courses[c["vid"]] = {**c, "rav": rav.get("name", slug), "_kind": rav.get("kind")}
+    top_courses = sorted(courses.values(), key=lambda c: (-(c["site"] + c["direct"]), c["title"]))[:top]
+    top_courses = [{k: v for k, v in c.items() if k != "_kind"} for c in top_courses]
+
+    # Catalogue: unique episodes, new ones per ISO week, quiet channels
+    published = {v: e["published"] for r in catalogue.values()
+                 for v, e in r["episodes"].items() if e.get("published")}
+    wk0 = _iso_week_start(end) - timedelta(weeks=11)
+    new_weekly = {(wk0 + timedelta(weeks=i)).isoformat(): 0 for i in range(12)}
+    pub_days = []
+    for p in published.values():
+        try:
+            pub_days.append(date.fromisoformat(p))
+        except ValueError:
+            continue
+    for pd in pub_days:
+        if wk0 <= pd <= end:
+            new_weekly[_iso_week_start(pd).isoformat()] += 1
+    stale_limit = (end - timedelta(days=stale_days)).isoformat()
+    quiet = sorted(({"slug": r["slug"], "name": r["name"], "last": r["last"]}
+                    for r in ravs if r["kind"] == "channel" and r["last"] and r["last"] < stale_limit),
+                   key=lambda r: r["last"])
+
+    platforms = history.get("platforms", [])
+    src = history.get("sources", {})
+    return {
+        "v": FORMAT_VERSION,
+        "kind": "dashboard",
+        "generated": today.isoformat(),
+        "until": end.isoformat(),
+        "sources": {k: {"active": bool(src.get(k)), "since": (src.get(k) or {}).get("first"),
+                        "last": (src.get(k) or {}).get("last")} for k in DAILY_SOURCES},
+        "totals": totals,
+        "direct_unmatched": unmatched,
+        "series": series,
+        "ravs": ravs,
+        "by_lang": by_lang,
+        "courses": top_courses,
+        "catalogue": {
+            "episodes": len(known),
+            "channels": sum(1 for r in catalogue.values() if r.get("kind") == "channel"),
+            "guests": sum(1 for r in catalogue.values() if r.get("kind") == "guest"),
+            "new_weekly": [{"start": k, "n": v} for k, v in new_weekly.items()],
+            "new_d7": sum(1 for pd in pub_days if end - timedelta(days=6) <= pd <= end),
+            "new_d30": sum(1 for pd in pub_days if end - timedelta(days=29) <= pd <= end),
+            "quiet": quiet,
+        },
+        "platforms": {"rows": len(platforms), "plays": sum(int(p.get("plays", 0)) for p in platforms),
+                      "last_noted": max((p.get("noted", "") for p in platforms), default="") or None},
+        "health": health or {"available": False},
+    }

@@ -8,6 +8,10 @@ name: Espace rav stats
 # espace-rav.html opens them with the key carried by the rav's private link.
 # See scripts/stats_core.py for the confidentiality model.
 #
+# The same publish step seals David's global dashboard (tableau-de-bord.html:
+# audience of every rav + pipeline health read from the Actions API). The
+# extra 6-hourly slots only refresh that dashboard (no collection).
+#
 # Sources switch on by themselves as soon as their secret exists:
 #   CF_API_TOKEN (+ optional CF_ACCOUNT_ID)  -> R2 downloads per episode
 #   GA4_SA_JSON  (+ optional GA4_PROPERTY_ID) -> site player plays
@@ -18,6 +22,7 @@ name: Espace rav stats
 on:
   schedule:
     - cron: '23 3 * * *'   # after midnight UTC: yesterday is complete everywhere
+    - cron: '41 9,15,21 * * *'   # dashboard refresh only (pipeline health)
   workflow_dispatch:
     inputs:
       days:
@@ -30,6 +35,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read      # pipeline health on the dashboard (workflow runs)
 
 jobs:
   stats:
@@ -46,6 +52,8 @@ jobs:
       CF_ACCOUNT_ID:        ${{ secrets.CF_ACCOUNT_ID }}
       GA4_SA_JSON:          ${{ secrets.GA4_SA_JSON }}
       GA4_PROPERTY_ID:      ${{ secrets.GA4_PROPERTY_ID }}
+      GITHUB_TOKEN:         ${{ github.token }}
+      REFRESH_ONLY:         ${{ github.event.schedule == '41 9,15,21 * * *' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -59,6 +67,7 @@ jobs:
             /channels.json
             /speakers.json
             /espace-rav.html
+            /tableau-de-bord.html
 
       - uses: actions/setup-python@v6
         with:
@@ -78,8 +87,13 @@ jobs:
           fi
 
       - name: Collect
+        if: env.REFRESH_ONLY != 'true'
         run: python scripts/stats_update.py collect --days "${{ inputs.days || '30' }}"
 
       - name: Publish encrypted reports
-        if: ${{ !cancelled() && steps.key.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.key.outcome == 'success' && env.REFRESH_ONLY != 'true' }}
         run: python scripts/stats_update.py publish
+
+      - name: Refresh the dashboard only
+        if: ${{ steps.key.outcome == 'success' && env.REFRESH_ONLY == 'true' }}
+        run: python scripts/stats_update.py dashboard

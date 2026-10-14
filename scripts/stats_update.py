@@ -7,6 +7,12 @@
         Build one report per rav (channels + guests), encrypt it with the
         rav's token and upload it to R2 _stats/pub/<id>.bin (stale blobs of
         a rotated key are removed).
+        Also seals the global dashboard (every rav + pipeline health) with
+        the dashboard token, next to the rav reports.
+    python scripts/stats_update.py dashboard
+        Rebuild and publish the dashboard alone (fresher pipeline health).
+    python scripts/stats_update.py dashboard-link     (LOCAL ONLY)
+        Print David's private dashboard link (tableau-de-bord.html#k=...).
     python scripts/stats_update.py pull --dest site/espace-rav/d
         Copy the published blobs into a built site (deploy-site.yml).
     python scripts/stats_update.py links            (LOCAL ONLY)
@@ -158,30 +164,70 @@ def load_catalogue(s3, bucket: str) -> dict:
     return core.build_catalogue(channels, speakers, entries)
 
 
+def _health(lines: list[str]) -> dict | None:
+    import stats_sources as src
+    try:
+        h = src.fetch_health()
+        lines.append(f"- Santé pipeline : **active** — {len(h['workflows'])} workflows suivis")
+        return h
+    except src.SourceUnavailable as exc:
+        lines.append(f"- Santé pipeline : inactive ({exc})")
+    except Exception as exc:       # never block the reports for it
+        lines.append(f"- Santé pipeline : **ERREUR** {str(exc)[:300]}")
+        print(f"::warning::dashboard health snapshot failed: {str(exc)[:300]}")
+    return None
+
+
+def _put_dashboard(s3, bucket: str, master: bytes, catalogue: dict, history: dict,
+                   reports: dict, today: date, lines: list[str]) -> str:
+    token = core.dashboard_token(master)
+    bid = core.blob_id(token)
+    dash = core.build_dashboard(catalogue, history, reports, today, health=_health(lines))
+    s3.put_object(Bucket=bucket, Key=f"{PUB_PREFIX}{bid}.bin", Body=core.seal_report(token, dash),
+                  ContentType="application/octet-stream", CacheControl="no-cache")
+    lines.append("- Tableau de bord chiffré publié")
+    return bid
+
+
 def cmd_publish(args) -> int:
     master = _master()
     s3, bucket = _r2()
     history = load_history(s3, bucket, master)
     catalogue = load_catalogue(s3, bucket)
     today = date.today() if not args.today else date.fromisoformat(args.today)
-    wanted = {}
+    wanted, reports = {}, {}
     for slug, rav in sorted(catalogue.items()):
         token = core.rav_token(master, slug)
         bid = core.blob_id(token)
-        report = core.build_report(rav, catalogue, history, today)
+        report = reports[slug] = core.build_report(rav, catalogue, history, today)
         s3.put_object(Bucket=bucket, Key=f"{PUB_PREFIX}{bid}.bin", Body=core.seal_report(token, report),
                       ContentType="application/octet-stream", CacheControl="no-cache")
         wanted[bid] = slug
+    lines = [f"### Espace rav — publication", ""]
+    wanted[_put_dashboard(s3, bucket, master, catalogue, history, reports, today, lines)] = "dashboard"
     stale = [k for k in _list(s3, bucket, PUB_PREFIX) if k[len(PUB_PREFIX):-4] not in wanted]
     for k in stale:
         s3.delete_object(Bucket=bucket, Key=k)
     with_eps = sum(1 for r in catalogue.values() if r["episodes"])
-    _summary([f"### Espace rav — publication", "",
-              f"- {len(wanted)} rapports chiffrés publiés ({with_eps} ravs avec épisodes connus)",
-              f"- {len(stale)} rapport(s) périmé(s) supprimé(s)"])
+    _summary(lines[:2] + [f"- {len(reports)} rapports chiffrés publiés ({with_eps} ravs avec épisodes connus)",
+                          f"- {len(stale)} rapport(s) périmé(s) supprimé(s)"] + lines[2:])
     if with_eps == 0:
         print("::error::no episode found in R2 _state/feeds — catalogue empty")
         return 1
+    return 0
+
+
+def cmd_dashboard(args) -> int:
+    """Refresh the dashboard alone (pipeline health between two collections)."""
+    master = _master()
+    s3, bucket = _r2()
+    history = load_history(s3, bucket, master)
+    catalogue = load_catalogue(s3, bucket)
+    today = date.today() if not args.today else date.fromisoformat(args.today)
+    reports = {slug: core.build_report(rav, catalogue, history, today) for slug, rav in catalogue.items()}
+    lines = ["### Tableau de bord — rafraîchissement", ""]
+    _put_dashboard(s3, bucket, master, catalogue, history, reports, today, lines)
+    _summary(lines)
     return 0
 
 
@@ -225,6 +271,12 @@ def cmd_links(args) -> int:
     return 0
 
 
+def cmd_dashboard_link(args) -> int:
+    _local_only("dashboard-link")
+    print(core.dashboard_link(core.dashboard_token(_master())))
+    return 0
+
+
 def cmd_show(args) -> int:
     _local_only("show")
     master = _master()
@@ -258,6 +310,11 @@ def main(argv: list[str] | None = None) -> int:
     c = sub.add_parser("publish")
     c.add_argument("--today")
     c.set_defaults(fn=cmd_publish)
+    c = sub.add_parser("dashboard")
+    c.add_argument("--today")
+    c.set_defaults(fn=cmd_dashboard)
+    c = sub.add_parser("dashboard-link")
+    c.set_defaults(fn=cmd_dashboard_link)
     c = sub.add_parser("pull")
     c.add_argument("--dest", required=True)
     c.set_defaults(fn=cmd_pull)
