@@ -787,6 +787,48 @@ CSS = """\
       --color-primary: #1a1a2e;
       --color-primary-hover: #2d2d50;
     }
+    /* Dark theme — set by the inline head script from TTPPrefs `theme`
+       (auto | light | dark; auto follows prefers-color-scheme). */
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --color-bg: #0d0d1a;
+      --color-surface: #1a1a2e;
+      --color-surface-alt: #252545;
+      --color-text: #f6f6fa;
+      --color-text-secondary: #e4e4ee;
+      --color-text-tertiary: #c8c8da;
+      --color-text-muted: #b4b4cc;
+      --color-text-subtle: #a6a6c2;
+      --color-text-faint: #9c9cb8;
+      --color-text-disabled: #8c8caa;
+      --color-border: #34345a;
+      --color-border-soft: #2c2c4e;
+      --color-inverse-bg: #14142a;
+      --shadow-card: rgba(0,0,0,.35);
+      --shadow-card-soft: rgba(0,0,0,.3);
+      --color-heading: #f6f6fa;
+      --color-text-body: #d2d2e2;
+      --color-text-soft: #aeaec8;
+      --color-border-strong: #4a4a74;
+      --color-border-hover: #5a5a86;
+      --color-divider: #26264a;
+      --color-surface-muted: #252545;
+      --color-surface-sunken: #151529;
+      --color-skeleton: #2a2a4a;
+      --color-surface-warm: #1f1f36;
+      --color-surface-tag: #2a2a48;
+      --color-text-hint: #9494b2;
+      --color-surface-cream: #22223a;
+      --color-border-cream: #3a3452;
+      --color-surface-hover: #252545;
+      --color-surface-muted-hover: #303056;
+      --color-badge-bg: #2e2a52;
+      --color-badge-text: #c0b6f4;
+      --color-mark-bg: rgba(232,119,34,.22);
+      --color-mark-text: #ffc79a;
+      --color-primary: #3d3d6e;
+      --color-primary-hover: #4c4c82;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, -apple-system, sans-serif; background: var(--color-bg); color: var(--color-text); line-height: 1.5; padding-bottom: 60px; }
     header { background: var(--color-inverse-bg); color: var(--color-on-inverse); padding: 28px 20px 0; text-align: center; }
@@ -925,6 +967,11 @@ CSS = """\
       .nav-dropdown { position: static; }
       .nav-submenu { left: 50%; right: auto; transform: translateX(-50%); min-width: 0; max-width: calc(100vw - 24px); width: max-content; }
     }"""
+
+# Applies the stored theme (TTPPrefs `theme`, localStorage key ttp_theme:
+# auto | light | dark) before the first paint, so a dark reader never sees a
+# white flash. Must stay identical to the inline script of the static pages.
+THEME_HEAD = """  <script>(function(){var t;try{t=localStorage.getItem('ttp_theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}document.documentElement.setAttribute('data-theme',t)})();</script>"""
 
 GTAG = """\
   <link rel="preconnect" href="https://www.googletagmanager.com">
@@ -1159,6 +1206,7 @@ def render_page(ch: dict, entries: list, all_channels: list,
   <script type="application/ld+json">
 {breadcrumb_json}
   </script>
+{THEME_HEAD}
 {GTAG}
   <style>
 {CSS}
@@ -1677,6 +1725,7 @@ def render_episode_page(ep: dict, ch: dict, all_entries: list, all_channels: lis
   <script type="application/ld+json">
 {breadcrumb_json}
   </script>
+{THEME_HEAD}
 {GTAG}
   <style>
 {CSS}

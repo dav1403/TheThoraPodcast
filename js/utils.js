@@ -139,6 +139,10 @@ function _t3(fr, en, he) { return window.lang === 'he' ? he : (window.lang === '
 // Keys owned here:
 //   lang             — UI language of the SITE ('fr' | 'en' | 'he')
 //   ttp_course_lang  — language SPOKEN in the classes ('all' | 'fr' | 'he')
+//   ttp_theme        — colour theme ('auto' | 'light' | 'dark'); 'auto' follows
+//                      the OS (prefers-color-scheme). Read BEFORE first paint by
+//                      the inline <head> script of the theme-ready pages, which
+//                      sets <html data-theme>; TTPTheme below keeps it live.
 // The two are deliberately independent: an Israeli may read the site in Hebrew
 // and still want the French shiurim, and a French speaker may keep the site in
 // French while listening only to Hebrew classes.
@@ -146,6 +150,7 @@ window.TTPPrefs = (function () {
   var DEFS = {
     lang:            { key: 'lang',            values: ['fr', 'en', 'he'],  def: 'fr'  },
     courseLang:      { key: 'ttp_course_lang', values: ['all', 'fr', 'he'], def: 'all' },
+    theme:           { key: 'ttp_theme',       values: ['auto', 'light', 'dark'], def: 'auto' },
   };
   var listeners = {};
 
@@ -169,6 +174,35 @@ window.TTPPrefs = (function () {
     // Shorthands — the two settings read all over the site.
     uiLang:     function () { return read('lang'); },
     courseLang: function () { return read('courseLang'); },   // 'all' | 'fr' | 'he'
+    theme:      function () { return read('theme'); },        // 'auto' | 'light' | 'dark'
+  };
+})();
+
+// ─── Theme (light / dark) ────────────────────────────────────────────────────
+// The colours live in each page's CSS: `:root` (light) and `[data-theme="dark"]`
+// (dark), never here — a :root injected from JS would flash on load. This only
+// keeps <html data-theme> in sync after first paint: when the user picks a theme
+// in reglages.html, and when the OS switches while the preference is 'auto'.
+// Pages without the dark block simply stay light whatever the attribute says.
+window.TTPTheme = (function () {
+  var mq = (window.matchMedia) ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function resolved(pref) {
+    if (pref === 'light' || pref === 'dark') return pref;
+    return (mq && mq.matches) ? 'dark' : 'light';
+  }
+  function apply() {
+    document.documentElement.setAttribute('data-theme', resolved(window.TTPPrefs.theme()));
+  }
+  if (mq) {
+    var onOs = function () { if (window.TTPPrefs.theme() === 'auto') apply(); };
+    if (mq.addEventListener) mq.addEventListener('change', onOs);
+    else if (mq.addListener) mq.addListener(onOs);
+  }
+  window.TTPPrefs.on('theme', apply);
+  return {
+    resolved: function () { return resolved(window.TTPPrefs.theme()); },
+    set: function (pref) { window.TTPPrefs.set('theme', pref); },
+    apply: apply,
   };
 })();
 
