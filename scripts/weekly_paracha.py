@@ -56,7 +56,7 @@ DATA_DIR = pages.DATA_DIR
 CHANNELS_FILE = Path("channels.json")
 SPEAKERS_FILE = Path("speakers.json")
 
-SUMMARY_MODEL = "claude-haiku-4-5-20251001"
+SUMMARY_MODEL = "claude-haiku-5-5"
 MIN_COURSES = 8
 MAX_COURSES = 12
 MAX_PER_RAV = 2
@@ -406,8 +406,11 @@ def generate_summary(label_fr: str, courses: list[dict], api_key: str | None) ->
     try:
         msg = client.messages.create(
             model=SUMMARY_MODEL,
-            max_tokens=500,
+            # Haiku 5.5 thinks by default and thinking counts against max_tokens:
+            # effort "low" for a short summary, plus headroom in max_tokens.
+            max_tokens=4096,
             messages=[{"role": "user", "content": build_prompt(label_fr, courses)}],
+            extra_body={"output_config": {"effort": "low"}},
         )
     except Exception as exc:  # noqa: BLE001
         if sp._is_credit_error(exc):
@@ -415,6 +418,9 @@ def generate_summary(label_fr: str, courses: list[dict], api_key: str | None) ->
             sp._flag_credit_error(exc)
             return fallback_summary(label_fr, courses), "fallback"
         print(f"WARNING: summary API call failed ({type(exc).__name__}: {exc}) — fallback summary")
+        return fallback_summary(label_fr, courses), "fallback"
+    if getattr(msg, "stop_reason", None) in ("refusal", "max_tokens"):
+        print(f"WARNING: Claude stop_reason={msg.stop_reason} — fallback summary")
         return fallback_summary(label_fr, courses), "fallback"
     text = normalize_summary(first_text(msg))
     if not valid_summary(text):

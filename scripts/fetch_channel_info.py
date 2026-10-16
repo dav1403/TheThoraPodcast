@@ -28,6 +28,26 @@ CHANNELS_FILE = Path("channels.json")
 FEEDS_DIR     = Path("feeds")
 
 client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+MODEL  = "claude-haiku-5-5"
+
+
+def _complete(prompt: str, max_tokens: int) -> str:
+    """Single-turn text generation. Haiku 5.5 thinks by default and thinking
+    counts against max_tokens: effort "low" plus headroom in max_tokens.
+    A refused or truncated answer raises, so main() skips the channel instead
+    of saving a broken description."""
+    resp = client.messages.create(
+        model=MODEL,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+        extra_body={"output_config": {"effort": "low"}},
+    )
+    if resp.stop_reason in ("refusal", "max_tokens"):
+        raise RuntimeError(f"Claude stop_reason={resp.stop_reason}")
+    text = first_text(resp)
+    if not text:
+        raise RuntimeError("Claude returned no text block")
+    return text
 
 
 def fetch_youtube_info(channel_id: str) -> dict:
@@ -90,19 +110,8 @@ Retourne uniquement le texte, sans introduction."""
 Insiste sur : écoute en arrière-plan, sans pub, sans contenu inapproprié, pureté de l'âme.
 Retourne uniquement le texte."""
 
-    page_resp = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=600,
-        messages=[{"role": "user", "content": page_desc_prompt}],
-    )
-    page_description = first_text(page_resp)
-
-    meta_resp = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=200,
-        messages=[{"role": "user", "content": meta_prompt}],
-    )
-    seo_description = first_text(meta_resp).strip('"')
+    page_description = _complete(page_desc_prompt, max_tokens=4096)
+    seo_description = _complete(meta_prompt, max_tokens=2048).strip('"')
 
     return {
         "seo_description":  seo_description,

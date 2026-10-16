@@ -243,13 +243,27 @@ def test_generate_summary_uses_haiku_and_grounded_prompt(monkeypatch):
     _FakeAnthropic.calls, _FakeAnthropic.raise_exc = [], None
     chosen = _chosen()
     text, source = wp.generate_summary("Paracha Bereshit", chosen, "key")
-    assert source == "claude-haiku-4-5-20251001"
+    assert source == "claude-haiku-5-5"
     assert text == SUMMARY                       # bullets stripped, thinking block skipped
     prompt = _FakeAnthropic.calls[0]["messages"][0]["content"]
-    assert _FakeAnthropic.calls[0]["model"] == "claude-haiku-4-5-20251001"
+    assert _FakeAnthropic.calls[0]["model"] == "claude-haiku-5-5"
+    assert "temperature" not in _FakeAnthropic.calls[0]
     assert "UNIQUEMENT" in prompt and "n'invente" in prompt
     for c in chosen:
         assert c["ep"]["title"] in prompt
+
+
+def test_generate_summary_falls_back_on_refusal_or_truncation(monkeypatch):
+    monkeypatch.setattr(wp, "_anthropic", _Ns)
+    _FakeAnthropic.calls, _FakeAnthropic.raise_exc = [], None
+    chosen = _chosen()
+    for stop in ("refusal", "max_tokens"):
+        msg = _Msg([_Block("text", SUMMARY)])
+        msg.stop_reason = stop
+        monkeypatch.setattr(_FakeAnthropic, "create", lambda self, **kw: msg)
+        text, source = wp.generate_summary("Paracha Bereshit", chosen, "key")
+        assert source == "fallback"
+        assert text == wp.fallback_summary("Paracha Bereshit", chosen)
 
 
 def test_generate_summary_falls_back_on_credit_error(monkeypatch, tmp_path):

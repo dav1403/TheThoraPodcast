@@ -94,14 +94,21 @@ Rules:
 """
 
 
-def tag_batch(client: anthropic.Anthropic, titles: list[str]) -> list[list[str]]:
+def tag_batch(client: anthropic.Anthropic, titles: list[str]) -> list[list[str]] | None:
+    """Tags per title, or None when Claude refused or was cut off — the caller
+    then leaves the batch untagged so the next run retries it."""
     numbered = "\n".join(f"{i + 1}. {t}" for i, t in enumerate(titles))
     response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=1024,
+        model="claude-haiku-5-5",
+        # Haiku 5.5 thinks by default and thinking counts against max_tokens.
+        max_tokens=8192,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": f"Tag these {len(titles)} episodes:\n{numbered}"}],
+        extra_body={"output_config": {"effort": "low"}},
     )
+    if response.stop_reason in ("refusal", "max_tokens"):
+        print(f"WARNING: Claude stop_reason={response.stop_reason} — batch left untagged")
+        return None
     text = first_text(response)
     match = re.search(r"\[.*\]", text, re.DOTALL)
     if not match:
@@ -161,6 +168,8 @@ def main():
                     print(f"\nStopped early. Total tagged before stop: {total_tagged} episodes.")
                     return
                 raise
+            if tags is None:
+                continue
             for j, idx in enumerate(batch):
                 entries[idx]["tags"] = tags[j] if j < len(tags) else []
             print(f"  [{batch_start + len(batch)}/{len(untagged_idx)}] done")
