@@ -13,7 +13,8 @@ Mechanism
     ci_pre_run_counts.py at the start of the run. That is the ground truth
     (an episode only lands in entries.json once its audio is on R2).
   - "Pending work" = historical backlog still to fetch, from backfill_state.json:
-    queued items (`todo`) plus, per channel, yt_video_count - episodes in feed.
+    queued items (`todo`) plus, per channel, yt_video_count - episodes in feed
+    (scripts/backlog.py — the same figure is shown on the private dashboard).
     When nothing is pending, a zero run means "nothing to do", not a failure,
     and the streak is left untouched.
 
@@ -25,8 +26,13 @@ Outputs (GITHUB_OUTPUT, when running in Actions): added, pending, zero_streak.
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from backlog import pending_backlog  # noqa: E402  (shared with the dashboard)
 
 FEEDS_DIR = Path("feeds")
 STATE_FILE = FEEDS_DIR / "ingest_state.json"
@@ -65,19 +71,13 @@ def count_pending() -> int:
     state = load_json(Path("backfill_state.json"), {})
     if not isinstance(state, dict):
         return 0
-    pending = 0
+    counts = {}
     for slug, ch in state.items():
-        if not isinstance(ch, dict):
-            continue
-        todo = ch.get("todo")
-        if isinstance(todo, list):
-            pending += len(todo)
-        yt_count = ch.get("yt_video_count")
-        if isinstance(yt_count, int):
+        # entries.json is only needed for the yt_video_count term
+        if isinstance(ch, dict) and isinstance(ch.get("yt_video_count"), int):
             entries = load_json(FEEDS_DIR / f"{slug}.entries.json", [])
-            have = len(entries) if isinstance(entries, list) else 0
-            pending += max(0, yt_count - have)
-    return pending
+            counts[slug] = len(entries) if isinstance(entries, list) else 0
+    return pending_backlog(state, counts)["total"]
 
 
 def main() -> None:

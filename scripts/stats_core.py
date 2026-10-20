@@ -454,7 +454,7 @@ def _site_events(counts: dict) -> tuple[int, int]:
 
 def build_dashboard(catalogue: dict, history: dict, reports: dict[str, dict], today: date,
                     health: dict | None = None, days: int = 90, top: int = 25,
-                    stale_days: int = 30) -> dict:
+                    stale_days: int = 30, backlog: dict | None = None) -> dict:
     """Global report: every rav at once, plus the pipeline health snapshot.
 
     Global totals come from the history itself, never from adding up the
@@ -462,6 +462,8 @@ def build_dashboard(catalogue: dict, history: dict, reports: dict[str, dict], to
     of the reports counts it twice. Site plays = every audio_play of the
     site (all pages, GA4 pagePath); direct = every R2 GetObject on an mp3.
     `reports` are the per-rav reports built in the same run (build_report).
+    `backlog` = backlog.pending_backlog() (courses still to integrate), or
+    None when backfill_state.json could not be read -> {"available": False}.
     """
     end = today - timedelta(days=1)
     first = end - timedelta(days=days - 1)
@@ -586,4 +588,5 @@ def build_dashboard(catalogue: dict, history: dict, reports: dict[str, dict], to
         "platforms": {"rows": len(platforms), "plays": sum(int(p.get("plays", 0)) for p in platforms),
                       "last_noted": max((p.get("noted", "") for p in platforms), default="") or None},
         "health": health or {"available": False},
+        "backlog": {"available": True, **backlog} if backlog is not None else {"available": False},
     }

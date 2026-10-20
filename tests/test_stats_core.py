@@ -457,3 +457,85 @@ def test_dashboard_link_refuses_to_run_in_actions(monkeypatch):
     with pytest.raises(SystemExit) as exc:
         stats_update.main(["dashboard-link"])
     assert "local use only" in str(exc.value)
+
+
+# ---------------------------------------------------------------- backlog tile
+
+def test_pending_backlog_matches_the_watchdog_formula():
+    from backlog import pending_backlog
+    state = {
+        "lev": {"todo": ["x1", "x2"], "yt_video_count": 10},   # 2 + (10 - 6)
+        "Nahal-Haim": {"todo": [], "yt_video_count": 3},       # entries > yt -> 0
+        "new": {"todo": None, "yt_video_count": 5},            # no entries yet -> 5
+        "broken": "not a dict",
+        "noscan": {},
+    }
+    b = pending_backlog(state, {"lev": 6, "Nahal-Haim": 4})
+    assert b == {"total": 11, "channels": 2, "top": {"slug": "lev", "n": 6}}
+    assert pending_backlog({}, {}) == {"total": 0, "channels": 0, "top": None}
+    assert pending_backlog([1, 2], {}) == {"total": 0, "channels": 0, "top": None}
+    # ties: alphabetical, deterministic
+    assert pending_backlog({"b": {"todo": ["1"]}, "a": {"todo": ["2"]}}, {})["top"] == {"slug": "a", "n": 1}
+
+
+def test_watchdog_count_pending_uses_the_shared_definition(tmp_path, monkeypatch):
+    import ci_ingest_watchdog as wd
+    from backlog import pending_backlog
+    state = {"lev": {"todo": ["x1"], "yt_video_count": 4}, "other": {"todo": ["y"]}}
+    (tmp_path / "feeds").mkdir()
+    (tmp_path / "backfill_state.json").write_text(json.dumps(state), encoding="utf-8")
+    (tmp_path / "feeds" / "lev.entries.json").write_text(json.dumps([{}, {}, {}]), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    assert wd.count_pending() == 3 == pending_backlog(state, {"lev": 3})["total"]
+    (tmp_path / "backfill_state.json").write_text("", encoding="utf-8")
+    assert wd.count_pending() == 0
+
+
+def test_dashboard_carries_the_backlog_or_marks_it_unavailable():
+    cat = _catalogue()
+    h = core.empty_history()
+    reports = {s: core.build_report(r, cat, h, TODAY) for s, r in cat.items()}
+    b = {"total": 7, "channels": 2, "top": {"slug": "lev", "n": 5}}
+    dash = core.build_dashboard(cat, h, reports, TODAY, backlog=b)
+    assert dash["backlog"] == {"available": True, **b}
+    assert core.build_dashboard(cat, h, reports, TODAY)["backlog"] == {"available": False}
+
+
+class _StateS3:
+    def __init__(self, objects):
+        self.objects = objects
+
+    def get_object(self, Bucket, Key):
+        import io
+        if Key not in self.objects:
+            raise Exception("An error occurred (NoSuchKey) when calling GetObject")
+        val = self.objects[Key]
+        if isinstance(val, Exception):
+            raise val
+        return {"Body": io.BytesIO(val)}
+
+
+def test_publish_backlog_reuses_loaded_entries_and_never_fails(capsys):
+    import stats_update
+    P = stats_update.STATE_PREFIX
+    s3 = _StateS3({f"{P}feeds/lev.entries.json": json.dumps([{"video_id": "A", "title": "t"}, {}]).encode(),
+                  f"{P}backfill_state.json": b"\xef\xbb\xbf" + json.dumps({"lev": {"todo": [], "yt_video_count": 5}}).encode()})
+    counts = {}
+    cat = stats_update.load_catalogue(s3, "b", counts)
+    assert counts["lev"] == 2 and len(cat["lev"]["episodes"]) == 1   # raw count, not the deduped catalogue
+    lines = []
+    assert stats_update._backlog(s3, "b", counts, lines) == {"total": 3, "channels": 1, "top": {"slug": "lev", "n": 3}}
+    assert lines == ["- Cours restant à intégrer : 3 (1 chaîne(s))"]
+    # missing / unreadable state -> None, a warning with the exception type only
+    for bad in (_StateS3({}), _StateS3({f"{P}backfill_state.json": b"{not json"}),
+                _StateS3({f"{P}backfill_state.json": RuntimeError("secret-ish detail")})):
+        lines = []
+        assert stats_update._backlog(bad, "b", counts, lines) is None
+        assert "indisponible" in lines[0]
+    assert "secret-ish" not in capsys.readouterr().out
+
+
+def test_dashboard_page_renders_the_backlog_tile():
+    html = DASH_PAGE.read_text(encoding="utf-8")
+    assert "backlogTile(r.backlog, r.ravs)" in html
+    assert "'Cours restant à intégrer'" in html and "'indisponible'" in html

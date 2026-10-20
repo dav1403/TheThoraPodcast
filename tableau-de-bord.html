@@ -133,9 +133,22 @@
     var cls = p > 0 ? 'up' : p < 0 ? 'down' : '';
     return ' · <span class="' + cls + '">' + (p > 0 ? '▲ +' : p < 0 ? '▼ ' : '') + p + ' %</span> vs 30 j préc.';
   }
-  function tile(label, value, sub, on) {
-    return '<div class="tile' + (on === false ? ' off' : '') + '"><div class="l">' + esc(label) + '</div>' +
-      '<div class="v">' + (on === false ? 'source inactive' : fmt(value)) + '</div><div class="s">' + (sub || '') + '</div></div>';
+  function tile(label, value, sub, on, offText, hint) {
+    return '<div class="tile' + (on === false ? ' off' : '') + '"' + (hint ? ' title="' + esc(hint) + '"' : '') + '><div class="l">' + esc(label) + '</div>' +
+      '<div class="v">' + (on === false ? esc(offText || 'source inactive') : fmt(value)) + '</div><div class="s">' + (sub || '') + '</div></div>';
+  }
+  // Courses still to integrate: same figure as scripts/ci_ingest_watchdog.py (scripts/backlog.py).
+  var BACKLOG_HINT = 'Par chaîne : vidéos YouTube (vidéos + lives + shorts, au dernier scan) moins les cours du flux, ' +
+    '+ file d’attente du rattrapage. Même calcul que l’alerte « Ingestion à zéro ». Majorant : une vidéo en file est aussi dans l’écart, donc comptée deux fois.';
+  function backlogTile(b, ravs) {
+    if (!b || !b.available) return tile('Cours restant à intégrer', 0, 'état du rattrapage illisible', false, 'indisponible', BACKLOG_HINT);
+    var sub = 'aucune chaîne en retard';
+    if (b.channels) {
+      var top = b.top && (ravs || []).filter(function (x) { return x.slug === b.top.slug; })[0];
+      sub = fmt(b.channels) + (b.channels > 1 ? ' chaînes' : ' chaîne') +
+        (b.top ? ' · surtout ' + esc(top ? top.name : b.top.slug) + ' (' + fmt(b.top.n) + ')' : '');
+    }
+    return tile('Cours restant à intégrer', b.total, sub, true, '', BACKLOG_HINT);
   }
 
   // Daily lines (one axis: both measures are plays) + crosshair tooltip.
@@ -265,6 +278,7 @@
       tile('Téléchargements — 30 j', t.d30.direct, 'apps de podcast + lecteur' + delta(t.d30.direct, t.prev30.direct), dirOn) +
       tile('7 derniers jours', t.d7.site + t.d7.direct, fmt(t.d7.site) + ' site · ' + fmt(t.d7.direct) + ' téléch.', siteOn || dirOn) +
       tile('Cours au catalogue', c.episodes, '+' + fmt(c.new_d7) + ' en 7 j · +' + fmt(c.new_d30) + ' en 30 j') +
+      backlogTile(r.backlog, r.ravs) +
       tile('Rabbanim', c.channels + c.guests, fmt(c.channels) + ' chaînes · ' + fmt(c.guests) + ' invités') +
       tile('Spotify / Deezer / Apple', r.platforms.plays, r.platforms.rows ? fmt(r.platforms.rows) + ' relevé(s) manuel(s)' : 'aucun relevé saisi', r.platforms.rows > 0) +
       '</div>';

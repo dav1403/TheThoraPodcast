@@ -41,6 +41,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import stats_core as core  # noqa: E402
+from backlog import pending_backlog  # noqa: E402
 
 STATS_PREFIX = os.environ.get("TTP_STATS_PREFIX", "_stats/")
 HISTORY_KEY = STATS_PREFIX + "history.bin"
@@ -149,7 +150,9 @@ def cmd_collect(args) -> int:
     return 1 if getattr(args, "_failed", False) else 0
 
 
-def load_catalogue(s3, bucket: str) -> dict:
+def load_catalogue(s3, bucket: str, entry_counts: dict | None = None) -> dict:
+    """Catalogue from R2 entries.json; fills `entry_counts` (slug -> raw number
+    of entries) when given, so the backlog does not read them a second time."""
     channels = json.loads((ROOT / "channels.json").read_text(encoding="utf-8"))
     speakers = json.loads((ROOT / "speakers.json").read_text(encoding="utf-8"))
     entries = {}
@@ -161,7 +164,25 @@ def load_catalogue(s3, bucket: str) -> dict:
             if not _is_missing(exc):
                 raise
             entries[slug] = []
+    if entry_counts is not None:
+        entry_counts.update({s: len(e) if isinstance(e, list) else 0 for s, e in entries.items()})
     return core.build_catalogue(channels, speakers, entries)
+
+
+def _backlog(s3, bucket: str, entry_counts: dict, lines: list[str]) -> dict | None:
+    """Courses still to integrate (same figure as ci_ingest_watchdog.py), from
+    R2 backfill_state.json. Missing or unreadable -> None ("indisponible" on
+    the dashboard), never a failed publish."""
+    try:
+        obj = s3.get_object(Bucket=bucket, Key=f"{STATE_PREFIX}backfill_state.json")
+        state = json.loads(obj["Body"].read().decode("utf-8-sig") or "{}")
+        b = pending_backlog(state, entry_counts)
+        lines.append(f"- Cours restant à intégrer : {b['total']} ({b['channels']} chaîne(s))")
+        return b
+    except Exception as exc:
+        lines.append(f"- Cours restant à intégrer : indisponible ({type(exc).__name__})")
+        print(f"::warning::dashboard backlog unavailable: {type(exc).__name__}")
+    return None
 
 
 def _health(lines: list[str]) -> dict | None:
@@ -179,10 +200,11 @@ def _health(lines: list[str]) -> dict | None:
 
 
 def _put_dashboard(s3, bucket: str, master: bytes, catalogue: dict, history: dict,
-                   reports: dict, today: date, lines: list[str]) -> str:
+                   reports: dict, today: date, lines: list[str], entry_counts: dict) -> str:
     token = core.dashboard_token(master)
     bid = core.blob_id(token)
-    dash = core.build_dashboard(catalogue, history, reports, today, health=_health(lines))
+    dash = core.build_dashboard(catalogue, history, reports, today, health=_health(lines),
+                                backlog=_backlog(s3, bucket, entry_counts, lines))
     s3.put_object(Bucket=bucket, Key=f"{PUB_PREFIX}{bid}.bin", Body=core.seal_report(token, dash),
                   ContentType="application/octet-stream", CacheControl="no-cache")
     lines.append("- Tableau de bord chiffré publié")
@@ -193,7 +215,8 @@ def cmd_publish(args) -> int:
     master = _master()
     s3, bucket = _r2()
     history = load_history(s3, bucket, master)
-    catalogue = load_catalogue(s3, bucket)
+    entry_counts: dict[str, int] = {}
+    catalogue = load_catalogue(s3, bucket, entry_counts)
     today = date.today() if not args.today else date.fromisoformat(args.today)
     wanted, reports = {}, {}
     for slug, rav in sorted(catalogue.items()):
@@ -204,7 +227,8 @@ def cmd_publish(args) -> int:
                       ContentType="application/octet-stream", CacheControl="no-cache")
         wanted[bid] = slug
     lines = [f"### Espace rav — publication", ""]
-    wanted[_put_dashboard(s3, bucket, master, catalogue, history, reports, today, lines)] = "dashboard"
+    wanted[_put_dashboard(s3, bucket, master, catalogue, history, reports, today, lines,
+                          entry_counts)] = "dashboard"
     stale = [k for k in _list(s3, bucket, PUB_PREFIX) if k[len(PUB_PREFIX):-4] not in wanted]
     for k in stale:
         s3.delete_object(Bucket=bucket, Key=k)
@@ -222,11 +246,12 @@ def cmd_dashboard(args) -> int:
     master = _master()
     s3, bucket = _r2()
     history = load_history(s3, bucket, master)
-    catalogue = load_catalogue(s3, bucket)
+    entry_counts: dict[str, int] = {}
+    catalogue = load_catalogue(s3, bucket, entry_counts)
     today = date.today() if not args.today else date.fromisoformat(args.today)
     reports = {slug: core.build_report(rav, catalogue, history, today) for slug, rav in catalogue.items()}
     lines = ["### Tableau de bord — rafraîchissement", ""]
-    _put_dashboard(s3, bucket, master, catalogue, history, reports, today, lines)
+    _put_dashboard(s3, bucket, master, catalogue, history, reports, today, lines, entry_counts)
     _summary(lines)
     return 0
 
