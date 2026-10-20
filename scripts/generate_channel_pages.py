@@ -1421,21 +1421,8 @@ def render_page(ch: dict, entries: list, all_channels: list,
       document.querySelectorAll('.play-btn').forEach(b => b.classList.remove('playing'));
       currentEpId = null;
     }});
-    if (typeof gtag !== 'undefined' && playerAudio) {{
-      const ga4Played = {{}}, ga4Completed = {{}};
-      playerAudio.addEventListener('play', () => {{
-        if (currentEpId && !ga4Played[currentEpId]) {{
-          ga4Played[currentEpId] = true;
-          gtag('event', 'audio_play', {{ep_title: (document.getElementById('player-title') || {{}}).textContent || '', rav: '{esc(name)}'}});
-        }}
-      }});
-      playerAudio.addEventListener('timeupdate', () => {{
-        if (currentEpId && !ga4Completed[currentEpId] && playerAudio.duration > 0 && playerAudio.currentTime / playerAudio.duration >= 0.9) {{
-          ga4Completed[currentEpId] = true;
-          gtag('event', 'audio_complete', {{ep_title: (document.getElementById('player-title') || {{}}).textContent || '', rav: '{esc(name)}'}});
-        }}
-      }});
-    }}
+    // GA4 audio_play / audio_complete are emitted by TTPPlayer itself
+    // (js/utils.js), for every page: a second emitter here would double-count.
   }}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wirePlayerSync);
   else wirePlayerSync();

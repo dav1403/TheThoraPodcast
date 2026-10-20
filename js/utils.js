@@ -1530,6 +1530,48 @@ window.TTPPlayer = (function () {
     return root;
   }
 
+  // ── GA4 listening events — SINGLE emitter for every page ─────────────────
+  // scripts/stats_core.py counts site plays from GA4 `audio_play` /
+  // `audio_complete` with the event-scoped custom dimensions `rav` and
+  // `ep_title` (stats_sources.parse_ga_ep_rows). Emitting from the bar covers
+  // every way a class is played (rav pages, episode pages, home, paracha,
+  // legacy pages driving #player-audio) instead of one page template only.
+  // Deduplicated per episode and per page load.
+  var gaPlayed = {}, gaCompleted = {};
+  function _absUrl(u) {
+    try { return new URL(u, location.href).href; } catch (_) { return u || ''; }
+  }
+  function _gaInfo(audio) {
+    var src = audio.currentSrc || audio.src || '';
+    // Legacy pages play through their own code and never call load(): a meta
+    // left over from a restored bar would then describe another class.
+    var m = (meta.src && src && _absUrl(meta.src) !== _absUrl(src)) ? {} : meta;
+    return {
+      key: m.id || src,
+      rav: m.channel || (elCh ? elCh.textContent : '') || '',
+      ep_title: m.title || (elTitle ? elTitle.textContent : '') || ''
+    };
+  }
+  function _gaSend(name, info) {
+    try {
+      if (typeof gtag === 'function') gtag('event', name, { rav: info.rav, ep_title: info.ep_title });
+    } catch (_) {}
+  }
+  function _gaPlay(audio) {
+    var info = _gaInfo(audio);
+    if (!info.key || gaPlayed[info.key]) return;
+    gaPlayed[info.key] = true;
+    _gaSend('audio_play', info);
+  }
+  function _gaComplete(audio, force) {
+    var d = audio.duration;
+    if (!force && !(isFinite(d) && d > 0 && audio.currentTime / d >= 0.9)) return;
+    var info = _gaInfo(audio);
+    if (!info.key || gaCompleted[info.key]) return;
+    gaCompleted[info.key] = true;
+    _gaSend('audio_complete', info);
+  }
+
   // Bind the bar to whichever <audio> is actually playing on this page.
   function bind(audio) {
     if (!audio || cur === audio) return;
@@ -1538,6 +1580,9 @@ window.TTPPlayer = (function () {
     ['play', 'playing', 'pause', 'ended'].forEach(function (ev) {
       cur.addEventListener(ev, _renderPlay);
     });
+    audio.addEventListener('playing', function () { if (cur === audio) _gaPlay(audio); });
+    audio.addEventListener('timeupdate', function () { if (cur === audio) _gaComplete(audio, false); });
+    audio.addEventListener('ended', function () { if (cur === audio) _gaComplete(audio, true); });
     cur.addEventListener('loadedmetadata', function () {
       if (pendingSeek > 0) {
         try { cur.currentTime = pendingSeek; } catch (_) {}
@@ -1797,6 +1842,9 @@ window.TTPPlayer = (function () {
     meta = m || {};
     restoredPos = 0;
     _paint();
+    // Attached from the page's own 'play' handler (resume banner, keyboard):
+    // the bar's 'playing' listener may come too late for this start.
+    if (!audioEl.paused) _gaPlay(audioEl);
     audioEl.playbackRate = speed();
     show();
     _renderTime();
