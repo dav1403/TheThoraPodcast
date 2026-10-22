@@ -31,6 +31,7 @@ from feedgen.feed import FeedGenerator
 from feedgen.ext.base import BaseExtension
 from lxml import etree
 from feeds_util import PODCAST_NS, itunes_image_url, podcast_guid
+import channel_errors
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
@@ -76,6 +77,8 @@ CHANNELS_FILE  = "channels.json"
 PROCESSED_FILE = "processed.json"
 FEEDS_DIR      = Path("feeds")
 AUDIO_DIR      = Path("tmp_audio")
+# Read by the backfill step of the workflow: slots left after new episodes.
+BACKFILL_BUDGET_FILE = Path("/tmp/backfill_budget")
 
 FEEDS_DIR.mkdir(exist_ok=True)
 AUDIO_DIR.mkdir(exist_ok=True)
@@ -1125,6 +1128,7 @@ def main():
     global AUTH_FAILED
     budget_remaining = args.budget
     errors = []
+    channel_errors.reset()
     for ch in channels:
         if budget_remaining <= 0:
             print(f"\nBudget exhausted — skipping remaining channels.")
@@ -1149,15 +1153,24 @@ def main():
             errors.append((ch["slug"], str(e)))
 
     # Write remaining budget so backfill_podcasts.py knows how many slots are left
-    Path("/tmp/backfill_budget").write_text(str(budget_remaining))
+    BACKFILL_BUDGET_FILE.write_text(str(budget_remaining))
     print(f"\nBudget remaining for backfill: {budget_remaining}")
 
     if errors:
         print(f"\n{'='*60}")
-        print(f"Completed with {len(errors)} error(s):")
+        print(f"Completed with {len(errors)} channel error(s) (other channels kept):")
         for slug, err in errors:
             print(f"  {slug}: {err}")
-        sys.exit(1)
+        # A failing channel must not block the others (incident 21-22/10/2026:
+        # one bad thumbnail URL -> exit 1 -> backfill, pages, R2 state push all
+        # skipped for 6 h). The error goes to the ledger and we exit 0; the
+        # last step of the workflow (channel_errors.py check, if: always())
+        # turns the run red AFTER publication. Safe: a channel saves its
+        # entries.json before build_rss_feed, and the XML is rebuilt next run.
+        channel_errors.record(errors, step="process_podcasts")
+        print(f"Errors recorded in {channel_errors.ledger_path()}; the final "
+              "check step of the workflow will mark the run as failed.")
+        return
 
     print(f"\n{'='*60}")
     print("New episode check complete.")

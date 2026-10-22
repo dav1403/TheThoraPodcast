@@ -438,3 +438,14 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: python scripts/generate_summary.py >> $GITHUB_STEP_SUMMARY
+
+      # LAST STEP, on purpose. process_podcasts.py isolates a failing channel
+      # (logs it in the ledger, exits 0) so the other channels are processed,
+      # the state is pushed to R2 and deploy-site rebuilds the site (it runs on
+      # "success" and "failure"). Incident 21-22/10/2026: one channel's exit 1
+      # skipped every later step for 6 h. The failure must still not hide
+      # behind a green run: this step annotates each channel error, adds a
+      # table to the summary and turns the run red, after publication.
+      - name: Fail the run if a channel errored (after publication)
+        if: always()
+        run: python3 scripts/channel_errors.py check
