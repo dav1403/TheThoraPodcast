@@ -30,7 +30,7 @@ from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
 from feedgen.ext.base import BaseExtension
 from lxml import etree
-from feeds_util import PODCAST_NS, podcast_guid
+from feeds_util import PODCAST_NS, itunes_image_url, podcast_guid
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
@@ -945,8 +945,12 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
         fe.enclosure(_safe_url, str(entry.get("file_size", 0)), "audio/mpeg")
         fe.podcast.itunes_duration(str(entry.get("duration_secs", 0)))
         fe.podcast.itunes_explicit("no")
-        if entry.get("thumbnail"):
-            fe.podcast.itunes_image(entry["thumbnail"])
+        # feedgen rejects any URL not ending in .jpg/.png (query string included)
+        # with a ValueError that used to abort the whole channel: normalise it,
+        # or omit the tag and let the episode inherit the channel artwork.
+        ep_image = itunes_image_url(entry.get("thumbnail"))
+        if ep_image:
+            fe.podcast.itunes_image(ep_image)
 
     fg.rss_file(str(feed_path), pretty=True)
     print(f"  RSS feed written -> {feed_path} ({len(entries)} episodes)")

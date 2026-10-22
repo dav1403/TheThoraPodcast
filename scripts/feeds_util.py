@@ -18,6 +18,7 @@ import json
 import re
 import uuid
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 SPEAKERS_FILE = "speakers.json"
 
@@ -45,6 +46,36 @@ def podcast_guid(feed_url: str) -> str:
     """
     name = _SCHEME_RE.sub("", feed_url.strip()).rstrip("/")
     return str(uuid.uuid5(PODCAST_GUID_NAMESPACE, name))
+
+
+# Extensions feedgen's podcast extension accepts for <itunes:image>. It tests
+# the WHOLE string with a case-sensitive endswith(), query string included.
+_ITUNES_IMAGE_EXTS = (".jpg", ".png")
+
+
+def itunes_image_url(url: str | None) -> str | None:
+    """An episode image URL that feedgen will accept for <itunes:image>, or None.
+
+    feedgen's PodcastEntryExtension.itunes_image() raises
+    ValueError("Image file must be png or jpg") unless the full URL ends with
+    ".jpg" or ".png". YouTube appends a cache-busting query string to the
+    thumbnail of a video whose thumbnail was replaced (e.g.
+    ".../maxresdefault.jpg?v=7"), and that single URL used to abort the whole
+    channel in build_rss_feed() — and with it the run's state push to R2.
+
+    The query string and fragment are dropped when the path itself is a JPG/PNG
+    (i.ytimg.com serves the same image without the cache buster). Anything else
+    (WebP, AVIF, no extension) returns None: the episode then simply inherits
+    the channel artwork, which is what directories fall back to anyway.
+    """
+    if not url or not url.strip():
+        return None
+    parts = urlsplit(url.strip())
+    if not parts.scheme or not parts.netloc:
+        return None
+    if not parts.path.endswith(_ITUNES_IMAGE_EXTS):
+        return None
+    return urlunsplit(parts._replace(query="", fragment=""))
 
 
 def speaker_slugs(root: Path = Path(".")) -> set[str]:
