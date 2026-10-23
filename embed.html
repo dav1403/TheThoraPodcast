@@ -3,8 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){var t;try{t=localStorage.getItem('ttp_theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}document.documentElement.setAttribute('data-theme',t)})();</script>
   <title>The Torah Podcast — Widget</title>
   <style>
+    :root {
+      /* Page */
+      --color-bg: #f5f5f0;
+      --color-surface: #fff;
+      --color-surface-alt: #eee;
+      --color-text: #222;
+      --color-text-secondary: #333;
+      --color-text-tertiary: #555;
+      --color-text-muted: #666;
+      --color-text-subtle: #888;
+      --color-text-faint: #999;
+      --color-text-disabled: #aaa;
+      --color-border: #ddd;
+      --color-border-soft: #e0e0e0;
+      /* Accent */
+      --color-accent: #e87722;
+      --color-on-accent: #fff;
+      /* Inverse surfaces (dark header, footer, menus) */
+      --color-inverse-bg: #1a1a2e;
+      --color-inverse-surface: #252545;
+      --color-inverse-heading: #aab;
+      --color-on-inverse: #fff;
+      --color-on-inverse-soft: rgba(255,255,255,.78);
+      --color-on-inverse-muted: rgba(255,255,255,.65);
+      --color-on-inverse-dim: rgba(255,255,255,.6);
+      --color-inverse-border: rgba(255,255,255,.2);
+      --color-inverse-border-strong: rgba(255,255,255,.35);
+      --color-inverse-border-soft: rgba(255,255,255,.15);
+      --color-inverse-border-faint: rgba(255,255,255,.12);
+      --color-inverse-hover: rgba(255,255,255,.1);
+      --color-inverse-hover-soft: rgba(255,255,255,.12);
+      --color-inverse-tint: rgba(255,255,255,.05);
+      --color-inverse-scrim: rgba(255,255,255,.5);
+      /* Elevation */
+      --shadow-card: rgba(0,0,0,.08);
+      --shadow-card-soft: rgba(0,0,0,.06);
+      --shadow-overlay: rgba(0,0,0,.5);
+      /* Light-surface roles added for the dark theme */
+      --color-heading: #1a1a2e;
+      --color-text-body: #444;
+      --color-text-soft: #777;
+      --color-border-strong: #ccc;
+      --color-border-hover: #bbb;
+      --color-divider: #f0f0f0;
+      --color-surface-muted: #f0f0f0;
+      --color-surface-sunken: #fafafa;
+      --color-skeleton: #e8e8e8;
+      --color-surface-warm: #fbfaf7;
+      --color-surface-tag: #f0f0e8;
+      --color-text-hint: #bbb;
+      --color-surface-cream: #faf6f0;
+      --color-border-cream: #f0e6d8;
+      --color-surface-hover: #f0f0ea;
+      --color-surface-muted-hover: #e2e2e2;
+      --color-badge-bg: #eceaf6;
+      --color-badge-text: #6a5acd;
+      --color-mark-bg: #ffe9d2;
+      --color-mark-text: #b4530a;
+      --color-primary: #1a1a2e;
+      --color-primary-hover: #2d2d50;
+      /* Secondary-page roles (paracha, limud yomi, legal, embed...) */
+      --color-border-card: #e8e8e3;
+      --color-border-warm: #e4e4dc;
+      --color-border-sand: #e2ddd0;
+      --color-divider-soft: #f5f5f5;
+      --color-divider-warm: #f0f0eb;
+      --color-divider-alt: #eee;
+      --color-surface-warm-hover: #faf8f3;
+      --color-surface-cool-hover: #f7f7f9;
+      --color-surface-cool-hover-alt: #f4f4f8;
+      --color-surface-accent-soft: #fff8f3;
+      --color-primary-tint: rgba(26,26,46,.06);
+      --color-primary-tint-strong: rgba(26,26,46,.12);
+      --color-text-gold: #9a7a3a;
+      --color-text-sand: #4a3f2a;
+      --color-text-pale: #ccc;
+    }
+    /* Dark theme — set by the inline head script from TTPPrefs `theme`
+       (auto | light | dark; auto follows prefers-color-scheme). */
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --color-bg: #0d0d1a;
+      --color-surface: #1a1a2e;
+      --color-surface-alt: #252545;
+      --color-text: #f6f6fa;
+      --color-text-secondary: #e4e4ee;
+      --color-text-tertiary: #c8c8da;
+      --color-text-muted: #b4b4cc;
+      --color-text-subtle: #a6a6c2;
+      --color-text-faint: #9c9cb8;
+      --color-text-disabled: #8c8caa;
+      --color-border: #34345a;
+      --color-border-soft: #2c2c4e;
+      --color-inverse-bg: #14142a;
+      --shadow-card: rgba(0,0,0,.35);
+      --shadow-card-soft: rgba(0,0,0,.3);
+      --color-heading: #f6f6fa;
+      --color-text-body: #d2d2e2;
+      --color-text-soft: #aeaec8;
+      --color-border-strong: #4a4a74;
+      --color-border-hover: #5a5a86;
+      --color-divider: #26264a;
+      --color-surface-muted: #252545;
+      --color-surface-sunken: #151529;
+      --color-skeleton: #2a2a4a;
+      --color-surface-warm: #1f1f36;
+      --color-surface-tag: #2a2a48;
+      --color-text-hint: #9494b2;
+      --color-surface-cream: #22223a;
+      --color-border-cream: #3a3452;
+      --color-surface-hover: #252545;
+      --color-surface-muted-hover: #303056;
+      --color-badge-bg: #2e2a52;
+      --color-badge-text: #c0b6f4;
+      --color-mark-bg: rgba(232,119,34,.22);
+      --color-mark-text: #ffc79a;
+      --color-primary: #3d3d6e;
+      --color-primary-hover: #4c4c82;
+      --color-border-card: #34345a;
+      --color-border-warm: #34345a;
+      --color-border-sand: #3a3452;
+      --color-divider-soft: #26264a;
+      --color-divider-warm: #26264a;
+      --color-divider-alt: #2c2c4e;
+      --color-surface-warm-hover: #252545;
+      --color-surface-cool-hover: #252545;
+      --color-surface-cool-hover-alt: #252545;
+      --color-surface-accent-soft: #2e2236;
+      --color-primary-tint: rgba(255,255,255,.06);
+      --color-primary-tint-strong: rgba(255,255,255,.12);
+      --color-text-gold: #dcbc7c;
+      --color-text-sand: #e6dcc6;
+      --color-text-pale: #8c8caa;
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
@@ -14,8 +149,8 @@
 
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      background: #fff;
-      color: #222;
+      background: var(--color-surface);
+      color: var(--color-text);
       display: flex;
       flex-direction: column;
       font-size: 14px;
@@ -24,7 +159,7 @@
 
     /* ── Header ─────────────────────────────────────────────── */
     .widget-header {
-      background: #1a1a2e;
+      background: var(--color-inverse-bg);
       padding: 14px 16px;
       display: flex;
       align-items: center;
@@ -42,7 +177,7 @@
     .ch-name {
       font-size: 0.95rem;
       font-weight: 700;
-      color: #fff;
+      color: var(--color-on-inverse);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -69,10 +204,10 @@
     }
     .plat-btn:hover { opacity: 0.75; }
     .plat-btn svg { width: 14px; height: 14px; }
-    .plat-spotify { background: #1DB954; color: #fff; }
-    .plat-apple   { background: #872EC4; color: #fff; }
-    .plat-deezer  { background: #EF5466; color: #fff; }
-    .plat-rss     { background: #e87722; color: #fff; }
+    .plat-spotify { background: #1DB954; color: var(--color-on-inverse); }
+    .plat-apple   { background: #872EC4; color: var(--color-on-inverse); }
+    .plat-deezer  { background: #EF5466; color: var(--color-on-inverse); }
+    .plat-rss     { background: var(--color-accent); color: var(--color-on-accent); }
 
     /* ── Episode list ───────────────────────────────────────── */
     .episode-list {
@@ -80,17 +215,17 @@
       overflow-y: auto;
       list-style: none;
       scrollbar-width: thin;
-      scrollbar-color: #ddd transparent;
+      scrollbar-color: var(--color-border) transparent;
     }
     .episode-list::-webkit-scrollbar { width: 4px; }
-    .episode-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+    .episode-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
 
     .ep-item {
       display: flex;
       align-items: center;
       gap: 10px;
       padding: 10px 14px;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--color-divider);
       cursor: default;
     }
     .ep-item:last-child { border-bottom: none; }
@@ -98,47 +233,47 @@
       width: 60px; height: 40px;
       border-radius: 5px;
       object-fit: cover;
-      background: #e8e8e8;
+      background: var(--color-skeleton);
       flex-shrink: 0;
     }
     .ep-thumb-ph {
       width: 60px; height: 40px;
       border-radius: 5px;
-      background: #e8e8e8;
+      background: var(--color-skeleton);
       flex-shrink: 0;
     }
     .ep-body { flex: 1; min-width: 0; }
     .ep-title {
       font-size: 0.82rem;
       font-weight: 600;
-      color: #1a1a2e;
+      color: var(--color-heading);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       margin-bottom: 2px;
     }
-    .ep-date { font-size: 0.68rem; color: #aaa; }
+    .ep-date { font-size: 0.68rem; color: var(--color-text-disabled); }
     .play-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       width: 30px; height: 30px;
       border-radius: 50%;
-      background: #1a1a2e;
-      color: #fff;
+      background: var(--color-primary);
+      color: var(--color-on-inverse);
       border: none;
       cursor: pointer;
       flex-shrink: 0;
       transition: background .15s;
     }
-    .play-btn:hover { background: #2d2d50; }
-    .play-btn.playing { background: #e87722; }
+    .play-btn:hover { background: var(--color-primary-hover); }
+    .play-btn.playing { background: var(--color-accent); }
     .play-btn svg { width: 11px; height: 11px; }
 
     /* ── Mini player bar ────────────────────────────────────── */
     #mini-player {
-      background: #f5f5f0;
-      border-top: 1px solid #eee;
+      background: var(--color-bg);
+      border-top: 1px solid var(--color-divider-alt);
       padding: 8px 14px;
       display: flex;
       align-items: center;
@@ -149,7 +284,7 @@
     #mini-title {
       font-size: 0.72rem;
       font-weight: 600;
-      color: #1a1a2e;
+      color: var(--color-heading);
       flex: 1;
       min-width: 0;
       white-space: nowrap;
@@ -160,28 +295,28 @@
       flex: 2;
       min-width: 80px;
       height: 28px;
-      accent-color: #e87722;
+      accent-color: var(--color-accent);
     }
 
     /* ── Footer ─────────────────────────────────────────────── */
     .widget-footer {
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--color-divider-alt);
       padding: 8px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
-      background: #fff;
+      background: var(--color-surface);
     }
     .widget-brand {
       font-size: 0.68rem;
-      color: #bbb;
+      color: var(--color-text-hint);
       text-decoration: none;
       font-weight: 600;
       letter-spacing: 0.03em;
     }
-    .widget-brand:hover { color: #1a1a2e; }
-    .ep-count { font-size: 0.68rem; color: #ccc; }
+    .widget-brand:hover { color: var(--color-heading); }
+    .ep-count { font-size: 0.68rem; color: var(--color-text-pale); }
 
     /* ── States ─────────────────────────────────────────────── */
     .state {
@@ -189,13 +324,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #aaa;
+      color: var(--color-text-disabled);
       font-size: 0.85rem;
     }
     .loading-spinner {
       width: 18px; height: 18px;
-      border: 2px solid #ddd;
-      border-top-color: #555;
+      border: 2px solid var(--color-border);
+      border-top-color: var(--color-text-tertiary);
       border-radius: 50%;
       animation: spin .7s linear infinite;
       margin-right: 8px;

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){var t;try{t=localStorage.getItem('ttp_theme')}catch(e){}if(t!=='light'&&t!=='dark'){t=(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}document.documentElement.setAttribute('data-theme',t)})();</script>
   <title>Espace rav — The Torah Podcast</title>
   <meta name="robots" content="noindex, nofollow">
   <meta name="referrer" content="no-referrer">
@@ -13,33 +14,170 @@
        exactly as in scripts/stats_core.py (blob_id / blob_key). No analytics
        tag on purpose. Not in the sitemap. -->
   <style>
+    :root {
+      /* Page */
+      --color-bg: #f5f5f0;
+      --color-surface: #fff;
+      --color-surface-alt: #eee;
+      --color-text: #222;
+      --color-text-secondary: #333;
+      --color-text-tertiary: #555;
+      --color-text-muted: #666;
+      --color-text-subtle: #888;
+      --color-text-faint: #999;
+      --color-text-disabled: #aaa;
+      --color-border: #ddd;
+      --color-border-soft: #e0e0e0;
+      /* Accent */
+      --color-accent: #e87722;
+      --color-on-accent: #fff;
+      /* Inverse surfaces (dark header, footer, menus) */
+      --color-inverse-bg: #1a1a2e;
+      --color-inverse-surface: #252545;
+      --color-inverse-heading: #aab;
+      --color-on-inverse: #fff;
+      --color-on-inverse-soft: rgba(255,255,255,.78);
+      --color-on-inverse-muted: rgba(255,255,255,.65);
+      --color-on-inverse-dim: rgba(255,255,255,.6);
+      --color-inverse-border: rgba(255,255,255,.2);
+      --color-inverse-border-strong: rgba(255,255,255,.35);
+      --color-inverse-border-soft: rgba(255,255,255,.15);
+      --color-inverse-border-faint: rgba(255,255,255,.12);
+      --color-inverse-hover: rgba(255,255,255,.1);
+      --color-inverse-hover-soft: rgba(255,255,255,.12);
+      --color-inverse-tint: rgba(255,255,255,.05);
+      --color-inverse-scrim: rgba(255,255,255,.5);
+      /* Elevation */
+      --shadow-card: rgba(0,0,0,.08);
+      --shadow-card-soft: rgba(0,0,0,.06);
+      --shadow-overlay: rgba(0,0,0,.5);
+      /* Light-surface roles added for the dark theme */
+      --color-heading: #1a1a2e;
+      --color-text-body: #444;
+      --color-text-soft: #777;
+      --color-border-strong: #ccc;
+      --color-border-hover: #bbb;
+      --color-divider: #f0f0f0;
+      --color-surface-muted: #f0f0f0;
+      --color-surface-sunken: #fafafa;
+      --color-skeleton: #e8e8e8;
+      --color-surface-warm: #fbfaf7;
+      --color-surface-tag: #f0f0e8;
+      --color-text-hint: #bbb;
+      --color-surface-cream: #faf6f0;
+      --color-border-cream: #f0e6d8;
+      --color-surface-hover: #f0f0ea;
+      --color-surface-muted-hover: #e2e2e2;
+      --color-badge-bg: #eceaf6;
+      --color-badge-text: #6a5acd;
+      --color-mark-bg: #ffe9d2;
+      --color-mark-text: #b4530a;
+      --color-primary: #1a1a2e;
+      --color-primary-hover: #2d2d50;
+      /* Secondary-page roles (paracha, limud yomi, legal, embed...) */
+      --color-border-card: #e8e8e3;
+      --color-border-warm: #e4e4dc;
+      --color-border-sand: #e2ddd0;
+      --color-divider-soft: #f5f5f5;
+      --color-divider-warm: #f0f0eb;
+      --color-divider-alt: #eee;
+      --color-surface-warm-hover: #faf8f3;
+      --color-surface-cool-hover: #f7f7f9;
+      --color-surface-cool-hover-alt: #f4f4f8;
+      --color-surface-accent-soft: #fff8f3;
+      --color-primary-tint: rgba(26,26,46,.06);
+      --color-primary-tint-strong: rgba(26,26,46,.12);
+      --color-text-gold: #9a7a3a;
+      --color-text-sand: #4a3f2a;
+      --color-text-pale: #ccc;
+    }
+    /* Dark theme — set by the inline head script from TTPPrefs `theme`
+       (auto | light | dark; auto follows prefers-color-scheme). */
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --color-bg: #0d0d1a;
+      --color-surface: #1a1a2e;
+      --color-surface-alt: #252545;
+      --color-text: #f6f6fa;
+      --color-text-secondary: #e4e4ee;
+      --color-text-tertiary: #c8c8da;
+      --color-text-muted: #b4b4cc;
+      --color-text-subtle: #a6a6c2;
+      --color-text-faint: #9c9cb8;
+      --color-text-disabled: #8c8caa;
+      --color-border: #34345a;
+      --color-border-soft: #2c2c4e;
+      --color-inverse-bg: #14142a;
+      --shadow-card: rgba(0,0,0,.35);
+      --shadow-card-soft: rgba(0,0,0,.3);
+      --color-heading: #f6f6fa;
+      --color-text-body: #d2d2e2;
+      --color-text-soft: #aeaec8;
+      --color-border-strong: #4a4a74;
+      --color-border-hover: #5a5a86;
+      --color-divider: #26264a;
+      --color-surface-muted: #252545;
+      --color-surface-sunken: #151529;
+      --color-skeleton: #2a2a4a;
+      --color-surface-warm: #1f1f36;
+      --color-surface-tag: #2a2a48;
+      --color-text-hint: #9494b2;
+      --color-surface-cream: #22223a;
+      --color-border-cream: #3a3452;
+      --color-surface-hover: #252545;
+      --color-surface-muted-hover: #303056;
+      --color-badge-bg: #2e2a52;
+      --color-badge-text: #c0b6f4;
+      --color-mark-bg: rgba(232,119,34,.22);
+      --color-mark-text: #ffc79a;
+      --color-primary: #3d3d6e;
+      --color-primary-hover: #4c4c82;
+      --color-border-card: #34345a;
+      --color-border-warm: #34345a;
+      --color-border-sand: #3a3452;
+      --color-divider-soft: #26264a;
+      --color-divider-warm: #26264a;
+      --color-divider-alt: #2c2c4e;
+      --color-surface-warm-hover: #252545;
+      --color-surface-cool-hover: #252545;
+      --color-surface-cool-hover-alt: #252545;
+      --color-surface-accent-soft: #2e2236;
+      --color-primary-tint: rgba(255,255,255,.06);
+      --color-primary-tint-strong: rgba(255,255,255,.12);
+      --color-text-gold: #dcbc7c;
+      --color-text-sand: #e6dcc6;
+      --color-text-pale: #8c8caa;
+    }
+    /* Page-specific role (stat tiles) */
+    :root { --color-border-tile: #e6e6e0; }
+    [data-theme="dark"] { --color-border-tile: #34345a; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f0; color: #222; line-height: 1.5; padding-bottom: 60px; }
-    header { background: #1a1a2e; color: #fff; padding: 26px 20px 22px; text-align: center; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--color-bg); color: var(--color-text); line-height: 1.5; padding-bottom: 60px; }
+    header { background: var(--color-inverse-bg); color: var(--color-on-inverse); padding: 26px 20px 22px; text-align: center; }
     header h1 { font-size: 1.7rem; margin-bottom: 4px; }
-    header p { color: #aab; font-size: .95rem; }
-    header a { color: #aab; }
+    header p { color: var(--color-inverse-heading); font-size: .95rem; }
+    header a { color: var(--color-inverse-heading); }
     main { max-width: 980px; margin: 0 auto; padding: 20px 16px; }
-    .card { background: #fff; border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .card { background: var(--color-surface); border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 1px 3px var(--shadow-card-soft); }
     .card h2 { font-size: 1.1rem; margin-bottom: 10px; }
-    .muted { color: #666; font-size: .88rem; }
+    .muted { color: var(--color-text-muted); font-size: .88rem; }
     .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-    .tile { border: 1px solid #e6e6e0; border-radius: 10px; padding: 14px; }
-    .tile .v { font-size: 1.9rem; font-weight: 700; color: #1a1a2e; }
+    .tile { border: 1px solid var(--color-border-tile); border-radius: 10px; padding: 14px; }
+    .tile .v { font-size: 1.9rem; font-weight: 700; color: var(--color-heading); }
     .tile .l { font-size: .9rem; font-weight: 600; }
-    .tile .s { font-size: .8rem; color: #666; }
-    .off .v { color: #aaa; font-size: 1.1rem; font-weight: 600; }
+    .tile .s { font-size: .8rem; color: var(--color-text-muted); }
+    .off .v { color: var(--color-text-disabled); font-size: 1.1rem; font-weight: 600; }
     table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-    th, td { text-align: start; padding: 7px 6px; border-bottom: 1px solid #eee; vertical-align: top; }
-    th { font-size: .8rem; color: #555; }
+    th, td { text-align: start; padding: 7px 6px; border-bottom: 1px solid var(--color-surface-alt); vertical-align: top; }
+    th { font-size: .8rem; color: var(--color-text-tertiary); }
     td.n, th.n { text-align: end; white-space: nowrap; font-variant-numeric: tabular-nums; }
     .chart { width: 100%; height: auto; display: block; }
     .legend { display: flex; gap: 16px; font-size: .85rem; margin-top: 6px; flex-wrap: wrap; }
     .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-inline-end: 6px; vertical-align: -1px; }
     .msg { text-align: center; padding: 40px 20px; }
     .lang { margin-top: 8px; }
-    .lang button { background: none; border: 1px solid rgba(255,255,255,.3); color: #fff; border-radius: 14px; padding: 2px 10px; cursor: pointer; font-size: .8rem; }
-    .lang button[aria-pressed="true"] { background: #fff; color: #1a1a2e; }
+    .lang button { background: none; border: 1px solid rgba(255,255,255,.3); color: var(--color-on-inverse); border-radius: 14px; padding: 2px 10px; cursor: pointer; font-size: .8rem; }
+    .lang button[aria-pressed="true"] { background: var(--color-on-inverse); color: var(--color-inverse-bg); }
   </style>
 </head>
 <body>
@@ -159,11 +297,11 @@
       var hs = (H - 30) * w.site / max, hd = (H - 30) * w.direct / max;
       bars += '<rect x="' + x.toFixed(1) + '" y="' + (H - 20 - hs).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hs.toFixed(1) + '" fill="#3a6ea5"><title>' + esc(t('week') + ' ' + fdate(w.start) + ' — ' + t('site') + ' : ' + fmt(w.site)) + '</title></rect>';
       bars += '<rect x="' + (x + bw).toFixed(1) + '" y="' + (H - 20 - hd).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hd.toFixed(1) + '" fill="#c98b2b"><title>' + esc(t('week') + ' ' + fdate(w.start) + ' — ' + t('direct') + ' : ' + fmt(w.direct)) + '</title></rect>';
-      if (i % 4 === 0) bars += '<text x="' + x.toFixed(1) + '" y="' + (H - 5) + '" font-size="11" fill="#666">' + esc(fdate(w.start)) + '</text>';
+      if (i % 4 === 0) bars += '<text x="' + x.toFixed(1) + '" y="' + (H - 5) + '" font-size="11" fill="var(--color-text-muted)">' + esc(fdate(w.start)) + '</text>';
     });
     return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(t('weekly')) + '" direction="ltr">' +
-      '<line x1="' + pad + '" y1="' + (H - 20) + '" x2="' + W + '" y2="' + (H - 20) + '" stroke="#ccc"/>' +
-      '<text x="0" y="12" font-size="11" fill="#666">' + fmt(max) + '</text>' + bars + '</svg>' +
+      '<line x1="' + pad + '" y1="' + (H - 20) + '" x2="' + W + '" y2="' + (H - 20) + '" stroke="var(--color-border-strong)"/>' +
+      '<text x="0" y="12" font-size="11" fill="var(--color-text-muted)">' + fmt(max) + '</text>' + bars + '</svg>' +
       '<div class="legend"><span><i style="background:#3a6ea5"></i>' + esc(t('site')) + '</span><span><i style="background:#c98b2b"></i>' + esc(t('direct')) + '</span></div>';
   }
 

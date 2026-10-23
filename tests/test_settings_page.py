@@ -82,7 +82,34 @@ def test_utils_js_still_wires_the_settings_link():
 # read the very key TTPPrefs owns.
 _THEME_PAGES = ["index.html", "derniers-cours.html", "rabbins.html",
                 "mes-favoris.html", "reglages.html"]
+# Secondary pages migrated afterwards (same mechanism). The list is explicit so
+# that a page dropping out fails by name; test_every_root_page_is_theme_ready
+# below also catches a NEW page that forgets the mechanism.
+_SECONDARY_THEME_PAGES = [
+    "paracha.html", "themes.html", "hayom-yom.html", "daf-hayomi.html", "hitat.html",
+    "hiloula.html", "bein-hametsarim.html", "paracha-de-la-semaine.html", "embed.html",
+    "cgv.html", "contact.html", "politique-confidentialite.html", "espace-rav.html",
+    "tableau-de-bord.html", "episode.html",
+]
 _HEAD_SCRIPT_RE = re.compile(r"<script>\(function\(\)\{var t;try\{t=localStorage\.getItem\('ttp_theme'\).*?</script>")
+# The canonical palette: light roles then dark overrides, identical everywhere.
+_ROOT_BLOCK_RE = re.compile(r"    :root \{\n      /\* Page \*/.*?\n    \}", re.S)
+_DARK_BLOCK_RE = re.compile(r"    \[data-theme=\"dark\"\] \{\n      color-scheme: dark;.*?\n    \}", re.S)
+_GENERATORS = ["generate_channel_pages.py", "weekly_paracha_pages.py"]
+
+
+def _all_theme_pages():
+    weekly = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "paracha").glob("*.html"))
+    return _THEME_PAGES + _SECONDARY_THEME_PAGES + weekly
+
+
+def _assert_theme_ready(name, html):
+    assert '[data-theme="dark"]' in html, f"{name}: dark palette missing"
+    m = _HEAD_SCRIPT_RE.search(html)
+    assert m, f"{name}: inline theme script missing"
+    assert m.start() < html.index("<style"), f"{name}: theme script must run before the CSS"
+    assert m.start() < html.index("</head>")
+    return m.group(0)
 
 
 def test_theme_key_is_owned_by_ttpprefs():
@@ -108,3 +135,44 @@ def test_theme_ready_pages_set_the_theme_before_first_paint():
     scripts.add(m.group(0))
     assert gen.count("{THEME_HEAD}") == 2, "both generator templates must inject THEME_HEAD"
     assert len(scripts) == 1, "the inline theme script differs between pages"
+
+
+def test_secondary_pages_set_the_theme_before_first_paint():
+    scripts = set()
+    pages = _all_theme_pages()
+    assert any(p.startswith("paracha/") for p in pages), "no weekly paracha archive page found"
+    for name in pages:
+        scripts.add(_assert_theme_ready(name, _read(ROOT / name)))
+    weekly = _read(ROOT / "scripts" / "weekly_paracha_pages.py")
+    m = _HEAD_SCRIPT_RE.search(weekly)
+    assert m, "weekly_paracha_pages.py: THEME_HEAD missing"
+    scripts.add(m.group(0))
+    assert weekly.count("{THEME_HEAD}") == 1, "the weekly paracha template must inject THEME_HEAD"
+    scripts.add(_HEAD_SCRIPT_RE.search(_read(ROOT / "index.html")).group(0))
+    assert len(scripts) == 1, "the inline theme script differs between pages"
+
+
+def test_palette_blocks_are_identical_everywhere():
+    # One palette: a role added or a dark value tuned on one page only would
+    # leave the others silently out of step.
+    ref = _read(ROOT / "index.html")
+    ref_root, ref_dark = _ROOT_BLOCK_RE.search(ref).group(0), _DARK_BLOCK_RE.search(ref).group(0)
+    sources = [(n, _read(ROOT / n)) for n in _all_theme_pages()]
+    sources += [(g, _read(ROOT / "scripts" / g)) for g in _GENERATORS]
+    for name, text in sources:
+        root, dark = _ROOT_BLOCK_RE.search(text), _DARK_BLOCK_RE.search(text)
+        assert root and root.group(0) == ref_root, f"{name}: :root palette differs from index.html"
+        assert dark and dark.group(0) == ref_dark, f"{name}: dark palette differs from index.html"
+
+
+def test_every_root_page_is_theme_ready():
+    # A new static page with its own CSS must join the theme (or be listed
+    # here with the reason it cannot).
+    exempt = set()
+    known = set(_THEME_PAGES + _SECONDARY_THEME_PAGES)
+    for page in sorted(ROOT.glob("*.html")):
+        html = _read(page)
+        if "<style" not in html or page.name in exempt:
+            continue
+        assert page.name in known, f"{page.name}: page with CSS not covered by the dark theme tests"
+        _assert_theme_ready(page.name, html)
