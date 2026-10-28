@@ -52,6 +52,8 @@ import urllib.error
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from date_titles import is_date_title
+
 # Print UTF-8 regardless of the host console encoding (Windows cp1252 would
 # otherwise crash on Hebrew/accented titles). No-op on already-UTF-8 consoles.
 for _stream in (sys.stdout, sys.stderr):
@@ -66,8 +68,6 @@ FEEDS_DIR = REPO_ROOT / "feeds"
 
 UA = {"User-Agent": "ttp-title-verify/1.0 (+https://thetorahpodcast.net)"}
 ITUNES_LOOKUP = "https://itunes.apple.com/lookup"
-# Titles that are auto-generated placeholders on the site side; never flag them.
-_DATE_TITLE_RE = re.compile(r"^\d{1,2}[/\-.]\d{1,2}[/\-.]\d{2,4}$|^\d{1,2}\s+\w+\s+\d{4}$")
 
 
 def norm_title(s: str) -> str:
@@ -180,8 +180,8 @@ def check_channel_apple(ch: dict) -> tuple[list[dict], str | None]:
         site_title = site.get(ep["guid"])
         if site_title is None:
             continue  # not on the site yet, or not joinable — skip
-        if _DATE_TITLE_RE.match(site_title.strip()):
-            continue
+        if is_date_title(site_title):
+            continue  # date-only placeholder title (scripts/date_titles.py): never flagged
         if norm_title(site_title) != norm_title(ep["title"]):
             mismatches.append({
                 "slug": slug,

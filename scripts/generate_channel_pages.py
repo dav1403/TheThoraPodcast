@@ -13,6 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 from build_mobile_index import build_mobile_index
+from date_titles import is_date_title
 from lang_detect import episode_lang
 from weekly_paracha_pages import sitemap_entries as weekly_paracha_sitemap
 
@@ -201,6 +202,36 @@ def ep_filename(ep: dict, ch_slug: str = "") -> str:
 
 def ep_path(ch_slug: str, ep: dict) -> str:
     return f"{ch_slug}/{ep_filename(ep, ch_slug)}"
+
+
+def write_episode_alias_stubs(ch_dir: Path, ch_slug: str, entries: list[dict]) -> int:
+    """Redirect stubs at the OLD file names of renamed episodes.
+
+    An episode page is named after its title (ep_filename), so when
+    scripts/title_resync.py picks up a title renamed on YouTube ("24 août 2026"
+    -> the real subject), the page moves. The previous file name is kept in the
+    entry's `page_aliases`; each alias gets a noindex stub whose canonical and
+    redirect point at the current page, so old links, bookmarks and indexed URLs
+    keep working (the target self-canonicalises under the original-case
+    directory, like ep_path). An alias never replaces a page of the channel
+    that is generated under the same name - identical date titles already
+    collide on one name (e.g. four "24-04-017" the same day).
+    Returns the number of stubs written."""
+    live = [ep for ep in entries if ep.get("title") and ep.get("published")]
+    real_names = {ep_filename(ep, ch_slug) for ep in live}
+    written = 0
+    for ep in live:
+        current = ep_filename(ep, ch_slug)
+        target = f"{ch_slug}/{current[:-len('.html')]}"
+        for alias in ep.get("page_aliases") or []:
+            if (not isinstance(alias, str) or not alias.endswith(".html")
+                    or "/" in alias or "\\" in alias or alias.startswith(".")
+                    or alias in real_names):
+                continue
+            (ch_dir / alias).write_text(REDIRECT_STUB.format(base=BASE_URL, target=target),
+                                        encoding="utf-8")
+            written += 1
+    return written
 
 
 def js_str(s) -> str:
@@ -1061,11 +1092,10 @@ def render_page(ch: dict, entries: list, all_channels: list,
 
     # Static episode list
     sorted_entries = sorted(entries, key=lambda x: x["published"], reverse=True)
-    _date_title_re = re.compile(r"^\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4}$|^\d{1,2}\s+\w+\s+\d{4}$")
     ep_parts = []
     for ep in sorted_entries:
-        if _date_title_re.match((ep.get("title") or "").strip()):
-            continue  # LOG-04: skip episodes whose title is just a date
+        if is_date_title(ep.get("title")):
+            continue  # LOG-04: skip episodes whose title is just a date (scripts/date_titles.py)
         thumb     = ep.get("thumbnail", "")
         _raw = (ep.get("description") or "").strip()
         _raw = re.sub(r"^[Dd]escription\s*:\s*", "", _raw)
@@ -2648,6 +2678,7 @@ def main():
 
     # Channel episode pages
     ep_count = 0
+    alias_count = 0
     for slug, entries in generated:
         ch = next(c for c in enabled if c["slug"] == slug)
         ch_dir = Path(slug)
@@ -2658,7 +2689,10 @@ def main():
             ep_page = render_episode_page(ep, ch, entries, enabled)
             (ch_dir / ep_filename(ep, slug)).write_text(ep_page, encoding="utf-8")
             ep_count += 1
-    print(f"  rabbi subdirs/  ({ep_count} channel episode pages generated)")
+        # Old URLs of renamed episodes (title_resync.py) -> redirect stubs.
+        alias_count += write_episode_alias_stubs(ch_dir, slug, entries)
+    print(f"  rabbi subdirs/  ({ep_count} channel episode pages generated, "
+          f"{alias_count} redirect stubs for renamed episodes)")
 
     # Speaker pages
     # Collected for the sitemap exactly like `generated` above: the guest show

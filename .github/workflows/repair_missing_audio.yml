@@ -243,6 +243,21 @@ jobs:
           echo "Backfill budget: $BUDGET"
           python scripts/backfill_podcasts.py --budget "$BUDGET"
 
+      # A title is read once, at ingestion: a class published as "24 août 2026"
+      # and renamed on YouTube later kept its date title everywhere. This pass
+      # re-reads the date-only titles (~160 videos, ~4 quota units), applies the
+      # renames to entries.json + the channel RSS (guid = video id: platforms
+      # update in place), and records the old page name for a redirect stub.
+      # After process/backfill (they rewrite entries/RSS), before the generator
+      # (it derives the speaker feeds and pages from the renamed entries).
+      # Never blocks the run.
+      - name: Resync date-only titles renamed on YouTube
+        env:
+          YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
+          GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO:          ${{ github.repository }}
+        run: python scripts/title_resync.py || echo "WARNING: title resync failed, continuing"
+
       - name: Tag untagged episodes with AI themes
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
