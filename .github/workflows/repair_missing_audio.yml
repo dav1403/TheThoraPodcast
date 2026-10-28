@@ -256,7 +256,8 @@ jobs:
           YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
           GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPO:          ${{ github.repository }}
-        run: python scripts/title_resync.py || echo "WARNING: title resync failed, continuing"
+        run: |
+          python scripts/title_resync.py || echo "WARNING - title resync failed, continuing"
 
       - name: Tag untagged episodes with AI themes
         env:
