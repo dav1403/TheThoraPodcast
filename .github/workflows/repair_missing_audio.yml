@@ -243,19 +243,33 @@ jobs:
           echo "Backfill budget: $BUDGET"
           python scripts/backfill_podcasts.py --budget "$BUDGET"
 
-      # A title is read once, at ingestion: a class published as "24 août 2026"
-      # and renamed on YouTube later kept its date title everywhere. This pass
-      # re-reads the date-only titles (~160 videos, ~4 quota units), applies the
-      # renames to entries.json + the channel RSS (guid = video id: platforms
-      # update in place), and records the old page name for a redirect stub.
-      # After process/backfill (they rewrite entries/RSS), before the generator
-      # (it derives the speaker feeds and pages from the renamed entries).
-      # Never blocks the run.
-      - name: Resync date-only titles renamed on YouTube
+      # A title is read once, at ingestion: a class renamed on YouTube later
+      # (typically "24 août 2026" -> the real subject) kept its old title
+      # everywhere. This pass re-reads titles on YouTube, applies the renames to
+      # entries.json + the channel RSS (guid = video id: platforms update in
+      # place), and records the old page name for a redirect stub.
+      # TITLE_RESYNC_MODE: "dates" = date-only titles (~160 videos, ~4 quota
+      # units); "all" = every episode published in the last
+      # TITLE_RESYNC_RECENT_DAYS days + date titles, every run (~23 units), plus
+      # a rotating slice of TITLE_RESYNC_SLICE older episodes (~5 units; cursor
+      # in feeds/title_resync_state.json): ~28 units/run, full tour in 2-3 weeks.
+      # More than TITLE_RESYNC_MAX_RENAMES renames in one run -> nothing applied,
+      # ::warning:: + job summary (anti-mass guard). See scripts/title_resync.py.
+      # After process/backfill (they rewrite entries/RSS), before the tagger
+      # (a renamed episode is re-tagged) and the generator (it derives the
+      # speaker feeds and pages from the renamed entries). Never blocks the run.
+      - name: Resync titles renamed on YouTube
         env:
           YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
           GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPO:          ${{ github.repository }}
+          # 'dates' on purpose: the 29/10/2026 dry run of the general mode over the
+          # whole catalog found far more than 300 renames (one channel retitled
+          # ~90% of its videos on YouTube) - switch to 'all' only after review.
+          TITLE_RESYNC_MODE:        'dates'
+          TITLE_RESYNC_RECENT_DAYS: '60'
+          TITLE_RESYNC_SLICE:       '250'
+          TITLE_RESYNC_MAX_RENAMES: '50'
         run: |
           python scripts/title_resync.py || echo "WARNING - title resync failed, continuing"
 
