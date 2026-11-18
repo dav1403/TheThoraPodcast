@@ -101,6 +101,10 @@ def _summary(text: str) -> None:
             fh.write(text + "\n")
 
 
+VERIFY_RETRIES = 3       # verify2: extra probes of a failing URL (CDN propagation)
+VERIFY_RETRY_DELAY = 30  # seconds between those probes
+
+
 def fetch(url: str, timeout: int = 30) -> tuple[int, dict, bytes]:
     req = urllib.request.Request(url, headers=UA)
     try:
@@ -676,25 +680,43 @@ def cmd_verify2(args) -> int:
             return 1
         time.sleep(5)
     fails: list[str] = []
+    retried: list[str] = []
     checked = 0
 
-    def check(path: str, ctype: str = "", md5: str = "", parse_json: bool = False) -> bytes:
-        nonlocal checked
+    def probe_once(path: str, ctype: str, md5: str, parse_json: bool) -> tuple[list[str], bytes]:
         code, headers, body = fetch(bust(base, path))
-        checked += 1
         h = {k.lower(): v for k, v in headers.items()}
+        errs: list[str] = []
         if code != 200:
-            fails.append(f"{path}: HTTP {code}")
-            return b""
+            return [f"{path}: HTTP {code}"], b""
         if ctype and not h.get("content-type", "").startswith(ctype):
-            fails.append(f"{path}: content-type {h.get('content-type')!r}, expected {ctype}")
+            errs.append(f"{path}: content-type {h.get('content-type')!r}, expected {ctype}")
         if parse_json:
             try:
                 json.loads(body.decode("utf-8-sig"))
             except ValueError as e:
-                fails.append(f"{path}: invalid JSON ({e})")
+                errs.append(f"{path}: invalid JSON ({e})")
         if md5 and hashlib.md5(body).hexdigest() != md5:
-            fails.append(f"{path}: MD5 differs from the build")
+            errs.append(f"{path}: MD5 differs from the build")
+        return errs, body
+
+    def check(path: str, ctype: str = "", md5: str = "", parse_json: bool = False) -> bytes:
+        # Pages/CDN propagation: right after the marker is served, a single file
+        # can still be stale (MD5 differs) or answer a transient 503. Re-probe up
+        # to VERIFY_RETRIES times, VERIFY_RETRY_DELAY s apart, before failing.
+        nonlocal checked
+        checked += 1
+        errs, body = probe_once(path, ctype, md5, parse_json)
+        attempt = 1
+        while errs and attempt <= VERIFY_RETRIES:
+            print(f"::notice::{path}: {'; '.join(errs)} - re-probe {attempt}/{VERIFY_RETRIES} "
+                  f"in {VERIFY_RETRY_DELAY}s (CDN propagation)")
+            time.sleep(VERIFY_RETRY_DELAY)
+            errs, body = probe_once(path, ctype, md5, parse_json)
+            attempt += 1
+        if attempt > 1:
+            retried.append(f"{path}: {'OK' if not errs else 'still KO'} after {attempt} attempt(s)")
+        fails.extend(errs)
         return body
 
     feeds_md5 = m.get("feeds_md5") or {}
@@ -729,7 +751,9 @@ def cmd_verify2(args) -> int:
                         f"- marker of run {args.run_id} served {time.time() - t0:.0f}s after polling started",
                         f"- generation {m.get('state_generation')}, source {m.get('main_sha', '')[:10]}",
                         f"- {len(feeds_md5)} feeds/*.xml: HTTP 200 + application/xml + MD5 == build",
-                        f"- {checked} URL(s) probed, {len(fails)} failure(s)"] + [f"- FAIL: {f}" for f in fails]))
+                        f"- {checked} URL(s) probed, {len(fails)} failure(s)"]
+                       + [f"- re-probed: {r}" for r in retried]
+                       + [f"- FAIL: {f}" for f in fails]))
     return 1 if fails else 0
 
 
