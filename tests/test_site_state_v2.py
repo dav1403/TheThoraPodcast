@@ -27,11 +27,18 @@ class _Err(Exception):
 class FakeS3:
     def __init__(self):
         self.objs: dict[str, bytes] = {}
+        self.gets: list[str] = []  # every GetObject key (R2 Class B reads)
 
     def _etag(self, key):
         return '"' + hashlib.md5(self.objs[key]).hexdigest() + '"'
 
+    def state_gets(self):
+        """Rel paths of the per-file state GETs (manifest/lock excluded)."""
+        return sorted(k[len(site_state.STATE_PREFIX):] for k in self.gets
+                      if k.startswith(site_state.STATE_PREFIX) and k not in site_state.RESERVED_KEYS)
+
     def get_object(self, Bucket, Key):
+        self.gets.append(Key)
         if Key not in self.objs:
             raise _Err("NoSuchKey", 404)
         return {"Body": io.BytesIO(self.objs[Key]), "ETag": self._etag(Key)}
@@ -235,3 +242,135 @@ def test_loss_problems_pure():
                                     partial=True) == []
     assert site_state.select_only(["feeds/a.entries.json", "feeds/transcripts/x.txt", "p.json"],
                                   ["feeds/*.entries.json"]) == ["feeds/a.entries.json"]
+
+
+# --------------------------------------------------------------------------
+# Incremental pull + snapshot seed (R2 Class B reads: 20.5 M/month, 11/2026)
+# --------------------------------------------------------------------------
+
+def _write_cycle(tmp_path, s3, capsys, mutate, name="w2"):
+    """lease -> pull -> mutate(work) -> push -> release: a new generation."""
+    assert run("lock", "acquire", "--print-token", "--wait-minutes", 0) == 0
+    tok = token_of(capsys)
+    work = tmp_path / name
+    rec = tmp_path / f"{name}.json"
+    assert run("pull", "--dest", work, "--record", rec, "--no-seed") == 0
+    mutate(work)
+    assert run("push", "--root", work, "--base-record", rec, "--token", tok) == 0
+    assert run("lock", "release", "--token", tok) == 0
+
+
+def _assert_mirror(s3, dest: Path):
+    m = json.loads(s3.objs[site_state.MANIFEST_KEY])
+    assert site_state.iter_state_files(dest) == sorted(m["files"])
+    for rel, meta in m["files"].items():
+        assert hashlib.md5((dest / rel).read_bytes()).hexdigest() == meta["md5"], rel
+
+
+def test_incremental_pull_only_fetches_what_differs(tmp_path, s3, capsys):
+    init(tmp_path, s3)
+    work = tmp_path / "w"
+    assert run("pull", "--dest", work) == 0
+    assert len(s3.state_gets()) == 29  # first restore: everything
+    # another writer changes one file in R2
+    _write_cycle(tmp_path, s3, capsys,
+                 lambda w: (w / "feeds" / "c2.entries.json").write_text(json.dumps([{"i": k} for k in range(4)])))
+    # locally: one file corrupted, one missing, one extra state file, one extra
+    # non-state file (must survive)
+    (work / "feeds" / "c0.xml").write_text("<rss>corrupt</rss>")
+    (work / "feeds" / "c1.xml").unlink()
+    (work / "feeds" / "zz.entries.json").write_text("[]")
+    (work / "feeds" / "transcripts" / "gone.txt").write_text("old")
+    (work / "README.md").write_text("source")
+    s3.gets.clear()
+    capsys.readouterr()
+    assert run("pull", "--dest", work, "--record", tmp_path / "rec.json") == 0
+    out = capsys.readouterr().out
+    # identical files are NOT re-downloaded; modified/missing/changed are
+    assert s3.state_gets() == ["feeds/c0.xml", "feeds/c1.xml", "feeds/c2.entries.json"]
+    assert "downloaded 3 " in out and "already present 26" in out and "removed 2 " in out
+    assert not (work / "feeds" / "zz.entries.json").exists()
+    assert not (work / "feeds" / "transcripts" / "gone.txt").exists()
+    assert (work / "README.md").read_text() == "source"
+    _assert_mirror(s3, work)
+    rec = json.loads((tmp_path / "rec.json").read_text())
+    assert "feeds/zz.entries.json" not in rec["counts"]["entries"]
+    # a second pull of an up-to-date tree reads no state object at all
+    s3.gets.clear()
+    assert run("pull", "--dest", work) == 0
+    assert s3.state_gets() == []
+
+
+def test_partial_pull_prunes_only_inside_its_globs(tmp_path, s3):
+    init(tmp_path, s3)
+    work = tmp_path / "w"
+    (work / "feeds").mkdir(parents=True)
+    (work / "artwork").mkdir()
+    (work / "feeds" / "zz.entries.json").write_text("[]")
+    (work / "artwork" / "old.png").write_bytes(b"x")
+    assert run("pull", "--dest", work, "--only", "feeds/*.entries.json") == 0
+    assert not (work / "feeds" / "zz.entries.json").exists()
+    assert (work / "artwork" / "old.png").exists()  # outside the globs: untouched
+    assert not any(k.startswith(site_state.SNAPSHOT_PREFIX) for k in s3.gets)  # never seeds
+
+
+def test_empty_runner_is_seeded_from_the_snapshots(tmp_path, s3, capsys):
+    src = tmp_path / "src"
+    make_state(src, transcripts=5)
+    assert run("push", "--root", src, "--init", "--no-lock", "--snapshot", "--with-transcripts", "yes") == 0
+
+    def mutate(w):
+        (w / "feeds" / "c3.xml").write_text("<rss>changed after the snapshot</rss>")
+        (w / "feeds" / "transcripts" / "v1.txt").unlink()        # deleted after the snapshot
+        (w / "feeds" / "transcripts" / "new.txt").write_text("new transcript")
+    _write_cycle(tmp_path, s3, capsys, mutate)
+    assert site_state.STATE_PREFIX + "feeds/transcripts/v1.txt" not in s3.objs
+
+    s3.gets.clear()
+    capsys.readouterr()
+    fresh = tmp_path / "runner"
+    assert run("pull", "--dest", fresh, "--record", tmp_path / "rec.json") == 0
+    out = capsys.readouterr().out
+    # 2 tarballs + only what changed since the snapshot
+    tars = [k for k in s3.gets if k.startswith(site_state.SNAPSHOT_PREFIX)]
+    assert sorted(t.rsplit("/", 1)[1] for t in tars) == ["state.tar.gz", "transcripts.tar.gz"]
+    assert s3.state_gets() == ["feeds/c3.xml", "feeds/transcripts/new.txt"]
+    assert "removed 0 " in out and "seed: " in out
+    # the file deleted since the snapshot is NOT resurrected by the seed
+    assert not (fresh / "feeds" / "transcripts" / "v1.txt").exists()
+    _assert_mirror(s3, fresh)
+
+
+def test_broken_snapshot_falls_back_to_a_plain_pull(tmp_path, s3, capsys):
+    src = tmp_path / "src"
+    make_state(src)
+    assert run("push", "--root", src, "--init", "--no-lock", "--snapshot", "--with-transcripts", "yes") == 0
+    for k in list(s3.objs):
+        if k.endswith("state.tar.gz"):
+            s3.objs[k] = b"not a tarball"
+        elif k.endswith("transcripts.tar.gz"):
+            del s3.objs[k]
+    s3.gets.clear()
+    fresh = tmp_path / "runner"
+    assert run("pull", "--dest", fresh) == 0
+    assert "::warning::state seed" in capsys.readouterr().out
+    assert len(s3.state_gets()) == 29
+    _assert_mirror(s3, fresh)
+    # --no-seed never touches the snapshots
+    s3.gets.clear()
+    assert run("pull", "--dest", tmp_path / "other", "--no-seed") == 0
+    assert not any(k.startswith(site_state.SNAPSHOT_PREFIX) for k in s3.gets)
+
+
+def test_seed_never_overwrites_a_file_already_on_disk(tmp_path, s3):
+    src = tmp_path / "src"
+    make_state(src)
+    assert run("push", "--root", src, "--init", "--no-lock", "--snapshot", "--with-transcripts", "yes") == 0
+    dest = tmp_path / "d"
+    (dest / "feeds").mkdir(parents=True)
+    (dest / "feeds" / "c0.xml").write_text("<rss>local</rss>")
+    wanted = set(json.loads(s3.objs[site_state.MANIFEST_KEY])["files"])
+    msg = site_state.seed_from_snapshots(s3, "bucket", dest, wanted)
+    assert "state.tar.gz" in msg
+    assert (dest / "feeds" / "c0.xml").read_text() == "<rss>local</rss>"
+    assert (dest / "feeds" / "c1.xml").read_text() == "<rss>1</rss>"

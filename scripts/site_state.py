@@ -36,7 +36,10 @@ verified against the manifest, without the lock.
 CLI (see --help):
   lock acquire|release|status   writer lease
   push      upload the working tree's state (full, or --only globs = partial)
-  pull      restore the state (or --only globs) into a directory, MD5-verified
+  pull      restore the state (or --only globs) into a directory, MD5-verified;
+            incremental (files already on disk with the right MD5 are kept,
+            state files absent from the manifest are removed), an empty
+            destination is first seeded from the newest snapshot tarballs
   manifest  print the manifest header (generation, counts) / GITHUB_OUTPUT
   adopt     turn the v1 manifest (git era) into v2 generation 1, no upload
   seed      server-side copy of another prefix into this one (staging)
@@ -859,6 +862,101 @@ def _get_file(s3, bucket: str, dest: Path, rel: str) -> str:
     return hashlib.md5(data).hexdigest()
 
 
+def local_md5s(dest: Path, files: dict[str, dict], rels: list[str], workers: int = 16) -> dict[str, str]:
+    """rel -> md5 of the files ALREADY present under `dest` (incremental pull).
+
+    A file whose size differs from the manifest is not hashed: it is stale
+    anyway. Unreadable files are simply absent from the result (re-fetched)."""
+    cands = []
+    for r in rels:
+        p = dest / r
+        try:
+            if p.is_file() and p.stat().st_size == int((files.get(r) or {}).get("size", -1)):
+                cands.append(r)
+        except OSError:
+            continue
+    out: dict[str, str] = {}
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futs = {ex.submit(md5_file, dest / r): r for r in cands}
+        for fut in as_completed(futs):
+            try:
+                out[futs[fut]] = fut.result()[0]
+            except OSError:
+                pass
+    return out
+
+
+def stale_local_files(dest: Path, files: dict[str, dict], only: list[str]) -> list[str]:
+    """State files under `dest` (within the --only globs) that the manifest
+    does not list. They must go: a full push mirrors the working tree
+    (plan_sync), so a leftover would be RE-UPLOADED and resurrected."""
+    return [r for r in select_only(iter_state_files(dest), only) if r not in files]
+
+
+def _seed_tarball(s3, bucket: str, key: str, dest: Path, wanted: set[str],
+                  written: dict[str, str]) -> tuple[int, int]:
+    """Stream one snapshot tarball into `dest`: only regular members that the
+    current manifest wants and that are not already on disk. Records the MD5
+    of what it wrote in `written` (no second read of the file). (files, bytes)."""
+    body = s3.get_object(Bucket=bucket, Key=key)["Body"]
+    n = size = 0
+    made: set[Path] = set()
+    with tarfile.open(fileobj=body, mode="r|gz") as tar:
+        for mem in tar:
+            if not mem.isfile():
+                continue
+            rel = mem.name[2:] if mem.name.startswith("./") else mem.name
+            if rel not in wanted:  # also rejects absolute / '..' names
+                continue
+            out = dest / rel
+            if out.exists():
+                continue
+            fh = tar.extractfile(mem)
+            if fh is None:
+                continue
+            data = fh.read()
+            if out.parent not in made:
+                out.parent.mkdir(parents=True, exist_ok=True)
+                made.add(out.parent)
+            out.write_bytes(data)
+            written[rel] = hashlib.md5(data).hexdigest()
+            n += 1
+            size += len(data)
+    return n, size
+
+
+def seed_from_snapshots(s3, bucket: str, dest: Path, wanted: set[str],
+                        written: dict[str, str] | None = None) -> str:
+    """Best-effort bootstrap of an empty runner from the newest snapshots
+    (state.tar.gz daily + transcripts.tar.gz weekly): 2 GETs instead of one
+    per file. NOTHING here is trusted: the pull then MD5-checks every file
+    against the live manifest and fetches what differs. Any failure is a
+    warning and the pull simply downloads more."""
+    written = {} if written is None else written
+    try:
+        days = list_snapshot_days(s3, bucket)
+    except Exception as exc:
+        print(f"::warning::state seed: cannot list snapshots ({exc}); plain pull")
+        return "failed (list)"
+    if not days:
+        return "no snapshot"
+    keys = [f"{SNAPSHOT_PREFIX}{max(days)}/state.tar.gz"]
+    tr_days = sorted(d for d, tr in days.items() if tr)
+    if tr_days and any(r.startswith(TRANSCRIPTS_PREFIX) for r in wanted):
+        keys.append(f"{SNAPSHOT_PREFIX}{tr_days[-1]}/transcripts.tar.gz")
+    parts = []
+    for key in keys:
+        t0 = time.time()
+        try:
+            n, size = _seed_tarball(s3, bucket, key, dest, wanted, written)
+        except Exception as exc:
+            print(f"::warning::state seed: {key} unusable ({exc}); the pull fetches what is missing")
+            parts.append(f"{key[len(SNAPSHOT_PREFIX):]} failed")
+            continue
+        parts.append(f"{key[len(SNAPSHOT_PREFIX):]} {n} files {size / 1e6:.0f} MB {time.time() - t0:.0f}s")
+    return ", ".join(parts)
+
+
 def write_record(path: str, manifest: dict, etag: str, dest: Path, rels: list[str], only: list[str]) -> None:
     rec = {"generation": generation_of(manifest), "etag": etag, "commit": manifest.get("commit", ""),
            "created_at": manifest.get("created_at", ""), "only": only,
@@ -886,8 +984,25 @@ def cmd_pull(args) -> int:
     def wanted(m: dict) -> list[str]:
         return select_only(m["files"], only)
 
+    # Incremental: a file already on disk with the manifest's MD5 is not
+    # downloaded again (one Class B read per file otherwise: ~59 000 per full
+    # restore). A fresh runner has nothing on disk, so a full restore is first
+    # seeded from the newest snapshot tarballs (2 reads), then only what
+    # changed since is fetched. Every file is still MD5-verified below.
     todo = wanted(manifest)
-    have: dict[str, str] = {}
+    seed = "not needed"
+    seeded: dict[str, str] = {}
+    if args.no_seed:
+        seed = "disabled"
+    elif only:
+        seed = "skipped (partial pull)"
+    elif sum(1 for r in todo if (dest / r).is_file()) < len(todo) // 2:
+        seed = seed_from_snapshots(s3, bucket, dest, set(todo), seeded)
+    have: dict[str, str] = dict(seeded)
+    have.update(local_md5s(dest, manifest["files"], [r for r in todo if r not in seeded]))
+    todo = [r for r in todo if have.get(r) != manifest["files"][r]["md5"]]
+    fetched: set[str] = set()
+    fetched_bytes = 0
     for attempt in range(1, 4):
         bad: list[str] = []
         with ThreadPoolExecutor(max_workers=args.workers) as ex:
@@ -896,6 +1011,8 @@ def cmd_pull(args) -> int:
                 rel = futs[fut]
                 try:
                     have[rel] = fut.result()
+                    fetched.add(rel)
+                    fetched_bytes += (dest / rel).stat().st_size
                 except Exception as exc:
                     print(f"  download failed {rel}: {exc}")
                     bad.append(rel)
@@ -925,6 +1042,12 @@ def cmd_pull(args) -> int:
         return 1
 
     rels = wanted(manifest)
+    stale = stale_local_files(dest, manifest["files"], only)
+    for rel in stale:
+        (dest / rel).unlink(missing_ok=True)
+    if stale:
+        print(f"removed {len(stale)} local state file(s) absent from the manifest: {stale[:10]}")
+    downloaded = len(fetched & set(rels))
     if args.record:
         write_record(args.record, manifest, etag, dest, rels, only)
     _summary([
@@ -932,9 +1055,13 @@ def cmd_pull(args) -> int:
         f"- generation {generation_of(manifest)} (source `{manifest.get('commit', '')[:10]}`, "
         f"written {manifest.get('created_at')}, run {manifest.get('run_id')})",
         f"- {'only ' + ', '.join(only) + ': ' if only else ''}files {len(rels)}, all MD5-verified",
+        f"- downloaded {downloaded} ({fetched_bytes / 1e6:.1f} MB), already present {len(rels) - downloaded}, "
+        f"removed {len(stale)} not in the manifest",
+        f"- seed: {seed}",
         f"- duration {time.time() - t0:.0f}s",
     ])
-    _output(commit=manifest.get("commit", ""), generation=generation_of(manifest), etag=etag)
+    _output(commit=manifest.get("commit", ""), generation=generation_of(manifest), etag=etag,
+            downloaded=downloaded, reused=len(rels) - downloaded, removed=len(stale))
     return 0
 
 
@@ -1169,6 +1296,8 @@ def main(argv: list[str] | None = None) -> int:
     sl.add_argument("--record", default="", help="write the restore record (for push --base-record)")
     sl.add_argument("--expect-commit", default="")
     sl.add_argument("--expect-generation", type=int, default=0)
+    sl.add_argument("--no-seed", action="store_true",
+                    help="never bootstrap an empty destination from the snapshot tarballs")
     sl.add_argument("--workers", type=int, default=48)
     sl.set_defaults(func=cmd_pull)
 
