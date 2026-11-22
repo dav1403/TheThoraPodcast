@@ -90,8 +90,10 @@ MOBILE_SOURCE_JSON = ("package.json",)
 STATE_PREFIX = os.environ.get("TTP_STATE_PREFIX", "_state/")
 MANIFEST_KEY = STATE_PREFIX + "_manifest.json"
 LOCK_KEY = STATE_PREFIX + "_lock.json"
+# Written by scripts/pipeline_gate.py at the end of a full pipeline run.
+GATE_KEY = STATE_PREFIX + "_gate.json"
 # Objects under STATE_PREFIX that are not state files.
-RESERVED_KEYS = (MANIFEST_KEY, LOCK_KEY)
+RESERVED_KEYS = (MANIFEST_KEY, LOCK_KEY, GATE_KEY)
 SNAPSHOT_PREFIX = os.environ.get("TTP_SNAPSHOT_PREFIX", "_state-snapshots/")
 MANIFEST_VERSION = 2
 SNAPSHOT_KEEP_DAYS = 30
@@ -698,6 +700,13 @@ def cmd_push(args) -> int:
         return 0
     print(f"{'partial ' if partial else ''}push: local={len(local)} remote={n_remote} "
           f"upload={len(upload)} ({up_bytes / 1e6:.1f} MB) delete={len(delete)}")
+    # Names when they are few: what made this run a new generation (an idle
+    # run should upload nothing; see deploy-site "already deployed").
+    if 0 < len(upload) + len(delete) <= 40:
+        for r in upload:
+            print(f"  upload {r}")
+        for r in delete:
+            print(f"  delete {r}")
 
     errors: list[str] = []
     with ThreadPoolExecutor(max_workers=args.workers) as ex:

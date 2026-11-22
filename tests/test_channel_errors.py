@@ -241,6 +241,9 @@ def test_auth_error_still_stops_the_run_without_ledger_entry(pp, monkeypatch):
 # Workflow wiring
 # ---------------------------------------------------------------------------
 
+GATE_COND = "steps.gate.outputs.run != 'false'"
+
+
 def _steps(text: str) -> list[tuple[str, str]]:
     """(name, body) of each step of the single job, in order."""
     parts = re.split(r"(?m)^      - name: ", text)
@@ -251,7 +254,9 @@ def test_workflow_check_is_the_last_step_and_always_runs():
     steps = _steps(WORKFLOW.read_text(encoding="utf-8"))
     name, body = steps[-1]
     assert "channel_errors.py check" in body, name
-    assert re.search(r"(?m)^        if: always\(\)\s*$", body), body
+    # always(), except on a run the pipeline gate stopped at its first step
+    # (scripts/pipeline_gate.py: nothing ran, so no ledger to check).
+    assert re.search(r"(?m)^        if: always\(\)( && " + re.escape(GATE_COND) + r")?\s*$", body), body
 
 
 def test_workflow_nothing_between_process_and_push_is_conditional_on_success():
@@ -267,7 +272,11 @@ def test_workflow_nothing_between_process_and_push_is_conditional_on_success():
     assert "continue-on-error" not in process_body
     assert "|| true" not in process_body
     for name, body in steps[i_process + 1:i_push + 1]:
-        assert not re.search(r"(?m)^        if:", body), f"step {name!r} has an if:"
+        # The only condition allowed is the pipeline gate's: without a status
+        # function GitHub adds success(), so a failure still stops the run
+        # before the push.
+        conds = re.findall(r"(?m)^        if: (.*?)\s*$", body)
+        assert all(c == GATE_COND for c in conds), f"step {name!r} has an if: {conds}"
 
 
 def test_process_podcasts_no_longer_exits_1_on_channel_errors():

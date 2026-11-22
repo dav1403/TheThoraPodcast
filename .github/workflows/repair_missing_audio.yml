@@ -80,18 +80,48 @@ jobs:
             /scripts/
             /requirements.txt
 
-      - name: Widen to the whole SOURCE tree (state and generated outputs excluded)
-        run: |
-          python3 scripts/site_state.py sparse-patterns --channels channels.json --speakers speakers.json > "$RUNNER_TEMP/sparse.txt"
-          git sparse-checkout set --no-cone --stdin < "$RUNNER_TEMP/sparse.txt"
-          echo "source files: $(git ls-files | wc -l)"
-
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Scheduled runs with nothing to do stop HERE (~30 s instead of ~6 min):
+      # see scripts/pipeline_gate.py for what "nothing to do" means (the last
+      # full run was idle, same source + state, < 6 h, same day, no new
+      # processable video on any channel, external feeds unchanged). Any
+      # doubt or error -> full run. workflow_dispatch always runs.
+      - name: Pipeline gate (skip a scheduled run that has nothing to do)
+        id: gate
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO:     ${{ github.repository }}
+        run: |
+          python scripts/pipeline_gate.py check --observed-out "$RUNNER_TEMP/gate-observed.json" \
+            || echo "run=true" >> "$GITHUB_OUTPUT"
+
+      - name: Widen to the whole SOURCE tree (state and generated outputs excluded)
+        if: steps.gate.outputs.run != 'false'
+        run: |
+          python3 scripts/site_state.py sparse-patterns --channels channels.json --speakers speakers.json > "$RUNNER_TEMP/sparse.txt"
+          git sparse-checkout set --no-cone --stdin < "$RUNNER_TEMP/sparse.txt"
+          echo "source files: $(git ls-files | wc -l)"
+
       - name: Validate channels.json (fail fast on broken JSON)
+        if: steps.gate.outputs.run != 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -112,52 +142,47 @@ jobs:
             exit 1
           fi
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
       - name: Set up Deno (for yt-dlp EJS n-challenge solver)
+        if: steps.gate.outputs.run != 'false'
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
       - name: Install ffmpeg
+        if: steps.gate.outputs.run != 'false'
         run: |
           sudo apt-get update -y
           sudo apt-get install -y ffmpeg
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
       - name: Install boto3 early (state lease + restore)
+        if: steps.gate.outputs.run != 'false'
         run: python -m pip install --quiet boto3
 
       # Git used to serialise the writers (a stale push was refused); R2 does
       # not, so every state writer takes this lease first (If-None-Match on
       # <prefix>_lock.json). Waits for e.g. the nightly duration backfill.
       - name: Take the state lease
+        if: steps.gate.outputs.run != 'false'
         id: lease
         run: python scripts/site_state.py lock acquire --ttl-minutes 200 --wait-minutes 60
 
       # The state of the previous run, MD5-verified. Mandatory: without it the
       # run would start from nothing and the push guard would refuse it.
       - name: Restore the state from R2
+        if: steps.gate.outputs.run != 'false'
         id: restore
         run: python scripts/site_state.py pull --dest . --record "$RUNNER_TEMP/state-record.json"
 
       - name: Ensure feeds/ directory exists
+        if: steps.gate.outputs.run != 'false'
         run: mkdir -p feeds
 
       - name: Save pre-run feed counts
+        if: steps.gate.outputs.run != 'false'
         run: python scripts/ci_pre_run_counts.py
 
       - name: Write YouTube cookies (rotating pool, single-cookie fallback)
+        if: steps.gate.outputs.run != 'false'
         # Picks one cookie from YOUTUBE_COOKIES_POOL (many accounts concatenated,
         # separated by a line "-----COOKIE-----"), rotating by run number so each
         # account is used only occasionally. Falls back to the single
@@ -177,6 +202,7 @@ jobs:
           fi
 
       - name: Generate channel artwork (3000x3000 PNG for Apple Podcasts)
+        if: steps.gate.outputs.run != 'false'
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
@@ -188,12 +214,15 @@ jobs:
       # and GitHub Pages offers no CDN resizing, so the 256 px variant has to be
       # built and committed here. Idempotent: only re-encodes changed artwork.
       - name: Build artwork thumbnails (256px WebP for site + mobile app)
+        if: steps.gate.outputs.run != 'false'
         run: python scripts/build_artwork_thumbs.py
 
       - name: Sync external RSS channels
+        if: steps.gate.outputs.run != 'false'
         run: python scripts/sync_rss_channels.py
 
       - name: Bootstrap new channels (backfill last 10 episodes if feed missing)
+        if: steps.gate.outputs.run != 'false'
         env:
           YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
           GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
@@ -208,6 +237,7 @@ jobs:
           python scripts/ci_bootstrap_all.py
 
       - name: Run podcast update (new episodes)
+        if: steps.gate.outputs.run != 'false'
         env:
           YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
           GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
@@ -226,6 +256,7 @@ jobs:
           python scripts/process_podcasts.py --budget "$PROCESS_BUDGET"
 
       - name: Run backfill (historical episodes with remaining budget)
+        if: steps.gate.outputs.run != 'false'
         env:
           YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
           GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
@@ -259,6 +290,7 @@ jobs:
       # (a renamed episode is re-tagged) and the generator (it derives the
       # speaker feeds and pages from the renamed entries). Never blocks the run.
       - name: Resync titles renamed on YouTube
+        if: steps.gate.outputs.run != 'false'
         env:
           YOUTUBE_API_KEY:      ${{ secrets.YOUTUBE_API_KEY }}
           GITHUB_TOKEN:         ${{ secrets.GITHUB_TOKEN }}
@@ -274,21 +306,25 @@ jobs:
           python scripts/title_resync.py || echo "WARNING - title resync failed, continuing"
 
       - name: Tag untagged episodes with AI themes
+        if: steps.gate.outputs.run != 'false'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           python scripts/tag_episodes.py || echo "WARNING: tagging failed (API credits?), continuing"
 
       - name: Fetch episode transcripts (auto-captions from YouTube)
+        if: steps.gate.outputs.run != 'false'
         env:
           YOUTUBE_COOKIES_FILE: ${{ env.YOUTUBE_COOKIES_FILE }}
         run: python scripts/fetch_transcripts.py --budget 50
 
       - name: Track ingestion volume (watchdog for "green but empty" runs)
+        if: steps.gate.outputs.run != 'false'
         id: ingest
         run: python scripts/ci_ingest_watchdog.py
 
       - name: Generate per-channel HTML pages and update sitemap
+        if: steps.gate.outputs.run != 'false'
         run: python scripts/generate_channel_pages.py
 
       # Full-text search INSIDE the classes. Rebuilds the sharded inverted index
@@ -298,6 +334,8 @@ jobs:
       # index is committed, like sitemap.xml and search-index.json). Lower it to
       # 0 to make every new transcript searchable within the hour.
       - name: Build transcript full-text search index
+        id: fts
+        if: steps.gate.outputs.run != 'false'
         run: python scripts/build_transcript_index.py --min-interval-hours 6
 
       # Replaces the git commit: the new generation of the state goes to R2,
@@ -306,10 +344,27 @@ jobs:
       # is a red run. Daily snapshot (+ transcripts on Sundays).
       # The site is rebuilt and published by deploy-site.yml (workflow_run).
       - name: Push the new state to R2 (anti-loss guard, CAS)
+        if: steps.gate.outputs.run != 'false'
         id: push
         timeout-minutes: 30
         run: |
           python scripts/site_state.py push --root . --base-record "$RUNNER_TEMP/state-record.json"             --snapshot --snapshot-copy "$RUNNER_TEMP/snapshot/state.tar.gz"
+
+      # What the next scheduled run's gate reads: was this run idle (state
+      # unchanged, nothing pending, no error), which YouTube ids it handled.
+      # Best effort: without a fresh record the next run is simply a full run.
+      - name: Record the pipeline gate (for the next scheduled run)
+        if: steps.push.outcome == 'success'
+        continue-on-error: true
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          GITHUB_TOKEN:    ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO:     ${{ github.repository }}
+        run: |
+          python scripts/pipeline_gate.py record --observed "$RUNNER_TEMP/gate-observed.json" \
+            --push-unchanged "${{ steps.push.outputs.unchanged }}" --generation "${{ steps.push.outputs.generation }}" \
+            --pending "${{ steps.ingest.outputs.pending }}" \
+            --index-pending "${{ steps.fts.outputs.index_pending }}"
 
       - name: Snapshot retention (30 days, 90 with transcripts)
         if: steps.push.outcome == 'success'
@@ -329,11 +384,11 @@ jobs:
           if-no-files-found: ignore
 
       - name: Release the state lease
-        if: always() && steps.lease.outcome == 'success'
+        if: always() && steps.lease.outcome == 'success' && steps.gate.outputs.run != 'false'
         run: python scripts/site_state.py lock release
 
       - name: Alert if YouTube auth error detected
-        if: always() && env.TTP_IS_PROD == 'true'
+        if: always() && env.TTP_IS_PROD == 'true' && steps.gate.outputs.run != 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -385,7 +440,7 @@ jobs:
           echo "Opened a new GitHub issue for the YouTube auth error."
 
       - name: Alert if Anthropic credits exhausted (theme tagging)
-        if: always() && env.TTP_IS_PROD == 'true'
+        if: always() && env.TTP_IS_PROD == 'true' && steps.gate.outputs.run != 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -420,7 +475,7 @@ jobs:
           echo "Opened a new GitHub issue for the Anthropic credit error."
 
       - name: Alert if ingestion has been stuck at zero
-        if: always() && env.TTP_IS_PROD == 'true'
+        if: always() && env.TTP_IS_PROD == 'true' && steps.gate.outputs.run != 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ADDED: ${{ steps.ingest.outputs.added }}
@@ -464,7 +519,7 @@ jobs:
           fi
 
       - name: Generate run summary
-        if: always()
+        if: always() && steps.gate.outputs.run != 'false'
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: python scripts/generate_summary.py >> $GITHUB_STEP_SUMMARY
@@ -477,5 +532,5 @@ jobs:
       # behind a green run: this step annotates each channel error, adds a
       # table to the summary and turns the run red, after publication.
       - name: Fail the run if a channel errored (after publication)
-        if: always()
+        if: always() && steps.gate.outputs.run != 'false'
         run: python3 scripts/channel_errors.py check

@@ -42,6 +42,7 @@ Usage:
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 import time
@@ -235,6 +236,13 @@ def main():
     build, reason = should_build(fingerprint, args)
     if not build:
         print(f"Skipping rebuild: {reason}.")
+        # A rebuild only postponed by --min-interval-hours is work still to do:
+        # the pipeline gate (scripts/pipeline_gate.py) must not call the next
+        # runs idle.
+        out = os.environ.get("GITHUB_OUTPUT")
+        if out and reason.startswith("corpus changed"):
+            with open(out, "a", encoding="utf-8") as fh:
+                fh.write("index_pending=true\n")
         return
     print(f"Rebuilding: {reason}.")
 
