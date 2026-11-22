@@ -101,3 +101,23 @@ def channel_entry_files(feeds_dir: Path, root: Path = Path(".")) -> list[Path]:
         f for f in Path(feeds_dir).glob("*.entries.json")
         if entries_slug(f) not in derived
     )
+
+
+# feedgen stamps <lastBuildDate> with the current time on every build. Every
+# pipeline run rebuilds every channel feed, so an idle run used to rewrite the
+# 25 feeds (~66 MB uploaded to R2, a new state generation, a full site
+# redeploy). The date is now only moved when something else in the feed moved.
+_LAST_BUILD_RE = re.compile(rb"<lastBuildDate>[^<]*</lastBuildDate>")
+
+
+def write_feed_if_changed(feed_path: Path, xml: bytes) -> bool:
+    """Write `xml` to `feed_path` unless the file already holds the same feed
+    apart from <lastBuildDate> (then the file, its date included, is left
+    untouched). Returns True when the file was written."""
+    feed_path = Path(feed_path)
+    if feed_path.is_file():
+        old = feed_path.read_bytes()
+        if _LAST_BUILD_RE.sub(b"", old) == _LAST_BUILD_RE.sub(b"", xml):
+            return False
+    feed_path.write_bytes(xml)
+    return True

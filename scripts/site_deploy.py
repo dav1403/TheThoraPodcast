@@ -378,6 +378,7 @@ def cmd_marker(args) -> int:
         "state_commit_time": args.state_time,
         "legacy_orphans": args.legacy_orphans,
         "state_generation": args.state_generation,
+        "stats_digest": args.stats_digest,
         "files": files + 1,
         "built_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
     }
@@ -480,9 +481,16 @@ MIN_FILES_RATIO = 0.98
 
 
 def freshness_verdict_v2(live: dict | None, src_sha: str, src_time: int, generation: int,
-                         force: bool) -> tuple[bool, str]:
+                         force: bool, stats_digest: str | None = None,
+                         today: str | None = None) -> tuple[bool, str]:
     """(deploy?, reason). Ordering by state GENERATION (several generations
-    share one source commit in phase 4), never older source either."""
+    share one source commit in phase 4), never older source either.
+
+    Same source + same generation as the live site = the build would publish
+    the same site: skipped, unless one of the other inputs of a build moved -
+    the Espace rav reports pulled from R2 at build time (`stats_digest`, None =
+    not checked) or the UTC day (`today`: sitemap lastmod, paracha of the week
+    are computed from the date; at most one such rebuild a day)."""
     if not live:
         return True, "no live marker"
     lg = int(live.get("state_generation") or 0)
@@ -492,9 +500,32 @@ def freshness_verdict_v2(live: dict | None, src_sha: str, src_time: int, generat
     if lt > src_time:
         return False, (f"live site has a newer source ({live.get('main_sha', '')[:10]}@{lt} > "
                        f"{src_sha[:10]}@{src_time})")
-    if live.get("main_sha") == src_sha and lg == generation and not force:
-        return False, f"already deployed (source {src_sha[:10]}, generation {generation})"
+    if live.get("main_sha") == src_sha and lg == generation:
+        if force:
+            return True, f"forced redeploy (source {src_sha[:10]}, generation {generation})"
+        if stats_digest is not None and live.get("stats_digest") != stats_digest:
+            return True, (f"same source + state (generation {generation}), "
+                          "but the Espace rav reports changed")
+        built = str(live.get("built_at") or "")[:10]
+        if today and built != today:
+            return True, (f"same source + state (generation {generation}), "
+                          f"but the live build is from {built or '?'} (daily rebuild, date-dependent pages)")
+        return False, (f"already deployed: same source {src_sha[:10]} and same state generation "
+                       f"{generation}" + (", Espace rav reports unchanged" if stats_digest is not None else "")
+                       + (f", built today ({built})" if today else ""))
     return True, "newer than the live site"
+
+
+def stats_digest(s3, bucket: str, prefix: str) -> str:
+    """Digest of the Espace rav reports in R2 (key + ETag, one LIST): they are
+    copied into the site at build time, so a change must trigger a build."""
+    h = hashlib.sha256()
+    n = 0
+    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix):
+        for o in sorted(page.get("Contents", []), key=lambda o: o["Key"]):
+            h.update(f"{o['Key']}\t{o.get('ETag', '')}\n".encode())
+            n += 1
+    return f"{n}:{h.hexdigest()[:16]}"
 
 
 def episode_pages(paths, slugs) -> list[str]:
@@ -577,9 +608,19 @@ def _files_txt(data: bytes | None) -> list[str]:
 
 def cmd_freshness2(args) -> int:
     live = live_marker(args.base)
-    ok, reason = freshness_verdict_v2(live, args.src_sha, args.src_time, args.generation, args.force)
-    _summary(f"### Freshness (phase 4)\n- {'DEPLOY' if ok else 'SKIP'}: {reason}")
-    _output(deploy=str(ok).lower(), reason=reason.replace("\n", " "))
+    digest = None
+    if args.stats_prefix:
+        try:
+            s3, bucket = _r2()
+            digest = stats_digest(s3, bucket, args.stats_prefix)
+        except Exception as exc:  # cannot tell -> never skip on it
+            digest = f"unavailable ({type(exc).__name__})"
+            print(f"::warning::Espace rav reports not listed ({type(exc).__name__}): no skip on them")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    ok, reason = freshness_verdict_v2(live, args.src_sha, args.src_time, args.generation, args.force,
+                                      stats_digest=digest, today=today)
+    _summary(f"### Freshness (phase 4)\n- {'DEPLOY' if ok else 'SKIP (no restore, no build)'}: {reason}")
+    _output(deploy=str(ok).lower(), reason=reason.replace("\n", " "), stats_digest=digest or "")
     return 0
 
 
@@ -877,6 +918,8 @@ def _add_phase4_parsers(sub, base: str) -> None:
     s.add_argument("--src-time", type=int, required=True)
     s.add_argument("--generation", type=int, required=True)
     s.add_argument("--force", action="store_true")
+    s.add_argument("--stats-prefix", default=os.environ.get("TTP_STATS_PREFIX", "_stats/") + "pub/",
+                   help="Espace rav reports in R2 (empty: not checked)")
     s.set_defaults(func=cmd_freshness2)
 
     s = sub.add_parser("guard")
@@ -966,6 +1009,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--legacy-orphans", type=int, default=0)
     s.add_argument("--state-generation", type=int, default=0)
     s.add_argument("--feeds-md5", default="", help="JSON map feeds/*.xml -> md5 (phase 4 verify)")
+    s.add_argument("--stats-digest", default="", help="freshness2 stats_digest (Espace rav reports)")
     s.set_defaults(func=cmd_marker)
 
     _add_phase4_parsers(sub, base)

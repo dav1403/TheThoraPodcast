@@ -180,6 +180,18 @@ def check_audio_urls(slug: str, entries: list[dict]) -> dict:
     return record
 
 
+def same_health_kept(previous: dict | None, current: dict) -> dict:
+    """The previous record when nothing but `checked_at` differs: a fresh
+    timestamp alone would rewrite rss_health.json at every run, making each
+    idle run a new state generation and a full site redeploy. `checked_at`
+    therefore means "health unchanged since"."""
+    if isinstance(previous, dict) and \
+            {k: v for k, v in previous.items() if k != "checked_at"} == \
+            {k: v for k, v in current.items() if k != "checked_at"}:
+        return previous
+    return current
+
+
 def main():
     channels = json.loads(Path("channels.json").read_text(encoding="utf-8-sig"))
     rss_channels = [
@@ -254,7 +266,7 @@ def main():
 
         # Audio URL health check
         health = check_audio_urls(slug, result)
-        health_records[slug] = health
+        health_records[slug] = same_health_kept(health_records.get(slug), health)
         if health["status"] != "ok":
             any_degraded = True
 

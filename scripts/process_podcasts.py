@@ -30,7 +30,7 @@ from yt_dlp import YoutubeDL
 from feedgen.feed import FeedGenerator
 from feedgen.ext.base import BaseExtension
 from lxml import etree
-from feeds_util import PODCAST_NS, itunes_image_url, podcast_guid
+from feeds_util import PODCAST_NS, itunes_image_url, podcast_guid, write_feed_if_changed
 import channel_errors
 import boto3
 from botocore.config import Config
@@ -955,8 +955,12 @@ def build_rss_feed(channel_cfg: dict, channel_info: dict, entries: list[dict], f
         if ep_image:
             fe.podcast.itunes_image(ep_image)
 
-    fg.rss_file(str(feed_path), pretty=True)
-    print(f"  RSS feed written -> {feed_path} ({len(entries)} episodes)")
+    # Same bytes as fg.rss_file(); unchanged apart from <lastBuildDate> -> the
+    # file is kept as is, so an idle run leaves the state byte-identical.
+    if write_feed_if_changed(feed_path, fg.rss_str(pretty=True)):
+        print(f"  RSS feed written -> {feed_path} ({len(entries)} episodes)")
+    else:
+        print(f"  RSS feed unchanged -> {feed_path} ({len(entries)} episodes)")
 
 
 # ---------------------------------------------------------------------------

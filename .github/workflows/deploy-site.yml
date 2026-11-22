@@ -135,13 +135,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install dependencies + unit tests of the tooling
+      # Only what the skip decision needs (R2 manifest + Espace rav listing):
+      # an idle trigger must not pay the full install + tests.
+      - name: Minimal dependencies for the freshness decision
         if: steps.mode.outputs.on == 'true'
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r tools/requirements.txt pytest
-          python -m pytest -q tools/tests/test_site_state.py tools/tests/test_site_state_v2.py \
-            tools/tests/test_site_deploy.py tools/tests/test_site_deploy_v2.py tools/tests/test_site_deploy_verify.py
+        run: python -m pip install --quiet boto3
 
       - name: Read the state manifest
         id: manifest
@@ -182,6 +180,14 @@ jobs:
       - name: Decision
         id: go
         run: echo "deploy=${{ steps.fresh.outputs.deploy == 'true' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies + unit tests of the tooling
+        if: steps.go.outputs.deploy == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tools/requirements.txt pytest
+          python -m pytest -q tools/tests/test_site_state.py tools/tests/test_site_state_v2.py \
+            tools/tests/test_site_deploy.py tools/tests/test_site_deploy_v2.py tools/tests/test_site_deploy_verify.py
 
       # No lease: a reader. MD5-verified against the manifest; if a writer
       # publishes mid-restore, the restore follows it to the new generation.
@@ -241,7 +247,8 @@ jobs:
           python tools/scripts/site_deploy.py marker --site site \
             --main-sha "${{ steps.src.outputs.sha }}" --main-time "${{ steps.tree.outputs.time }}" \
             --state-commit "${{ steps.manifest.outputs.commit }}" --state-time 0 \
-            --state-generation "$GEN" --feeds-md5 "$RUNNER_TEMP/feeds-md5.json" --legacy-orphans "$N"
+            --state-generation "$GEN" --feeds-md5 "$RUNNER_TEMP/feeds-md5.json" --legacy-orphans "$N" \
+            --stats-digest "${{ steps.fresh.outputs.stats_digest }}"
           echo "site: $(find site -type f | wc -l) files, $(du -sh site | cut -f1)"
 
       - name: Upload Pages artifact

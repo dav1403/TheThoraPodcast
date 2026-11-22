@@ -374,3 +374,34 @@ def test_seed_never_overwrites_a_file_already_on_disk(tmp_path, s3):
     assert "state.tar.gz" in msg
     assert (dest / "feeds" / "c0.xml").read_text() == "<rss>local</rss>"
     assert (dest / "feeds" / "c1.xml").read_text() == "<rss>1</rss>"
+
+
+def test_idle_full_push_keeps_the_generation_but_still_snapshots(tmp_path, s3, capsys):
+    """An idle pipeline run (nothing changed on disk) mints no new generation:
+    deploy-site then skips the build ("already deployed")."""
+    init(tmp_path, s3)
+    m1 = s3.objs[site_state.MANIFEST_KEY]
+    assert run("lock", "acquire", "--print-token", "--wait-minutes", 0) == 0
+    tok = token_of(capsys)
+    work = tmp_path / "w"
+    assert run("pull", "--dest", work, "--record", tmp_path / "rec.json") == 0
+    snaps_before = [k for k in s3.objs if k.startswith(site_state.SNAPSHOT_PREFIX)]
+    assert run("push", "--root", work, "--base-record", tmp_path / "rec.json", "--token", tok,
+               "--snapshot") == 0
+    out = capsys.readouterr().out
+    assert "nothing changed: generation stays 1" in out
+    assert s3.objs[site_state.MANIFEST_KEY] == m1                    # manifest untouched
+    snaps = [k for k in s3.objs if k.startswith(site_state.SNAPSHOT_PREFIX)]
+    assert snaps and len(snaps) >= len(snaps_before)                 # the day's snapshot still taken
+    # the next real change still bumps the generation (same base record: etag unchanged)
+    (work / "feeds" / "c1.entries.json").write_text(json.dumps([{"i": k} for k in range(4)]))
+    assert run("push", "--root", work, "--base-record", tmp_path / "rec.json", "--token", tok) == 0
+    assert json.loads(s3.objs[site_state.MANIFEST_KEY])["generation"] == 2
+
+
+def test_manifest_matches():
+    local = {"a": {"md5": "1", "size": 1}, "b": {"md5": "2", "size": 2}}
+    assert site_state.manifest_matches({"files": {"a": {"md5": "1"}, "b": {"md5": "2"}}}, local)
+    assert not site_state.manifest_matches({"files": {"a": {"md5": "1"}, "b": {"md5": "3"}}}, local)
+    assert not site_state.manifest_matches({"files": {"a": {"md5": "1"}}}, local)
+    assert not site_state.manifest_matches(None, local)

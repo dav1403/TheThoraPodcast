@@ -100,14 +100,20 @@ def main() -> None:
         streak += 1
     # else: nothing ingested but nothing pending either -> not a failure.
 
+    before = dict(state)
     state["consecutive_zero_runs"] = streak
-    state["last_run"] = now_iso
     state["last_added"] = added
     state["last_pending"] = pending
-    STATE_FILE.write_text(
-        json.dumps(state, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    # `last_run` = last run that changed this record. An identical run leaves
+    # the file untouched: a timestamp alone would make every idle run a new
+    # state generation and a full site redeploy (read by nothing else).
+    if {k: v for k, v in state.items() if k != "last_run"} != \
+            {k: v for k, v in before.items() if k != "last_run"} or "last_run" not in before:
+        state["last_run"] = now_iso
+        STATE_FILE.write_text(
+            json.dumps(state, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
 
     print(f"Ingested this run: {added} | pending backlog: {pending} | "
           f"consecutive zero runs: {streak}")

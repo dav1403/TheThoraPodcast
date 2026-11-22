@@ -223,6 +223,15 @@ def plan_sync(local: dict[str, dict], remote_etags: dict[str, str]) -> tuple[lis
     return sorted(upload), sorted(delete)
 
 
+def manifest_matches(manifest: dict | None, local: dict[str, dict]) -> bool:
+    """The manifest lists exactly the local files, with the same MD5s (the
+    objects alone are not enough: after a failed compare-and-swap they can be
+    ahead of the manifest)."""
+    files = (manifest or {}).get("files") or {}
+    return set(files) == set(local) and all(
+        (files[r] or {}).get("md5") == m["md5"] for r, m in local.items())
+
+
 def deletion_allowed(n_delete: int, n_remote: int, max_ratio: float = 0.05, floor: int = 200) -> bool:
     """Mass-deletion guard: a mirror that wants to drop a big share of R2 is
     far more likely a broken working tree than a real change."""
@@ -665,7 +674,27 @@ def cmd_push(args) -> int:
     if partial and not upload:
         print(f"partial push: nothing changed in {only}: manifest untouched (generation stays "
               f"{generation_of(remote_manifest)})")
-        _output(generation=generation_of(remote_manifest), uploaded=0, deleted=0, etag=etag)
+        _output(generation=generation_of(remote_manifest), uploaded=0, deleted=0, etag=etag,
+                unchanged="true")
+        return 0
+    if not partial and remote_manifest is not None and not upload and not delete \
+            and manifest_matches(remote_manifest, local):
+        # An idle run: the working tree is byte-identical to the published
+        # generation. Minting a new one would only make deploy-site rebuild and
+        # republish the same site (it skips "already deployed" generations).
+        gen = generation_of(remote_manifest)
+        snap = ""
+        if args.snapshot:
+            snap = snapshot(s3, bucket, root, remote_manifest, force=args.force_snapshot,
+                            with_transcripts=args.with_transcripts, copy_to=args.snapshot_copy)
+        _summary([
+            "### R2 state push",
+            f"- nothing changed: generation stays {gen} (manifest untouched, nothing uploaded)",
+            f"- files {len(local)} / {sum(m['size'] for m in local.values()) / 1e6:.1f} MB",
+            f"- snapshot: {snap or 'not requested'}",
+            f"- duration {time.time() - t0:.0f}s",
+        ])
+        _output(generation=gen, uploaded=0, deleted=0, etag=etag, unchanged="true")
         return 0
     print(f"{'partial ' if partial else ''}push: local={len(local)} remote={n_remote} "
           f"upload={len(upload)} ({up_bytes / 1e6:.1f} MB) delete={len(delete)}")
@@ -748,7 +777,7 @@ def cmd_push(args) -> int:
         f"- snapshot: {snap or 'not requested'}",
         f"- duration {time.time() - t0:.0f}s",
     ])
-    _output(generation=gen, uploaded=len(upload), deleted=deleted, etag=new_etag)
+    _output(generation=gen, uploaded=len(upload), deleted=deleted, etag=new_etag, unchanged="false")
     return 0
 
 
