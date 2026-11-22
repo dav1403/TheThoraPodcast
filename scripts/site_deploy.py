@@ -101,13 +101,30 @@ def _summary(text: str) -> None:
             fh.write(text + "\n")
 
 
-# verify2: delays (s) between extra probes of a failing URL (CDN propagation).
-# GitHub Pages serves with max-age=600: a stale edge copy can survive several
-# minutes after the marker is live (5 false reds on 21-22/11/2026 with 3 x 30 s;
-# all feeds matched when re-checked later). 30+60+90+120+150+150 = 600 s per URL.
+# verify2: delays (s) between extra probes of a failing URL whose response
+# carries no usable Last-Modified (HTTP error, 503...). 30+60+...+150 = 600 s.
 VERIFY_RETRY_DELAYS = (30, 60, 90, 120, 150, 150)
 VERIFY_RETRIES = len(VERIFY_RETRY_DELAYS)
 VERIFY_WAIT_BUDGET = 1200  # s of re-probe sleep for the whole run (job timeout: 30 min)
+
+# Why a feed could differ from the build right after its own marker is live
+# (122 red deploys out of 271, 20/10-19/11/2026), measured on 22/11/2026:
+#   - the Fastly CDN in front of GitHub Pages IGNORES the query string: a
+#     unique `?cb=` still answers `X-Cache: HIT` with Age > 0, and no request
+#     header (Cache-Control/Pragma/Accept-Encoding) bypasses it. `bust()` never
+#     reached the origin;
+#   - every file of a Pages deployment carries Last-Modified = the moment the
+#     deployment was unpacked (all within ~10 s, unchanged files included);
+#   - objects are cached max-age=600.
+# So an edge node that (re)cached a file of the PREVIOUS deployment around the
+# purge serves it for up to 600 s: its Last-Modified predates the marker's.
+# Such a copy is not a defect - wait until it expires (max-age - Age) and probe
+# again. A copy that already belongs to THIS deployment and still differs is a
+# real mismatch: one short re-probe (transient), then red.
+STALE_LM_MARGIN = 60          # s: same deployment if within this of the marker
+STALE_MAX_WAITS = 4           # a re-probe may land on another stale node
+DEFAULT_MAX_AGE = 600
+FRESH_MISMATCH_RETRY = 30     # s, once, for a copy of this deployment
 
 
 def fetch(url: str, timeout: int = 30) -> tuple[int, dict, bytes]:
@@ -120,17 +137,83 @@ def fetch(url: str, timeout: int = 30) -> tuple[int, dict, bytes]:
 
 
 def bust(base: str, path: str) -> str:
+    # The query string does not bust the GitHub Pages CDN (see above); kept so
+    # a request is recognisable in logs, never relied upon for freshness.
     return f"{base.rstrip('/')}/{quote(path, safe='/-._~')}?cb={time.time_ns()}"
 
 
 def live_marker(base: str) -> dict | None:
-    code, _h, body = fetch(bust(base, "_deploy.json"))
+    return live_marker_and_headers(base)[0]
+
+
+def live_marker_and_headers(base: str) -> tuple[dict | None, dict]:
+    code, headers, body = fetch(bust(base, "_deploy.json"))
     if code != 200:
+        return None, {}
+    try:
+        return json.loads(body.decode("utf-8")), headers
+    except ValueError:
+        return None, {}
+
+
+def _lower(headers: dict) -> dict:
+    return {k.lower(): v for k, v in (headers or {}).items()}
+
+
+def http_time(value: str | None) -> float | None:
+    """Epoch seconds of an HTTP date header, None if absent/unparsable."""
+    from email.utils import parsedate_to_datetime
+    if not value:
         return None
     try:
-        return json.loads(body.decode("utf-8"))
-    except ValueError:
+        return parsedate_to_datetime(value).timestamp()
+    except (TypeError, ValueError, IndexError):
         return None
+
+
+def cache_facts(headers: dict) -> str:
+    """Short, loggable summary of the CDN headers of a response."""
+    h = _lower(headers)
+    return ", ".join(f"{k}={h[k]}" for k in ("last-modified", "age", "x-cache", "x-served-by", "etag")
+                     if h.get(k)) or "no cache headers"
+
+
+def stale_copy_wait(headers: dict, marker_lm: float | None) -> int | None:
+    """Seconds until a CDN copy of an OLDER deployment expires, or None when
+    the response cannot be shown to predate this deployment (fresh copy of
+    this deployment, or headers missing)."""
+    lm = http_time(_lower(headers).get("last-modified"))
+    if lm is None or marker_lm is None or lm >= marker_lm - STALE_LM_MARGIN:
+        return None
+    h = _lower(headers)
+    max_age = DEFAULT_MAX_AGE
+    for part in (h.get("cache-control") or "").split(","):
+        k, _, v = part.strip().partition("=")
+        if k == "max-age" and v.isdigit():
+            max_age = int(v)
+    try:
+        age = int(h.get("age") or 0)
+    except ValueError:
+        age = 0
+    return max(5, min(max_age, max_age - age) + 5)
+
+
+def retry_decision(headers: dict, marker_lm: float | None, n_stale: int, n_generic: int,
+                   fresh_retried: bool) -> tuple[str, int]:
+    """What to do with a failing probe -> (kind, delay s):
+      stale        copy of an older deployment: wait until it expires
+      fresh        copy of THIS deployment: a single short re-probe
+      fresh-final  copy of THIS deployment, already re-probed: red, no masking
+      generic      no Last-Modified to reason on (HTTP error...): old schedule
+      give-up      retries exhausted"""
+    wait = stale_copy_wait(headers, marker_lm)
+    if wait is not None:
+        return ("stale", wait) if n_stale < STALE_MAX_WAITS else ("give-up", 0)
+    if marker_lm is not None and http_time(_lower(headers).get("last-modified")) is not None:
+        return ("fresh-final", 0) if fresh_retried else ("fresh", FRESH_MISMATCH_RETRY)
+    if n_generic < VERIFY_RETRIES:
+        return "generic", VERIFY_RETRY_DELAYS[n_generic]
+    return "give-up", 0
 
 
 def ref_tree_names(repo: Path, ref: str, prefix: str) -> dict[str, str]:
@@ -677,24 +760,31 @@ def cmd_verify2(args) -> int:
     base = args.base.rstrip("/")
     t0 = time.time()
     while True:
-        m = live_marker(base)
+        m, marker_headers = live_marker_and_headers(base)
         if m and str(m.get("run_id")) == str(args.run_id):
             break
         if time.time() - t0 > args.timeout:
             print(f"::error::marker of run {args.run_id} not served after {args.timeout}s (live: {m})")
             return 1
         time.sleep(5)
+    served_after = time.time() - t0
+    # Last-Modified of THIS deployment (every file of a Pages deployment
+    # carries the unpack time): the reference to tell a stale CDN copy of the
+    # previous deployment from a real mismatch.
+    marker_lm = http_time(_lower(marker_headers).get("last-modified"))
+    print(f"marker of run {args.run_id} served after {served_after:.0f}s ({cache_facts(marker_headers)})")
     fails: list[str] = []
     retried: list[str] = []
+    stale_seen: list[str] = []
     checked = 0
     waited = 0
 
-    def probe_once(path: str, ctype: str, md5: str, parse_json: bool) -> tuple[list[str], bytes]:
+    def probe_once(path: str, ctype: str, md5: str, parse_json: bool) -> tuple[list[str], bytes, dict]:
         code, headers, body = fetch(bust(base, path))
-        h = {k.lower(): v for k, v in headers.items()}
+        h = _lower(headers)
         errs: list[str] = []
         if code != 200:
-            return [f"{path}: HTTP {code}"], b""
+            return [f"{path}: HTTP {code}"], b"", headers
         if ctype and not h.get("content-type", "").startswith(ctype):
             errs.append(f"{path}: content-type {h.get('content-type')!r}, expected {ctype}")
         if parse_json:
@@ -704,23 +794,35 @@ def cmd_verify2(args) -> int:
                 errs.append(f"{path}: invalid JSON ({e})")
         if md5 and hashlib.md5(body).hexdigest() != md5:
             errs.append(f"{path}: MD5 differs from the build")
-        return errs, body
+        return errs, body, headers
 
     def check(path: str, ctype: str = "", md5: str = "", parse_json: bool = False) -> bytes:
-        # Pages/CDN propagation: right after the marker is served, a single file
-        # can still be stale (MD5 differs) or answer a transient 503. Re-probe up
-        # to VERIFY_RETRIES times (VERIFY_RETRY_DELAYS), within VERIFY_WAIT_BUDGET for the run.
         nonlocal checked, waited
         checked += 1
-        errs, body = probe_once(path, ctype, md5, parse_json)
+        errs, body, headers = probe_once(path, ctype, md5, parse_json)
+        n_stale = n_generic = 0
+        fresh_retried = False
         attempt = 1
-        while errs and attempt <= VERIFY_RETRIES and waited + VERIFY_RETRY_DELAYS[attempt - 1] <= VERIFY_WAIT_BUDGET:
-            delay = VERIFY_RETRY_DELAYS[attempt - 1]
-            print(f"::notice::{path}: {'; '.join(errs)} - re-probe {attempt}/{VERIFY_RETRIES} "
-                  f"in {delay}s (CDN propagation)", flush=True)
+        while errs:
+            kind, delay = retry_decision(headers, marker_lm, n_stale, n_generic, fresh_retried)
+            if kind in ("give-up", "fresh-final") or waited + delay > VERIFY_WAIT_BUDGET:
+                if kind == "fresh-final":
+                    errs = [e + f" (copy of THIS deployment: {cache_facts(headers)})" for e in errs]
+                break
+            if kind == "stale":
+                n_stale += 1
+                stale_seen.append(path)
+                why = f"stale CDN copy of an older deployment ({cache_facts(headers)}), expires in {delay}s"
+            elif kind == "fresh":
+                fresh_retried = True
+                why = f"copy of this deployment ({cache_facts(headers)}), one transient re-probe"
+            else:
+                n_generic += 1
+                why = f"no usable Last-Modified ({cache_facts(headers)})"
+            print(f"::notice::{path}: {'; '.join(errs)} - {why} - re-probe in {delay}s", flush=True)
             time.sleep(delay)
             waited += delay
-            errs, body = probe_once(path, ctype, md5, parse_json)
+            errs, body, headers = probe_once(path, ctype, md5, parse_json)
             attempt += 1
         if attempt > 1:
             retried.append(f"{path}: {'OK' if not errs else 'still KO'} after {attempt} attempt(s)")
@@ -756,10 +858,13 @@ def cmd_verify2(args) -> int:
         want = _git(repo, "cat-file", "blob", f"HEAD:.well-known/{n}")
         check(f".well-known/{n}", md5=hashlib.md5(want).hexdigest())
     _summary("\n".join([f"### Live verification of {base} (phase 4)",
-                        f"- marker of run {args.run_id} served {time.time() - t0:.0f}s after polling started",
+                        f"- marker of run {args.run_id} served {served_after:.0f}s after polling started "
+                        f"(checks took {time.time() - t0 - served_after:.0f}s, {waited}s of it re-probe waits)",
                         f"- generation {m.get('state_generation')}, source {m.get('main_sha', '')[:10]}",
                         f"- {len(feeds_md5)} feeds/*.xml: HTTP 200 + application/xml + MD5 == build",
-                        f"- {checked} URL(s) probed, {len(fails)} failure(s)"]
+                        f"- {checked} URL(s) probed, {len(fails)} failure(s)",
+                        f"- stale CDN copies of an older deployment waited out: {len(stale_seen)}"
+                        + (f" ({', '.join(sorted(set(stale_seen))[:5])})" if stale_seen else "")]
                        + [f"- re-probed: {r}" for r in retried]
                        + [f"- FAIL: {f}" for f in fails]))
     return 1 if fails else 0
