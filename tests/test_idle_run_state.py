@@ -94,6 +94,16 @@ def test_watchdog_identical_run_leaves_the_file_untouched(tmp_path, monkeypatch)
     wd.main()
     state = json.loads((tmp_path / "feeds" / "ingest_state.json").read_text())
     assert state["last_added"] == 1 and "last_nonzero_run" in state
+    # the next run ingests nothing: untouched (last_added stays the last change)
+    after_ingest = (tmp_path / "feeds" / "ingest_state.json").read_bytes()
+    (tmp_path / "pre.json").write_text(json.dumps({"a": 3}))
+    wd.main()
+    assert (tmp_path / "feeds" / "ingest_state.json").read_bytes() == after_ingest
+    # a zero run while work is pending moves the streak: rewritten
+    (tmp_path / "backfill_state.json").write_text(json.dumps({"a": {"todo": ["x", "y"]}}))
+    wd.main()
+    state = json.loads((tmp_path / "feeds" / "ingest_state.json").read_text())
+    assert state["consecutive_zero_runs"] == 1 and state["last_pending"] >= 1
 
 
 # -- feeds/rss_health.json: checked_at = "unchanged since" ------------------
