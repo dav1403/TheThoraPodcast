@@ -101,8 +101,13 @@ def _summary(text: str) -> None:
             fh.write(text + "\n")
 
 
-VERIFY_RETRIES = 3       # verify2: extra probes of a failing URL (CDN propagation)
-VERIFY_RETRY_DELAY = 30  # seconds between those probes
+# verify2: delays (s) between extra probes of a failing URL (CDN propagation).
+# GitHub Pages serves with max-age=600: a stale edge copy can survive several
+# minutes after the marker is live (5 false reds on 21-22/11/2026 with 3 x 30 s;
+# all feeds matched when re-checked later). 30+60+90+120+150+150 = 600 s per URL.
+VERIFY_RETRY_DELAYS = (30, 60, 90, 120, 150, 150)
+VERIFY_RETRIES = len(VERIFY_RETRY_DELAYS)
+VERIFY_WAIT_BUDGET = 1200  # s of re-probe sleep for the whole run (job timeout: 30 min)
 
 
 def fetch(url: str, timeout: int = 30) -> tuple[int, dict, bytes]:
@@ -682,6 +687,7 @@ def cmd_verify2(args) -> int:
     fails: list[str] = []
     retried: list[str] = []
     checked = 0
+    waited = 0
 
     def probe_once(path: str, ctype: str, md5: str, parse_json: bool) -> tuple[list[str], bytes]:
         code, headers, body = fetch(bust(base, path))
@@ -703,15 +709,17 @@ def cmd_verify2(args) -> int:
     def check(path: str, ctype: str = "", md5: str = "", parse_json: bool = False) -> bytes:
         # Pages/CDN propagation: right after the marker is served, a single file
         # can still be stale (MD5 differs) or answer a transient 503. Re-probe up
-        # to VERIFY_RETRIES times, VERIFY_RETRY_DELAY s apart, before failing.
-        nonlocal checked
+        # to VERIFY_RETRIES times (VERIFY_RETRY_DELAYS), within VERIFY_WAIT_BUDGET for the run.
+        nonlocal checked, waited
         checked += 1
         errs, body = probe_once(path, ctype, md5, parse_json)
         attempt = 1
-        while errs and attempt <= VERIFY_RETRIES:
+        while errs and attempt <= VERIFY_RETRIES and waited + VERIFY_RETRY_DELAYS[attempt - 1] <= VERIFY_WAIT_BUDGET:
+            delay = VERIFY_RETRY_DELAYS[attempt - 1]
             print(f"::notice::{path}: {'; '.join(errs)} - re-probe {attempt}/{VERIFY_RETRIES} "
-                  f"in {VERIFY_RETRY_DELAY}s (CDN propagation)")
-            time.sleep(VERIFY_RETRY_DELAY)
+                  f"in {delay}s (CDN propagation)", flush=True)
+            time.sleep(delay)
+            waited += delay
             errs, body = probe_once(path, ctype, md5, parse_json)
             attempt += 1
         if attempt > 1:
