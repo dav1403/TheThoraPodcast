@@ -156,6 +156,15 @@ jobs:
               if m:
                   return lookup_handle(m.group(1))
 
+              # RTL copy-paste reversed bare handle: "handle@"
+              m = re.fullmatch(r'(' + HANDLE + ')@', url)
+              if m:
+                  return lookup_handle(m.group(1))
+
+              # bare handle without "@" (e.g. "הרב_דן_צרפתי")
+              if re.fullmatch(HANDLE, url) and not url.startswith("UC"):
+                  return lookup_handle(url)
+
               # bare channel ID
               if re.fullmatch(r'UC[A-Za-z0-9_-]{22}', url):
                   return url
